@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Blocks direct pushes to `main`. The repo is private so GitHub can't enforce
+# branch protection on the free plan — this hook enforces it locally.
+#
+# In an emergency (hotfix, fixing a broken deploy), override with:
+#   VINTIGA_ALLOW_MAIN_PUSH=1 git push
+
+set -e
+
+protected_branch='main'
+
+if [ "${VINTIGA_ALLOW_MAIN_PUSH}" = "1" ]; then
+  exit 0
+fi
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/${protected_branch}" ]; then
+    echo ""
+    echo "✗ Direct push to '${protected_branch}' is blocked."
+    echo ""
+    echo "  Open a PR instead:"
+    echo "    git checkout -b feat/my-change"
+    echo "    git push -u origin feat/my-change"
+    echo "    gh pr create"
+    echo ""
+    echo "  Emergency override:"
+    echo "    VINTIGA_ALLOW_MAIN_PUSH=1 git push"
+    echo ""
+    exit 1
+  fi
+done
+
+exit 0

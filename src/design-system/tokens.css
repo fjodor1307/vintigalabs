@@ -1,0 +1,488 @@
+/* ───────────────────────────────────────────────────────────────────────── */
+/* Vintiga design tokens — sourced from Figma variables export.              */
+/* Primitives = full Tailwind palette. Semantic layer is a thin brand map;   */
+/* tweak the semantic block when the Vintiga brand direction firms up.       */
+/* ───────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* ─── Primitives — colour scales ─── */
+
+  --color-vintiga-white: #FFFFFF;
+  --color-vintiga-black: #000000;
+
+  /* ── Slate ── */
+  --color-vintiga-slate-50: #F8FAFC;
+  --color-vintiga-slate-100: #F1F5F9;
+  --color-vintiga-slate-200: #E2E8F0;
+  --color-vintiga-slate-300: #CBD5E1;
+  --color-vintiga-slate-400: #94A3B8;
+  --color-vintiga-slate-500: #64748B;
+  --color-vintiga-slate-600: #475569;
+  --color-vintiga-slate-700: #334155;
+  --color-vintiga-slate-800: #1E293B;
+  --color-vintiga-slate-900: #0F172A;
+  --color-vintiga-slate-950: #020617;
+
+  /* ── Gray ── */
+  --color-vintiga-gray-50: #F9FAFB;
+  --color-vintiga-gray-100: #F3F4F6;
+  --color-vintiga-gray-200: #E5E7EB;
+  --color-vintiga-gray-300: #D1D5DB;
+  --color-vintiga-gray-400: #9CA3AF;
+  --color-vintiga-gray-500: #6B7280;
+  --color-vintiga-gray-600: #4B5563;
+  --color-vintiga-gray-700: #374151;
+  --color-vintiga-gray-800: #1F2937;
+  --color-vintiga-gray-900: #111827;
+  --color-vintiga-gray-950: #030712;
+
+  /* ── Zinc ── */
+  --color-vintiga-zinc-50: #FAFAFA;
+  --color-vintiga-zinc-100: #F4F4F5;
+  --color-vintiga-zinc-200: #E4E4E7;
+  --color-vintiga-zinc-300: #D4D4D8;
+  --color-vintiga-zinc-400: #A1A1AA;
+  --color-vintiga-zinc-500: #71717A;
+  --color-vintiga-zinc-600: #52525B;
+  --color-vintiga-zinc-700: #3F3F46;
+  --color-vintiga-zinc-800: #27272A;
+  --color-vintiga-zinc-900: #18181B;
+  --color-vintiga-zinc-950: #09090B;
+
+  /* ── Neutral ── */
+  --color-vintiga-neutral-50: #FAFAFA;
+  --color-vintiga-neutral-100: #F5F5F5;
+  --color-vintiga-neutral-200: #E5E5E5;
+  --color-vintiga-neutral-300: #D4D4D4;
+  --color-vintiga-neutral-400: #A3A3A3;
+  --color-vintiga-neutral-500: #737373;
+  --color-vintiga-neutral-600: #525252;
+  --color-vintiga-neutral-700: #404040;
+  --color-vintiga-neutral-800: #262626;
+  --color-vintiga-neutral-900: #171717;
+  --color-vintiga-neutral-950: #0A0A0A;
+
+  /* ── Stone ── */
+  --color-vintiga-stone-50: #FAFAF9;
+  --color-vintiga-stone-100: #F5F5F4;
+  --color-vintiga-stone-200: #E7E5E4;
+  --color-vintiga-stone-300: #D6D3D1;
+  --color-vintiga-stone-400: #A8A29E;
+  --color-vintiga-stone-500: #78716C;
+  --color-vintiga-stone-600: #57534E;
+  --color-vintiga-stone-700: #44403C;
+  --color-vintiga-stone-800: #292524;
+  --color-vintiga-stone-900: #1C1917;
+  --color-vintiga-stone-950: #0C0A09;
+
+  /* ── Red ── */
+  --color-vintiga-red-50: #FEF2F2;
+  --color-vintiga-red-100: #FEE2E2;
+  --color-vintiga-red-200: #FECACA;
+  --color-vintiga-red-300: #FCA5A5;
+  --color-vintiga-red-400: #F87171;
+  --color-vintiga-red-500: #EF4444;
+  --color-vintiga-red-600: #DC2626;
+  --color-vintiga-red-700: #B91C1C;
+  --color-vintiga-red-800: #991B1B;
+  --color-vintiga-red-900: #7F1D1D;
+  --color-vintiga-red-950: #450A0A;
+
+  /* ── Orange ── */
+  --color-vintiga-orange-50: #FFF7ED;
+  --color-vintiga-orange-100: #FFEDD5;
+  --color-vintiga-orange-200: #FED7AA;
+  --color-vintiga-orange-300: #FDBA74;
+  --color-vintiga-orange-400: #FB923C;
+  --color-vintiga-orange-500: #F97316;
+  --color-vintiga-orange-600: #EA580C;
+  --color-vintiga-orange-700: #C2410C;
+  --color-vintiga-orange-800: #9A3412;
+  --color-vintiga-orange-900: #7C2D12;
+  --color-vintiga-orange-950: #431407;
+
+  /* ── Amber ── */
+  --color-vintiga-amber-50: #FFFBEB;
+  --color-vintiga-amber-100: #FEF3C7;
+  --color-vintiga-amber-200: #FDE68A;
+  --color-vintiga-amber-300: #FCD34D;
+  --color-vintiga-amber-400: #FBBF24;
+  --color-vintiga-amber-500: #F59E0B;
+  --color-vintiga-amber-600: #D97706;
+  --color-vintiga-amber-700: #B45309;
+  --color-vintiga-amber-800: #92400E;
+  --color-vintiga-amber-900: #78350F;
+  --color-vintiga-amber-950: #451A03;
+
+  /* ── Yellow ── */
+  --color-vintiga-yellow-50: #FEFCE8;
+  --color-vintiga-yellow-100: #FEF9C3;
+  --color-vintiga-yellow-200: #FEF08A;
+  --color-vintiga-yellow-300: #FDE047;
+  --color-vintiga-yellow-400: #FACC15;
+  --color-vintiga-yellow-500: #EAB308;
+  --color-vintiga-yellow-600: #CA8A04;
+  --color-vintiga-yellow-700: #A16207;
+  --color-vintiga-yellow-800: #854D0E;
+  --color-vintiga-yellow-900: #713F12;
+  --color-vintiga-yellow-950: #422006;
+
+  /* ── Lime ── */
+  --color-vintiga-lime-50: #F7FEE7;
+  --color-vintiga-lime-100: #ECFCCB;
+  --color-vintiga-lime-200: #D9F99D;
+  --color-vintiga-lime-300: #BEF264;
+  --color-vintiga-lime-400: #A3E635;
+  --color-vintiga-lime-500: #84CC16;
+  --color-vintiga-lime-600: #65A30D;
+  --color-vintiga-lime-700: #4D7C0F;
+  --color-vintiga-lime-800: #3F6212;
+  --color-vintiga-lime-900: #365314;
+  --color-vintiga-lime-950: #1A2E05;
+
+  /* ── Green ── */
+  --color-vintiga-green-50: #F0FDF4;
+  --color-vintiga-green-100: #DCFCE7;
+  --color-vintiga-green-200: #BBF7D0;
+  --color-vintiga-green-300: #86EFAC;
+  --color-vintiga-green-400: #4ADE80;
+  --color-vintiga-green-500: #22C55E;
+  --color-vintiga-green-600: #16A34A;
+  --color-vintiga-green-700: #15803D;
+  --color-vintiga-green-800: #166534;
+  --color-vintiga-green-900: #14532D;
+  --color-vintiga-green-950: #052E16;
+
+  /* ── Emerald ── */
+  --color-vintiga-emerald-50: #ECFDF5;
+  --color-vintiga-emerald-100: #D1FAE5;
+  --color-vintiga-emerald-200: #A7F3D0;
+  --color-vintiga-emerald-300: #6EE7B7;
+  --color-vintiga-emerald-400: #34D399;
+  --color-vintiga-emerald-500: #10B981;
+  --color-vintiga-emerald-600: #059669;
+  --color-vintiga-emerald-700: #047857;
+  --color-vintiga-emerald-800: #065F46;
+  --color-vintiga-emerald-900: #064E3B;
+  --color-vintiga-emerald-950: #022C22;
+
+  /* ── Teal ── */
+  --color-vintiga-teal-50: #F0FDFA;
+  --color-vintiga-teal-100: #CCFBF1;
+  --color-vintiga-teal-200: #99F6E4;
+  --color-vintiga-teal-300: #5EEAD4;
+  --color-vintiga-teal-400: #2DD4BF;
+  --color-vintiga-teal-500: #14B8A6;
+  --color-vintiga-teal-600: #0D9488;
+  --color-vintiga-teal-700: #0F766E;
+  --color-vintiga-teal-800: #115E59;
+  --color-vintiga-teal-900: #134E4A;
+  --color-vintiga-teal-950: #042F2E;
+
+  /* ── Cyan ── */
+  --color-vintiga-cyan-50: #ECFEFF;
+  --color-vintiga-cyan-100: #CFFAFE;
+  --color-vintiga-cyan-200: #A5F3FC;
+  --color-vintiga-cyan-300: #67E8F9;
+  --color-vintiga-cyan-400: #22D3EE;
+  --color-vintiga-cyan-500: #06B6D4;
+  --color-vintiga-cyan-600: #0891B2;
+  --color-vintiga-cyan-700: #0E7490;
+  --color-vintiga-cyan-800: #155E75;
+  --color-vintiga-cyan-900: #164E63;
+  --color-vintiga-cyan-950: #083344;
+
+  /* ── Sky ── */
+  --color-vintiga-sky-50: #F0F9FF;
+  --color-vintiga-sky-100: #E0F2FE;
+  --color-vintiga-sky-200: #BAE6FD;
+  --color-vintiga-sky-300: #7DD3FC;
+  --color-vintiga-sky-400: #38BDF8;
+  --color-vintiga-sky-500: #0EA5E9;
+  --color-vintiga-sky-600: #0284C7;
+  --color-vintiga-sky-700: #0369A1;
+  --color-vintiga-sky-800: #075985;
+  --color-vintiga-sky-900: #0C4A6E;
+  --color-vintiga-sky-950: #082F49;
+
+  /* ── Blue ── */
+  --color-vintiga-blue-50: #EFF6FF;
+  --color-vintiga-blue-100: #DBEAFE;
+  --color-vintiga-blue-200: #BFDBFE;
+  --color-vintiga-blue-300: #93C5FD;
+  --color-vintiga-blue-400: #60A5FA;
+  --color-vintiga-blue-500: #3B82F6;
+  --color-vintiga-blue-600: #2563EB;
+  --color-vintiga-blue-700: #1D4ED8;
+  --color-vintiga-blue-800: #1E40AF;
+  --color-vintiga-blue-900: #1E3A8A;
+  --color-vintiga-blue-950: #172554;
+
+  /* ── Indigo ── */
+  --color-vintiga-indigo-50: #EEF2FF;
+  --color-vintiga-indigo-100: #E0E7FF;
+  --color-vintiga-indigo-200: #C7D2FE;
+  --color-vintiga-indigo-300: #A5B4FC;
+  --color-vintiga-indigo-400: #818CF8;
+  --color-vintiga-indigo-500: #6366F1;
+  --color-vintiga-indigo-600: #4F46E5;
+  --color-vintiga-indigo-700: #4338CA;
+  --color-vintiga-indigo-800: #3730A3;
+  --color-vintiga-indigo-900: #312E81;
+  --color-vintiga-indigo-950: #1E1B4B;
+
+  /* ── Violet ── */
+  --color-vintiga-violet-50: #F5F3FF;
+  --color-vintiga-violet-100: #EDE9FE;
+  --color-vintiga-violet-200: #DDD6FE;
+  --color-vintiga-violet-300: #C4B5FD;
+  --color-vintiga-violet-400: #A78BFA;
+  --color-vintiga-violet-500: #8B5CF6;
+  --color-vintiga-violet-600: #7C3AED;
+  --color-vintiga-violet-700: #6D28D9;
+  --color-vintiga-violet-800: #5B21B6;
+  --color-vintiga-violet-900: #4C1D95;
+  --color-vintiga-violet-950: #2E1065;
+
+  /* ── Purple ── */
+  --color-vintiga-purple-50: #FAF5FF;
+  --color-vintiga-purple-100: #F3E8FF;
+  --color-vintiga-purple-200: #E9D5FF;
+  --color-vintiga-purple-300: #D8B4FE;
+  --color-vintiga-purple-400: #C084FC;
+  --color-vintiga-purple-500: #A855F7;
+  --color-vintiga-purple-600: #9333EA;
+  --color-vintiga-purple-700: #7E22CE;
+  --color-vintiga-purple-800: #6B21A8;
+  --color-vintiga-purple-900: #581C87;
+  --color-vintiga-purple-950: #3B0764;
+
+  /* ── Fuchsia ── */
+  --color-vintiga-fuchsia-50: #FDF4FF;
+  --color-vintiga-fuchsia-100: #FAE8FF;
+  --color-vintiga-fuchsia-200: #F5D0FE;
+  --color-vintiga-fuchsia-300: #F0ABFC;
+  --color-vintiga-fuchsia-400: #E879F9;
+  --color-vintiga-fuchsia-500: #D946EF;
+  --color-vintiga-fuchsia-600: #C026D3;
+  --color-vintiga-fuchsia-700: #A21CAF;
+  --color-vintiga-fuchsia-800: #86198F;
+  --color-vintiga-fuchsia-900: #701A75;
+  --color-vintiga-fuchsia-950: #4A044E;
+
+  /* ── Pink ── */
+  --color-vintiga-pink-50: #FDF2F8;
+  --color-vintiga-pink-100: #FCE7F3;
+  --color-vintiga-pink-200: #FBCFE8;
+  --color-vintiga-pink-300: #F9A8D4;
+  --color-vintiga-pink-400: #F472B6;
+  --color-vintiga-pink-500: #EC4899;
+  --color-vintiga-pink-600: #DB2777;
+  --color-vintiga-pink-700: #BE185D;
+  --color-vintiga-pink-800: #9D174D;
+  --color-vintiga-pink-900: #831843;
+  --color-vintiga-pink-950: #500724;
+
+  /* ── Rose ── */
+  --color-vintiga-rose-50: #FFF1F2;
+  --color-vintiga-rose-100: #FFE4E6;
+  --color-vintiga-rose-200: #FECDD3;
+  --color-vintiga-rose-300: #FDA4AF;
+  --color-vintiga-rose-400: #FB7185;
+  --color-vintiga-rose-500: #F43F5E;
+  --color-vintiga-rose-600: #E11D48;
+  --color-vintiga-rose-700: #BE123C;
+  --color-vintiga-rose-800: #9F1239;
+  --color-vintiga-rose-900: #881337;
+  --color-vintiga-rose-950: #4C0519;
+
+  /* ─── Semantic — brand (placeholder; replace primary to match Vintiga brand) ─── */
+  /* Primary = Indigo-600 (sourced from Figma — "Save" buttons and primary CTAs). */
+  --color-vintiga-primary:            var(--color-vintiga-indigo-600);
+  --color-vintiga-primary-hover:      var(--color-vintiga-indigo-700);
+  --color-vintiga-primary-active:     var(--color-vintiga-indigo-800);
+  --color-vintiga-primary-soft:       var(--color-vintiga-indigo-50);
+  --color-vintiga-primary-foreground: var(--color-vintiga-white);
+  --color-vintiga-accent:             var(--color-vintiga-indigo-500);
+
+  /* ─── Semantic — neutrals ─── */
+  --color-vintiga-foreground:         var(--color-vintiga-slate-900);
+  --color-vintiga-foreground-inverse: var(--color-vintiga-slate-50);
+  --color-vintiga-foreground-muted:   var(--color-vintiga-slate-500);
+  --color-vintiga-surface:            var(--color-vintiga-white);
+  --color-vintiga-surface-element:    var(--color-vintiga-slate-100);
+  --color-vintiga-surface-secondary:  var(--color-vintiga-slate-50);
+  --color-vintiga-surface-muted:      var(--color-vintiga-slate-200);
+  --color-vintiga-border:             var(--color-vintiga-slate-200);
+
+  /* ─── Semantic — sentiments ─── */
+  --color-vintiga-info:         var(--color-vintiga-blue-600);
+  --color-vintiga-info-soft:    var(--color-vintiga-blue-100);
+  --color-vintiga-success:      var(--color-vintiga-green-600);
+  --color-vintiga-success-soft: var(--color-vintiga-green-100);
+  --color-vintiga-warning:      var(--color-vintiga-amber-500);
+  --color-vintiga-warning-soft: var(--color-vintiga-amber-100);
+  --color-vintiga-amber-800:    var(--color-vintiga-amber-800);
+  --color-vintiga-error:        var(--color-vintiga-red-600);
+  --color-vintiga-error-soft:   var(--color-vintiga-red-100);
+
+  /* ─── Semantic — data visualisation ─── */
+  --color-vintiga-data-1: var(--color-vintiga-slate-900);
+  --color-vintiga-data-2: var(--color-vintiga-slate-500);
+  --color-vintiga-data-3: var(--color-vintiga-amber-500);
+  --color-vintiga-data-4: var(--color-vintiga-green-600);
+  --color-vintiga-data-5: var(--color-vintiga-violet-500);
+
+  /* ─── Typography — font families ─── */
+  --font-vintiga-display: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-vintiga-body:    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* ─── Typography — font weights ─── */
+  --font-weight-vintiga-thin:        100;
+  --font-weight-vintiga-extralight:  200;
+  --font-weight-vintiga-light:       300;
+  --font-weight-vintiga-regular:     400;
+  --font-weight-vintiga-medium:      500;
+  --font-weight-vintiga-semibold:    600;
+  --font-weight-vintiga-bold:        700;
+  --font-weight-vintiga-extrabold:   800;
+  --font-weight-vintiga-black:       900;
+
+  /* ─── Typography — sizes (from Figma XS→8XL) ─── */
+  --text-vintiga-xs:  12px;
+  --text-vintiga-s:   14px;
+  --text-vintiga-m:   16px;
+  --text-vintiga-l:   18px;
+  --text-vintiga-xl:  20px;
+  --text-vintiga-1xl: 24px;
+  --text-vintiga-2xl: 30px;
+  --text-vintiga-3xl: 36px;
+  --text-vintiga-4xl: 48px;
+  --text-vintiga-5xl: 60px;
+  --text-vintiga-6xl: 72px;
+  --text-vintiga-7xl: 96px;
+  --text-vintiga-8xl: 128px;
+
+  /* ─── Typography — line heights ─── */
+  --leading-vintiga-xs:  16px;
+  --leading-vintiga-s:   20px;
+  --leading-vintiga-m:   24px;
+  --leading-vintiga-l:   28px;
+  --leading-vintiga-xl:  32px;
+  --leading-vintiga-1xl: 36px;
+  --leading-vintiga-2xl: 40px;
+  --leading-vintiga-3xl: 100px;
+
+  /* ─── Typography — semantic aliases (used by .typo-* utilities) ─── */
+  --text-vintiga-display:            var(--text-vintiga-5xl);
+  --leading-vintiga-display:         var(--leading-vintiga-2xl);
+  --tracking-vintiga-display:        -0.03em;
+  --text-vintiga-title-screen-lg:    var(--text-vintiga-4xl);
+  --leading-vintiga-title-screen-lg: var(--leading-vintiga-2xl);
+  --tracking-vintiga-title-screen-lg:-0.03em;
+  --text-vintiga-title-screen:       var(--text-vintiga-3xl);
+  --leading-vintiga-title-screen:    var(--leading-vintiga-1xl);
+  --tracking-vintiga-title-screen:   -0.03em;
+  --text-vintiga-title-section:      var(--text-vintiga-1xl);
+  --leading-vintiga-title-section:   var(--leading-vintiga-l);
+  --tracking-vintiga-title-section:  -0.015em;
+  --text-vintiga-title-subsection:   var(--text-vintiga-xl);
+  --leading-vintiga-title-subsection:var(--leading-vintiga-m);
+  --tracking-vintiga-title-subsection:-0.01em;
+  --text-vintiga-body-lg:            var(--text-vintiga-l);
+  --leading-vintiga-body-lg:         var(--leading-vintiga-m);
+  --tracking-vintiga-body-lg:        0;
+  --text-vintiga-body:               var(--text-vintiga-m);
+  --leading-vintiga-body:            var(--leading-vintiga-m);
+  --tracking-vintiga-body:           0;
+  --text-vintiga-body-sm:            var(--text-vintiga-s);
+  --leading-vintiga-body-sm:         var(--leading-vintiga-s);
+  --tracking-vintiga-body-sm:        0;
+  --text-vintiga-caption:            var(--text-vintiga-xs);
+  --leading-vintiga-caption:         var(--leading-vintiga-xs);
+  --tracking-vintiga-caption:        0;
+
+  /* ─── Spacing — numeric (Tailwind scale) ─── */
+  --spacing-vintiga-0: 0px;
+  --spacing-vintiga-1: 4px;
+  --spacing-vintiga-2: 8px;
+  --spacing-vintiga-3: 12px;
+  --spacing-vintiga-4: 16px;
+  --spacing-vintiga-5: 20px;
+  --spacing-vintiga-6: 24px;
+  --spacing-vintiga-7: 28px;
+  --spacing-vintiga-8: 32px;
+  --spacing-vintiga-9: 36px;
+  --spacing-vintiga-10: 40px;
+  --spacing-vintiga-11: 44px;
+  --spacing-vintiga-12: 48px;
+  --spacing-vintiga-14: 56px;
+  --spacing-vintiga-16: 64px;
+  --spacing-vintiga-20: 80px;
+  --spacing-vintiga-24: 96px;
+  --spacing-vintiga-28: 112px;
+  --spacing-vintiga-32: 128px;
+  --spacing-vintiga-36: 144px;
+  --spacing-vintiga-40: 160px;
+  --spacing-vintiga-44: 176px;
+  --spacing-vintiga-48: 192px;
+  --spacing-vintiga-52: 208px;
+  --spacing-vintiga-56: 224px;
+  --spacing-vintiga-60: 240px;
+  --spacing-vintiga-64: 256px;
+  --spacing-vintiga-72: 288px;
+  --spacing-vintiga-80: 320px;
+  --spacing-vintiga-96: 384px;
+  --spacing-vintiga-px: 1px;
+  --spacing-vintiga-0․5: 2px;
+  --spacing-vintiga-1․5: 6px;
+  --spacing-vintiga-2․5: 10px;
+  --spacing-vintiga-3․5: 14px;
+
+  /* ─── Spacing — semantic T-shirt aliases ─── */
+  --spacing-vintiga-xs:  var(--spacing-vintiga-1);   /* 4px  */
+  --spacing-vintiga-sm:  var(--spacing-vintiga-2);   /* 8px  */
+  --spacing-vintiga-md:  var(--spacing-vintiga-4);   /* 16px */
+  --spacing-vintiga-lg:  var(--spacing-vintiga-6);   /* 24px */
+  --spacing-vintiga-xl:  var(--spacing-vintiga-8);   /* 32px */
+  --spacing-vintiga-2xl: var(--spacing-vintiga-12);  /* 48px */
+  --spacing-vintiga-3xl: var(--spacing-vintiga-16);  /* 64px */
+
+  /* ─── Icon sizes ─── */
+  --size-vintiga-icon-16: 16px;
+  --size-vintiga-icon-20: 20px;
+  --size-vintiga-icon-24: 24px;
+  --size-vintiga-icon-32: 32px;
+  --size-vintiga-icon-40: 40px;
+
+  /* ─── Border radius (Tailwind scale) ─── */
+  --radius-vintiga-none: 0px;
+  --radius-vintiga-sm:   2px;
+  --radius-vintiga-md:   6px;
+  --radius-vintiga-lg:   8px;
+  --radius-vintiga-xl:   12px;
+  --radius-vintiga-2xl:  16px;
+  --radius-vintiga-3xl:  24px;
+  --radius-vintiga-full: 9999px;
+  /* Semantic aliases */
+  --radius-vintiga-input:  var(--radius-vintiga-lg);   /* 8px  */
+  --radius-vintiga-card:   var(--radius-vintiga-2xl);  /* 16px */
+  --radius-vintiga-button: var(--radius-vintiga-full); /* pill */
+
+  /* ─── Border widths ─── */
+  --border-width-vintiga-0: 0;
+  --border-width-vintiga-1: 1px;
+  --border-width-vintiga-2: 2px;
+
+  /* ─── Shadows ─── */
+  --shadow-vintiga-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-vintiga-md: 0 2px 8px rgba(0, 0, 0, 0.12);
+  --shadow-vintiga-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+
+  /* ─── Breakpoints (reference; Tailwind handles these natively) ─── */
+  --breakpoint-vintiga-sm: 640px;
+  --breakpoint-vintiga-md: 768px;
+  --breakpoint-vintiga-lg: 1024px;
+  --breakpoint-vintiga-xl: 1280px;
+  --breakpoint-vintiga-2xl: 1536px;
+}

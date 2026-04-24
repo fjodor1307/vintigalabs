@@ -1,0 +1,40 @@
+name: PR hygiene
+
+# Runs every weekday at 17:00 UTC (end of UK day) to:
+#   1. Warn on PRs older than 3 days so nothing festers over a weekend.
+#   2. Close anything that's been stale for 14 days with no activity.
+# Does NOT auto-merge or auto-rebase — that's a human call.
+#
+# To enable true auto-merge on a PR, use GitHub's native feature:
+#   gh pr merge <number> --auto --squash
+# It merges the moment CI passes + any required approvals land.
+
+on:
+  schedule:
+    - cron: '0 17 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  stale-prs:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-pr-stale: 3
+          days-before-pr-close: 14
+          stale-pr-message: |
+            This PR has been open for 3+ days. Consider:
+            - `git fetch origin main && git rebase origin/main` to pick up any drift
+            - splitting further if it's getting large
+            - merging if it's ready — the team can iterate on `main`
+            Stays open; this is just a nudge.
+          close-pr-message: |
+            Closing due to 2 weeks of inactivity. Reopen if you're still on it.
+          stale-pr-label: 'stale'
+          exempt-pr-labels: 'wip,blocked,long-running'
+          # Issues are out of scope for this repo's workflow
+          days-before-issue-stale: -1
+          days-before-issue-close: -1
