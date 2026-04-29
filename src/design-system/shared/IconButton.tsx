@@ -1,10 +1,14 @@
 import type { ReactNode } from 'react'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── IconButton ───────────────────────────────────────────────────────────────
+// Square sibling to <Button>. Same variant / intent / disabled vocab and
+// matching outer dimensions so a Button + IconButton sit perfectly in-line.
 
 export type IconButtonVariant = 'solid' | 'outline'
 export type IconButtonSize    = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-export type IconButtonTone    = 'primary' | 'destructive'
+export type IconButtonIntent  = 'primary' | 'destructive'
+/** @deprecated Use IconButtonIntent. Kept for backwards compatibility. */
+export type IconButtonTone    = IconButtonIntent
 
 export interface IconButtonProps {
   /** The icon to render inside the button */
@@ -13,8 +17,10 @@ export interface IconButtonProps {
   variant?: IconButtonVariant
   /** Size. Default: 'md' */
   size?: IconButtonSize
-  /** Colour tone. Default: 'primary' */
-  tone?: IconButtonTone
+  /** Colour intent. Default: 'primary' */
+  intent?: IconButtonIntent
+  /** @deprecated Use `intent`. */
+  tone?: IconButtonIntent
   disabled?: boolean
   onClick?: () => void
   /** Required for accessibility */
@@ -23,34 +29,42 @@ export interface IconButtonProps {
   type?: 'button' | 'submit' | 'reset'
 }
 
-// ─── Size map (matches Button padding so square buttons sit in-line) ─────────
+// ─── Size map — outer height matches <Button> at the same size ───────────────
+//  xs 24 · sm 28 · md 32 · lg 36 · xl 40
 
 const SIZE: Record<IconButtonSize, string> = {
-  xs: 'p-1 [&>svg]:w-4 [&>svg]:h-4',           // 24×24
-  sm: 'p-1.5 [&>svg]:w-4 [&>svg]:h-4',         // 28×28
-  md: 'p-1.5 [&>svg]:w-5 [&>svg]:h-5',         // 32×32
-  lg: 'p-2 [&>svg]:w-5 [&>svg]:h-5',           // 36×36
-  xl: 'p-2.5 [&>svg]:w-5 [&>svg]:h-5',         // 40×40
+  xs: 'p-1   [&>svg]:w-4 [&>svg]:h-4',
+  sm: 'p-1.5 [&>svg]:w-4 [&>svg]:h-4',
+  md: 'p-1.5 [&>svg]:w-5 [&>svg]:h-5',
+  lg: 'p-2   [&>svg]:w-5 [&>svg]:h-5',
+  xl: 'p-2.5 [&>svg]:w-5 [&>svg]:h-5',
 }
 
-const VARIANT_TONE: Record<IconButtonVariant, Record<IconButtonTone, string>> = {
+// ─── Variant × intent — mirrors <Button> exactly ─────────────────────────────
+
+const VARIANT_INTENT: Record<IconButtonVariant, Record<IconButtonIntent, string>> = {
   solid: {
     primary:
       'bg-vintiga-indigo-600 text-vintiga-white hover:bg-vintiga-indigo-700 active:bg-vintiga-indigo-700',
     destructive:
       'bg-vintiga-red-600 text-vintiga-white hover:bg-vintiga-red-700 active:bg-vintiga-red-700',
   },
+  // Figma "Secondary Button" — slate tones, shadow on interaction
   outline: {
     primary:
-      'bg-vintiga-white text-vintiga-slate-900 border border-vintiga-slate-300 hover:bg-vintiga-indigo-50 hover:border-vintiga-indigo-500 active:bg-vintiga-indigo-50 active:border-vintiga-indigo-600',
+      'bg-vintiga-white text-vintiga-slate-700 border border-vintiga-slate-300 ' +
+      'hover:bg-vintiga-slate-50 hover:text-vintiga-slate-800 hover:shadow-sm ' +
+      'active:bg-vintiga-slate-50 active:text-vintiga-slate-800 active:border-vintiga-slate-400 active:shadow-sm',
     destructive:
-      'bg-vintiga-white text-vintiga-red-600 border border-vintiga-red-200 hover:bg-vintiga-red-50 hover:border-vintiga-red-500 active:bg-vintiga-red-50 active:border-vintiga-red-600',
+      'bg-vintiga-white text-vintiga-red-600 border border-vintiga-red-300 ' +
+      'hover:bg-vintiga-red-50 hover:shadow-sm ' +
+      'active:bg-vintiga-red-50 active:border-vintiga-red-400 active:shadow-sm',
   },
 }
 
 const DISABLED: Record<IconButtonVariant, string> = {
-  solid: 'bg-vintiga-slate-300 text-vintiga-slate-400 cursor-not-allowed pointer-events-none',
-  outline: 'bg-vintiga-white text-vintiga-slate-400 border border-vintiga-slate-200 cursor-not-allowed pointer-events-none',
+  solid:   'bg-vintiga-slate-300 text-vintiga-slate-400 cursor-not-allowed pointer-events-none',
+  outline: 'bg-vintiga-white text-vintiga-slate-300 border border-vintiga-slate-200 cursor-not-allowed pointer-events-none',
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -59,17 +73,20 @@ export function IconButton({
   icon,
   variant = 'solid',
   size = 'md',
-  tone = 'primary',
+  intent,
+  tone,
   disabled = false,
   onClick,
   'aria-label': ariaLabel,
   className,
   type = 'button',
 }: IconButtonProps) {
+  const resolvedIntent: IconButtonIntent = intent ?? tone ?? 'primary'
+
   const classes = [
-    'inline-flex items-center justify-center rounded-vintiga-md transition-colors border-none cursor-pointer shrink-0',
+    'inline-flex items-center justify-center rounded-vintiga-md transition-colors cursor-pointer shrink-0',
     SIZE[size],
-    disabled ? DISABLED[variant] : VARIANT_TONE[variant][tone],
+    disabled ? DISABLED[variant] : VARIANT_INTENT[variant][resolvedIntent],
     className ?? '',
   ].filter(Boolean).join(' ')
 

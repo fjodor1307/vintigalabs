@@ -80,6 +80,9 @@ export interface ProductState {
   // Catalogue (sibling list of products + collections, used by ProductsListScreen + CollectionsScreen)
   catalogue: CatalogueProduct[]
   allCollections: Collection[]
+  /** ID of the catalogue row currently being edited (set by `loadFromCatalogue`).
+   *  Image edits sync back to this row's thumbnail when set. */
+  editingId: string | null
 }
 
 function uid(prefix = 'id'): string {
@@ -133,14 +136,20 @@ const initial: ProductState = {
   taste: { body: 1, sweetness: 3, acidity: 4, tannin: 2, fruitiness: 4 },
   modifierGroups: [],
   catalogue: [
-    { id: 'p1', name: '2016 Reserve Cabernet Sauvignon', sku: 'SKU-1234-1234', price: '27.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Red Wine'], channels: ['Website', 'POS'] },
-    { id: 'p2', name: '2018 Pinot Noir',                  sku: 'SKU-1234-1234', price: '43.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Red Wine'], channels: ['Website', 'POS'] },
-    { id: 'p3', name: '2020 Chardonnay',                  sku: 'SKU-1234-1234', price: '72.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'White Wine'], channels: ['Website', 'POS'] },
-    { id: 'p4', name: '2020 Rose',                        sku: 'SKU-1234-1234', price: '12.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Rose'], channels: ['POS'] },
-    { id: 'p5', name: '2020 Riesling',                    sku: 'SKU-1234-1234', price: '16.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'White Wine'], channels: ['Website', 'POS'] },
-    { id: 'p6', name: '2020 Pinot Gris',                  sku: 'SKU-1234-1234', price: '44.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'White Wine'], channels: ['Website'] },
-    { id: 'p7', name: '2018 Reserve Cabernet Sauvignon',  sku: 'SKU-1234-1234', price: '27.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Red Wine'], channels: ['Website'] },
-    { id: 'p8', name: '2021 Chardonnay',                  sku: 'SKU-1234-1234', price: '17.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'White Wine'], channels: ['POS'] },
+    { id: 'p1',  name: '2016 Reserve Cabernet Sauvignon', sku: 'SKU-1234-1234', price: '27.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Red Wine'],   channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1697115355150-46dd3a5df633?w=320&h=320&fit=crop&q=80' },
+    { id: 'p2',  name: '2018 Pinot Noir',                  sku: 'SKU-1234-1234', price: '43.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Red Wine'],   channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1611571940159-425a28706d6f?w=320&h=320&fit=crop&q=80' },
+    { id: 'p3',  name: '2020 Chardonnay',                  sku: 'SKU-1234-1234', price: '72.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'White Wine'], channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1642189941430-7073f85d7140?w=320&h=320&fit=crop&q=80' },
+    { id: 'p4',  name: '2020 Rose',                        sku: 'SKU-1234-1234', price: '12.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Rose'],       channels: ['POS'],            imageUrl: 'https://images.unsplash.com/photo-1710795476248-53791e560daf?w=320&h=320&fit=crop&q=80' },
+    { id: 'p5',  name: '2020 Riesling',                    sku: 'SKU-1234-1234', price: '16.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'White Wine'], channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1710795476231-54c3b96d416f?w=320&h=320&fit=crop&q=80' },
+    { id: 'p6',  name: '2020 Pinot Gris',                  sku: 'SKU-1234-1234', price: '44.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'White Wine'], channels: ['Website'],        imageUrl: 'https://images.unsplash.com/photo-1710795476210-8c64901f506b?w=320&h=320&fit=crop&q=80' },
+    { id: 'p7',  name: '2018 Reserve Cabernet Sauvignon',  sku: 'SKU-1234-1234', price: '27.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Red Wine'],   channels: ['Website'],        imageUrl: 'https://images.unsplash.com/photo-1710795476273-1edb00a92ebc?w=320&h=320&fit=crop&q=80' },
+    { id: 'p8',  name: '2021 Chardonnay',                  sku: 'SKU-1234-1234', price: '17.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'White Wine'], channels: ['POS'],            imageUrl: 'https://images.unsplash.com/photo-1676024462421-f12102fc613d?w=320&h=320&fit=crop&q=80' },
+    // ── New batch ─────────────────────────────────────────────────────────────
+    { id: 'p9',  name: '2019 Merlot Estate',               sku: 'SKU-1234-1235', price: '34.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Red Wine'],   channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1695634580213-c384a6201eee?w=320&h=320&fit=crop&q=80' },
+    { id: 'p10', name: '2017 Syrah Reserve',               sku: 'SKU-1234-1236', price: '52.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Red Wine'],   channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1697115355209-46e7bce340fb?w=320&h=320&fit=crop&q=80' },
+    { id: 'p11', name: '2021 Sauvignon Blanc',             sku: 'SKU-1234-1237', price: '22.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'White Wine'], channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1588982766898-4a826e5ef631?w=320&h=320&fit=crop&q=80' },
+    { id: 'p12', name: '2019 Brut Sparkling',              sku: 'SKU-1234-1238', price: '38.00', type: 'Wine', availability: 'Public', collections: ['Wine'],               channels: ['Website'],        imageUrl: 'https://images.unsplash.com/photo-1614208406223-5b78888e8b4b?w=320&h=320&fit=crop&q=80' },
+    { id: 'p13', name: '2022 Late Harvest Riesling',       sku: 'SKU-1234-1239', price: '28.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'White Wine'], channels: ['POS'],            imageUrl: 'https://images.unsplash.com/photo-1605701061257-37892a5cc0ab?w=320&h=320&fit=crop&q=80' },
   ],
   allCollections: [
     { id: 'c1', name: 'Mix Wines',  type: 'Wine Type',  productIds: ['p1', 'p2', 'p3', 'p4', 'p5', 'p8'] },
@@ -150,12 +159,30 @@ const initial: ProductState = {
     { id: 'c5', name: 'On Tap',      type: 'Beer Type',  productIds: [] },
     { id: 'c6', name: 'Flights',     type: 'Tasting',    productIds: [] },
   ],
+  editingId: null,
 }
 
 let state: ProductState = { ...initial }
 const listeners = new Set<() => void>()
 
 function emit() { listeners.forEach((l) => l()) }
+
+/**
+ * Push the editor's first image URL back to the catalogue row's thumbnail
+ * so the products list & collections list stay in sync with what the user
+ * sees (and edits) on the product editor.
+ */
+function syncCatalogueThumb() {
+  const id = state.editingId
+  if (!id) return
+  const next = state.images[0]?.url
+  state = {
+    ...state,
+    catalogue: state.catalogue.map((p) =>
+      p.id === id ? { ...p, imageUrl: next } : p,
+    ),
+  }
+}
 
 export function useProductState(): ProductState {
   return useSyncExternalStore(
@@ -173,12 +200,14 @@ export const productActions = {
     const url = URL.createObjectURL(file)
     const img: ProductImage = { id: uid('img'), url, name: file.name }
     state = { ...state, images: [...state.images, img] }
+    syncCatalogueThumb()
     emit()
   },
   removeImage(id: string) {
     const img = state.images.find((i) => i.id === id)
-    if (img) URL.revokeObjectURL(img.url)
+    if (img && img.url.startsWith('blob:')) URL.revokeObjectURL(img.url)
     state = { ...state, images: state.images.filter((i) => i.id !== id) }
+    syncCatalogueThumb()
     emit()
   },
 
@@ -293,12 +322,22 @@ export const productActions = {
     if (state.name && state.images.length > 0 && productId === '__current') return
     const p = state.catalogue.find((x) => x.id === productId)
     if (!p) return
-    // Don't trample uploaded images (blob URLs).
+
+    // Drop any existing blob-URL uploads (we only own those during this session).
+    state.images.forEach((i) => { if (i.url.startsWith('blob:')) URL.revokeObjectURL(i.url) })
+
+    // Seed a single image entry from the catalogue's primary photo.
+    const images: ProductImage[] = p.imageUrl
+      ? [{ id: uid('img'), url: p.imageUrl, name: p.name }]
+      : []
+
     state = {
       ...state,
+      editingId: productId,
       name: p.name,
       productType: p.type,
       collections: p.collections,
+      images,
       // Variants: if catalogue product carries no variants, seed a single one.
       variants: state.variants.length > 0 ? state.variants : [
         { ...emptyVariant('Standard Bottle'), sku: p.sku, price: p.price, taxType: p.type },
@@ -308,8 +347,29 @@ export const productActions = {
   },
 
   reset() {
-    state.images.forEach((i) => URL.revokeObjectURL(i.url))
+    state.images.forEach((i) => { if (i.url.startsWith('blob:')) URL.revokeObjectURL(i.url) })
     state = { ...initial }
+    emit()
+  },
+
+  /**
+   * Start editing a brand-new product. Clears the editor-specific fields
+   * (name, content, images, variants, collections, editingId) but leaves the
+   * catalogue and collections lists intact so the user can return to them.
+   * Pre-fills `productType` with the picked type.
+   */
+  startNewProduct(productType: string) {
+    state.images.forEach((i) => { if (i.url.startsWith('blob:')) URL.revokeObjectURL(i.url) })
+    state = {
+      ...state,
+      editingId: null,
+      name: '',
+      productType,
+      tags: [],
+      collections: [],
+      images: [],
+      variants: [],
+    }
     emit()
   },
 }

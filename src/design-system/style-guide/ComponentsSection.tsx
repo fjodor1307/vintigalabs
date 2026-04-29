@@ -33,9 +33,11 @@ import { DropdownMenu, DropdownItem, DropdownSection, DropdownSeparator } from '
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
 import { Navbar } from '@ds/shared/Navbar'
 import { Sidebar, SidebarHeader, SidebarBody, SidebarItem, SidebarDivider, SidebarFooter, SidebarBadge } from '@ds/shared/Sidebar'
+import { ListCard } from '@ds/shared/ListCard'
+import { SelectionCard } from '@ds/shared/SelectionCard'
 import { Widget, WidgetHeader, WidgetBody, WidgetFooter } from '@ds/shared/Widget'
 import { VintigaIconIndigo } from '@ds/shared/VintigaLogo'
-import { DollarIcon, TrendUpIcon, UserIcon, SettingsIcon, LogOutIcon, HomeIcon, ChartIcon, BookOpenIcon, ExportIcon, AlertTriangleIcon, InfoIcon, CheckIcon, FolderIcon, SearchIcon, InboxIcon, UsersIcon, PlusIcon, CircleAlertIcon, MessagesSquareIcon, MailIcon, GiftIcon, GlobeIcon, StarIcon, CalendarIcon, PackageIcon, ShoppingCartIcon, CalendarCheckIcon, IdCardIcon, MapPinIcon, ChevronDownIcon, DownloadIcon, EllipsisIcon } from '@ds/icons/Icons'
+import { DollarIcon, TrendUpIcon, UserIcon, SettingsIcon, LogOutIcon, HomeIcon, ChartIcon, BookOpenIcon, ExportIcon, AlertTriangleIcon, InfoIcon, CheckIcon, FolderIcon, SearchIcon, InboxIcon, UsersIcon, PlusIcon, CircleAlertIcon, MessagesSquareIcon, MailIcon, GiftIcon, GlobeIcon, StarIcon, CalendarIcon, PackageIcon, ShoppingCartIcon, CalendarCheckIcon, IdCardIcon, MapPinIcon, ChevronDownIcon, DownloadIcon, EllipsisIcon, GemIcon, HandIcon, BuildingIcon, TagIcon } from '@ds/icons/Icons'
 
 const HeartIcon = ({ className }: { className?: string }) => (
   <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -886,7 +888,7 @@ function AvatarsSection() {
 
 const TAG_CONTROLS: ControlSchema = {
   variant:  { type: 'select', options: ['filled', 'outline', 'neutral-dark', 'neutral-light'], default: 'filled' },
-  tone:     { type: 'select', options: ['success', 'warning', 'danger', 'info', 'default'],    default: 'success' },
+  tone:     { type: 'select', options: ['default', 'success', 'warning', 'danger', 'info', 'orange', 'yellow', 'teal', 'blue', 'violet'], default: 'success' },
   size:     { type: 'select', options: ['sm', 'md'], default: 'md' },
   children: { type: 'text',   default: 'Wine Club' },
 }
@@ -894,7 +896,7 @@ const TAG_CONTROLS: ControlSchema = {
 function TagsSection() {
   const v = usePlayground(TAG_CONTROLS)
   return (
-    <SubSection id="ds-tags" title="Tags" description="Labels for status, category, or metadata. Filled variant carries tone (success / warning / danger / info).">
+    <SubSection id="ds-tags" title="Tags" description="Labels for status, category, or metadata. Filled variant carries tone — semantic (success / warning / danger / info / default) plus extras (orange / yellow / teal / blue / violet) used by the order-status palette.">
       <div className="flex flex-col gap-vintiga-lg">
         <PlaygroundStage>
           <Tag variant={v.variant as TagVariant} tone={v.tone as TagTone} size={v.size as 'sm' | 'md'}>
@@ -902,13 +904,40 @@ function TagsSection() {
           </Tag>
         </PlaygroundStage>
 
-        <ReferenceCard label="Filled tones">
+        <ReferenceCard label="Semantic tones">
           <div className="flex flex-wrap gap-2">
+            <Tag tone="default">Default</Tag>
             <Tag tone="success">Success</Tag>
             <Tag tone="warning">Warning</Tag>
             <Tag tone="danger">Danger</Tag>
             <Tag tone="info">Info</Tag>
-            <Tag tone="default">Default</Tag>
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="Extended palette">
+          <div className="flex flex-wrap gap-2">
+            <Tag tone="orange">Orange</Tag>
+            <Tag tone="yellow">Yellow</Tag>
+            <Tag tone="teal">Teal</Tag>
+            <Tag tone="blue">Blue</Tag>
+            <Tag tone="violet">Violet</Tag>
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="Order status (Figma 4506:19880)">
+          <div className="flex flex-wrap gap-2">
+            <Tag tone="default">Pending</Tag>
+            <Tag tone="warning">Awaiting Payment</Tag>
+            <Tag tone="orange">Awaiting Compliance</Tag>
+            <Tag tone="yellow">Awaiting Fulfillment</Tag>
+            <Tag tone="info">Awaiting Shipping</Tag>
+            <Tag tone="success">Completed</Tag>
+            <Tag tone="success">Fulfilled</Tag>
+            <Tag tone="teal">Exchanged</Tag>
+            <Tag tone="danger">Declined</Tag>
+            <Tag tone="danger">Quarantined</Tag>
+            <Tag tone="blue">Refunded</Tag>
+            <Tag tone="violet">Partially Refunded</Tag>
           </div>
         </ReferenceCard>
 
@@ -1473,6 +1502,237 @@ function SidebarSection() {
   )
 }
 
+function ListCardSection() {
+  const [picked, setPicked] = useState('mix-wines')
+  const items = [
+    { id: 'mix-wines',   label: 'Mix Wines' },
+    { id: 'white-wines', label: 'White Wines' },
+    { id: 'red-wines',   label: 'Red Wines' },
+    { id: 'pale-ale',    label: 'Pale Ale' },
+    { id: 'on-tap',      label: 'On Tap' },
+    { id: 'flights',     label: 'Flights' },
+  ]
+
+  return (
+    <SubSection
+      id="ds-list-card"
+      title="List Card"
+      description="44 px bordered list-item — used wherever a vertical list of selectable rows is needed (Collections, Channels, Workspaces, Saved views). Three states: default, hover, selected. Trailing slot defaults to a kebab menu but accepts any node."
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-lg">
+        <ReferenceCard label="States">
+          <div className="flex flex-col gap-vintiga-sm w-[289px]">
+            <ListCard label="Default" />
+            <ListCard label="Hover (try it)" />
+            <ListCard label="Selected" selected />
+            <ListCard label="Disabled" disabled />
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="Selectable list">
+          <div className="flex flex-col gap-vintiga-sm w-[289px]" role="listbox" aria-label="Collections">
+            {items.map((it) => (
+              <ListCard
+                key={it.id}
+                label={it.label}
+                selected={picked === it.id}
+                onClick={() => setPicked(it.id)}
+                onActionClick={() => {}}
+              />
+            ))}
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="With leading icon">
+          <div className="flex flex-col gap-vintiga-sm w-[289px]">
+            <ListCard label="Folder" icon={<FolderIcon />} />
+            <ListCard label="Inbox"  icon={<InboxIcon />} selected />
+            <ListCard label="Starred" icon={<StarIcon />} />
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="No trailing action">
+          <div className="flex flex-col gap-vintiga-sm w-[289px]">
+            <ListCard label="Read-only row" hideAction />
+            <ListCard label="Read-only row" hideAction selected />
+          </div>
+        </ReferenceCard>
+      </div>
+    </SubSection>
+  )
+}
+
+const SELECTION_CARD_CONTROLS: ControlSchema = {
+  orientation: { type: 'select',  options: ['horizontal', 'vertical'],   default: 'horizontal' },
+  align:       { type: 'select',  options: ['start', 'center'],          default: 'start' },
+  size:        { type: 'select',  options: ['md', 'sm'],                 default: 'md' },
+  tone:        { type: 'select',  options: ['indigo', 'slate'],          default: 'indigo' },
+  title:       { type: 'text',    default: 'Reserve Tier' },
+  description: { type: 'text',    default: 'Premium members get first access to allocations and limited releases.' },
+  selected:    { type: 'boolean', default: false },
+  disabled:    { type: 'boolean', default: false },
+  trailing:    { type: 'boolean', default: false },
+}
+
+function SelectionCardSection() {
+  const v = usePlayground(SELECTION_CARD_CONTROLS)
+  const [promo, setPromo] = useState<'manual' | 'auto' | 'code'>('auto')
+
+  return (
+    <SubSection
+      id="ds-selection-card"
+      title="Selection Card"
+      description={`"Pick one" card. One component, four common patterns: a wide horizontal info card, a narrow vertical type tile (left or centred text), and a compact tenant-style row with a trailing pill. Each pattern below is split into its own subsection.`}
+    >
+      <div className="flex flex-col gap-vintiga-xl">
+        {/* ── Playground ─────────────────────────────────────────────────── */}
+        <PlaygroundStage minHeight={220}>
+          <div className={v.orientation === 'vertical' ? 'w-[200px]' : 'w-[460px]'}>
+            <SelectionCard
+              orientation={v.orientation as 'horizontal' | 'vertical'}
+              align={v.align as 'start' | 'center'}
+              size={v.size as 'sm' | 'md'}
+              tone={v.tone as 'indigo' | 'slate'}
+              icon={<GemIcon />}
+              title={v.title as string}
+              description={v.description as string}
+              selected={v.selected as boolean}
+              disabled={v.disabled as boolean}
+              trailing={v.trailing ? <Tag variant="outline">Select</Tag> : undefined}
+              onClick={() => {}}
+            />
+          </div>
+        </PlaygroundStage>
+
+        {/* ── 1. Horizontal info card ────────────────────────────────────── */}
+        <div className="flex flex-col gap-vintiga-sm">
+          <h4 className="typo-body font-semibold text-vintiga-slate-900">Horizontal — info card</h4>
+          <p className="typo-body-sm text-vintiga-slate-500">
+            Wide horizontal layout, 48 px indigo icon container, 18 px semibold title + 14 px description.
+            Used in onboarding pickers (e.g. wine-club tier, business type).
+            Figma <code className="font-mono bg-vintiga-slate-100 px-1 rounded">5079:33569</code>.
+          </p>
+          <ReferenceCard label="Default · hover">
+            <div className="flex flex-col gap-vintiga-md max-w-[460px]">
+              <SelectionCard
+                icon={<GemIcon />}
+                title="Reserve Tier"
+                description="Premium members get first access to allocations and limited releases."
+                onClick={() => {}}
+              />
+              <SelectionCard
+                icon={<StarIcon />}
+                title="Founders Club"
+                description="Charter members. Annual shipment plus exclusive winemaker dinners."
+                onClick={() => {}}
+              />
+            </div>
+          </ReferenceCard>
+        </div>
+
+        {/* ── 2. Vertical tile, left-aligned ─────────────────────────────── */}
+        <div className="flex flex-col gap-vintiga-sm">
+          <h4 className="typo-body font-semibold text-vintiga-slate-900">Vertical — left-aligned, with selected state</h4>
+          <p className="typo-body-sm text-vintiga-slate-500">
+            Tile-style picker for type / mode selection. Selected state fills the icon container with indigo-600.
+            Figma <code className="font-mono bg-vintiga-slate-100 px-1 rounded">3675:37603</code>.
+          </p>
+          <ReferenceCard label="Default · hover · selected">
+            <div className="grid grid-cols-3 gap-vintiga-sm">
+              <SelectionCard
+                orientation="vertical"
+                icon={<HandIcon />}
+                title="Manual"
+                description="Tap to apply during checkout. Staff-controlled discounts."
+                selected={promo === 'manual'}
+                onClick={() => setPromo('manual')}
+              />
+              <SelectionCard
+                orientation="vertical"
+                icon={<TrendUpIcon />}
+                title="Automatic"
+                description="Trigger when a basket meets the rules — no code required."
+                selected={promo === 'auto'}
+                onClick={() => setPromo('auto')}
+              />
+              <SelectionCard
+                orientation="vertical"
+                icon={<TagIcon />}
+                title="Code"
+                description="Customer enters a code at checkout. Track usage and limits."
+                selected={promo === 'code'}
+                onClick={() => setPromo('code')}
+              />
+            </div>
+          </ReferenceCard>
+        </div>
+
+        {/* ── 3. Vertical tile, centred ──────────────────────────────────── */}
+        <div className="flex flex-col gap-vintiga-sm">
+          <h4 className="typo-body font-semibold text-vintiga-slate-900">Vertical — centred</h4>
+          <p className="typo-body-sm text-vintiga-slate-500">
+            Same tile as above but every line centred. Used for report-type pickers and short labels.
+            Figma <code className="font-mono bg-vintiga-slate-100 px-1 rounded">5000:45656</code>.
+          </p>
+          <ReferenceCard label="Centred">
+            <div className="grid grid-cols-3 gap-vintiga-sm">
+              <SelectionCard orientation="vertical" align="center" icon={<ChartIcon />}   title="Sales"      description="Revenue and order trends across channels." onClick={() => {}} />
+              <SelectionCard orientation="vertical" align="center" icon={<UsersIcon />}   title="Customers"  description="Lifecycle, lifetime value, and retention."  onClick={() => {}} />
+              <SelectionCard orientation="vertical" align="center" icon={<PackageIcon />} title="Inventory"  description="Stock movement and low-stock alerts."        onClick={() => {}} />
+            </div>
+          </ReferenceCard>
+        </div>
+
+        {/* ── 4. Compact tenant row ──────────────────────────────────────── */}
+        <div className="flex flex-col gap-vintiga-sm">
+          <h4 className="typo-body font-semibold text-vintiga-slate-900">Compact tenant / list row</h4>
+          <p className="typo-body-sm text-vintiga-slate-500">
+            Smaller variant — 32 px slate icon container, 8 px corner radius, trailing pill. Used in
+            workspace switchers and account pickers.
+            Figma <code className="font-mono bg-vintiga-slate-100 px-1 rounded">2930:20012</code>.
+          </p>
+          <ReferenceCard label="Compact + trailing tag">
+            <div className="flex flex-col gap-vintiga-sm">
+              {[
+                { name: 'Vintiga Labs Inc',     rep: 'Rep: Jim Secord' },
+                { name: 'Hillside Vineyards',   rep: 'Rep: Marcus Chen' },
+                { name: 'Valley View Winery',   rep: 'Rep: Maria Rodriguez' },
+              ].map((t) => (
+                <SelectionCard
+                  key={t.name}
+                  size="sm"
+                  tone="slate"
+                  icon={<BuildingIcon />}
+                  title={t.name}
+                  description={t.rep}
+                  trailing={<Tag variant="outline">Select</Tag>}
+                  onClick={() => {}}
+                />
+              ))}
+            </div>
+          </ReferenceCard>
+        </div>
+
+        {/* ── API ─────────────────────────────────────────────────────────── */}
+        <p className="typo-caption text-vintiga-slate-500">
+          Import from <code className="font-mono bg-vintiga-slate-100 px-1 rounded">@ds/shared/SelectionCard</code>.
+          Props: <code className="font-mono bg-vintiga-slate-100 px-1 rounded">orientation</code>,{' '}
+          <code className="font-mono bg-vintiga-slate-100 px-1 rounded">align</code>,{' '}
+          <code className="font-mono bg-vintiga-slate-100 px-1 rounded">size</code>,{' '}
+          <code className="font-mono bg-vintiga-slate-100 px-1 rounded">tone</code>,{' '}
+          <code className="font-mono bg-vintiga-slate-100 px-1 rounded">selected</code>,{' '}
+          <code className="font-mono bg-vintiga-slate-100 px-1 rounded">disabled</code>,{' '}
+          <code className="font-mono bg-vintiga-slate-100 px-1 rounded">icon</code>,{' '}
+          <code className="font-mono bg-vintiga-slate-100 px-1 rounded">title</code>,{' '}
+          <code className="font-mono bg-vintiga-slate-100 px-1 rounded">description</code>,{' '}
+          <code className="font-mono bg-vintiga-slate-100 px-1 rounded">trailing</code>,{' '}
+          <code className="font-mono bg-vintiga-slate-100 px-1 rounded">onClick</code>.
+        </p>
+      </div>
+    </SubSection>
+  )
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-buttons':        ButtonsSection,
@@ -1506,6 +1766,8 @@ export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-navbar':         NavbarSection,
   'ds-sidebar':        SidebarSection,
   'ds-widget':         WidgetSection,
+  'ds-list-card':      ListCardSection,
+  'ds-selection-card': SelectionCardSection,
 }
 
 export function ComponentsSection() {

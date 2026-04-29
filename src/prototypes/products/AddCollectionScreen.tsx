@@ -6,7 +6,9 @@ import { useProductState, productActions } from './productStore'
 import { Button } from '@ds/shared/Button'
 import { Radio } from '@ds/shared/Radio'
 import { TextField } from '@ds/shared/TextField'
+import { Tag } from '@ds/shared/Tag'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
+import { RightRail, RailSection } from '@ds/shared/RightRail'
 import {
   HomeIcon,
   ChevronRightIcon,
@@ -21,6 +23,7 @@ import {
   AlignJustifyIcon,
   LinkIcon,
   ImageIcon,
+  SearchIcon,
 } from '@ds/icons/Icons'
 
 function RichTextEditor() {
@@ -99,7 +102,7 @@ export function AddCollectionScreen() {
 
   return (
     <Shell bg="white">
-      <div className="flex">
+      <div className="flex flex-col lg:flex-row">
         {/* Main column */}
         <div className="flex-1 p-vintiga-xl flex flex-col gap-vintiga-md min-w-0">
           <Breadcrumb />
@@ -193,20 +196,29 @@ export function AddCollectionScreen() {
           )}
         </div>
 
-        {/* Right rail */}
-        <aside className="w-[260px] shrink-0 p-vintiga-xl flex flex-col gap-vintiga-xl border-l border-vintiga-slate-200">
-          <section className="flex flex-col gap-vintiga-sm">
-            <h3 className="typo-body-sm font-semibold text-vintiga-slate-900">Status</h3>
+        {/* Right rail — collapsible */}
+        <RightRail>
+          <RailSection title="Status">
             <Radio checked={status === 'available'}    onChange={() => setStatus('available')}    label="Available" />
             <Radio checked={status === 'not-available'} onChange={() => setStatus('not-available')} label="Not Available" />
-          </section>
+          </RailSection>
 
-          <section className="flex flex-col gap-vintiga-sm">
-            <h3 className="typo-body-sm font-semibold text-vintiga-slate-900">Web Status</h3>
+          <RailSection title="Web Status">
             <Radio checked={webStatus === 'available'}    onChange={() => setWebStatus('available')}    label="Available" />
             <Radio checked={webStatus === 'not-available'} onChange={() => setWebStatus('not-available')} label="Not Available" />
-          </section>
-        </aside>
+          </RailSection>
+
+          <RailSection
+            title="Collections"
+            action={<Button variant="outline" size="sm">Create</Button>}
+          >
+            <TextField placeholder="Search" leftIcon={<SearchIcon className="w-4 h-4" />} />
+            <div className="flex flex-wrap gap-1.5">
+              <Tag variant="outline" onRemove={() => {}}>Wines</Tag>
+              <Tag variant="outline" onRemove={() => {}}>Red Wines</Tag>
+            </div>
+          </RailSection>
+        </RightRail>
       </div>
     </Shell>
   )

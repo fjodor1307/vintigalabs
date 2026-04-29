@@ -139,6 +139,8 @@ const NAV: NavGroup[] = [
         icon: ChartIcon,
         items: [
           { id: 'ds-cards',    label: 'Cards' },
+          { id: 'ds-list-card', label: 'List Card' },
+          { id: 'ds-selection-card', label: 'Selection Card' },
           { id: 'ds-widget',   label: 'Widget' },
           { id: 'ds-kpi-card', label: 'KPI Card' },
           { id: 'ds-avatars',  label: 'Avatars' },
@@ -512,42 +514,42 @@ function DesignSystemInner() {
           <DsLogo />
         </div>
 
-        {/* Breadcrumb bar — desktop */}
-        <div className="hidden lg:flex items-center h-[57px] px-4 shrink-0 gap-3">
-          {/* Sidebar toggle */}
-          <button
-            type="button"
-            onClick={() => setSidebarOpen((v) => !v)}
-            className="flex items-center justify-center w-7 h-7 rounded-[6px] border border-[#e2e8f0] bg-white text-[#64748b] hover:bg-[#f8fafc] hover:text-[#0f172a] transition-colors cursor-pointer shrink-0"
-            aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            <SidebarIcon className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Vertical separator */}
-          <div className="w-px h-4 bg-[#e2e8f0] shrink-0" />
-
-          {/* Breadcrumb */}
-          {crumb && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-[12px] text-[#94a3b8]">{crumb.group}</span>
-              {crumb.sub && (
-                <>
-                  <ChevronRightIcon className="w-3 h-3 text-[#cbd5e1]" />
-                  <span className="text-[12px] text-[#94a3b8]">{crumb.sub}</span>
-                </>
-              )}
-              <ChevronRightIcon className="w-3 h-3 text-[#cbd5e1]" />
-              <span className="text-[12px] font-medium text-[#374151]">{crumb.label}</span>
-            </div>
-          )}
-        </div>
-
         {/* Content row: preview + optional controls panel */}
         <div className="flex flex-1 min-h-0 overflow-hidden">
 
           {/* Page content */}
           <main className="flex-1 overflow-y-auto bg-white" key={activePage}>
+            {/* Breadcrumb bar — desktop, sticky frosted-glass header */}
+            <div className="hidden lg:flex sticky top-0 z-30 items-center h-[57px] px-4 gap-3 border-b border-[#e2e8f0] bg-white/75 backdrop-blur-md">
+              {/* Sidebar toggle */}
+              <button
+                type="button"
+                onClick={() => setSidebarOpen((v) => !v)}
+                className="flex items-center justify-center w-7 h-7 rounded-[6px] border border-[#e2e8f0] bg-white text-[#64748b] hover:bg-[#f8fafc] hover:text-[#0f172a] transition-colors cursor-pointer shrink-0"
+                aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+              >
+                <SidebarIcon className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Vertical separator */}
+              <div className="w-px h-4 bg-[#e2e8f0] shrink-0" />
+
+              {/* Breadcrumb */}
+              {crumb && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[12px] text-[#94a3b8]">{crumb.group}</span>
+                  {crumb.sub && (
+                    <>
+                      <ChevronRightIcon className="w-3 h-3 text-[#cbd5e1]" />
+                      <span className="text-[12px] text-[#94a3b8]">{crumb.sub}</span>
+                    </>
+                  )}
+                  <ChevronRightIcon className="w-3 h-3 text-[#cbd5e1]" />
+                  <span className="text-[12px] font-medium text-[#374151]">{crumb.label}</span>
+                </div>
+              )}
+            </div>
+
             <div className={[
               'animate-[fadeUp_0.2s_ease-out]',
               isComponentPage

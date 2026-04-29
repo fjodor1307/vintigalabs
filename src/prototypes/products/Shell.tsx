@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
+import { useState } from 'react'
 import {
   HomeIcon,
+  MenuIcon,
+  XIcon,
   MessageIcon,
   SendIcon,
   TagIcon,
@@ -76,34 +79,64 @@ function NavItem({ icon: Icon, label, href, external, active }: NavItemDef & { a
   return <button type="button" className={cls}>{inner}</button>
 }
 
-function Sidebar({ activeNav }: { activeNav?: string }) {
+function SidebarBody({ activeNav, onItemClick }: { activeNav?: string; onItemClick?: () => void }) {
   return (
-    <aside className="w-60 shrink-0 bg-vintiga-white border-r border-vintiga-slate-200 flex flex-col h-screen">
-      <div className="h-[57px] flex items-center gap-2 px-4 border-b border-vintiga-slate-200">
+    <>
+      <div className="h-16 shrink-0 flex items-center gap-2 px-4 border-b border-vintiga-slate-200">
         <VintigaLogo size={24} />
         <span className="typo-body-sm font-semibold text-vintiga-slate-900">Vintiga Labs, LLC</span>
       </div>
-      <nav className="flex-1 overflow-y-auto px-2 py-3 flex flex-col gap-1">
+      <nav className="flex-1 overflow-y-auto px-2 py-3 flex flex-col gap-1" onClick={onItemClick}>
         {NAV_TOP.map((item) => <NavItem key={item.label} {...item} active={activeNav === item.label} />)}
         <div className="h-px bg-vintiga-slate-200 my-2" />
         {NAV_BOTTOM_GROUP.map((item) => <NavItem key={item.label} {...item} active={activeNav === item.label} />)}
       </nav>
-      <div className="border-t border-vintiga-slate-200 px-2 py-3 flex flex-col gap-1">
+      <div className="border-t border-vintiga-slate-200 px-2 py-3 flex flex-col gap-1" onClick={onItemClick}>
         {NAV_FOOTER.map((item) => <NavItem key={item.label} {...item} active={activeNav === item.label} />)}
       </div>
+    </>
+  )
+}
+
+function Sidebar({ activeNav }: { activeNav?: string }) {
+  return (
+    <aside className="hidden lg:flex w-60 shrink-0 bg-vintiga-white border-r border-vintiga-slate-200 flex-col h-screen">
+      <SidebarBody activeNav={activeNav} />
     </aside>
   )
 }
 
-function TopBar() {
+function MobileSidebar({ open, onClose, activeNav }: { open: boolean; onClose: () => void; activeNav?: string }) {
+  if (!open) return null
   return (
-    <header className="h-[57px] shrink-0 flex items-center justify-between px-6 border-b border-vintiga-slate-200 bg-vintiga-white">
+    <div className="fixed inset-0 z-50 lg:hidden">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
+      <aside className="absolute inset-y-0 left-0 w-72 bg-vintiga-white border-r border-vintiga-slate-200 flex flex-col shadow-vintiga-xl animate-slide-in-left">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close menu"
+          className="absolute top-3 right-3 w-9 h-9 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-0 cursor-pointer"
+        >
+          <XIcon className="w-4 h-4 text-vintiga-slate-700" />
+        </button>
+        <SidebarBody activeNav={activeNav} onItemClick={onClose} />
+      </aside>
+    </div>
+  )
+}
+
+function TopBar({ onMenuToggle }: { onMenuToggle: () => void }) {
+  return (
+    <header className="sticky top-0 z-30 h-16 shrink-0 flex items-center justify-between px-6 border-b border-vintiga-slate-200 bg-vintiga-white/75 backdrop-blur-md">
       <button
         type="button"
-        className="w-8 h-8 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-none cursor-pointer"
-        aria-label="Toggle sidebar"
+        onClick={onMenuToggle}
+        className="w-9 h-9 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-none cursor-pointer"
+        aria-label="Open menu"
       >
-        <SidebarIcon className="w-4 h-4 text-vintiga-slate-500" />
+        <MenuIcon className="w-5 h-5 text-vintiga-slate-700 lg:hidden" />
+        <SidebarIcon className="w-5 h-5 text-vintiga-slate-700 hidden lg:inline" />
       </button>
       <div className="flex items-center gap-3">
         <button
@@ -134,12 +167,14 @@ export function Shell({
   bg?: 'white' | 'slate'
   activeNav?: string
 }) {
+  const [mobileOpen, setMobileOpen] = useState(false)
   return (
     <div className="flex h-screen bg-vintiga-white">
       <Sidebar activeNav={activeNav} />
+      <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} activeNav={activeNav} />
       <div className="flex-1 flex flex-col min-w-0">
-        <TopBar />
-        <main className={`flex-1 overflow-y-auto ${bg === 'slate' ? 'bg-vintiga-slate-50' : 'bg-vintiga-white'}`}>
+        <main className={`flex-1 overflow-y-auto flex flex-col ${bg === 'slate' ? 'bg-vintiga-slate-50' : 'bg-vintiga-white'}`}>
+          <TopBar onMenuToggle={() => setMobileOpen(true)} />
           {children}
         </main>
       </div>

@@ -1,18 +1,22 @@
-import { useState, useRef, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { OverviewLayout } from './OverviewLayout'
-import { useProductState } from './productStore'
+import { useProductState, productActions } from './productStore'
+import { SelectProductTypeModal, type ProductType } from './SelectProductTypeModal'
+import { NoImageArt } from './NoImageArt'
+import { SelectAllCheckbox } from './SelectAllCheckbox'
 import { Tag } from '@ds/shared/Tag'
 import { Button } from '@ds/shared/Button'
+import { IconButton } from '@ds/shared/IconButton'
 import { TextField } from '@ds/shared/TextField'
 import { Checkbox } from '@ds/shared/Checkbox'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
-import { DropdownMenu, DropdownItem, DropdownSeparator } from '@ds/shared/Dropdown'
+import { FilterDropdown } from '@ds/shared/FilterDropdown'
+import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import {
   PlusIcon,
   SearchIcon,
   ChevronDownIcon,
   EllipsisIcon,
-  ImageIcon,
   BoxIcon,
   BottleWineIcon,
   BeerIcon,
@@ -29,7 +33,7 @@ import {
   TicketIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ExportIcon,
+  DownloadIcon,
   XIcon,
 } from '@ds/icons/Icons'
 
@@ -55,86 +59,12 @@ const TYPE_FILTER_OPTIONS = [
   { value: 'tickets'     as ProductFilter, label: 'Tickets',      icon: <TicketIcon       className="w-3.5 h-3.5" /> },
 ]
 
-// ─── Reusable hook: close on outside click ─────────────────────────────────
+type StatusFilter = 'active' | 'inactive'
 
-function useClickOutside<T extends HTMLElement>(onClose: () => void) {
-  const ref = useRef<T>(null)
-  useEffect(() => {
-    function handle(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
-    }
-    document.addEventListener('mousedown', handle)
-    return () => document.removeEventListener('mousedown', handle)
-  }, [onClose])
-  return ref
-}
-
-// ─── Status filter dropdown ────────────────────────────────────────────────
-
-function StatusFilter() {
-  const [open, setOpen]           = useState(false)
-  const [active, setActive]       = useState(true)
-  const [inactive, setInactive]   = useState(false)
-  const [applied, setApplied]     = useState({ active: true, inactive: false })
-  const ref = useClickOutside<HTMLDivElement>(() => setOpen(false))
-
-  const hasFilter = applied.active || applied.inactive
-  const count = (applied.active ? 1 : 0) + (applied.inactive ? 1 : 0)
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className={[
-          'inline-flex items-center gap-1.5 px-3 py-2 rounded-vintiga-md border typo-body-sm transition-colors cursor-pointer',
-          hasFilter
-            ? 'bg-vintiga-indigo-50 border-vintiga-indigo-200 text-vintiga-indigo-700'
-            : 'bg-vintiga-white border-vintiga-slate-200 text-vintiga-slate-700 hover:bg-vintiga-slate-50',
-        ].join(' ')}
-      >
-        Status
-        {hasFilter && (
-          <span className="w-4 h-4 rounded-full bg-vintiga-indigo-600 text-vintiga-white text-[10px] font-semibold flex items-center justify-center">
-            {count}
-          </span>
-        )}
-        <ChevronDownIcon className="w-3.5 h-3.5" />
-      </button>
-
-      {open && (
-        <DropdownMenu className="absolute top-full mt-1.5 right-0 z-50 w-48 gap-1 p-3">
-          <p className="typo-body-sm font-medium text-vintiga-slate-900 px-1 pb-1">Filter by Status</p>
-          <label className="flex items-center gap-2 cursor-pointer px-2 py-1">
-            <Checkbox size="sm" checked={active} onChange={() => setActive((v) => !v)} />
-            <span className="typo-body-sm font-medium text-vintiga-slate-900">Active</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer px-2 py-1">
-            <Checkbox size="sm" checked={inactive} onChange={() => setInactive((v) => !v)} />
-            <span className="typo-body-sm font-medium text-vintiga-slate-900">Inactive</span>
-          </label>
-          <DropdownSeparator />
-          <div className="flex gap-2 pt-1">
-            <button
-              type="button"
-              onClick={() => { setActive(false); setInactive(false); setApplied({ active: false, inactive: false }); setOpen(false) }}
-              className="flex-1 px-2.5 py-1.5 rounded-[4px] border border-vintiga-slate-300 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
-            >
-              Clear All
-            </button>
-            <button
-              type="button"
-              onClick={() => { setApplied({ active, inactive }); setOpen(false) }}
-              className="flex-1 px-2.5 py-1.5 rounded-[4px] border border-vintiga-slate-300 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
-            >
-              Apply
-            </button>
-          </div>
-        </DropdownMenu>
-      )}
-    </div>
-  )
-}
+const STATUS_FILTER_OPTIONS = [
+  { value: 'active'   as StatusFilter, label: 'Active' },
+  { value: 'inactive' as StatusFilter, label: 'Inactive' },
+]
 
 // ─── Export modal ──────────────────────────────────────────────────────────
 
@@ -174,61 +104,109 @@ function ExportModal({ count, onClose }: { count: number; onClose: () => void })
 // ─── Actions dropdown ──────────────────────────────────────────────────────
 
 function ActionsDropdown({ onExport }: { onExport: () => void }) {
-  const [open, setOpen] = useState(false)
-  const ref = useClickOutside<HTMLDivElement>(() => setOpen(false))
-
   return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
-      >
-        Actions
-        <ChevronDownIcon className="w-3.5 h-3.5" />
-      </button>
-
-      {open && (
-        <DropdownMenu className="absolute top-full mt-1.5 right-0 z-50 w-44">
-          <DropdownItem
-            leftIcon={<ExportIcon className="w-4 h-4" />}
-            onClick={() => { setOpen(false); onExport() }}
-          >
-            Export Products
-          </DropdownItem>
-          <DropdownItem
-            leftIcon={<ExportIcon className="w-4 h-4 scale-x-[-1]" />}
-            onClick={() => setOpen(false)}
-          >
-            Duplicate
-          </DropdownItem>
-        </DropdownMenu>
+    <PopoverMenu
+      align="right"
+      width="w-44"
+      trigger={(_open, toggle) => (
+        <Button variant="outline" size="md" rightIcon={<ChevronDownIcon />} onClick={toggle}>
+          Actions
+        </Button>
       )}
-    </div>
+      items={[
+        { label: 'Export Products', onClick: onExport },
+        { label: 'Duplicate',       onClick: () => {} },
+      ]}
+    />
   )
 }
 
+// ─── Type filter dropdown (multi-select checkbox list) ────────────────────
+
+const PRODUCT_CATEGORIES = TYPE_FILTER_OPTIONS
+  .filter((o) => o.value !== 'all')
+  .map((o) => ({ value: o.value, label: o.label, icon: o.icon }))
+
 // ─── Product thumbnail ─────────────────────────────────────────────────────
 
-function ProductThumb({ name }: { name: string }) {
-  const hue = (name.charCodeAt(0) * 31) % 360
+function ProductThumb({ name, imageUrl }: { name: string; imageUrl?: string }) {
   return (
-    <div
-      className="w-12 h-12 rounded-vintiga-md border border-vintiga-slate-200 overflow-hidden flex items-center justify-center shrink-0"
-      style={{ background: `hsl(${hue}, 30%, 96%)` }}
-    >
-      <ImageIcon className="w-5 h-5 text-vintiga-slate-300" />
+    <div className="w-16 h-16 rounded-vintiga-md border border-vintiga-slate-200 overflow-hidden flex items-center justify-center shrink-0 bg-vintiga-slate-50">
+      {imageUrl
+        ? <img src={imageUrl} alt={name} className="w-full h-full object-cover" loading="lazy" />
+        : <NoImageArt className="w-full h-full" />}
     </div>
   )
 }
 
 // ─── Main screen ───────────────────────────────────────────────────────────
 
+// ─── Map a product type string → SegmentedControl filter key ──────────────
+
+function categoryKeyFor(p: { type: string }): ProductFilter {
+  switch (p.type.toLowerCase()) {
+    case 'wine':       return 'wines'
+    case 'beer':       return 'beer'
+    case 'spirit':     return 'spirits'
+    case 'event':      return 'events'
+    case 'merch':      return 'merch'
+    case 'experience': return 'experiences'
+    case 'tasting':    return 'tastings'
+    case 'food':       return 'food'
+    case 'booking':    return 'bookings'
+    case 'bundle':     return 'bundles'
+    case 'gift':       return 'gifts'
+    case 'voucher':    return 'vouchers'
+    case 'ticket':     return 'tickets'
+    default:           return 'wines'
+  }
+}
+
 export function ProductsListScreen() {
   const { catalogue } = useProductState()
   const [selected, setSelected]       = useState<Set<string>>(new Set())
-  const [filterType, setFilterType]   = useState<ProductFilter>('wines')
+  const [filterType, setFilterType]   = useState<ProductFilter>('all')
+  const [typeFilter, setTypeFilter]   = useState<Set<ProductFilter>>(new Set())
+  const [statusFilter, setStatusFilter] = useState<Set<StatusFilter>>(new Set())
+  const [search, setSearch]           = useState('')
   const [showExport, setShowExport]   = useState(false)
+  const [showAddType, setShowAddType] = useState(false)
+
+  const onSelectType = (type: ProductType) => {
+    setShowAddType(false)
+    // Map the modal's ProductType slug to the human-readable label that
+    // ProductState.productType expects.
+    const label: Record<ProductType, string> = {
+      wine: 'Wine', beer: 'Beer', spirit: 'Spirit',
+      experience: 'Experience', merchandise: 'Merchandise', 'drink-token': 'Drink Token',
+      food: 'Food', tasting: 'Tasting', reservation: 'Reservation',
+      bundle: 'Bundle', 'gift-card': 'Gift Card', collateral: 'Collateral',
+      'event-ticket': 'Event Ticket',
+    }
+    // Start a clean editor — no name, no images, no content, no variants —
+    // pre-filled with the picked product type.
+    productActions.startNewProduct(label[type])
+    // For now every type lands on the general product editor — different
+    // routes can be wired up later as each editor is built.
+    window.location.hash = '#/web/products/general'
+  }
+
+  // Derived: visible products after segmented tab + filter chips + search
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return catalogue.filter((p) => {
+      // Segmented control tab (exclusive: 'all' shows all, otherwise match)
+      if (filterType !== 'all' && categoryKeyFor(p) !== filterType) return false
+      // Type chip filter (additive: show if any picked type matches)
+      if (typeFilter.size > 0 && !typeFilter.has(categoryKeyFor(p))) return false
+      // Status chip filter — products in the catalogue are all "active" placeholders;
+      // a real impl would read p.status. For now: 'inactive' filter hides everything.
+      if (statusFilter.size > 0 && !statusFilter.has('active')) return false
+      // Search by name or SKU
+      if (q && !p.name.toLowerCase().includes(q) && !p.sku.toLowerCase().includes(q)) return false
+      return true
+    })
+  }, [catalogue, filterType, typeFilter, statusFilter, search])
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -237,9 +215,6 @@ export function ProductsListScreen() {
       else next.add(id)
       return next
     })
-  }
-  function toggleAll() {
-    setSelected((prev) => prev.size === catalogue.length ? new Set() : new Set(catalogue.map((p) => p.id)))
   }
 
   return (
@@ -256,46 +231,56 @@ export function ProductsListScreen() {
             aria-label="Filter by product type"
           />
           <div className="flex items-center gap-2">
-            <button
-              type="button"
+            <Button leftIcon={<PlusIcon />} onClick={() => setShowAddType(true)}>Add Product</Button>
+            <IconButton
+              variant="outline"
+              size="md"
+              icon={<DownloadIcon />}
+              aria-label="Export CSV"
               onClick={() => setShowExport(true)}
-              className="w-9 h-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white flex items-center justify-center hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
-              aria-label="Export products"
-            >
-              <ExportIcon className="w-4 h-4 text-vintiga-slate-600" />
-            </button>
-            <Button leftIcon={<PlusIcon />} as="a" href="#/web/products/general">Add Product</Button>
+            />
           </div>
         </div>
 
         {/* Search + filters */}
         <div className="flex items-center gap-vintiga-sm">
           <div className="flex-1 max-w-sm">
-            <TextField placeholder="Search Products" leftIcon={<SearchIcon className="w-4 h-4" />} />
+            <TextField
+              placeholder="Search Products"
+              leftIcon={<SearchIcon className="w-4 h-4" />}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <button
-              type="button"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
-            >
-              Type
-              <ChevronDownIcon className="w-3.5 h-3.5" />
-            </button>
-            <StatusFilter />
+            <FilterDropdown<ProductFilter>
+              label="Type"
+              options={PRODUCT_CATEGORIES}
+              value={typeFilter}
+              onChange={setTypeFilter}
+            />
+            <FilterDropdown<StatusFilter>
+              label="Status"
+              options={STATUS_FILTER_OPTIONS}
+              value={statusFilter}
+              onChange={setStatusFilter}
+            />
             <ActionsDropdown onExport={() => setShowExport(true)} />
           </div>
         </div>
 
         {/* Table */}
         <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
-          <div className="grid grid-cols-[40px_1fr_120px_100px_120px_220px_40px] items-center gap-4 px-vintiga-md py-vintiga-sm bg-vintiga-slate-50 border-b border-vintiga-slate-200">
-            <Checkbox
-              size="sm"
-              checked={selected.size === catalogue.length && catalogue.length > 0}
-              indeterminate={selected.size > 0 && selected.size < catalogue.length}
-              onChange={toggleAll}
+          <div className="grid grid-cols-[40px_1fr_120px_100px_120px_220px_40px] items-center gap-4 px-vintiga-md h-12 bg-vintiga-slate-50 border-b border-vintiga-slate-200">
+            <SelectAllCheckbox
+              selectedCount={selected.size}
+              totalOnPage={visible.length}
+              totalAll={catalogue.length}
+              onSelectPage={() => setSelected(new Set(visible.map((p) => p.id)))}
+              onSelectAll={() => setSelected(new Set(catalogue.map((p) => p.id)))}
+              onClear={() => setSelected(new Set())}
             />
-            <span className="typo-body-sm font-semibold text-vintiga-slate-700">Wines ({catalogue.length})</span>
+            <span className="typo-body-sm font-semibold text-vintiga-slate-700">Items ({visible.length})</span>
             <span className="typo-body-sm font-semibold text-vintiga-slate-700">Price</span>
             <span className="typo-body-sm font-semibold text-vintiga-slate-700">Type</span>
             <span className="typo-body-sm font-semibold text-vintiga-slate-700">Availability</span>
@@ -303,7 +288,17 @@ export function ProductsListScreen() {
             <span />
           </div>
 
-          {catalogue.map((p) => (
+          {visible.length === 0 && (
+            <div className="px-vintiga-md py-vintiga-2xl text-center">
+              <p className="typo-body-sm text-vintiga-slate-500">
+                {search.trim()
+                  ? `No products match "${search}"`
+                  : 'No products match these filters'}
+              </p>
+            </div>
+          )}
+
+          {visible.map((p) => (
             <div
               key={p.id}
               role="link"
@@ -315,13 +310,13 @@ export function ProductsListScreen() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') window.location.hash = `#/web/products/general?id=${p.id}`
               }}
-              className="grid grid-cols-[40px_1fr_120px_100px_120px_220px_40px] items-center gap-4 px-vintiga-md py-vintiga-sm border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
+              className="grid grid-cols-[40px_1fr_120px_100px_120px_220px_40px] items-center gap-4 px-vintiga-md h-24 border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
             >
               <span data-row-stop onClick={(e) => e.stopPropagation()}>
                 <Checkbox size="sm" checked={selected.has(p.id)} onChange={() => toggle(p.id)} />
               </span>
               <div className="flex items-center gap-3 min-w-0">
-                <ProductThumb name={p.name} />
+                <ProductThumb name={p.name} imageUrl={p.imageUrl} />
                 <div className="flex flex-col min-w-0">
                   <span className="typo-body-sm font-medium text-vintiga-slate-900 truncate">{p.name}</span>
                   <span className="typo-caption text-vintiga-slate-500">{p.sku}</span>
@@ -338,15 +333,26 @@ export function ProductsListScreen() {
                   <Tag variant="outline" size="sm">+{p.collections.length - 2}</Tag>
                 )}
               </div>
-              <button
-                data-row-stop
-                type="button"
-                onClick={(e) => e.stopPropagation()}
-                className="w-8 h-8 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-none cursor-pointer"
-                aria-label="Row actions"
-              >
-                <EllipsisIcon className="w-4 h-4 text-vintiga-slate-500" />
-              </button>
+              <span data-row-stop onClick={(e) => e.stopPropagation()}>
+                <PopoverMenu
+                  align="right"
+                  width="w-40"
+                  trigger={(_open, t) => (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); t() }}
+                      className="w-8 h-8 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-none cursor-pointer"
+                      aria-label={`${p.name} actions`}
+                    >
+                      <EllipsisIcon className="w-4 h-4 text-vintiga-slate-500" />
+                    </button>
+                  )}
+                  items={[
+                    { label: 'View',      onClick: () => { window.location.hash = `#/web/products/general?id=${p.id}` } },
+                    { label: 'Duplicate', onClick: () => {} },
+                  ]}
+                />
+              </span>
             </div>
           ))}
         </div>
@@ -388,6 +394,13 @@ export function ProductsListScreen() {
       {showExport && (
         <ExportModal count={catalogue.length} onClose={() => setShowExport(false)} />
       )}
+
+      {/* Select product type modal */}
+      <SelectProductTypeModal
+        open={showAddType}
+        onClose={() => setShowAddType(false)}
+        onSelect={onSelectType}
+      />
     </OverviewLayout>
   )
 }

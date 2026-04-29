@@ -3,7 +3,33 @@ import type { ReactNode } from 'react'
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type TagVariant = 'filled' | 'outline' | 'neutral-dark' | 'neutral-light'
-export type TagTone = 'success' | 'warning' | 'danger' | 'info' | 'default'
+/**
+ * Filled-tag tones — palette matches Figma 4506:19880 (Order Status).
+ *
+ *   Semantic   Hex pair (bg / text)   Typical use
+ *   ─────────  ─────────────────────  ─────────────────────────────────
+ *   default    gray-200   gray-700    Pending / draft / neutral
+ *   success    lime-100   green-700   Completed / Fulfilled / paid
+ *   warning    amber-100  amber-800   Awaiting Payment
+ *   danger     red-100    red-700     Declined / Quarantined / failure
+ *   info       sky-100    sky-800     Awaiting Shipping / informational
+ *   orange     orange-100 orange-800  Awaiting Compliance
+ *   yellow     yellow-100 yellow-800  Awaiting Fulfillment
+ *   teal       teal-100   teal-800    Exchanged
+ *   blue       blue-100   blue-800    Refunded
+ *   violet     violet-100 violet-800  Partially Refunded / Exchanged
+ */
+export type TagTone =
+  | 'default'
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'info'
+  | 'orange'
+  | 'yellow'
+  | 'teal'
+  | 'blue'
+  | 'violet'
 export type TagSize = 'sm' | 'md'
 
 export interface TagProps {
@@ -26,11 +52,16 @@ const SIZE: Record<TagSize, string> = {
 }
 
 const FILLED_TONE: Record<TagTone, string> = {
-  success: 'bg-vintiga-lime-100 text-vintiga-green-700',
-  warning: 'bg-vintiga-orange-100 text-vintiga-orange-700',
-  danger:  'bg-vintiga-red-100 text-vintiga-red-700',
-  info:    'bg-vintiga-blue-100 text-vintiga-blue-700',
-  default: 'bg-vintiga-slate-100 text-vintiga-slate-700',
+  default: 'bg-vintiga-gray-200    text-vintiga-gray-700',
+  success: 'bg-vintiga-lime-100    text-vintiga-green-700',
+  warning: 'bg-vintiga-amber-100   text-vintiga-amber-800',
+  danger:  'bg-vintiga-red-100     text-vintiga-red-700',
+  info:    'bg-vintiga-sky-100     text-vintiga-sky-800',
+  orange:  'bg-vintiga-orange-100  text-vintiga-orange-800',
+  yellow:  'bg-vintiga-yellow-100  text-vintiga-yellow-800',
+  teal:    'bg-vintiga-teal-100    text-vintiga-teal-800',
+  blue:    'bg-vintiga-blue-100    text-vintiga-blue-800',
+  violet:  'bg-vintiga-violet-100  text-vintiga-violet-800',
 }
 
 const VARIANT: Record<TagVariant, string> = {
