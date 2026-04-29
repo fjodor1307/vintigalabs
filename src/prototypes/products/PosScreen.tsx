@@ -7,7 +7,7 @@ export function PosScreen() {
   const fakeGen = () => { setGenerating(true); setTimeout(() => setGenerating(false), 500) }
 
   return (
-    <ProductLayout activeTab="pos" onGenerate={fakeGen} generating={generating}>
+    <ProductLayout activeTab="pos">
       <SectionCard title="POS">
         <Field label="Title" helper="Leave blank to inherit the main product title. Edit to use a shorter label that fits POS screens.">
           <TextInput placeholder="Inherits main title (e.g. 26 Cab S)" />

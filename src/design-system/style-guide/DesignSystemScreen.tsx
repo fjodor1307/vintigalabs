@@ -89,6 +89,7 @@ const NAV: NavGroup[] = [
         items: [
           { id: 'ds-buttons',      label: 'Buttons' },
           { id: 'ds-icon-buttons', label: 'Icon Buttons' },
+          { id: 'ds-ai-suggest-button', label: 'AI Suggest Button' },
         ],
       },
       {
@@ -96,6 +97,7 @@ const NAV: NavGroup[] = [
         icon: PenIcon,
         items: [
           { id: 'ds-text-fields', label: 'Text Fields' },
+          { id: 'ds-field',       label: 'Field' },
           { id: 'ds-checkbox',    label: 'Checkbox' },
           { id: 'ds-radio',       label: 'Radio Group' },
           { id: 'ds-switch',      label: 'Switch' },
@@ -129,6 +131,7 @@ const NAV: NavGroup[] = [
         items: [
           { id: 'ds-navbar',             label: 'Navbar' },
           { id: 'ds-sidebar',            label: 'Sidebar' },
+          { id: 'ds-breadcrumb',         label: 'Breadcrumb' },
           { id: 'ds-tabs',               label: 'Tabs' },
           { id: 'ds-segmented-control',  label: 'Segmented Control' },
           { id: 'ds-separator',          label: 'Separator' },
@@ -139,6 +142,7 @@ const NAV: NavGroup[] = [
         icon: ChartIcon,
         items: [
           { id: 'ds-cards',    label: 'Cards' },
+          { id: 'ds-section-card', label: 'Section Card' },
           { id: 'ds-list-card', label: 'List Card' },
           { id: 'ds-selection-card', label: 'Selection Card' },
           { id: 'ds-widget',   label: 'Widget' },

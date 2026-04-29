@@ -8,7 +8,7 @@ import { SegmentedControl } from '@ds/shared/SegmentedControl'
 import { ListCard } from '@ds/shared/ListCard'
 import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import { EmptyState } from '@ds/components/EmptyState'
-import { CollectionProductsTable } from './CollectionProductsTable'
+import { CollectionProductsTable, AddProductsSearch } from './CollectionProductsTable'
 import { Field, Select } from './ProductLayout'
 import {
   PlusIcon,
@@ -17,6 +17,7 @@ import {
   EllipsisVerticalIcon,
   PackageIcon,
   ListPlusIcon,
+  TrashIcon,
   BottleWineIcon,
   BeerIcon,
   MartiniIcon,
@@ -165,7 +166,7 @@ function iconForType(type: string): React.ReactNode {
 
 // ─── Row kebab — used inside each ListCard ──────────────────────────────────
 
-function RowKebabMenu({ collectionName }: { collectionName: string }) {
+function RowKebabMenu({ collectionName, selected = false }: { collectionName: string; selected?: boolean }) {
   return (
     <PopoverMenu
       align="right"
@@ -174,7 +175,12 @@ function RowKebabMenu({ collectionName }: { collectionName: string }) {
           type="button"
           onClick={(e) => { e.stopPropagation(); toggle() }}
           aria-label={`${collectionName} actions`}
-          className="w-5 h-5 flex items-center justify-center text-vintiga-slate-400 hover:text-vintiga-slate-700 transition-colors cursor-pointer p-0 bg-transparent border-0"
+          className={[
+            'w-5 h-5 flex items-center justify-center transition-colors cursor-pointer p-0 bg-transparent border-0',
+            selected
+              ? 'text-vintiga-indigo-700 hover:text-vintiga-indigo-800'
+              : 'text-vintiga-slate-400 hover:text-vintiga-slate-700',
+          ].join(' ')}
         >
           <EllipsisVerticalIcon className="w-5 h-5" />
         </button>
@@ -217,7 +223,7 @@ function CollectionList({
               icon={iconForType(c.type)}
               selected={selectedId === c.id}
               onClick={() => onSelect(c.id)}
-              action={<RowKebabMenu collectionName={c.name} />}
+              action={<RowKebabMenu collectionName={c.name} selected={selectedId === c.id} />}
             />
           ))}
         </div>
@@ -249,9 +255,10 @@ function ProductsPanel({
   onRemove: (productId: string) => void
 }) {
   const [tab, setTab] = useState<'products' | 'summary'>('products')
+  const alreadyAddedIds = new Set(products.map((p) => p.id))
 
   return (
-    <div className="flex flex-col gap-vintiga-md min-w-0">
+    <div className="flex flex-col gap-vintiga-md min-w-0 h-full">
       {/* Header */}
       <div className="flex items-center justify-between gap-vintiga-md">
         <h2 className="typo-body-lg font-semibold text-vintiga-slate-900">{collection.name}</h2>
@@ -298,13 +305,30 @@ function ProductsPanel({
           onReorder={(from, to) => productActions.reorderProductInCollection(collection.id, from, to)}
         />
       ) : (
-        <div className="flex-1 min-h-[280px] border border-vintiga-slate-200 rounded-vintiga-lg flex items-center justify-center bg-vintiga-white">
-          <EmptyState
-            icon={<PackageIcon className="w-5 h-5" />}
-            title="No Products"
-            description="Looks like your collection doesn't have any products yet. Why not start by adding one?"
-          />
-        </div>
+        <>
+          <div className="flex items-center gap-vintiga-md">
+            <AddProductsSearch
+              alreadyAddedIds={alreadyAddedIds}
+              onAdd={(productId) => productActions.addProductToCollection(collection.id, productId)}
+            />
+            <span className="typo-body-sm text-vintiga-slate-500 shrink-0">0 products selected</span>
+            <IconButton
+              variant="outline"
+              size="md"
+              icon={<TrashIcon />}
+              aria-label="Bulk delete"
+              disabled
+            />
+          </div>
+          <div className="flex-1 min-h-[280px] flex items-center justify-center">
+            <EmptyState
+              bordered={false}
+              icon={<PackageIcon className="w-5 h-5" />}
+              title="No Products"
+              description="Looks like your collection doesn't have any products yet. Why not start by adding one?"
+            />
+          </div>
+        </>
       )}
     </div>
   )
@@ -333,15 +357,15 @@ export function CollectionsScreen() {
 
   return (
     <OverviewLayout title="Collections" description="View and manage all your collections" activeTab="collections">
-      <div className="bg-vintiga-white border border-vintiga-slate-200 rounded-vintiga-2xl overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] min-h-[500px]">
+      <div className="bg-vintiga-white border border-vintiga-slate-200 rounded-vintiga-2xl overflow-hidden flex-1 min-h-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] h-full min-h-[500px]">
           {/* Left column — full-height divider via right border on this column */}
           <div className="lg:border-r lg:border-vintiga-slate-200 p-vintiga-lg">
             <CollectionList collections={allCollections} selectedId={selectedId} onSelect={setSelectedId} />
           </div>
 
           {/* Right column */}
-          <div className="p-vintiga-lg min-w-0">
+          <div className="p-vintiga-lg min-w-0 h-full">
             {selected ? (
               <ProductsPanel
                 collection={selected}

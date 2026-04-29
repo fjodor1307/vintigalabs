@@ -122,6 +122,8 @@ export {
   LogOut         as LogOutIcon,
   ArrowUp        as ArrowUpIcon,
   ArrowDown      as ArrowDownIcon,
+  Minimize2      as MinimizeIcon,
+  Maximize2      as MaximizeIcon,
   // Product category icons
   BottleWine     as BottleWineIcon,
   Beer           as BeerIcon,

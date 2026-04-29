@@ -43,7 +43,7 @@ function ProductThumb({ name, imageUrl, size = 64 }: { name: string; imageUrl?: 
   )
 }
 
-function AddProductsSearch({
+export function AddProductsSearch({
   alreadyAddedIds,
   onAdd,
 }: {

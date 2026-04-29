@@ -9,9 +9,8 @@ import { TextField } from '@ds/shared/TextField'
 import { Tag } from '@ds/shared/Tag'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
 import { RightRail, RailSection } from '@ds/shared/RightRail'
+import { Breadcrumb, BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
 import {
-  HomeIcon,
-  ChevronRightIcon,
   BoldIcon,
   ItalicIcon,
   UnderlineIcon,
@@ -66,20 +65,6 @@ function RichTextEditor() {
   )
 }
 
-function Breadcrumb() {
-  return (
-    <nav className="flex items-center gap-1.5 typo-body-sm" aria-label="Breadcrumb">
-      <a href="#/web/products/list" className="text-vintiga-slate-500 hover:text-vintiga-slate-700 no-underline flex items-center">
-        <HomeIcon className="w-4 h-4" />
-      </a>
-      <ChevronRightIcon className="w-3.5 h-3.5 text-vintiga-slate-400" />
-      <a href="#/web/products/collections" className="text-vintiga-slate-500 hover:text-vintiga-slate-700 no-underline">Collections</a>
-      <ChevronRightIcon className="w-3.5 h-3.5 text-vintiga-slate-400" />
-      <span className="text-vintiga-slate-900 font-semibold">Add Collection</span>
-    </nav>
-  )
-}
-
 export function AddCollectionScreen() {
   const { catalogue } = useProductState()
   const [tab, setTab] = useState<'summary' | 'products'>('summary')
@@ -105,7 +90,13 @@ export function AddCollectionScreen() {
       <div className="flex flex-col lg:flex-row">
         {/* Main column */}
         <div className="flex-1 p-vintiga-xl flex flex-col gap-vintiga-md min-w-0">
-          <Breadcrumb />
+          <Breadcrumb
+            items={[
+              { icon: <BreadcrumbHomeIcon />, href: '#/web/products/list' },
+              { label: 'Collections', href: '#/web/products/collections' },
+              { label: 'Add Collection' },
+            ]}
+          />
 
           <div className="flex items-center justify-between gap-vintiga-md">
             <h1 className="typo-title-section font-semibold text-vintiga-slate-900">Add Collection</h1>

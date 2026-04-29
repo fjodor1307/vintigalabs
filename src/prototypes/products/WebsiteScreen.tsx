@@ -7,7 +7,7 @@ export function WebsiteScreen() {
   const fakeGen = () => { setGenerating(true); setTimeout(() => setGenerating(false), 500) }
 
   return (
-    <ProductLayout activeTab="website" onGenerate={fakeGen} generating={generating}>
+    <ProductLayout activeTab="website">
       <SectionCard title="Website">
         <Field label="Web Status">
           <div className="relative">

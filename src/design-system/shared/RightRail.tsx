@@ -17,12 +17,13 @@ export function RightRail({ children, className = '' }: RightRailProps) {
   return (
     <aside
       className={[
-        // Desktop: fixed sidebar with a visible left divider
-        'lg:w-[360px] lg:shrink-0 lg:border-l lg:border-vintiga-slate-200',
-        // Mobile: stacks under main as a top-bordered block
-        'w-full border-t border-vintiga-slate-200 lg:border-t-0',
-        // Layout
-        'bg-vintiga-white flex flex-col gap-vintiga-md p-vintiga-md',
+        // Desktop: fixed sidebar (no border)
+        'lg:w-[360px] lg:shrink-0',
+        // Mobile: stacks under main as a full-width block (no border)
+        'w-full',
+        // Layout — top padding 32 px
+        'bg-vintiga-white flex flex-col gap-vintiga-md',
+        'px-vintiga-md pb-vintiga-md pt-vintiga-xl',
         className,
       ].join(' ')}
     >

@@ -88,7 +88,7 @@ export function ListCard({
       className={rowClasses}
     >
       {icon && (
-        <span className={`shrink-0 flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4 ${selected ? 'text-vintiga-indigo-700' : 'text-vintiga-slate-500'}`}>
+        <span className={`shrink-0 flex items-center justify-center [&>svg]:w-5 [&>svg]:h-5 ${selected ? 'text-vintiga-indigo-700' : 'text-vintiga-slate-500'}`}>
           {icon}
         </span>
       )}
@@ -97,7 +97,7 @@ export function ListCard({
 
       {!hideAction && (
         action ? (
-          <span onClick={stop} className="shrink-0">
+          <span onClick={stop} className="shrink-0 flex items-center">
             {action}
           </span>
         ) : (

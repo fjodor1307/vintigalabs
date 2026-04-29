@@ -91,7 +91,7 @@ function SidebarBody({ activeNav, onItemClick }: { activeNav?: string; onItemCli
         <div className="h-px bg-vintiga-slate-200 my-2" />
         {NAV_BOTTOM_GROUP.map((item) => <NavItem key={item.label} {...item} active={activeNav === item.label} />)}
       </nav>
-      <div className="border-t border-vintiga-slate-200 px-2 py-3 flex flex-col gap-1" onClick={onItemClick}>
+      <div className="px-2 py-3 flex flex-col gap-1" onClick={onItemClick}>
         {NAV_FOOTER.map((item) => <NavItem key={item.label} {...item} active={activeNav === item.label} />)}
       </div>
     </>
@@ -100,7 +100,7 @@ function SidebarBody({ activeNav, onItemClick }: { activeNav?: string; onItemCli
 
 function Sidebar({ activeNav }: { activeNav?: string }) {
   return (
-    <aside className="hidden lg:flex w-60 shrink-0 bg-vintiga-white border-r border-vintiga-slate-200 flex-col h-screen">
+    <aside className="hidden lg:flex w-60 shrink-0 bg-vintiga-white border-r border-vintiga-slate-200 flex-col h-full">
       <SidebarBody activeNav={activeNav} />
     </aside>
   )
@@ -169,7 +169,7 @@ export function Shell({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   return (
-    <div className="flex h-screen bg-vintiga-white">
+    <div className="flex h-full bg-vintiga-white">
       <Sidebar activeNav={activeNav} />
       <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} activeNav={activeNav} />
       <div className="flex-1 flex flex-col min-w-0">
