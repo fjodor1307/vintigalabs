@@ -33,6 +33,10 @@ import { DropdownMenu, DropdownItem, DropdownSection, DropdownSeparator } from '
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
 import { Navbar } from '@ds/shared/Navbar'
 import { Sidebar, SidebarHeader, SidebarBody, SidebarItem, SidebarDivider, SidebarFooter, SidebarBadge } from '@ds/shared/Sidebar'
+import { Breadcrumb, BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
+import { SectionCard } from '@ds/shared/SectionCard'
+import { Field } from '@ds/shared/Field'
+import { AiSuggestButton } from '@ds/shared/AiSuggestButton'
 import { ListCard } from '@ds/shared/ListCard'
 import { SelectionCard } from '@ds/shared/SelectionCard'
 import { Widget, WidgetHeader, WidgetBody, WidgetFooter } from '@ds/shared/Widget'
@@ -1565,7 +1569,6 @@ function ListCardSection() {
 const SELECTION_CARD_CONTROLS: ControlSchema = {
   orientation: { type: 'select',  options: ['horizontal', 'vertical'],   default: 'horizontal' },
   align:       { type: 'select',  options: ['start', 'center'],          default: 'start' },
-  size:        { type: 'select',  options: ['md', 'sm'],                 default: 'md' },
   tone:        { type: 'select',  options: ['indigo', 'slate'],          default: 'indigo' },
   title:       { type: 'text',    default: 'Reserve Tier' },
   description: { type: 'text',    default: 'Premium members get first access to allocations and limited releases.' },
@@ -1591,7 +1594,6 @@ function SelectionCardSection() {
             <SelectionCard
               orientation={v.orientation as 'horizontal' | 'vertical'}
               align={v.align as 'start' | 'center'}
-              size={v.size as 'sm' | 'md'}
               tone={v.tone as 'indigo' | 'slate'}
               icon={<GemIcon />}
               title={v.title as string}
@@ -1733,6 +1735,84 @@ function SelectionCardSection() {
   )
 }
 
+function BreadcrumbSection() {
+  return (
+    <SubSection id="ds-breadcrumb" title="Breadcrumb" description="Navigation trail used at the top of detail screens.">
+      <Breadcrumb
+        items={[
+          { icon: <BreadcrumbHomeIcon />, href: '#' },
+          { label: 'Products', href: '#' },
+          { label: 'Pinot Noir 2023' },
+        ]}
+      />
+    </SubSection>
+  )
+}
+
+function SectionCardSection() {
+  return (
+    <SubSection id="ds-section-card" title="Section Card" description="Bordered card that groups form fields under a titled header. Optional icon and right-aligned action.">
+      <div className="flex flex-col gap-4 max-w-lg">
+        <SectionCard title="Website">
+          <Field label="URL" helper="Public storefront URL.">
+            <TextField placeholder="https://example.com" />
+          </Field>
+        </SectionCard>
+        <SectionCard
+          title="SEO"
+          icon={<GlobeIcon className="w-5 h-5" />}
+          action={<Button variant="outline" size="sm">Edit</Button>}
+        >
+          <Field label="Meta title">
+            <TextField placeholder="Enter meta title" />
+          </Field>
+        </SectionCard>
+      </div>
+    </SubSection>
+  )
+}
+
+function FieldSection() {
+  return (
+    <SubSection id="ds-field" title="Field" description="Label + control + helper-text wrapper. Pair with TextField, Select, or any custom input. Optional `action` slot for inline trailing controls.">
+      <div className="flex flex-col gap-4 max-w-lg">
+        <Field label="Title" required helper="Shown on the storefront.">
+          <TextField placeholder="Enter title" />
+        </Field>
+        <Field
+          label="Subtitle"
+          action={<AiSuggestButton onClick={() => {}} />}
+        >
+          <TextField placeholder="Enter subtitle" />
+        </Field>
+      </div>
+    </SubSection>
+  )
+}
+
+function AiSuggestButtonSection() {
+  const [generating, setGenerating] = useState(false)
+  const fakeGen = () => {
+    setGenerating(true)
+    setTimeout(() => setGenerating(false), 1200)
+  }
+  return (
+    <SubSection id="ds-ai-suggest-button" title="AI Suggest Button" description="Outline button with a sparkles icon and a 'generating…' loading state. Drop into a Field's `action` slot.">
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-3 items-center">
+          <AiSuggestButton onClick={fakeGen} generating={generating} />
+          <span className="typo-caption text-vintiga-foreground-muted">Click to see the loading state.</span>
+        </div>
+        <div className="flex gap-3">
+          <AiSuggestButton onClick={() => {}} size="sm" label="Suggest" />
+          <AiSuggestButton onClick={() => {}} size="md" />
+          <AiSuggestButton onClick={() => {}} size="lg" />
+        </div>
+      </div>
+    </SubSection>
+  )
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-buttons':        ButtonsSection,
@@ -1768,6 +1848,10 @@ export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-widget':         WidgetSection,
   'ds-list-card':      ListCardSection,
   'ds-selection-card': SelectionCardSection,
+  'ds-breadcrumb':     BreadcrumbSection,
+  'ds-section-card':   SectionCardSection,
+  'ds-field':          FieldSection,
+  'ds-ai-suggest-button': AiSuggestButtonSection,
 }
 
 export function ComponentsSection() {

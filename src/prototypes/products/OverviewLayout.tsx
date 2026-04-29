@@ -30,7 +30,7 @@ export function OverviewLayout({
 }) {
   return (
     <Shell bg="slate">
-      <div className="p-vintiga-xl flex flex-col gap-vintiga-xl">
+      <div className="p-vintiga-xl flex flex-col gap-vintiga-xl flex-1 min-h-0">
         <div className="flex items-start justify-between gap-vintiga-lg">
           <div>
             <h1 className="typo-title-section font-semibold text-vintiga-slate-900">{title}</h1>

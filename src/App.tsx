@@ -4,6 +4,8 @@ import contributorsData from './generated/contributors.json'
 import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { FilterBar } from './design-system/shared/FilterBar'
+import { BackArrowIcon } from './design-system/icons/Icons'
+import { SegmentedControl } from './design-system/shared/SegmentedControl'
 import {
   allRoutes,
   allEntries,
@@ -329,48 +331,34 @@ function ViewToggle({ hashPath, view, showFlow }: { hashPath: string; view: View
     if (next === 'prototype') window.location.hash = hashPath
     else window.location.hash = `${hashPath}?view=${next === 'overview' ? 'overview' : 'flow'}`
   }
-  const segments: { key: View; label: string }[] = [
-    { key: 'prototype', label: 'Prototype' },
-    { key: 'overview',  label: 'Design' },
-    ...(showFlow ? [{ key: 'flow' as const, label: 'Flow' }] : []),
+  const options: { value: View; label: string }[] = [
+    { value: 'prototype', label: 'Prototype' },
+    { value: 'overview',  label: 'Design' },
+    ...(showFlow ? [{ value: 'flow' as const, label: 'Flow' }] : []),
   ]
+
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-vintiga-slate-100 px-4 py-2 flex items-center gap-2">
+    <div className="fixed top-0 left-0 right-0 z-50 h-14 bg-vintiga-slate-800 px-4 flex items-center justify-between">
       <a
         href="#/"
-        className="flex-1 min-w-0 inline-flex items-center gap-1.5 typo-body-sm font-semibold text-vintiga-slate-700 hover:text-vintiga-slate-900 no-underline"
+        aria-label="Back to prototypes"
+        className="w-10 h-10 rounded-vintiga-md flex items-center justify-center text-vintiga-white hover:bg-vintiga-slate-700 transition-colors no-underline"
       >
-        <span aria-hidden="true">←</span>
-        Back to prototypes
+        <BackArrowIcon className="w-5 h-5" />
       </a>
-      <div className="bg-vintiga-white rounded-vintiga-md p-1 flex items-center shadow-vintiga-sm">
-        {segments.map((seg) => {
-          const active = view === seg.key
-          return (
-            <button
-              key={seg.key}
-              type="button"
-              onClick={() => setView(seg.key)}
-              aria-pressed={active}
-              className={[
-                'px-3 py-1.5 typo-body-sm font-medium transition-colors border-none cursor-pointer',
-                'rounded-vintiga-sm',
-                active
-                  ? 'bg-vintiga-indigo-600 text-vintiga-white shadow-vintiga-sm'
-                  : 'bg-transparent text-vintiga-slate-600 hover:text-vintiga-slate-900',
-              ].join(' ')}
-            >
-              {seg.label}
-            </button>
-          )
-        })}
-      </div>
+      <SegmentedControl<View>
+        size="sm"
+        value={view}
+        onChange={setView}
+        options={options}
+        aria-label="Prototype view"
+      />
     </div>
   )
 }
 
 // Height of the top bar — used as top padding when a prototype screen is rendered underneath.
-const VIEW_TOGGLE_HEIGHT = 52 // py-2 (16px) + ~36px pill
+const VIEW_TOGGLE_HEIGHT = 56 // h-14
 
 const PHONE_W = 390
 const PHONE_H = 844

@@ -221,22 +221,6 @@ export function GeneralScreen() {
     }, 700)
   }
 
-  // Page-level: name + content + (eventually more). For now: suggests a name
-  // when empty and always regenerates the content.
-  function generatePage() {
-    if (generating) return
-    setGenerating(true)
-    setTimeout(() => {
-      if (!product.name) {
-        const fallback = product.productType === 'Wine' ? '2024 Estate Reserve' : `New ${product.productType || 'product'}`
-        productActions.setName(fallback)
-      }
-      if (editorRef.current) {
-        editorRef.current.innerHTML = generateWineCopy(product.name || '2024 Estate Reserve')
-      }
-      setGenerating(false)
-    }, 700)
-  }
 
 
   // When the page is opened with `?id=p1` (e.g. from the products list),
@@ -259,7 +243,7 @@ export function GeneralScreen() {
   function close() { setModalOpen(false); setEditing(null) }
 
   return (
-    <ProductLayout activeTab="general" onGenerate={generatePage} generating={generating}>
+    <ProductLayout activeTab="general">
       <MediaSection />
 
       <SectionCard title="Summary">

@@ -16,25 +16,23 @@ import {
   UserIcon,
   SettingsIcon,
   BellIcon,
-  ChevronRightIcon,
   SidebarIcon,
   ExternalLinkIcon,
   ChevronDownIcon,
   SearchIcon,
-  EllipsisIcon,
   ImageIcon,
-  SparklesIcon,
   MenuIcon,
   XIcon,
 } from '@ds/icons/Icons'
 import { useProductState, productActions } from './productStore'
 import { VintigaLogo } from '@ds/shared/VintigaLogo'
 import { Button } from '@ds/shared/Button'
-import { IconButton } from '@ds/shared/IconButton'
 import { TextField } from '@ds/shared/TextField'
 import { RightRail, RailSection } from '@ds/shared/RightRail'
-import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
+import { Breadcrumb, BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
+import { SectionCard as DSSectionCard } from '@ds/shared/SectionCard'
+import { Field as DSField } from '@ds/shared/Field'
 
 type TabKey = 'general' | 'pos' | 'website' | 'advanced' | 'modifiers'
 
@@ -74,7 +72,7 @@ function SidebarBody({ onItemClick }: { onItemClick?: () => void }) {
         <div className="h-px bg-vintiga-slate-200 my-2" />
         {NAV_BOTTOM_GROUP.map((item) => <NavItem key={item.label} {...item} />)}
       </nav>
-      <div className="border-t border-vintiga-slate-200 px-2 py-3 flex flex-col gap-1" onClick={onItemClick}>
+      <div className="px-2 py-3 flex flex-col gap-1" onClick={onItemClick}>
         {NAV_FOOTER.map((item) => <NavItem key={item.label} {...item} />)}
       </div>
     </>
@@ -83,7 +81,7 @@ function SidebarBody({ onItemClick }: { onItemClick?: () => void }) {
 
 function Sidebar() {
   return (
-    <aside className="hidden lg:flex w-60 shrink-0 bg-vintiga-white border-r border-vintiga-slate-200 flex-col h-screen">
+    <aside className="hidden lg:flex w-60 shrink-0 bg-vintiga-white border-r border-vintiga-slate-200 flex-col h-full">
       <SidebarBody />
     </aside>
   )
@@ -179,21 +177,16 @@ function TopBar({ onMenuToggle }: { onMenuToggle: () => void }) {
   )
 }
 
-function Breadcrumb({ name }: { name: string }) {
+function ProductActions() {
   return (
-    <nav className="flex items-center gap-1.5 typo-body-sm" aria-label="Breadcrumb">
-      <a href="#/web/products/list" className="text-vintiga-slate-500 hover:text-vintiga-slate-700 no-underline flex items-center">
-        <HomeIcon className="w-4 h-4" />
-      </a>
-      <ChevronRightIcon className="w-3.5 h-3.5 text-vintiga-slate-400" />
-      <a href="#/web/products/list" className="text-vintiga-slate-500 hover:text-vintiga-slate-700 no-underline">Products</a>
-      <ChevronRightIcon className="w-3.5 h-3.5 text-vintiga-slate-400" />
-      <span className="text-vintiga-slate-900 font-semibold">{name || 'New product'}</span>
-    </nav>
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="lg">Cancel</Button>
+      <Button size="lg">Save</Button>
+    </div>
   )
 }
 
-function ProductHeader({ onGenerate, generating }: { onGenerate?: () => void; generating?: boolean }) {
+function ProductHeader() {
   const product = useProductState()
   const primaryImage = product.images[0]
   const displayName = product.name || 'New product'
@@ -223,34 +216,6 @@ function ProductHeader({ onGenerate, generating }: { onGenerate?: () => void; ge
             </span>
           ))}
         </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-2">
-        <Button size="lg">Save</Button>
-        <PopoverMenu
-          align="right"
-          width="w-48"
-          trigger={(_open, toggle) => (
-            <IconButton
-              variant="outline"
-              size="lg"
-              icon={<EllipsisIcon />}
-              aria-label="More actions"
-              onClick={toggle}
-            />
-          )}
-          items={[
-            ...(onGenerate ? [{
-              label: generating ? 'Generating…' : 'Suggest with AI',
-              icon: <SparklesIcon className={generating ? 'animate-pulse' : ''} />,
-              onClick: onGenerate,
-              disabled: generating,
-            }] : []),
-            { label: 'Duplicate', onClick: () => {} },
-            { label: 'Delete',    onClick: () => {}, danger: true },
-          ]}
-        />
       </div>
     </div>
   )
@@ -297,15 +262,9 @@ function RightPanel() {
 export function ProductLayout({
   children,
   activeTab,
-  onGenerate,
-  generating,
 }: {
   children: ReactNode
   activeTab: TabKey
-  /** Page-level "Generate with AI" — renders a sparkles IconButton in the header. */
-  onGenerate?: () => void
-  /** Optional loading flag — disables the button + pulses the icon. */
-  generating?: boolean
 }) {
   const product = useProductState()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -319,19 +278,27 @@ export function ProductLayout({
   }, [])
 
   return (
-    <div className="flex h-screen bg-vintiga-white">
+    <div className="flex h-full bg-vintiga-white">
       <Sidebar />
       <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0">
+        <TopBar onMenuToggle={() => setMobileOpen(true)} />
         <div className="flex-1 flex overflow-hidden">
           <main className="flex-1 overflow-y-auto flex flex-col">
-            <TopBar onMenuToggle={() => setMobileOpen(true)} />
-
             <div className="p-vintiga-xl flex flex-col gap-6">
-              <Breadcrumb name={product.name} />
+              <div className="flex items-center justify-between gap-4">
+                <Breadcrumb
+                  items={[
+                    { icon: <BreadcrumbHomeIcon />, href: '#/web/products/list' },
+                    { label: 'Products', href: '#/web/products/list' },
+                    { label: product.name || 'New product' },
+                  ]}
+                />
+                <ProductActions />
+              </div>
 
-              <ProductHeader onGenerate={onGenerate} generating={generating} />
+              <ProductHeader />
 
               <Tabs active={activeTab} />
 
@@ -355,50 +322,10 @@ export function ProductLayout({
 }
 
 // Shared primitives ──────────────────────────────────────────────────────────
-
-export function SectionCard({ title, icon, action, children }: { title: string; icon?: ReactNode; action?: ReactNode; children: ReactNode }) {
-  return (
-    <section className="border border-vintiga-slate-200 rounded-vintiga-xl bg-vintiga-white p-6 flex flex-col gap-5">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {icon && <span className="text-vintiga-slate-500">{icon}</span>}
-          <h2 className="typo-body-lg font-semibold text-vintiga-slate-900">{title}</h2>
-        </div>
-        {action}
-      </div>
-      {children}
-    </section>
-  )
-}
-
-export function Field({
-  label,
-  required,
-  helper,
-  action,
-  children,
-}: {
-  label: string
-  required?: boolean
-  helper?: string
-  /** Optional inline action shown to the right of the label (e.g. AI generate chip). */
-  action?: ReactNode
-  children: ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <label className="typo-body-sm font-medium text-vintiga-slate-700">
-          {label}
-          {required && <span className="text-vintiga-red-500 ml-0.5">*</span>}
-        </label>
-        {action}
-      </div>
-      {children}
-      {helper && <p className="typo-caption text-vintiga-slate-500">{helper}</p>}
-    </div>
-  )
-}
+// `SectionCard` and `Field` now live in the design system. Re-exported here so
+// existing imports (`from './ProductLayout'`) keep working.
+export const SectionCard = DSSectionCard
+export const Field = DSField
 
 export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
