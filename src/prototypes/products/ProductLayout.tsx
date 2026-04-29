@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useRef } from 'react'
+import { useEffect, useState } from 'react'
 import {
   HomeIcon,
   MessageIcon,
@@ -20,13 +20,21 @@ import {
   SidebarIcon,
   ExternalLinkIcon,
   ChevronDownIcon,
-  XIcon,
   SearchIcon,
   EllipsisIcon,
-  UploadIcon,
   ImageIcon,
+  SparklesIcon,
+  MenuIcon,
+  XIcon,
 } from '@ds/icons/Icons'
 import { useProductState, productActions } from './productStore'
+import { VintigaLogo } from '@ds/shared/VintigaLogo'
+import { Button } from '@ds/shared/Button'
+import { IconButton } from '@ds/shared/IconButton'
+import { TextField } from '@ds/shared/TextField'
+import { RightRail, RailSection } from '@ds/shared/RightRail'
+import { PopoverMenu } from '@ds/shared/PopoverMenu'
+import { SegmentedControl } from '@ds/shared/SegmentedControl'
 
 type TabKey = 'general' | 'pos' | 'website' | 'advanced' | 'modifiers'
 
@@ -43,7 +51,7 @@ const NAV_TOP = [
 
 const NAV_BOTTOM_GROUP = [
   { icon: UsersIcon,         label: 'Customers' },
-  { icon: PackageIcon,       label: 'Products', active: true },
+  { icon: PackageIcon,       label: 'Products', active: true, href: '#/web/products/list' },
   { icon: ShoppingCartIcon,  label: 'Orders' },
   { icon: CalendarIcon,      label: 'Reservations' },
   { icon: BookmarkIcon,      label: 'Clubs' },
@@ -54,26 +62,54 @@ const NAV_FOOTER = [
   { icon: SettingsIcon, label: 'Settings' },
 ] as const
 
-function Sidebar() {
+function SidebarBody({ onItemClick }: { onItemClick?: () => void }) {
   return (
-    <aside className="w-60 shrink-0 bg-vintiga-white border-r border-vintiga-slate-200 flex flex-col h-screen">
-      <div className="h-[57px] flex items-center gap-2 px-4 border-b border-vintiga-slate-200">
-        <div className="w-6 h-6 rounded-md bg-vintiga-indigo-600 flex items-center justify-center">
-          <span className="typo-caption font-semibold text-vintiga-white">V</span>
-        </div>
+    <>
+      <div className="h-16 shrink-0 flex items-center gap-2 px-4 border-b border-vintiga-slate-200">
+        <VintigaLogo size={24} />
         <span className="typo-body-sm font-semibold text-vintiga-slate-900">Vintiga Labs, LLC</span>
       </div>
-
-      <nav className="flex-1 overflow-y-auto px-2 py-3 flex flex-col gap-1">
+      <nav className="flex-1 overflow-y-auto px-2 py-3 flex flex-col gap-1" onClick={onItemClick}>
         {NAV_TOP.map((item) => <NavItem key={item.label} {...item} />)}
         <div className="h-px bg-vintiga-slate-200 my-2" />
         {NAV_BOTTOM_GROUP.map((item) => <NavItem key={item.label} {...item} />)}
       </nav>
-
-      <div className="border-t border-vintiga-slate-200 px-2 py-3 flex flex-col gap-1">
+      <div className="border-t border-vintiga-slate-200 px-2 py-3 flex flex-col gap-1" onClick={onItemClick}>
         {NAV_FOOTER.map((item) => <NavItem key={item.label} {...item} />)}
       </div>
+    </>
+  )
+}
+
+function Sidebar() {
+  return (
+    <aside className="hidden lg:flex w-60 shrink-0 bg-vintiga-white border-r border-vintiga-slate-200 flex-col h-screen">
+      <SidebarBody />
     </aside>
+  )
+}
+
+function MobileSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-50 lg:hidden">
+      <div
+        className="absolute inset-0 bg-black/40"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <aside className="absolute inset-y-0 left-0 w-72 bg-vintiga-white border-r border-vintiga-slate-200 flex flex-col shadow-vintiga-xl animate-slide-in-left">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close menu"
+          className="absolute top-3 right-3 w-9 h-9 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-0 cursor-pointer"
+        >
+          <XIcon className="w-4 h-4 text-vintiga-slate-700" />
+        </button>
+        <SidebarBody onItemClick={onClose} />
+      </aside>
+    </div>
   )
 }
 
@@ -82,39 +118,45 @@ function NavItem({
   label,
   active,
   external,
+  href,
 }: {
   icon: typeof HomeIcon
   label: string
   active?: boolean
   external?: boolean
+  href?: string
 }) {
-  return (
-    <button
-      type="button"
-      className={[
-        'flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-vintiga-md transition-colors cursor-pointer border-none',
-        'typo-body-sm',
-        active
-          ? 'bg-vintiga-indigo-50 text-vintiga-indigo-700 font-semibold'
-          : 'bg-transparent text-vintiga-slate-700 hover:bg-vintiga-slate-50',
-      ].join(' ')}
-    >
+  const cls = [
+    'flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-vintiga-md transition-colors cursor-pointer border-none no-underline',
+    'typo-body-sm',
+    active
+      ? 'bg-vintiga-indigo-50 text-vintiga-indigo-700 font-semibold'
+      : 'bg-transparent text-vintiga-slate-700 hover:bg-vintiga-slate-50',
+  ].join(' ')
+  const inner = (
+    <>
       <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-vintiga-indigo-600' : 'text-vintiga-slate-500'}`} />
       <span className="flex-1">{label}</span>
       {external && <ExternalLinkIcon className="w-3.5 h-3.5 text-vintiga-slate-400" />}
-    </button>
+    </>
   )
+  return href
+    ? <a href={href} className={cls}>{inner}</a>
+    : <button type="button" className={cls}>{inner}</button>
 }
 
-function TopBar() {
+function TopBar({ onMenuToggle }: { onMenuToggle: () => void }) {
   return (
-    <header className="h-[57px] shrink-0 flex items-center justify-between px-6 border-b border-vintiga-slate-200 bg-vintiga-white">
+    <header className="sticky top-0 z-30 h-16 shrink-0 flex items-center justify-between px-6 border-b border-vintiga-slate-200 bg-vintiga-white/75 backdrop-blur-md">
       <button
         type="button"
-        className="w-8 h-8 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-none cursor-pointer"
-        aria-label="Toggle sidebar"
+        onClick={onMenuToggle}
+        className="w-9 h-9 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-none cursor-pointer"
+        aria-label="Open menu"
       >
-        <SidebarIcon className="w-4 h-4 text-vintiga-slate-500" />
+        {/* Burger on mobile, sidebar-collapse glyph on desktop */}
+        <MenuIcon className="w-5 h-5 text-vintiga-slate-700 lg:hidden" />
+        <SidebarIcon className="w-5 h-5 text-vintiga-slate-700 hidden lg:inline" />
       </button>
 
       <div className="flex items-center gap-3">
@@ -140,18 +182,18 @@ function TopBar() {
 function Breadcrumb({ name }: { name: string }) {
   return (
     <nav className="flex items-center gap-1.5 typo-body-sm" aria-label="Breadcrumb">
-      <a href="#/web/products/general" className="text-vintiga-slate-500 hover:text-vintiga-slate-700 no-underline flex items-center">
+      <a href="#/web/products/list" className="text-vintiga-slate-500 hover:text-vintiga-slate-700 no-underline flex items-center">
         <HomeIcon className="w-4 h-4" />
       </a>
       <ChevronRightIcon className="w-3.5 h-3.5 text-vintiga-slate-400" />
-      <a href="#/web/products/general" className="text-vintiga-slate-500 hover:text-vintiga-slate-700 no-underline">Products</a>
+      <a href="#/web/products/list" className="text-vintiga-slate-500 hover:text-vintiga-slate-700 no-underline">Products</a>
       <ChevronRightIcon className="w-3.5 h-3.5 text-vintiga-slate-400" />
       <span className="text-vintiga-slate-900 font-semibold">{name || 'New product'}</span>
     </nav>
   )
 }
 
-function ProductHeader() {
+function ProductHeader({ onGenerate, generating }: { onGenerate?: () => void; generating?: boolean }) {
   const product = useProductState()
   const primaryImage = product.images[0]
   const displayName = product.name || 'New product'
@@ -185,177 +227,127 @@ function ProductHeader() {
 
       {/* Actions */}
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          className="px-4 py-2 rounded-vintiga-md bg-vintiga-indigo-600 typo-body-sm font-semibold text-vintiga-white hover:bg-vintiga-indigo-700 transition-colors border-none cursor-pointer shadow-vintiga-sm"
-        >
-          Save
-        </button>
-        <button
-          type="button"
-          className="w-9 h-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white flex items-center justify-center hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
-          aria-label="More actions"
-        >
-          <EllipsisIcon className="w-4 h-4 text-vintiga-slate-600" />
-        </button>
+        <Button size="lg">Save</Button>
+        <PopoverMenu
+          align="right"
+          width="w-48"
+          trigger={(_open, toggle) => (
+            <IconButton
+              variant="outline"
+              size="lg"
+              icon={<EllipsisIcon />}
+              aria-label="More actions"
+              onClick={toggle}
+            />
+          )}
+          items={[
+            ...(onGenerate ? [{
+              label: generating ? 'Generating…' : 'Suggest with AI',
+              icon: <SparklesIcon className={generating ? 'animate-pulse' : ''} />,
+              onClick: onGenerate,
+              disabled: generating,
+            }] : []),
+            { label: 'Duplicate', onClick: () => {} },
+            { label: 'Delete',    onClick: () => {}, danger: true },
+          ]}
+        />
       </div>
     </div>
   )
 }
 
 function Tabs({ active }: { active: TabKey }) {
-  const items: { key: TabKey; label: string; href: string }[] = [
-    { key: 'general',   label: 'General',   href: '#/web/products/general' },
-    { key: 'pos',       label: 'POS',       href: '#/web/products/pos' },
-    { key: 'website',   label: 'Website',   href: '#/web/products/website' },
-    { key: 'advanced',  label: 'Advanced',  href: '#/web/products/advanced' },
-    { key: 'modifiers', label: 'Modifiers', href: '#/web/products/modifiers' },
-  ]
   return (
-    <div className="bg-vintiga-slate-50 border border-vintiga-slate-200 rounded-vintiga-lg p-1 inline-flex gap-1">
-      {items.map((item) => {
-        const isActive = item.key === active
-        return (
-          <a
-            key={item.key}
-            href={item.href}
-            className={[
-              'px-4 py-1.5 rounded-vintiga-md typo-body-sm font-medium transition-colors no-underline',
-              isActive
-                ? 'bg-vintiga-white text-vintiga-slate-900 shadow-vintiga-sm'
-                : 'text-vintiga-slate-500 hover:text-vintiga-slate-900',
-            ].join(' ')}
-          >
-            {item.label}
-          </a>
-        )
-      })}
-    </div>
+    <SegmentedControl<TabKey>
+      value={active}
+      aria-label="Product editor tabs"
+      options={[
+        { value: 'general',   label: 'General',   href: '#/web/products/general' },
+        { value: 'pos',       label: 'POS',       href: '#/web/products/pos' },
+        { value: 'website',   label: 'Website',   href: '#/web/products/website' },
+        { value: 'advanced',  label: 'Advanced',  href: '#/web/products/advanced' },
+        { value: 'modifiers', label: 'Modifiers', href: '#/web/products/modifiers' },
+      ]}
+    />
   )
 }
 
-function ImagesPanel() {
-  const product = useProductState()
-  const fileInput = useRef<HTMLInputElement>(null)
-
-  function openPicker() { fileInput.current?.click() }
-  function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? [])
-    files.forEach((f) => productActions.addImage(f))
-    // reset so re-selecting the same file still triggers change
-    e.target.value = ''
-  }
-
-  return (
-    <section className="flex flex-col gap-3">
-      <h3 className="typo-body-sm font-semibold text-vintiga-slate-900">Images</h3>
-      <div className="grid grid-cols-3 gap-2">
-        {product.images.map((img) => (
-          <div
-            key={img.id}
-            className="relative aspect-square rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-slate-50 overflow-hidden group"
-          >
-            <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
-            <button
-              type="button"
-              onClick={() => productActions.removeImage(img.id)}
-              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-vintiga-white/90 border border-vintiga-slate-200 flex items-center justify-center cursor-pointer"
-              aria-label={`Remove ${img.name}`}
-            >
-              <XIcon className="w-3 h-3 text-vintiga-slate-700" />
-            </button>
-            <div className="absolute top-1 left-1 w-5 h-5 rounded-sm bg-vintiga-white/90 border border-vintiga-slate-200 flex items-center justify-center text-vintiga-slate-400">
-              <EllipsisIcon className="w-3 h-3" />
-            </div>
-          </div>
-        ))}
-
-        <button
-          type="button"
-          onClick={openPicker}
-          className="aspect-square rounded-vintiga-md border border-dashed border-vintiga-slate-300 bg-vintiga-white flex flex-col items-center justify-center gap-1 hover:border-vintiga-indigo-500 hover:bg-vintiga-indigo-50 transition-colors cursor-pointer"
-        >
-          <UploadIcon className="w-4 h-4 text-vintiga-slate-500" />
-          <span className="typo-caption text-vintiga-slate-500 text-center leading-tight">Upload<br />Image</span>
-        </button>
-      </div>
-      <input
-        ref={fileInput}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={onFiles}
-      />
-    </section>
-  )
-}
 
 function RightPanel() {
   return (
-    <aside className="w-[260px] shrink-0 px-6 py-6 flex flex-col gap-8">
-      <ImagesPanel />
-
-      <section className="flex flex-col gap-2">
-        <h3 className="typo-body-sm font-semibold text-vintiga-slate-900">Status</h3>
+    <RightRail>
+      <RailSection title="Status">
         <span className="typo-body-sm text-vintiga-slate-500">Available</span>
-      </section>
+      </RailSection>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h3 className="typo-body-sm font-semibold text-vintiga-slate-900">Collections</h3>
-          <button
-            type="button"
-            className="typo-body-sm font-medium text-vintiga-slate-700 border border-vintiga-slate-200 rounded-vintiga-md px-3 py-1 hover:bg-vintiga-slate-50 transition-colors bg-vintiga-white cursor-pointer"
-          >
-            Create
-          </button>
-        </div>
-        <label className="flex items-center gap-2 border border-vintiga-slate-200 rounded-vintiga-md px-3 h-9 focus-within:border-vintiga-indigo-500 transition-colors cursor-text bg-vintiga-white">
-          <SearchIcon className="w-4 h-4 text-vintiga-slate-400 shrink-0" />
-          <input
-            type="search"
-            placeholder="Search"
-            className="flex-1 bg-transparent typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 outline-none min-w-0 border-none"
-          />
-        </label>
-      </section>
+      <RailSection
+        title="Collections"
+        action={<Button variant="outline" size="sm">Create</Button>}
+      >
+        <TextField placeholder="Search" leftIcon={<SearchIcon className="w-4 h-4" />} />
+      </RailSection>
 
-      <section className="flex flex-col gap-2">
-        <h3 className="typo-body-sm font-semibold text-vintiga-slate-900">Availability</h3>
+      <RailSection title="Availability">
         <span className="typo-body-sm text-vintiga-slate-500">Secure To: Public</span>
-      </section>
-    </aside>
+      </RailSection>
+    </RightRail>
   )
 }
 
 export function ProductLayout({
   children,
   activeTab,
+  onGenerate,
+  generating,
 }: {
   children: ReactNode
   activeTab: TabKey
+  /** Page-level "Generate with AI" — renders a sparkles IconButton in the header. */
+  onGenerate?: () => void
+  /** Optional loading flag — disables the button + pulses the icon. */
+  generating?: boolean
 }) {
   const product = useProductState()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  // If the URL carries ?id=pX (set by row-click on the catalogue), pre-fill the
+  // editor with that catalogue product. Runs once per id change.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.split('?')[1] ?? '')
+    const id = params.get('id')
+    if (id) productActions.loadFromCatalogue(id)
+  }, [])
+
   return (
     <div className="flex h-screen bg-vintiga-white">
       <Sidebar />
+      <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <TopBar />
-
         <div className="flex-1 flex overflow-hidden">
-          <main className="flex-1 overflow-y-auto px-10 py-6 flex flex-col gap-6">
-            <Breadcrumb name={product.name} />
+          <main className="flex-1 overflow-y-auto flex flex-col">
+            <TopBar onMenuToggle={() => setMobileOpen(true)} />
 
-            <ProductHeader />
+            <div className="p-vintiga-xl flex flex-col gap-6">
+              <Breadcrumb name={product.name} />
 
-            <Tabs active={activeTab} />
+              <ProductHeader onGenerate={onGenerate} generating={generating} />
 
-            <div className="flex flex-col gap-6 pb-12">{children}</div>
+              <Tabs active={activeTab} />
+
+              <div className="flex flex-col gap-6 pb-12">{children}</div>
+            </div>
+
+            {/* Mobile: right rail stacks under content (hidden on desktop) */}
+            <div className="lg:hidden">
+              <RightPanel />
+            </div>
           </main>
 
-          <RightPanel />
+          {/* Desktop: right rail sits beside main */}
+          <div className="hidden lg:flex">
+            <RightPanel />
+          </div>
         </div>
       </div>
     </div>
@@ -383,19 +375,25 @@ export function Field({
   label,
   required,
   helper,
+  action,
   children,
 }: {
   label: string
   required?: boolean
   helper?: string
+  /** Optional inline action shown to the right of the label (e.g. AI generate chip). */
+  action?: ReactNode
   children: ReactNode
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="typo-body-sm font-medium text-vintiga-slate-700">
-        {label}
-        {required && <span className="text-vintiga-red-500 ml-0.5">*</span>}
-      </label>
+      <div className="flex items-center justify-between gap-2">
+        <label className="typo-body-sm font-medium text-vintiga-slate-700">
+          {label}
+          {required && <span className="text-vintiga-red-500 ml-0.5">*</span>}
+        </label>
+        {action}
+      </div>
       {children}
       {helper && <p className="typo-caption text-vintiga-slate-500">{helper}</p>}
     </div>

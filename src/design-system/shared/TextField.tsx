@@ -6,72 +6,80 @@ import { CheckIcon, XIcon } from '@ds/icons/Icons'
 export type TextFieldState = 'default' | 'focus' | 'success' | 'destructive' | 'disabled'
 
 export interface TextFieldProps {
-  /** Floating label rendered above the input */
+  /** Label rendered above the input */
   label?: string
   placeholder?: string
   value?: string
   defaultValue?: string
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
-  /** Controls border colour, ring, and auto icon. Default: 'default' */
+  /** Force a visual state. Default is reactive to :hover / :focus / disabled. */
   state?: TextFieldState
-  /** Helper / hint text below the input (bottom-left) */
+  /** Helper / hint text below the input */
   helperText?: string
-  /** Error or character-count text below the input (bottom-right) */
+  /** Error or character-count text on the right below the input */
   hintText?: string
-  /** Icon rendered on the left inside the field */
   leftIcon?: ReactNode
-  /**
-   * Icon rendered on the right inside the field.
-   * If omitted, success/destructive states auto-show CheckIcon / XIcon.
-   */
   rightIcon?: ReactNode
   type?: string
   id?: string
   name?: string
   autoFocus?: boolean
+  disabled?: boolean
+  required?: boolean
   className?: string
 }
 
-// ─── Style maps ───────────────────────────────────────────────────────────────
+// ─── Style maps (Figma-accurate) ─────────────────────────────────────────────
 
-const WRAPPER: Record<TextFieldState, string> = {
+const WRAPPER_BASE =
+  'flex items-center gap-2 h-10 px-3 rounded-vintiga-md border transition-colors bg-vintiga-white'
+
+const WRAPPER_STATE: Record<TextFieldState, string> = {
   default:
-    'border-vintiga-border bg-vintiga-surface focus-within:border-vintiga-slate-400 focus-within:shadow-[0_0_0_2px_rgba(0,70,173,0.2)]',
+    'border-vintiga-slate-200 hover:border-vintiga-slate-300 focus-within:border-vintiga-indigo-600 focus-within:ring-2 focus-within:ring-vintiga-indigo-100',
   focus:
-    'border-vintiga-slate-400 bg-vintiga-surface shadow-[0_0_0_2px_rgba(0,70,173,0.2)]',
+    'border-vintiga-indigo-600 ring-2 ring-vintiga-indigo-100',
   success:
-    'border-vintiga-green-500 bg-vintiga-surface shadow-[0_0_0_2px_var(--color-vintiga-green-300)]',
+    'border-vintiga-green-500 focus-within:ring-2 focus-within:ring-vintiga-green-100',
   destructive:
-    'border-vintiga-error bg-vintiga-surface shadow-[0_0_0_2px_var(--color-vintiga-red-300)]',
+    'border-vintiga-red-500 focus-within:ring-2 focus-within:ring-vintiga-red-100',
   disabled:
-    'border-vintiga-border bg-vintiga-surface opacity-50 cursor-not-allowed',
+    'border-vintiga-slate-200 bg-vintiga-slate-100 cursor-not-allowed',
+}
+
+const LABEL_STATE: Record<TextFieldState, string> = {
+  default:     'text-vintiga-slate-900',
+  focus:       'text-vintiga-slate-900',
+  success:     'text-vintiga-slate-900',
+  destructive: 'text-vintiga-slate-900',
+  disabled:    'text-vintiga-slate-400',
 }
 
 const ICON_COLOR: Record<TextFieldState, string> = {
-  default:     'text-vintiga-foreground-muted',
-  focus:       'text-vintiga-foreground-muted',
-  success:     'text-vintiga-success',
-  destructive: 'text-vintiga-error',
-  disabled:    'text-vintiga-foreground-muted',
+  default:     'text-vintiga-slate-400',
+  focus:       'text-vintiga-slate-500',
+  success:     'text-vintiga-green-600',
+  destructive: 'text-vintiga-red-600',
+  disabled:    'text-vintiga-slate-400',
 }
 
 const HELPER_COLOR: Record<TextFieldState, string> = {
-  default:     'text-vintiga-foreground-muted',
-  focus:       'text-vintiga-foreground-muted',
-  success:     'text-vintiga-success',
-  destructive: 'text-vintiga-error',
-  disabled:    'text-vintiga-foreground-muted',
+  default:     'text-vintiga-slate-500',
+  focus:       'text-vintiga-slate-500',
+  success:     'text-vintiga-green-600',
+  destructive: 'text-vintiga-red-600',
+  disabled:    'text-vintiga-slate-400',
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function TextField({
   label,
-  placeholder = 'Type here',
+  placeholder,
   value,
   defaultValue,
   onChange,
-  state = 'default',
+  state,
   helperText,
   hintText,
   leftIcon,
@@ -80,45 +88,33 @@ export function TextField({
   id,
   name,
   autoFocus,
+  disabled,
+  required,
   className,
 }: TextFieldProps) {
-  const isDisabled = state === 'disabled'
+  const resolvedState: TextFieldState = disabled ? 'disabled' : state ?? 'default'
 
-  // Auto right icon for success / destructive if none provided
+  // Auto icon for success / destructive states
   const resolvedRightIcon =
     rightIcon !== undefined
       ? rightIcon
-      : state === 'success'
+      : resolvedState === 'success'
       ? <CheckIcon className="w-4 h-4" />
-      : state === 'destructive'
+      : resolvedState === 'destructive'
       ? <XIcon className="w-4 h-4" />
       : null
 
   return (
     <div className={`flex flex-col gap-1.5 w-full ${className ?? ''}`}>
-      {/* Label */}
       {label && (
-        <label
-          htmlFor={id}
-          className="text-[16px] font-light text-vintiga-foreground leading-6 tracking-[0.08px]"
-        >
+        <label htmlFor={id} className={`typo-body-sm font-medium ${LABEL_STATE[resolvedState]}`}>
           {label}
+          {required && <span className="text-vintiga-red-500 ml-0.5">*</span>}
         </label>
       )}
 
-      {/* Input wrapper */}
-      <div
-        className={`
-          flex items-center gap-2 px-4 py-3 rounded-lg border transition-all
-          shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]
-          ${WRAPPER[state]}
-        `.trim().replace(/\s+/g, ' ')}
-      >
-        {leftIcon && (
-          <span className={`shrink-0 flex items-center ${ICON_COLOR[state]}`}>
-            {leftIcon}
-          </span>
-        )}
+      <div className={[WRAPPER_BASE, WRAPPER_STATE[resolvedState]].join(' ')}>
+        {leftIcon && <span className={`shrink-0 ${ICON_COLOR[resolvedState]}`}>{leftIcon}</span>}
 
         <input
           id={id}
@@ -128,30 +124,23 @@ export function TextField({
           defaultValue={defaultValue}
           onChange={onChange}
           placeholder={placeholder}
-          disabled={isDisabled}
+          disabled={resolvedState === 'disabled'}
           autoFocus={autoFocus}
-          className="flex-1 bg-transparent text-[16px] font-light text-vintiga-foreground leading-6 tracking-[0.08px] placeholder:text-vintiga-foreground-muted placeholder:opacity-80 focus:outline-none disabled:cursor-not-allowed min-w-0"
+          className="flex-1 bg-transparent typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:text-vintiga-slate-400 min-w-0 border-none"
         />
 
         {resolvedRightIcon && (
-          <span className={`shrink-0 flex items-center ${ICON_COLOR[state]}`}>
-            {resolvedRightIcon}
-          </span>
+          <span className={`shrink-0 ${ICON_COLOR[resolvedState]}`}>{resolvedRightIcon}</span>
         )}
       </div>
 
-      {/* Bottom row */}
       {(helperText || hintText) && (
         <div className="flex items-center justify-between gap-2">
           {helperText && (
-            <p className={`text-[12px] leading-4 tracking-[0.24px] ${HELPER_COLOR[state]}`}>
-              {helperText}
-            </p>
+            <p className={`typo-caption ${HELPER_COLOR[resolvedState]}`}>{helperText}</p>
           )}
           {hintText && (
-            <p className="text-[12px] leading-4 tracking-[0.24px] text-vintiga-foreground-muted ml-auto">
-              {hintText}
-            </p>
+            <p className="typo-caption text-vintiga-slate-500 ml-auto">{hintText}</p>
           )}
         </div>
       )}

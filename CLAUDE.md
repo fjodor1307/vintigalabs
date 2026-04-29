@@ -109,6 +109,18 @@ This is a shared repo — never work directly on `main`. See `CONTRIBUTING.md` f
 
 This project uses a **mobile-first** approach with **Base UI (@base-ui/react)** + **Vintiga tokens**. Import shared code from `@ds/` (alias for `src/design-system/`). Prototypes live in `src/prototypes/`. See `src/design-system/DESIGN-RULES.md` for the full reference.
 
+### Design System is the source of truth — use it everywhere
+
+When you build a new component or update an existing one in `src/design-system/`, **also propagate the change across every prototype that should use it.**
+
+Workflow:
+1. Build / update the component in `src/design-system/shared/<Name>.tsx`
+2. Add / refresh the showcase in `src/design-system/style-guide/ComponentsSection.tsx`
+3. **Grep for inline implementations of the same pattern across `src/prototypes/`** and replace them with the new component. Common offenders: buttons, checkboxes, segmented controls, tags, search inputs.
+4. Verify in the preview that prototypes still render correctly.
+
+If a prototype needs a one-off variant the DS doesn't cover, **extend the DS component (new prop, new variant)** rather than re-implementing the pattern locally. The only acceptable inline UI is when the pattern is genuinely unique to a single prototype and unlikely to recur.
+
 ### Project Structure
 - Design system: `src/design-system/` (tokens, components, icons, shared)
 - Prototypes: `src/prototypes/{flow-name}/` — import from `@ds/`, never from other prototypes

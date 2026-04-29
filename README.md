@@ -63,7 +63,7 @@ Tokens, spacing, typography, layout templates → **[`src/design-system/DESIGN-R
 
 Always branded. No wireframes. Real copy, no lorem ipsum. Mobile-first, responsive to desktop.
 
-Visit `#/web/style-guide` in the running app for a living reference of tokens and components.
+Visit `#/web/design-system` in the running app for a living reference of tokens and components.
 
 ---
 

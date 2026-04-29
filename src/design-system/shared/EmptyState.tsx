@@ -3,17 +3,19 @@ import type { ReactNode } from 'react'
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface EmptyStateProps {
-  /** Icon to display — rendered in vintiga-primary colour at 32 × 32 px. */
+  /** Icon shown inside the slate-50 pill at the top — typically 20×20 px (`w-5 h-5`). */
   icon?: ReactNode
-  /** Primary message. Required. */
+  /** Primary headline. Required. */
   title: string
-  /** Supporting copy below the title. */
+  /** Supporting description below the title. */
   description?: string
-  /** Label for the optional CTA button. Requires onAction. */
-  actionLabel?: string
-  /** Handler for the optional CTA button. Requires actionLabel. */
-  onAction?: () => void
-  /** Extra classes on the root container (e.g. min-height overrides). */
+  /** Primary action — pass a `<Button>` (or any ReactNode). */
+  action?: ReactNode
+  /** Optional secondary action — sits to the right of the primary. */
+  secondaryAction?: ReactNode
+  /** Show the white-card border + rounded corners. Default: true. */
+  bordered?: boolean
+  /** Extra classes on the root container. */
   className?: string
 }
 
@@ -23,36 +25,40 @@ export function EmptyState({
   icon,
   title,
   description,
-  actionLabel,
-  onAction,
-  className,
+  action,
+  secondaryAction,
+  bordered = true,
+  className = '',
 }: EmptyStateProps) {
   return (
     <div
-      className={`border border-vintiga-border rounded-2xl flex flex-col items-center justify-center gap-vintiga-md px-vintiga-lg py-vintiga-2xl w-full text-center ${className ?? ''}`}
+      className={[
+        'flex flex-col items-center justify-center gap-vintiga-md p-vintiga-xl text-center',
+        bordered ? 'bg-vintiga-white border border-vintiga-slate-200 rounded-2xl' : '',
+        className,
+      ].filter(Boolean).join(' ')}
     >
-      {/* Icon */}
-      {icon != null && (
-        <div className="text-vintiga-primary">{icon}</div>
+      {/* Icon pill */}
+      {icon && (
+        <div className="w-10 h-10 rounded-full bg-vintiga-slate-50 flex items-center justify-center text-vintiga-slate-600 shrink-0 [&>svg]:w-5 [&>svg]:h-5">
+          {icon}
+        </div>
       )}
 
       {/* Text */}
-      <div className="flex flex-col items-center gap-1">
-        <p className="typo-body font-semibold text-vintiga-foreground">{title}</p>
-        {description != null && (
-          <p className="typo-body font-light text-vintiga-foreground-muted">{description}</p>
+      <div className="flex flex-col items-center gap-0.5 w-full">
+        <p className="text-lg leading-7 font-semibold text-vintiga-slate-900">{title}</p>
+        {description && (
+          <p className="typo-body-sm text-vintiga-slate-500">{description}</p>
         )}
       </div>
 
-      {/* Optional CTA */}
-      {actionLabel != null && onAction != null && (
-        <button
-          type="button"
-          onClick={onAction}
-          className="mt-vintiga-sm bg-vintiga-primary text-vintiga-primary-foreground rounded-vintiga-button px-6 py-2.5 typo-body-sm font-semibold hover:bg-vintiga-primary-hover transition-colors"
-        >
-          {actionLabel}
-        </button>
+      {/* Actions */}
+      {(action || secondaryAction) && (
+        <div className="flex items-center gap-vintiga-sm">
+          {action}
+          {secondaryAction}
+        </div>
       )}
     </div>
   )

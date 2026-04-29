@@ -1,8 +1,13 @@
+import { useState } from 'react'
 import { ProductLayout, SectionCard, Field, TextInput, TextArea } from './ProductLayout'
+import { AiSuggestButton } from './AiSuggestButton'
 
 export function WebsiteScreen() {
+  const [generating, setGenerating] = useState(false)
+  const fakeGen = () => { setGenerating(true); setTimeout(() => setGenerating(false), 500) }
+
   return (
-    <ProductLayout activeTab="website">
+    <ProductLayout activeTab="website" onGenerate={fakeGen} generating={generating}>
       <SectionCard title="Website">
         <Field label="Web Status">
           <div className="relative">
@@ -18,21 +23,34 @@ export function WebsiteScreen() {
           </div>
         </Field>
 
-        <Field label="Subtitle">
+        <Field
+          label="Subtitle"
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+        >
           <TextInput placeholder="Enter subtitle" />
         </Field>
 
-        <Field label="Teaser" helper="Displayed on the product collection page online">
+        <Field
+          label="Teaser"
+          helper="Displayed on the product collection page online"
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+        >
           <TextArea placeholder="Enter teaser" />
         </Field>
       </SectionCard>
 
       <SectionCard title="SEO">
-        <Field label="Meta Tag Title">
+        <Field
+          label="Meta Tag Title"
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+        >
           <TextInput placeholder="Enter title" />
         </Field>
 
-        <Field label="Meta Tag Description">
+        <Field
+          label="Meta Tag Description"
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+        >
           <TextArea placeholder="Enter description" />
         </Field>
 

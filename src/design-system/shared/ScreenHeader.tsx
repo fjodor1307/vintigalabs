@@ -9,7 +9,7 @@ interface ScreenHeaderProps {
   showBack?: boolean
   /** Optional centred title between the two buttons. */
   title?: string
-  /** Right-side action — always pass as <IconButton variant="soft" tone="primary" size="lg" /> */
+  /** Right-side action — always pass as <IconButton variant="outline" tone="primary" size="lg" /> */
   rightIcon?: ReactNode
   /** Custom back handler. Defaults to browser history back. */
   onBack?: () => void
@@ -28,7 +28,7 @@ export function ScreenHeader({ progress, showBack = true, title, rightIcon, onBa
         {showBack ? (
           <IconButton
             icon={<BackArrowIcon className="w-5 h-5" />}
-            variant="soft"
+            variant="outline"
             tone="primary"
             size="lg"
             aria-label="Go back"

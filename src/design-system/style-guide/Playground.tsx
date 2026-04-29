@@ -201,7 +201,7 @@ function ColorControl({ value, onChange }: { value: string; onChange: (v: string
 }
 
 /* ------------------------------------------------------------------ */
-/*  ControlsPanel — rendered by StyleGuideScreen in the right rail     */
+/*  ControlsPanel — rendered by DesignSystemScreen in the right rail     */
 /* ------------------------------------------------------------------ */
 
 export function ControlsPanel({
@@ -216,10 +216,9 @@ export function ControlsPanel({
   return (
     <div className="flex flex-col h-full bg-white border-l border-[#e2e8f0]">
 
-      {/* Header row */}
-      <div className="grid grid-cols-[110px_1fr] gap-4 px-4 py-2.5 bg-[#f8fafc] border-b border-[#e2e8f0] shrink-0">
-        <span className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Name</span>
-        <span className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Controls</span>
+      {/* Header row — same height as the breadcrumb / navbar (57 px) */}
+      <div className="flex items-center h-[57px] px-4 bg-[#f8fafc] border-b border-[#e2e8f0] shrink-0">
+        <span className="typo-body-sm font-semibold text-[#0f172a]">Controls</span>
       </div>
 
       {/* Control rows */}

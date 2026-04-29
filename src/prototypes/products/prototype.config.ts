@@ -1,4 +1,7 @@
 import type { PrototypeConfig } from '../_registry'
+import { ProductsListScreen } from './ProductsListScreen'
+import { CollectionsScreen } from './CollectionsScreen'
+import { AddCollectionScreen } from './AddCollectionScreen'
 import { GeneralScreen } from './GeneralScreen'
 import { PosScreen } from './PosScreen'
 import { WebsiteScreen } from './WebsiteScreen'
@@ -8,20 +11,25 @@ import { ModifiersScreen } from './ModifiersScreen'
 export const config: PrototypeConfig = {
   slug: 'products',
   frame: 'web',
-  tags: ['dashboard', 'product-editor'],
+  tags: ['dashboard', 'product-editor', 'collections'],
   entries: [
     {
       name: 'Products',
-      description: 'Five-tab product editor with live image upload: General, POS, Website, Advanced, Modifiers.',
-      path: '#/web/products/general',
-      screens: 5,
+      description: 'Catalogue overview, collections page, add-collection editor, and the five-tab product editor (General / POS / Website / Advanced / Modifiers).',
+      path: '#/web/products/list',
+      screens: 8,
     },
   ],
   routes: {
-    '#/web/products/general':   GeneralScreen,
-    '#/web/products/pos':       PosScreen,
-    '#/web/products/website':   WebsiteScreen,
-    '#/web/products/advanced':  AdvancedScreen,
-    '#/web/products/modifiers': ModifiersScreen,
+    // Overview pages
+    '#/web/products/list':            ProductsListScreen,
+    '#/web/products/collections':     CollectionsScreen,
+    '#/web/products/collections/new': AddCollectionScreen,
+    // Product editor (5 tabs)
+    '#/web/products/general':         GeneralScreen,
+    '#/web/products/pos':             PosScreen,
+    '#/web/products/website':         WebsiteScreen,
+    '#/web/products/advanced':        AdvancedScreen,
+    '#/web/products/modifiers':       ModifiersScreen,
   },
 }

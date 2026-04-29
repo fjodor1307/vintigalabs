@@ -1,141 +1,78 @@
-import { useState } from 'react'
 import { SectionHeader } from './SectionHeader'
 
-/* ------------------------------------------------------------------ */
-/*  Data — full Figma ♦️ Primitives › spacing scale                   */
-/* ------------------------------------------------------------------ */
-
-const spacingTokens = [
-  { name: 'space-0',  cssVar: '--spacing-vintiga-0',  px: 0,  alias: null },
-  { name: 'space-2',  cssVar: '--spacing-vintiga-2',  px: 2,  alias: null },
-  { name: 'space-4',  cssVar: '--spacing-vintiga-4',  px: 4,  alias: 'xs' },
-  { name: 'space-6',  cssVar: '--spacing-vintiga-6',  px: 6,  alias: null },
-  { name: 'space-7',  cssVar: '--spacing-vintiga-7',  px: 7,  alias: null },
-  { name: 'space-8',  cssVar: '--spacing-vintiga-8',  px: 8,  alias: 'sm' },
-  { name: 'space-10', cssVar: '--spacing-vintiga-10', px: 10, alias: null },
-  { name: 'space-12', cssVar: '--spacing-vintiga-12', px: 12, alias: null },
-  { name: 'space-14', cssVar: '--spacing-vintiga-14', px: 14, alias: null },
-  { name: 'space-16', cssVar: '--spacing-vintiga-16', px: 16, alias: 'md' },
-  { name: 'space-20', cssVar: '--spacing-vintiga-20', px: 20, alias: null },
-  { name: 'space-24', cssVar: '--spacing-vintiga-24', px: 24, alias: 'lg' },
-  { name: 'space-28', cssVar: '--spacing-vintiga-28', px: 28, alias: null },
-  { name: 'space-32', cssVar: '--spacing-vintiga-32', px: 32, alias: 'xl' },
-  { name: 'space-40', cssVar: '--spacing-vintiga-40', px: 40, alias: null },
-  { name: 'space-48', cssVar: '--spacing-vintiga-48', px: 48, alias: '2xl' },
-  { name: 'space-56', cssVar: '--spacing-vintiga-56', px: 56, alias: null },
-  { name: 'space-64', cssVar: '--spacing-vintiga-64', px: 64, alias: '3xl' },
-  { name: 'space-72', cssVar: '--spacing-vintiga-72', px: 72, alias: null },
-] as const
-
-/* ------------------------------------------------------------------ */
-/*  Component                                                          */
-/* ------------------------------------------------------------------ */
+// Full Tailwind spacing scale — mirrors Figma variable set.
+// Base unit = 4px (so token `4` = 16px).
+const SPACING: { token: string; rem: string; px: number }[] = [
+  { token: '0',   rem: '0px',      px: 0 },
+  { token: 'px',  rem: '1px',      px: 1 },
+  { token: '0.5', rem: '0.125rem', px: 2 },
+  { token: '1',   rem: '0.25rem',  px: 4 },
+  { token: '1.5', rem: '0.375rem', px: 6 },
+  { token: '2',   rem: '0.5rem',   px: 8 },
+  { token: '2.5', rem: '0.625rem', px: 10 },
+  { token: '3',   rem: '0.75rem',  px: 12 },
+  { token: '3.5', rem: '0.875rem', px: 14 },
+  { token: '4',   rem: '1rem',     px: 16 },
+  { token: '5',   rem: '1.25rem',  px: 20 },
+  { token: '6',   rem: '1.5rem',   px: 24 },
+  { token: '7',   rem: '1.75rem',  px: 28 },
+  { token: '8',   rem: '2rem',     px: 32 },
+  { token: '9',   rem: '2.25rem',  px: 36 },
+  { token: '10',  rem: '2.5rem',   px: 40 },
+  { token: '11',  rem: '2.75rem',  px: 44 },
+  { token: '12',  rem: '3rem',     px: 48 },
+  { token: '14',  rem: '3.5rem',   px: 56 },
+  { token: '16',  rem: '4rem',     px: 64 },
+  { token: '20',  rem: '5rem',     px: 80 },
+  { token: '24',  rem: '6rem',     px: 96 },
+  { token: '28',  rem: '7rem',     px: 112 },
+  { token: '32',  rem: '8rem',     px: 128 },
+  { token: '36',  rem: '9rem',     px: 144 },
+  { token: '40',  rem: '10rem',    px: 160 },
+  { token: '44',  rem: '11rem',    px: 176 },
+  { token: '48',  rem: '12rem',    px: 192 },
+  { token: '52',  rem: '13rem',    px: 208 },
+  { token: '56',  rem: '14rem',    px: 224 },
+  { token: '60',  rem: '15rem',    px: 240 },
+  { token: '64',  rem: '16rem',    px: 256 },
+  { token: '72',  rem: '18rem',    px: 288 },
+  { token: '80',  rem: '20rem',    px: 320 },
+  { token: '96',  rem: '24rem',    px: 384 },
+]
 
 export function SpacingSection() {
-  const [copied, setCopied] = useState<string | null>(null)
-
-  const copy = (value: string) => {
-    navigator.clipboard.writeText(value).catch(() => {})
-    setCopied(value)
-    setTimeout(() => setCopied(null), 1500)
-  }
-
-  const MAX_PX = 72
-
   return (
-    <section>
+    <section className="flex flex-col gap-vintiga-xl">
       <SectionHeader
         id="spacing"
         title="Spacing"
-        description="19 spacing tokens from 0–72px. Figma: ♦️ Primitives › spacing. Tailwind usage: p-vintiga-16, gap-vintiga-24, mb-vintiga-8, etc."
+        description="Tailwind-aligned scale on a 4px grid. Use these tokens for padding, margin, and gap — never raw pixel values."
       />
 
-      {/* Token table */}
-      <div className="border border-vintiga-border rounded-[12px] overflow-hidden mb-10">
-        {/* Header row */}
-        <div className="grid grid-cols-[120px_80px_80px_1fr] gap-4 px-4 py-2.5 bg-vintiga-surface-element border-b border-vintiga-border">
-          <span className="text-[11px] font-semibold text-vintiga-foreground-muted uppercase tracking-wider">Token</span>
-          <span className="text-[11px] font-semibold text-vintiga-foreground-muted uppercase tracking-wider">Value</span>
-          <span className="text-[11px] font-semibold text-vintiga-foreground-muted uppercase tracking-wider">Alias</span>
-          <span className="text-[11px] font-semibold text-vintiga-foreground-muted uppercase tracking-wider">Scale</span>
+      <div className="border border-vintiga-slate-200 rounded-vintiga-lg bg-vintiga-white overflow-hidden">
+        <div className="grid grid-cols-[60px_100px_80px_1fr] items-center gap-4 px-vintiga-lg py-vintiga-sm bg-vintiga-slate-50 border-b border-vintiga-slate-200">
+          <span className="typo-caption font-semibold uppercase tracking-wider text-vintiga-slate-500">Token</span>
+          <span className="typo-caption font-semibold uppercase tracking-wider text-vintiga-slate-500">rem</span>
+          <span className="typo-caption font-semibold uppercase tracking-wider text-vintiga-slate-500">px</span>
+          <span className="typo-caption font-semibold uppercase tracking-wider text-vintiga-slate-500">Preview</span>
         </div>
-
-        {spacingTokens.map((token, i) => {
-          const isCopied = copied === token.cssVar
-          const barWidth = token.px === 0 ? 2 : Math.max(4, (token.px / MAX_PX) * 100)
-
-          return (
+        <div className="overflow-x-auto">
+          {SPACING.map((s) => (
             <div
-              key={token.name}
-              className={`grid grid-cols-[120px_80px_80px_1fr] gap-4 items-center px-4 py-3 ${
-                i < spacingTokens.length - 1 ? 'border-b border-vintiga-border' : ''
-              }`}
+              key={s.token}
+              className="grid grid-cols-[60px_100px_80px_1fr] items-center gap-4 px-vintiga-lg py-2 border-b border-vintiga-slate-100 last:border-b-0"
             >
-              {/* Token name — click to copy */}
-              <button
-                type="button"
-                onClick={() => copy(token.cssVar)}
-                title={`Copy ${token.cssVar}`}
-                className="text-left cursor-pointer group"
-              >
-                <code className="text-[12px] font-mono text-vintiga-foreground group-hover:text-vintiga-primary transition-colors">
-                  {isCopied ? (
-                    <span className="text-vintiga-success font-semibold">✓ Copied</span>
-                  ) : (
-                    token.name
-                  )}
-                </code>
-              </button>
-
-              {/* Value */}
-              <span className="text-[12px] font-mono text-vintiga-foreground-muted">
-                {token.px}px
-              </span>
-
-              {/* Semantic alias */}
-              <span className="text-[11px] text-vintiga-foreground-muted">
-                {token.alias ? (
-                  <code className="bg-vintiga-surface-element px-1.5 py-0.5 rounded text-vintiga-primary">
-                    {token.alias}
-                  </code>
-                ) : (
-                  <span className="text-vintiga-border">—</span>
-                )}
-              </span>
-
-              {/* Bar */}
+              <code className="typo-body-sm font-mono text-vintiga-slate-900">{s.token}</code>
+              <span className="typo-body-sm text-vintiga-slate-600 font-mono">{s.rem}</span>
+              <span className="typo-body-sm text-vintiga-slate-600 font-mono">{s.px}px</span>
               <div className="flex items-center">
-                {token.px === 0 ? (
-                  <div className="w-0.5 h-4 bg-vintiga-border rounded" />
-                ) : (
-                  <div
-                    className="h-5 bg-vintiga-primary-soft border-l-2 border-vintiga-primary rounded-r"
-                    style={{ width: `${barWidth}%` }}
-                  />
-                )}
+                <div
+                  className="h-3 rounded-vintiga-sm bg-vintiga-cyan-400"
+                  style={{ width: `${s.px}px`, minWidth: s.px === 0 ? 0 : 2 }}
+                />
               </div>
             </div>
-          )
-        })}
-      </div>
-
-      {/* Usage example */}
-      <div className="bg-vintiga-surface-element rounded-vintiga-card p-6">
-        <span className="typo-caption font-semibold text-vintiga-foreground-muted uppercase tracking-wider block mb-3">
-          Tailwind Usage
-        </span>
-        <div className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-lg">
-          <div className="flex flex-col gap-vintiga-md">
-            <div className="bg-vintiga-primary-soft rounded-vintiga-input p-vintiga-8">
-              <span className="typo-caption text-vintiga-primary">p-vintiga-8 (8px)</span>
-            </div>
-            <div className="bg-vintiga-primary-soft rounded-vintiga-input p-vintiga-16">
-              <span className="typo-caption text-vintiga-primary">p-vintiga-16 (16px)</span>
-            </div>
-            <div className="bg-vintiga-primary-soft rounded-vintiga-input p-vintiga-24">
-              <span className="typo-caption text-vintiga-primary">p-vintiga-24 (24px)</span>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>

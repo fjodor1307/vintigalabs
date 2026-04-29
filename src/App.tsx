@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Agentation } from 'agentation'
 import contributorsData from './generated/contributors.json'
-import { StyleGuideScreen } from './design-system/style-guide/StyleGuideScreen'
+import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { FilterBar } from './design-system/shared/FilterBar'
 import {
@@ -29,9 +29,9 @@ function useHashRoute() {
   return hash
 }
 
-// Style guide is a tool, not a prototype — registered directly.
+// Design System is a tool, not a prototype — registered directly.
 const webScreens: Record<string, React.ComponentType> = {
-  '#/web/style-guide': StyleGuideScreen,
+  '#/web/design-system': DesignSystemScreen,
   ...allRoutes,
 }
 
@@ -282,14 +282,14 @@ function IndexPage() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
           <a
-            href="#/web/style-guide"
+            href="#/web/design-system"
             className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-primary transition-colors no-underline"
           >
             <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">
-              Style guide
+              Design System
             </h3>
             <p className="typo-body-sm text-vintiga-foreground-muted">
-              Design tokens, typography, colours, components
+              Tokens, typography, colours, components
             </p>
             <span className="typo-body-sm font-semibold text-vintiga-primary mt-vintiga-sm">
               Open →
@@ -378,64 +378,55 @@ const WEB_THUMB_W = 480
 const WEB_INNER_W = 1440
 const WEB_INNER_H = 900
 
-function FlowGrid({ flow, inPhoneFrame }: { flow: { prefix: string; paths: string[] }; inPhoneFrame: boolean }) {
-  const webScale = 0.25
-  const webThumbW = Math.round(WEB_INNER_W * webScale)
-  const webThumbH = Math.round(WEB_INNER_H * webScale)
-  const phoneScale = 0.4
-  const phoneThumbW = Math.round(PHONE_W * phoneScale)
-  const phoneThumbH = Math.round(PHONE_H * phoneScale)
-  const outerW = inPhoneFrame ? phoneThumbW : webThumbW
-  const outerH = inPhoneFrame ? phoneThumbH : webThumbH
-  const scale = inPhoneFrame ? phoneScale : webScale
-  const innerW = inPhoneFrame ? PHONE_W : WEB_INNER_W
-  const innerH = inPhoneFrame ? PHONE_H : WEB_INNER_H
+function FlowGrid({ flow }: { flow: { prefix: string; paths: string[] }; inPhoneFrame: boolean }) {
+  const total = flow.paths.length
   return (
     <div
       className="min-h-screen bg-vintiga-surface-secondary pb-vintiga-2xl px-vintiga-xl overflow-x-auto"
-      style={{ paddingTop: VIEW_TOGGLE_HEIGHT + 48 }}
+      style={{ paddingTop: VIEW_TOGGLE_HEIGHT + 64 }}
     >
-      <div className="flex items-center gap-vintiga-lg w-max mx-auto">
+      {/* Row of nodes + arrows */}
+      <div className="flex items-center gap-0 w-max mx-auto">
         {flow.paths.map((p, idx) => {
-          const src = `${window.location.pathname}${p}?thumbnail=1`
           const label = prettyScreenName(p, flow.prefix)
           return (
-            <div key={p} className="flex items-center gap-vintiga-lg">
+            <div key={p} className="flex items-center">
+              {/* Node */}
               <a
                 href={p}
-                aria-label={`Open ${label} screen`}
-                className="group flex flex-col gap-vintiga-sm cursor-pointer no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vintiga-primary rounded-vintiga-lg"
-                style={{ width: outerW }}
+                aria-label={`Open ${label}`}
+                className="group flex flex-col items-center gap-2 no-underline focus-visible:outline-none"
               >
-                <div
-                  className="relative bg-vintiga-surface overflow-hidden rounded-vintiga-lg ring-1 ring-vintiga-border shadow-vintiga-sm group-hover:shadow-vintiga-md transition-shadow"
-                  style={{ width: outerW, height: outerH }}
-                >
-                  <iframe
-                    src={src}
-                    title={label}
-                    tabIndex={-1}
-                    style={{
-                      width: innerW,
-                      height: innerH,
-                      transform: `scale(${scale})`,
-                      transformOrigin: '0 0',
-                      border: 0,
-                      pointerEvents: 'none',
-                    }}
-                  />
+                {/* Step number pill */}
+                <span className="typo-caption font-semibold text-vintiga-foreground-muted">
+                  {idx + 1} / {total}
+                </span>
+
+                {/* Card */}
+                <div className="w-40 bg-vintiga-surface border border-vintiga-border rounded-vintiga-card px-vintiga-md py-vintiga-md flex flex-col items-center gap-1 shadow-vintiga-sm group-hover:border-vintiga-primary group-hover:shadow-vintiga-md transition-all">
+                  {/* Icon circle */}
+                  <div className="w-8 h-8 rounded-full bg-vintiga-surface-element flex items-center justify-center mb-1">
+                    <span className="typo-caption font-semibold text-vintiga-foreground">
+                      {idx + 1}
+                    </span>
+                  </div>
+                  <span className="typo-body-sm font-semibold text-vintiga-foreground text-center group-hover:text-vintiga-primary transition-colors">
+                    {label}
+                  </span>
                 </div>
-                <span className="typo-body-sm font-semibold text-vintiga-foreground group-hover:text-vintiga-primary transition-colors text-center">
-                  {label}
-                </span>
-                <span className="typo-caption text-vintiga-foreground-muted text-center">
-                  {idx + 1} of {flow.paths.length}
-                </span>
               </a>
-              {idx < flow.paths.length - 1 && (
-                <div className="flex items-center text-vintiga-foreground-muted shrink-0" aria-hidden="true">
+
+              {/* Arrow connector */}
+              {idx < total - 1 && (
+                <div className="w-10 flex items-center justify-center shrink-0 mt-6" aria-hidden="true">
                   <svg width="32" height="12" viewBox="0 0 32 12" fill="none">
-                    <path d="M0 6h28M22 1l6 5-6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M0 6h26M20 1l6 5-6 5"
+                      stroke="var(--color-vintiga-slate-300)"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </div>
               )}
@@ -538,7 +529,7 @@ function App() {
   }
 
   const flow = flowForPath(hashPath)
-  const canToggle = !!flow && !hashPath.startsWith('#/web/style-guide')
+  const canToggle = !!flow && !hashPath.startsWith('#/web/design-system')
   const showFlow = !!flow && flow.paths.length > 1
 
   if (Screen) {

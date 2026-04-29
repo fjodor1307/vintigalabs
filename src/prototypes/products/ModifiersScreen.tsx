@@ -3,7 +3,8 @@ import { ProductLayout, SectionCard } from './ProductLayout'
 import { useProductState, productActions, type ModifierGroup } from './productStore'
 import { ModifierGroupModal } from './ModifierGroupModal'
 import { useRowDrag } from './useRowDrag'
-import { EmptyState } from '@ds/components/EmptyState'
+import { EmptyState } from '@ds/shared/EmptyState'
+import { Button } from '@ds/shared/Button'
 import { PlusIcon, GripVerticalIcon, PencilIcon, ListPlusIcon } from '@ds/icons/Icons'
 
 function MenuIcon({ className }: { className?: string }) {
@@ -51,23 +52,14 @@ export function ModifiersScreen() {
         }
       >
         {modifierGroups.length === 0 ? (
-          <div className="border border-dashed border-vintiga-slate-200 rounded-vintiga-lg bg-vintiga-white">
-            <EmptyState
-              icon={<ListPlusIcon className="w-5 h-5" />}
-              title="No modifier groups yet"
-              description="Let guests add sizes, gift wrap, or pairings."
-              action={
-                <button
-                  type="button"
-                  onClick={openAdd}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
-                >
-                  <PlusIcon className="w-3.5 h-3.5" />
-                  Add Modifier Group
-                </button>
-              }
-            />
-          </div>
+          <EmptyState
+            icon={<ListPlusIcon />}
+            title="No modifier groups yet"
+            description="Let guests add sizes, gift wrap, or pairings."
+            action={
+              <Button variant="outline" leftIcon={<PlusIcon />} onClick={openAdd}>Add Modifier Group</Button>
+            }
+          />
         ) : (
           <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
             <div className="grid grid-cols-[40px_1fr_120px_1fr_80px] items-center gap-4 px-4 py-3 bg-vintiga-slate-50 border-b border-vintiga-slate-200">
