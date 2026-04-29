@@ -13,7 +13,7 @@ src/
 │   ├── components/         ← branded Base UI components
 │   ├── icons/Icons.tsx     ← Lucide-based icon set
 │   ├── shared/             ← ScreenHeader, StatusBar, PhoneFrame, primitives
-│   └── style-guide/        ← living style guide at #/web/style-guide
+│   └── style-guide/        ← Design System viewer at #/web/design-system
 ├── prototypes/             ← one folder per flow (none yet — run `npm run new-prototype`)
 ├── App.tsx
 └── index.css

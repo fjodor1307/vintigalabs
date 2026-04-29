@@ -2,7 +2,7 @@ import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'reac
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type ButtonVariant = 'solid' | 'soft' | 'outline' | 'ghost'
+export type ButtonVariant = 'solid' | 'outline'
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 export type ButtonIntent = 'primary' | 'destructive'
 
@@ -30,106 +30,102 @@ type ButtonAsAnchor = BaseProps &
 
 export type ButtonProps = ButtonAsButton | ButtonAsAnchor
 
-// ─── Style maps ───────────────────────────────────────────────────────────────
+// ─── Size × typography map (Figma-accurate) ───────────────────────────────────
 
 const SIZE: Record<ButtonSize, string> = {
-  xs: 'h-7 px-vintiga-sm gap-[6px] typo-caption',
-  sm: 'h-9 px-vintiga-md gap-vintiga-sm typo-body-sm',
-  md: 'h-10 px-vintiga-md gap-vintiga-sm typo-body-sm',
-  lg: 'h-12 px-vintiga-lg gap-vintiga-sm typo-body-sm',
-  xl: 'h-14 px-vintiga-xl gap-vintiga-sm typo-body-sm',
+  xs: 'px-2 py-1 gap-1.5 text-xs leading-4',
+  sm: 'px-2 py-1 gap-1.5 text-sm leading-5',
+  md: 'px-2.5 py-1.5 gap-1.5 text-sm leading-5',
+  lg: 'px-3 py-2 gap-1.5 text-sm leading-5',
+  xl: 'px-3.5 py-2.5 gap-1.5 text-sm leading-5',
 }
 
-/**
- * Variant × intent → Tailwind classes (enabled state).
- * Hover/active use CSS transitions; disabled is handled separately.
- */
+const ICON_SIZE: Record<ButtonSize, string> = {
+  xs: '[&>svg]:w-4 [&>svg]:h-4',
+  sm: '[&>svg]:w-4 [&>svg]:h-4',
+  md: '[&>svg]:w-5 [&>svg]:h-5',
+  lg: '[&>svg]:w-5 [&>svg]:h-5',
+  xl: '[&>svg]:w-5 [&>svg]:h-5',
+}
+
 const VARIANT_INTENT: Record<ButtonVariant, Record<ButtonIntent, string>> = {
   solid: {
     primary:
-      'bg-vintiga-primary text-vintiga-primary-foreground hover:bg-vintiga-primary-hover active:bg-vintiga-primary-active',
+      'bg-vintiga-indigo-600 text-vintiga-white hover:bg-vintiga-indigo-700 active:bg-vintiga-indigo-700',
     destructive:
-      'bg-vintiga-error text-white hover:opacity-90 active:opacity-80',
+      'bg-vintiga-red-600 text-vintiga-white hover:bg-vintiga-red-700 active:bg-vintiga-red-700',
   },
-  soft: {
-    primary:
-      'bg-vintiga-primary-soft text-vintiga-primary hover:bg-[#d6e6fa] active:bg-[#c0d8f7]',
-    destructive:
-      'bg-vintiga-error-soft text-vintiga-error hover:opacity-90 active:opacity-80',
-  },
+  // Figma "Secondary Button" — slate tones, shadow on interaction
   outline: {
     primary:
-      'border border-vintiga-primary text-vintiga-primary bg-transparent hover:bg-vintiga-primary-soft active:bg-[#d6e6fa]',
+      'bg-vintiga-white text-vintiga-slate-700 border border-vintiga-slate-300 ' +
+      'hover:bg-vintiga-slate-50 hover:text-vintiga-slate-800 hover:shadow-sm ' +
+      'active:bg-vintiga-slate-50 active:text-vintiga-slate-800 active:border-vintiga-slate-400 active:shadow-sm',
     destructive:
-      'border border-vintiga-error text-vintiga-error bg-transparent hover:bg-vintiga-error-soft active:opacity-90',
-  },
-  ghost: {
-    primary:
-      'text-vintiga-primary bg-transparent hover:bg-vintiga-primary-soft active:bg-[#d6e6fa]',
-    destructive:
-      'text-vintiga-error bg-transparent hover:bg-vintiga-error-soft active:opacity-90',
+      'bg-vintiga-white text-vintiga-red-600 border border-vintiga-red-300 ' +
+      'hover:bg-vintiga-red-50 hover:shadow-sm ' +
+      'active:bg-vintiga-red-50 active:border-vintiga-red-400 active:shadow-sm',
   },
 }
 
-const DISABLED =
-  'opacity-40 cursor-not-allowed pointer-events-none'
+const DISABLED: Record<ButtonVariant, string> = {
+  solid:   'bg-vintiga-slate-300 text-vintiga-slate-400 cursor-not-allowed pointer-events-none',
+  outline: 'bg-vintiga-white text-vintiga-slate-300 border border-vintiga-slate-200 cursor-not-allowed pointer-events-none',
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function Button(props: ButtonProps) {
   const {
     variant = 'solid',
-    size = 'lg',
+    size = 'md',
     intent = 'primary',
     leftIcon,
     rightIcon,
-    fullWidth = false,
+    fullWidth,
     className = '',
     children,
-    as,
-    ...rest
   } = props
 
-  const disabled =
-    as !== 'a' && (rest as ButtonHTMLAttributes<HTMLButtonElement>).disabled
+  const isDisabled = 'disabled' in props && props.disabled
 
-  const base = [
-    'inline-flex items-center justify-center rounded-full font-semibold transition-colors cursor-pointer select-none',
+  const classes = [
+    'inline-flex items-center justify-center rounded-vintiga-md transition-colors font-semibold whitespace-nowrap cursor-pointer',
     SIZE[size],
-    VARIANT_INTENT[variant][intent],
+    ICON_SIZE[size],
+    isDisabled ? DISABLED[variant] : VARIANT_INTENT[variant][intent],
     fullWidth ? 'w-full' : '',
-    disabled ? DISABLED : '',
-    // outline/ghost need no default border from browser reset
-    variant === 'solid' || variant === 'soft' ? 'border-none' : '',
     className,
-  ]
-    .filter(Boolean)
-    .join(' ')
+  ].filter(Boolean).join(' ')
 
-  const content = (
-    <>
-      {leftIcon && <span className="shrink-0">{leftIcon}</span>}
-      {children}
-      {rightIcon && <span className="shrink-0">{rightIcon}</span>}
-    </>
-  )
-
-  if (as === 'a') {
-    const { href, ...anchorRest } = rest as ButtonAsAnchor
+  if (props.as === 'a') {
+    const {
+      as: _as, variant: _v, size: _s, intent: _i,
+      leftIcon: _l, rightIcon: _r, fullWidth: _fw,
+      className: _c, children: _ch, ...anchorProps
+    } = props
+    void _as; void _v; void _s; void _i; void _l; void _r; void _fw; void _c; void _ch
     return (
-      <a href={href} className={`${base} no-underline`} {...anchorRest}>
-        {content}
+      <a {...anchorProps} className={classes}>
+        {leftIcon}
+        {children}
+        {rightIcon}
       </a>
     )
   }
 
+  const {
+    as: _as, variant: _v, size: _s, intent: _i,
+    leftIcon: _l, rightIcon: _r, fullWidth: _fw,
+    className: _c, children: _ch, ...buttonProps
+  } = props
+  void _as; void _v; void _s; void _i; void _l; void _r; void _fw; void _c; void _ch
+
   return (
-    <button
-      type="button"
-      className={base}
-      {...(rest as ButtonHTMLAttributes<HTMLButtonElement>)}
-    >
-      {content}
+    <button type={buttonProps.type ?? 'button'} {...buttonProps} className={classes}>
+      {leftIcon}
+      {children}
+      {rightIcon}
     </button>
   )
 }

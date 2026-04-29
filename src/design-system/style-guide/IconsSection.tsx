@@ -1,190 +1,128 @@
+import { useMemo, useState } from 'react'
+import * as Lucide from 'lucide-react'
 import { SectionHeader } from './SectionHeader'
-import {
-  InfoIcon,
-  BackArrowIcon,
-  CheckIcon,
-  CheckCircleIcon,
-  SearchIcon,
-  PlusIcon,
-  ArrowRightIcon,
-  BriefcaseIcon,
-  UserIcon,
-  ClockIcon,
-  ShieldCheckIcon,
-  CreditCardIcon,
-  HomeIcon,
-  ReceiptIcon,
-  WifiIcon,
-  SignalIcon,
-  BatteryIcon,
-  ChevronRightIcon,
-  ChevronDownIcon,
-  WarningIcon,
-  SparklesIcon,
-  SortAZIcon,
-  GlobeIcon,
-  PencilIcon,
-  PenIcon,
-  CalendarIcon,
-  LockIcon,
-  WalletIcon,
-  ChartIcon,
-  ArrowLeftRightIcon,
-  BellIcon,
-  FilterIcon,
-  TrendUpIcon,
-  PiggyBankIcon,
-  CalculatorIcon,
-  TelescopeIcon,
-  UsersGroupIcon,
-  ShieldIcon,
-  ChevronUpDownIcon,
-  UserXIcon,
-  ChevronLeftIcon,
-  BookOpenIcon,
-  BotIcon,
-  EllipsisIcon,
-  BoxIcon,
-  SettingsIcon,
-  HelpIcon,
-  SidebarIcon,
-  MapPinIcon,
-  PhoneIcon,
-  MailIcon,
-  BuildingIcon,
-  DollarIcon,
-  ExportIcon,
-  EyeIcon,
-  FileTextIcon,
-  PercentIcon,
-  AlertTriangleIcon,
-  XIcon,
-  MenuIcon,
-  VintigaLogoIcon,
-} from '../icons/Icons'
+import { SearchIcon } from '@ds/icons/Icons'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type IconComponent = (props: any) => React.ReactNode
+// ─── Build the full library from lucide-react exports ─────────────────────────
 
-// lucideSlug: the icon's name on lucide.dev/icons/<slug>. Null = custom brand icon.
-const icons: { name: string; lucideSlug: string | null; component: IconComponent }[] = [
-  { name: 'AlertTriangleIcon',  lucideSlug: 'triangle-alert',                    component: AlertTriangleIcon },
-  { name: 'ArrowLeftRightIcon', lucideSlug: 'arrow-left-right',                  component: ArrowLeftRightIcon },
-  { name: 'ArrowRightIcon',     lucideSlug: 'arrow-right',                       component: ArrowRightIcon },
-  { name: 'BackArrowIcon',      lucideSlug: 'arrow-left',                        component: BackArrowIcon },
-  { name: 'BatteryIcon',        lucideSlug: 'battery',                           component: BatteryIcon },
-  { name: 'BellIcon',           lucideSlug: 'bell',                              component: BellIcon },
-  { name: 'BookOpenIcon',       lucideSlug: 'book-open',                         component: BookOpenIcon },
-  { name: 'BotIcon',            lucideSlug: 'bot',                               component: BotIcon },
-  { name: 'BoxIcon',            lucideSlug: 'box',                               component: BoxIcon },
-  { name: 'BriefcaseIcon',      lucideSlug: 'briefcase',                         component: BriefcaseIcon },
-  { name: 'BuildingIcon',       lucideSlug: 'building-2',                        component: BuildingIcon },
-  { name: 'CalculatorIcon',     lucideSlug: 'calculator',                        component: CalculatorIcon },
-  { name: 'CalendarIcon',       lucideSlug: 'calendar',                          component: CalendarIcon },
-  { name: 'ChartIcon',          lucideSlug: 'chart-no-axes-column-increasing',   component: ChartIcon },
-  { name: 'CheckCircleIcon',    lucideSlug: 'circle-check',                      component: CheckCircleIcon },
-  { name: 'CheckIcon',          lucideSlug: 'check',                             component: CheckIcon },
-  { name: 'ChevronDownIcon',    lucideSlug: 'chevron-down',                      component: ChevronDownIcon },
-  { name: 'ChevronLeftIcon',    lucideSlug: 'chevron-left',                      component: ChevronLeftIcon },
-  { name: 'ChevronRightIcon',   lucideSlug: 'chevron-right',                     component: ChevronRightIcon },
-  { name: 'ChevronUpDownIcon',  lucideSlug: 'chevrons-up-down',                  component: ChevronUpDownIcon },
-  { name: 'ClockIcon',          lucideSlug: 'clock',                             component: ClockIcon },
-  { name: 'CreditCardIcon',     lucideSlug: 'credit-card',                       component: CreditCardIcon },
-  { name: 'DollarIcon',         lucideSlug: 'dollar-sign',                       component: DollarIcon },
-  { name: 'EllipsisIcon',       lucideSlug: 'ellipsis',                          component: EllipsisIcon },
-  { name: 'ExportIcon',         lucideSlug: 'upload',                            component: ExportIcon },
-  { name: 'EyeIcon',            lucideSlug: 'eye',                               component: EyeIcon },
-  { name: 'FileTextIcon',       lucideSlug: 'file-text',                         component: FileTextIcon },
-  { name: 'FilterIcon',         lucideSlug: 'filter',                            component: FilterIcon },
-  { name: 'GlobeIcon',          lucideSlug: 'globe',                             component: GlobeIcon },
-  { name: 'HelpIcon',           lucideSlug: 'circle-help',                       component: HelpIcon },
-  { name: 'HomeIcon',           lucideSlug: 'house',                             component: HomeIcon },
-  { name: 'InfoIcon',           lucideSlug: 'info',                              component: InfoIcon },
-  { name: 'LockIcon',           lucideSlug: 'lock',                              component: LockIcon },
-  { name: 'MailIcon',           lucideSlug: 'mail',                              component: MailIcon },
-  { name: 'MapPinIcon',         lucideSlug: 'map-pin',                           component: MapPinIcon },
-  { name: 'MenuIcon',           lucideSlug: 'menu',                              component: MenuIcon },
-  { name: 'VintigaLogoIcon',      lucideSlug: null,                                component: VintigaLogoIcon },
-  { name: 'PencilIcon',         lucideSlug: 'pencil',                            component: PencilIcon },
-  { name: 'PenIcon',            lucideSlug: 'pen',                               component: PenIcon },
-  { name: 'PercentIcon',        lucideSlug: 'percent',                           component: PercentIcon },
-  { name: 'PhoneIcon',          lucideSlug: 'phone',                             component: PhoneIcon },
-  { name: 'PiggyBankIcon',      lucideSlug: 'piggy-bank',                        component: PiggyBankIcon },
-  { name: 'PlusIcon',           lucideSlug: 'plus',                              component: PlusIcon },
-  { name: 'ReceiptIcon',        lucideSlug: 'receipt',                           component: ReceiptIcon },
-  { name: 'SearchIcon',         lucideSlug: 'search',                            component: SearchIcon },
-  { name: 'SettingsIcon',       lucideSlug: 'settings',                          component: SettingsIcon },
-  { name: 'ShieldCheckIcon',    lucideSlug: 'shield-check',                      component: ShieldCheckIcon },
-  { name: 'ShieldIcon',         lucideSlug: 'shield',                            component: ShieldIcon },
-  { name: 'SidebarIcon',        lucideSlug: 'panel-left',                        component: SidebarIcon },
-  { name: 'SignalIcon',         lucideSlug: 'signal',                            component: SignalIcon },
-  { name: 'SortAZIcon',         lucideSlug: 'arrow-down-a-z',                    component: SortAZIcon },
-  { name: 'SparklesIcon',       lucideSlug: 'sparkles',                          component: SparklesIcon },
-  { name: 'TelescopeIcon',      lucideSlug: 'telescope',                         component: TelescopeIcon },
-  { name: 'TrendUpIcon',        lucideSlug: 'trending-up',                       component: TrendUpIcon },
-  { name: 'UserIcon',           lucideSlug: 'user',                              component: UserIcon },
-  { name: 'UserXIcon',          lucideSlug: 'user-x',                            component: UserXIcon },
-  { name: 'UsersGroupIcon',     lucideSlug: 'users',                             component: UsersGroupIcon },
-  { name: 'WalletIcon',         lucideSlug: 'wallet',                            component: WalletIcon },
-  { name: 'WarningIcon',        lucideSlug: 'triangle-alert',                    component: WarningIcon },
-  { name: 'WifiIcon',           lucideSlug: 'wifi',                              component: WifiIcon },
-  { name: 'XIcon',              lucideSlug: 'x',                                 component: XIcon },
-]
+// Non-icon exports that ship alongside the icon components.
+const NON_ICONS = new Set([
+  'default',
+  'createLucideIcon',
+  'Icon',
+  'DynamicIcon',
+  'dynamicIconImports',
+  'icons',
+  'createElement',
+  'toPascalCase',
+  'mergeClasses',
+])
+
+// Build a unique list. Lucide ships aliases (old PascalCase names pointing at
+// the same component) — dedupe by component reference, keep the shortest name.
+const LUCIDE_ICONS: { name: string; slug: string; component: React.ComponentType<{ className?: string }> }[] =
+  (() => {
+    const byComponent = new Map<unknown, string>()
+    for (const [name, value] of Object.entries(Lucide as Record<string, unknown>)) {
+      if (NON_ICONS.has(name)) continue
+      if (name.endsWith('Icon') && name !== 'Icon') continue
+      if (typeof value !== 'object' && typeof value !== 'function') continue
+      if (!/^[A-Z]/.test(name)) continue
+      const existing = byComponent.get(value)
+      if (!existing || name.length < existing.length) {
+        byComponent.set(value, name)
+      }
+    }
+    return [...byComponent.entries()]
+      .map(([component, name]) => ({
+        name,
+        slug: toKebab(name),
+        component: component as React.ComponentType<{ className?: string }>,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  })()
+
+function toKebab(pascal: string): string {
+  return pascal
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
+    .toLowerCase()
+}
+
+// ─── Section ──────────────────────────────────────────────────────────────────
 
 export function IconsSection() {
+  const [query, setQuery] = useState('')
+  const [copied, setCopied] = useState<string | null>(null)
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return LUCIDE_ICONS
+    const q = query.toLowerCase().trim()
+    return LUCIDE_ICONS.filter((i) => i.name.toLowerCase().includes(q) || i.slug.includes(q))
+  }, [query])
+
+  function copyImport(name: string) {
+    const snippet = `import { ${name} } from 'lucide-react'`
+    navigator.clipboard?.writeText(snippet)
+    setCopied(name)
+    window.setTimeout(() => setCopied((c) => (c === name ? null : c)), 1500)
+  }
+
   return (
-    <section>
+    <section className="flex flex-col gap-vintiga-xl">
       <SectionHeader
         id="icons"
         title="Icons"
-        description={`${icons.length} icons — Lucide stroke-based SVGs + Vintiga brand mark. Click any Lucide icon to open its page on lucide.dev.`}
+        description={`${LUCIDE_ICONS.length} Lucide icons — stroke-based SVGs, tree-shakeable. Click an icon to copy its import; hold Shift-click to open on lucide.dev.`}
       />
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-        {icons.map(({ name, lucideSlug, component: Icon }) => {
-          const inner = (
-            <div className="flex flex-col items-center gap-2 p-3 rounded-vintiga-input hover:bg-vintiga-surface-element transition-colors w-full">
-              <div className="w-10 h-10 flex items-center justify-center text-vintiga-foreground">
-                <Icon className="w-5 h-5" />
-              </div>
-              <span className="typo-caption text-vintiga-foreground-muted text-center leading-tight">
-                {name.replace('Icon', '')}
-              </span>
-              {lucideSlug && (
-                <span className="typo-caption text-vintiga-foreground-muted/50 text-center leading-tight text-[10px]">
-                  {lucideSlug}
-                </span>
-              )}
-              {!lucideSlug && (
-                <span className="typo-caption text-vintiga-primary/60 text-center leading-tight text-[10px]">
-                  brand
-                </span>
-              )}
-            </div>
-          )
+      {/* Search */}
+      <label className="flex items-center gap-2 border border-vintiga-slate-200 rounded-vintiga-lg bg-vintiga-white px-vintiga-md h-11 focus-within:border-vintiga-indigo-500 focus-within:ring-2 focus-within:ring-vintiga-indigo-100 transition-colors cursor-text max-w-md">
+        <SearchIcon className="w-4 h-4 text-vintiga-slate-400 shrink-0" />
+        <input
+          type="search"
+          placeholder={`Search ${LUCIDE_ICONS.length} icons… (e.g. "arrow", "user", "chart")`}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="flex-1 bg-transparent typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 outline-none min-w-0 border-none"
+        />
+      </label>
 
-          if (lucideSlug) {
-            return (
-              <a
-                key={name}
-                href={`https://lucide.dev/icons/${lucideSlug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex no-underline"
-                title={`Open ${lucideSlug} on lucide.dev`}
-              >
-                {inner}
-              </a>
-            )
-          }
+      <p className="typo-caption text-vintiga-slate-500">
+        Showing {filtered.length.toLocaleString()} of {LUCIDE_ICONS.length.toLocaleString()} icons. Full library: <a href="https://lucide.dev/icons/" target="_blank" rel="noopener noreferrer" className="text-vintiga-indigo-600 hover:underline">lucide.dev/icons</a>
+      </p>
 
-          return (
-            <div key={name} className="flex">
-              {inner}
+      {/* Grid */}
+      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-vintiga-sm">
+        {filtered.map(({ name, slug, component: Icon }) => (
+          <button
+            key={name}
+            type="button"
+            onClick={(e) => {
+              if (e.shiftKey) {
+                window.open(`https://lucide.dev/icons/${slug}`, '_blank', 'noopener')
+              } else {
+                copyImport(name)
+              }
+            }}
+            title={`${name}\nClick to copy import\nShift+click to open on lucide.dev`}
+            className="group flex flex-col items-center gap-1 p-vintiga-sm rounded-vintiga-md hover:bg-vintiga-slate-50 active:bg-vintiga-slate-100 transition-colors border-none bg-transparent cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white flex items-center justify-center text-vintiga-slate-700 group-hover:text-vintiga-slate-900 group-hover:border-vintiga-slate-300 transition-colors">
+              <Icon className="w-5 h-5" />
             </div>
-          )
-        })}
+            <span className="typo-caption text-vintiga-slate-500 text-center leading-tight truncate w-full">
+              {copied === name ? 'Copied!' : slug}
+            </span>
+          </button>
+        ))}
       </div>
+
+      {filtered.length === 0 && (
+        <div className="text-center py-vintiga-2xl">
+          <p className="typo-body text-vintiga-slate-500">No icons match "{query}".</p>
+        </div>
+      )}
     </section>
   )
 }

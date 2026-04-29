@@ -2,16 +2,16 @@ import type { ReactNode } from 'react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type IconButtonVariant = 'solid' | 'soft' | 'outline' | 'ghost'
+export type IconButtonVariant = 'solid' | 'outline'
 export type IconButtonSize    = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-export type IconButtonTone    = 'primary' | 'destructive' | 'neutral'
+export type IconButtonTone    = 'primary' | 'destructive'
 
 export interface IconButtonProps {
   /** The icon to render inside the button */
   icon: ReactNode
-  /** Visual style of the button. Default: 'soft' */
+  /** Visual style. Default: 'solid' */
   variant?: IconButtonVariant
-  /** Size of the button. Default: 'md' */
+  /** Size. Default: 'md' */
   size?: IconButtonSize
   /** Colour tone. Default: 'primary' */
   tone?: IconButtonTone
@@ -23,51 +23,41 @@ export interface IconButtonProps {
   type?: 'button' | 'submit' | 'reset'
 }
 
-// ─── Size config ──────────────────────────────────────────────────────────────
+// ─── Size map (matches Button padding so square buttons sit in-line) ─────────
 
-const SIZE_CONFIG: Record<IconButtonSize, { padding: string; iconSize: string }> = {
-  xs: { padding: 'p-1',    iconSize: 'w-4 h-4' },
-  sm: { padding: 'p-2',    iconSize: 'w-4 h-4' },
-  md: { padding: 'p-2.5',  iconSize: 'w-5 h-5' },
-  lg: { padding: 'p-3',    iconSize: 'w-5 h-5' },
-  xl: { padding: 'p-3.5',  iconSize: 'w-5 h-5' },
+const SIZE: Record<IconButtonSize, string> = {
+  xs: 'p-1 [&>svg]:w-4 [&>svg]:h-4',           // 24×24
+  sm: 'p-1.5 [&>svg]:w-4 [&>svg]:h-4',         // 28×28
+  md: 'p-1.5 [&>svg]:w-5 [&>svg]:h-5',         // 32×32
+  lg: 'p-2 [&>svg]:w-5 [&>svg]:h-5',           // 36×36
+  xl: 'p-2.5 [&>svg]:w-5 [&>svg]:h-5',         // 40×40
 }
 
-// ─── Variant + tone → class strings ──────────────────────────────────────────
+const VARIANT_TONE: Record<IconButtonVariant, Record<IconButtonTone, string>> = {
+  solid: {
+    primary:
+      'bg-vintiga-indigo-600 text-vintiga-white hover:bg-vintiga-indigo-700 active:bg-vintiga-indigo-700',
+    destructive:
+      'bg-vintiga-red-600 text-vintiga-white hover:bg-vintiga-red-700 active:bg-vintiga-red-700',
+  },
+  outline: {
+    primary:
+      'bg-vintiga-white text-vintiga-slate-900 border border-vintiga-slate-300 hover:bg-vintiga-indigo-50 hover:border-vintiga-indigo-500 active:bg-vintiga-indigo-50 active:border-vintiga-indigo-600',
+    destructive:
+      'bg-vintiga-white text-vintiga-red-600 border border-vintiga-red-200 hover:bg-vintiga-red-50 hover:border-vintiga-red-500 active:bg-vintiga-red-50 active:border-vintiga-red-600',
+  },
+}
 
-function getVariantClasses(variant: IconButtonVariant, tone: IconButtonTone): string {
-  if (tone === 'neutral') {
-    if (variant === 'solid')   return 'bg-vintiga-slate-700 text-white hover:bg-vintiga-slate-800 active:bg-vintiga-slate-700 disabled:opacity-50'
-    if (variant === 'soft')    return 'bg-vintiga-surface-element text-vintiga-foreground hover:bg-vintiga-border active:bg-vintiga-surface-element disabled:opacity-50'
-    if (variant === 'outline') return 'border border-vintiga-border text-vintiga-foreground bg-transparent hover:bg-vintiga-slate-50 active:bg-transparent disabled:opacity-50'
-    /* ghost */                return 'bg-transparent text-vintiga-foreground hover:bg-vintiga-surface-element active:bg-transparent disabled:opacity-50'
-  }
-  if (variant === 'solid') {
-    return tone === 'primary'
-      ? 'bg-vintiga-primary text-white hover:bg-vintiga-primary-hover active:bg-vintiga-primary disabled:bg-vintiga-slate-300 disabled:opacity-50'
-      : 'bg-vintiga-error text-white hover:opacity-90 active:opacity-100 disabled:opacity-50'
-  }
-  if (variant === 'soft') {
-    return tone === 'primary'
-      ? 'bg-vintiga-primary-soft text-vintiga-primary hover:bg-vintiga-blue-300 active:bg-vintiga-primary-soft disabled:bg-vintiga-slate-300 disabled:opacity-50'
-      : 'bg-vintiga-error-soft text-vintiga-error hover:bg-vintiga-red-200 active:bg-vintiga-error-soft disabled:opacity-50'
-  }
-  if (variant === 'outline') {
-    return tone === 'primary'
-      ? 'border border-vintiga-primary text-vintiga-primary bg-transparent hover:bg-vintiga-blue-300 hover:border-vintiga-primary-hover active:bg-transparent disabled:border-vintiga-foreground-muted disabled:text-vintiga-foreground-muted disabled:opacity-50'
-      : 'border border-vintiga-error text-vintiga-error bg-transparent hover:bg-vintiga-red-200 active:bg-transparent disabled:opacity-50'
-  }
-  // ghost
-  return tone === 'primary'
-    ? 'bg-transparent text-vintiga-primary hover:bg-vintiga-blue-300 active:bg-transparent disabled:opacity-50'
-    : 'bg-transparent text-vintiga-error hover:bg-vintiga-red-200 active:bg-transparent disabled:opacity-50'
+const DISABLED: Record<IconButtonVariant, string> = {
+  solid: 'bg-vintiga-slate-300 text-vintiga-slate-400 cursor-not-allowed pointer-events-none',
+  outline: 'bg-vintiga-white text-vintiga-slate-400 border border-vintiga-slate-200 cursor-not-allowed pointer-events-none',
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function IconButton({
   icon,
-  variant = 'soft',
+  variant = 'solid',
   size = 'md',
   tone = 'primary',
   disabled = false,
@@ -76,8 +66,12 @@ export function IconButton({
   className,
   type = 'button',
 }: IconButtonProps) {
-  const { padding, iconSize } = SIZE_CONFIG[size]
-  const variantClasses = getVariantClasses(variant, tone)
+  const classes = [
+    'inline-flex items-center justify-center rounded-vintiga-md transition-colors border-none cursor-pointer shrink-0',
+    SIZE[size],
+    disabled ? DISABLED[variant] : VARIANT_TONE[variant][tone],
+    className ?? '',
+  ].filter(Boolean).join(' ')
 
   return (
     <button
@@ -85,16 +79,9 @@ export function IconButton({
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      className={`
-        inline-flex items-center justify-center rounded-full
-        transition-colors cursor-pointer border-none
-        disabled:cursor-not-allowed
-        ${padding} ${variantClasses} ${className ?? ''}
-      `.trim().replace(/\s+/g, ' ')}
+      className={classes}
     >
-      <span className={`${iconSize} flex items-center justify-center`}>
-        {icon}
-      </span>
+      {icon}
     </button>
   )
 }

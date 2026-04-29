@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   HomeIcon,
   MessageIcon,
@@ -27,6 +27,8 @@ import {
   ImageIcon,
 } from '@ds/icons/Icons'
 import { useProductState, productActions } from './productStore'
+import { VintigaLogo } from '@ds/shared/VintigaLogo'
+import { SegmentedControl } from '@ds/shared/SegmentedControl'
 
 type TabKey = 'general' | 'pos' | 'website' | 'advanced' | 'modifiers'
 
@@ -43,7 +45,7 @@ const NAV_TOP = [
 
 const NAV_BOTTOM_GROUP = [
   { icon: UsersIcon,         label: 'Customers' },
-  { icon: PackageIcon,       label: 'Products', active: true },
+  { icon: PackageIcon,       label: 'Products', active: true, href: '#/web/products/list' },
   { icon: ShoppingCartIcon,  label: 'Orders' },
   { icon: CalendarIcon,      label: 'Reservations' },
   { icon: BookmarkIcon,      label: 'Clubs' },
@@ -58,9 +60,7 @@ function Sidebar() {
   return (
     <aside className="w-60 shrink-0 bg-vintiga-white border-r border-vintiga-slate-200 flex flex-col h-screen">
       <div className="h-[57px] flex items-center gap-2 px-4 border-b border-vintiga-slate-200">
-        <div className="w-6 h-6 rounded-md bg-vintiga-indigo-600 flex items-center justify-center">
-          <span className="typo-caption font-semibold text-vintiga-white">V</span>
-        </div>
+        <VintigaLogo size={24} />
         <span className="typo-body-sm font-semibold text-vintiga-slate-900">Vintiga Labs, LLC</span>
       </div>
 
@@ -82,28 +82,31 @@ function NavItem({
   label,
   active,
   external,
+  href,
 }: {
   icon: typeof HomeIcon
   label: string
   active?: boolean
   external?: boolean
+  href?: string
 }) {
-  return (
-    <button
-      type="button"
-      className={[
-        'flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-vintiga-md transition-colors cursor-pointer border-none',
-        'typo-body-sm',
-        active
-          ? 'bg-vintiga-indigo-50 text-vintiga-indigo-700 font-semibold'
-          : 'bg-transparent text-vintiga-slate-700 hover:bg-vintiga-slate-50',
-      ].join(' ')}
-    >
+  const cls = [
+    'flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-vintiga-md transition-colors cursor-pointer border-none no-underline',
+    'typo-body-sm',
+    active
+      ? 'bg-vintiga-indigo-50 text-vintiga-indigo-700 font-semibold'
+      : 'bg-transparent text-vintiga-slate-700 hover:bg-vintiga-slate-50',
+  ].join(' ')
+  const inner = (
+    <>
       <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-vintiga-indigo-600' : 'text-vintiga-slate-500'}`} />
       <span className="flex-1">{label}</span>
       {external && <ExternalLinkIcon className="w-3.5 h-3.5 text-vintiga-slate-400" />}
-    </button>
+    </>
   )
+  return href
+    ? <a href={href} className={cls}>{inner}</a>
+    : <button type="button" className={cls}>{inner}</button>
 }
 
 function TopBar() {
@@ -140,11 +143,11 @@ function TopBar() {
 function Breadcrumb({ name }: { name: string }) {
   return (
     <nav className="flex items-center gap-1.5 typo-body-sm" aria-label="Breadcrumb">
-      <a href="#/web/products/general" className="text-vintiga-slate-500 hover:text-vintiga-slate-700 no-underline flex items-center">
+      <a href="#/web/products/list" className="text-vintiga-slate-500 hover:text-vintiga-slate-700 no-underline flex items-center">
         <HomeIcon className="w-4 h-4" />
       </a>
       <ChevronRightIcon className="w-3.5 h-3.5 text-vintiga-slate-400" />
-      <a href="#/web/products/general" className="text-vintiga-slate-500 hover:text-vintiga-slate-700 no-underline">Products</a>
+      <a href="#/web/products/list" className="text-vintiga-slate-500 hover:text-vintiga-slate-700 no-underline">Products</a>
       <ChevronRightIcon className="w-3.5 h-3.5 text-vintiga-slate-400" />
       <span className="text-vintiga-slate-900 font-semibold">{name || 'New product'}</span>
     </nav>
@@ -204,33 +207,18 @@ function ProductHeader() {
 }
 
 function Tabs({ active }: { active: TabKey }) {
-  const items: { key: TabKey; label: string; href: string }[] = [
-    { key: 'general',   label: 'General',   href: '#/web/products/general' },
-    { key: 'pos',       label: 'POS',       href: '#/web/products/pos' },
-    { key: 'website',   label: 'Website',   href: '#/web/products/website' },
-    { key: 'advanced',  label: 'Advanced',  href: '#/web/products/advanced' },
-    { key: 'modifiers', label: 'Modifiers', href: '#/web/products/modifiers' },
-  ]
   return (
-    <div className="bg-vintiga-slate-50 border border-vintiga-slate-200 rounded-vintiga-lg p-1 inline-flex gap-1">
-      {items.map((item) => {
-        const isActive = item.key === active
-        return (
-          <a
-            key={item.key}
-            href={item.href}
-            className={[
-              'px-4 py-1.5 rounded-vintiga-md typo-body-sm font-medium transition-colors no-underline',
-              isActive
-                ? 'bg-vintiga-white text-vintiga-slate-900 shadow-vintiga-sm'
-                : 'text-vintiga-slate-500 hover:text-vintiga-slate-900',
-            ].join(' ')}
-          >
-            {item.label}
-          </a>
-        )
-      })}
-    </div>
+    <SegmentedControl<TabKey>
+      value={active}
+      aria-label="Product editor tabs"
+      options={[
+        { value: 'general',   label: 'General',   href: '#/web/products/general' },
+        { value: 'pos',       label: 'POS',       href: '#/web/products/pos' },
+        { value: 'website',   label: 'Website',   href: '#/web/products/website' },
+        { value: 'advanced',  label: 'Advanced',  href: '#/web/products/advanced' },
+        { value: 'modifiers', label: 'Modifiers', href: '#/web/products/modifiers' },
+      ]}
+    />
   )
 }
 
@@ -293,7 +281,7 @@ function ImagesPanel() {
 
 function RightPanel() {
   return (
-    <aside className="w-[260px] shrink-0 px-6 py-6 flex flex-col gap-8">
+    <aside className="w-[260px] shrink-0 p-vintiga-xl flex flex-col gap-8">
       <ImagesPanel />
 
       <section className="flex flex-col gap-2">
@@ -337,6 +325,15 @@ export function ProductLayout({
   activeTab: TabKey
 }) {
   const product = useProductState()
+
+  // If the URL carries ?id=pX (set by row-click on the catalogue), pre-fill the
+  // editor with that catalogue product. Runs once per id change.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.split('?')[1] ?? '')
+    const id = params.get('id')
+    if (id) productActions.loadFromCatalogue(id)
+  }, [])
+
   return (
     <div className="flex h-screen bg-vintiga-white">
       <Sidebar />
@@ -345,7 +342,7 @@ export function ProductLayout({
         <TopBar />
 
         <div className="flex-1 flex overflow-hidden">
-          <main className="flex-1 overflow-y-auto px-10 py-6 flex flex-col gap-6">
+          <main className="flex-1 overflow-y-auto p-vintiga-xl flex flex-col gap-6">
             <Breadcrumb name={product.name} />
 
             <ProductHeader />

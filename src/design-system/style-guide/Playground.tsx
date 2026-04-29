@@ -201,7 +201,7 @@ function ColorControl({ value, onChange }: { value: string; onChange: (v: string
 }
 
 /* ------------------------------------------------------------------ */
-/*  ControlsPanel — rendered by StyleGuideScreen in the right rail     */
+/*  ControlsPanel — rendered by DesignSystemScreen in the right rail     */
 /* ------------------------------------------------------------------ */
 
 export function ControlsPanel({

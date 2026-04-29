@@ -2,9 +2,12 @@ import { useState, useCallback, useEffect } from 'react'
 import { PlaygroundProvider, ControlsPanel, usePlaygroundContext } from './Playground'
 import { ColorPaletteSection } from './ColorPaletteSection'
 import { TypographySection } from './TypographySection'
+import { FontWeightSection } from './FontWeightSection'
 import { SpacingSection } from './SpacingSection'
-import { RadiusAndShadowsSection } from './RadiusAndShadowsSection'
+import { RadiusSection } from './RadiusSection'
+import { ShadowsSection } from './ShadowsSection'
 import { IconsSection } from './IconsSection'
+import { LogoSection } from './LogoSection'
 import { ANIMATION_PAGES } from './AnimationsSection'
 import { COMPONENT_PAGES } from './ComponentsSection'
 import {
@@ -28,19 +31,17 @@ import type { LucideIcon } from 'lucide-react'
 
 // ─── Logo ─────────────────────────────────────────────────────────────────────
 
+import { VintigaLogo } from '@ds/shared/VintigaLogo'
+
 function DsLogoIcon() {
-  return (
-    <div className="w-6 h-6 rounded-[6px] bg-vintiga-primary flex items-center justify-center">
-      <span className="typo-caption font-semibold text-vintiga-primary-foreground">V</span>
-    </div>
-  )
+  return <VintigaLogo size={24} />
 }
 
 function DsLogo() {
   return (
     <div className="flex items-center gap-2">
-      <DsLogoIcon />
-      <span className="typo-body-sm font-semibold text-vintiga-foreground">Vintiga</span>
+      <VintigaLogo size={24} />
+      <span className="typo-body-sm font-semibold text-vintiga-foreground">Design System</span>
     </div>
   )
 }
@@ -55,10 +56,12 @@ const NAV: NavGroup[] = [
   {
     label: 'Foundation',
     items: [
-      { id: 'colors',         label: 'Colors',           icon: EyeIcon },
-      { id: 'typography',     label: 'Typography',       icon: BookOpenIcon },
-      { id: 'spacing',        label: 'Spacing',          icon: ArrowLeftRightIcon },
-      { id: 'radius-shadows',  label: 'Radius & Shadows', icon: BoxIcon },
+      { id: 'colors',       label: 'Colors',       icon: EyeIcon },
+      { id: 'typography',   label: 'Typography',   icon: BookOpenIcon },
+      { id: 'font-weight',  label: 'Font Weights', icon: PenIcon },
+      { id: 'spacing',      label: 'Spacing',      icon: ArrowLeftRightIcon },
+      { id: 'radius',       label: 'Radius',       icon: BoxIcon },
+      { id: 'shadows',      label: 'Shadows',      icon: SparklesIcon },
     ],
     subGroups: [
       {
@@ -73,6 +76,7 @@ const NAV: NavGroup[] = [
   {
     label: 'Assets',
     items: [
+      { id: 'logo',          label: 'Logo',         icon: SparklesIcon },
       { id: 'icons',         label: 'Icons',        icon: BoxIcon },
     ],
   },
@@ -102,6 +106,7 @@ const NAV: NavGroup[] = [
         icon: BellIcon,
         items: [
           { id: 'ds-alert-soft',   label: 'Alert' },
+          { id: 'ds-toast',        label: 'Toast' },
           { id: 'ds-progress',     label: 'Progress' },
           { id: 'ds-empty-states', label: 'Empty States' },
           { id: 'ds-skeletons',    label: 'Skeletons' },
@@ -115,22 +120,31 @@ const NAV: NavGroup[] = [
           { id: 'ds-dialog',       label: 'Dialog' },
           { id: 'ds-tooltip',      label: 'Tooltip' },
           { id: 'ds-bottom-sheet', label: 'Bottom Sheet' },
+          { id: 'ds-dropdown',     label: 'Dropdown' },
         ],
       },
       {
         label: 'Navigation',
         icon: ChevronRightIcon,
         items: [
-          { id: 'ds-tabs',      label: 'Tabs' },
-          { id: 'ds-separator', label: 'Separator' },
+          { id: 'ds-navbar',             label: 'Navbar' },
+          { id: 'ds-sidebar',            label: 'Sidebar' },
+          { id: 'ds-tabs',               label: 'Tabs' },
+          { id: 'ds-segmented-control',  label: 'Segmented Control' },
+          { id: 'ds-separator',          label: 'Separator' },
         ],
       },
       {
         label: 'Data Display',
         icon: ChartIcon,
         items: [
-          { id: 'ds-cards', label: 'Cards' },
-          { id: 'ds-pill',  label: 'Pill' },
+          { id: 'ds-cards',    label: 'Cards' },
+          { id: 'ds-widget',   label: 'Widget' },
+          { id: 'ds-kpi-card', label: 'KPI Card' },
+          { id: 'ds-avatars',  label: 'Avatars' },
+          { id: 'ds-tags',     label: 'Tags' },
+          { id: 'ds-pill',     label: 'Pill' },
+          { id: 'ds-table',    label: 'Table' },
         ],
       },
       {
@@ -148,11 +162,14 @@ const NAV: NavGroup[] = [
 // ─── Page map ─────────────────────────────────────────────────────────────────
 
 const FOUNDATION_PAGES: Record<string, React.ComponentType> = {
-  colors:           ColorPaletteSection,
-  typography:       TypographySection,
-  spacing:          SpacingSection,
-  'radius-shadows': RadiusAndShadowsSection,
-  icons:            IconsSection,
+  colors:        ColorPaletteSection,
+  typography:    TypographySection,
+  'font-weight': FontWeightSection,
+  spacing:       SpacingSection,
+  radius:        RadiusSection,
+  shadows:       ShadowsSection,
+  logo:          LogoSection,
+  icons:         IconsSection,
 }
 
 const PAGE_MAP: Record<string, React.ComponentType> = {
@@ -431,7 +448,7 @@ function Sidebar({
 
 // ─── Inner shell — needs to be inside PlaygroundProvider to use context ──────
 
-function StyleGuideInner() {
+function DesignSystemInner() {
   const [activePage, setActivePage] = useState('colors')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -439,15 +456,13 @@ function StyleGuideInner() {
 
   const isComponentPage = activePage.startsWith('ds-')
 
-  // Clear controls only when leaving component pages — component sections re-register on mount
-  useEffect(() => {
-    if (!isComponentPage) playground?.clearControls()
-  }, [activePage, isComponentPage]) // eslint-disable-line react-hooks/exhaustive-deps
-
   const handleSelect = useCallback((id: string) => {
+    // Clear before switching — the new section will re-register if it has a playground schema.
+    // Section's useLayoutEffect runs after we set activePage, so order is: clear → mount → register.
+    playground?.clearControls()
     setActivePage(id)
     setMobileOpen(false)
-  }, [])
+  }, [playground])
 
   const PageComponent = PAGE_MAP[activePage]
   const crumb = getBreadcrumb(activePage)
@@ -562,10 +577,10 @@ function StyleGuideInner() {
 
 // ─── Public export ────────────────────────────────────────────────────────────
 
-export function StyleGuideScreen() {
+export function DesignSystemScreen() {
   return (
     <PlaygroundProvider>
-      <StyleGuideInner />
+      <DesignSystemInner />
     </PlaygroundProvider>
   )
 }

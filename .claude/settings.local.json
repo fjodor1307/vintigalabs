@@ -27,7 +27,22 @@
       "mcp__plugin_figma_figma__get_variable_defs",
       "mcp__Figma__get_design_context",
       "Bash(git init *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(gh auth *)",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(git push *)",
+      "Bash(git rm *)",
+      "Bash(git mv *)",
+      "mcp__Figma__get_variable_defs",
+      "Bash(node -e \"const l = require\\('/Users/fedjagourban/Documents/vintiga-labs/node_modules/lucide-react'\\); const keys = Object.keys\\(l\\); const matches = keys.filter\\(k => /Wine|Beer|Bottle|Shirt|Gift|Ticket|Sandwich|Party|Popper|Glass|Notebook|Ticket|Utensils|UtensilsCrossed|Tag|Beer|Mug|Box|Open/i.test\\(k\\)\\); console.log\\(matches.slice\\(0,60\\).join\\('\\\\n'\\)\\);\")",
+      "mcp__plugin_figma_figma__get_design_context",
+      "Read(//Users/fedjagourban/Downloads/**)",
+      "Bash(unzip -l /Users/fedjagourban/Downloads/caveman-main.zip)",
+      "Bash(unzip -p /Users/fedjagourban/Downloads/caveman-main.zip caveman-main/.cursor/skills/caveman/SKILL.md)",
+      "Bash(unzip -p /Users/fedjagourban/Downloads/caveman-main.zip caveman-main/README.md)",
+      "mcp__plugin_figma_figma__get_metadata"
     ]
   }
 }
