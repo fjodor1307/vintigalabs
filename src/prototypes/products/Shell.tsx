@@ -128,7 +128,7 @@ function MobileSidebar({ open, onClose, activeNav }: { open: boolean; onClose: (
 
 function TopBar({ onMenuToggle }: { onMenuToggle: () => void }) {
   return (
-    <header className="sticky top-0 z-30 h-16 shrink-0 flex items-center justify-between px-6 border-b border-vintiga-slate-200 bg-vintiga-white/75 backdrop-blur-md">
+    <header className="h-16 shrink-0 flex items-center justify-between px-6 border-b border-vintiga-slate-200 bg-vintiga-white">
       <button
         type="button"
         onClick={onMenuToggle}
@@ -173,8 +173,8 @@ export function Shell({
       <Sidebar activeNav={activeNav} />
       <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} activeNav={activeNav} />
       <div className="flex-1 flex flex-col min-w-0">
+        <TopBar onMenuToggle={() => setMobileOpen(true)} />
         <main className={`flex-1 overflow-y-auto flex flex-col ${bg === 'slate' ? 'bg-vintiga-slate-50' : 'bg-vintiga-white'}`}>
-          <TopBar onMenuToggle={() => setMobileOpen(true)} />
           {children}
         </main>
       </div>
