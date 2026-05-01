@@ -18,18 +18,18 @@ export function Shell({
     <div className="flex h-full bg-vintiga-white">
       <AppSidebar collapsed={collapsed} activeNav={activeNav} />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Navbar lives inside the scroll container as a sticky element so
-            content blurs through it (iOS-style) as the user scrolls. */}
-        <main className={`flex-1 overflow-y-auto flex flex-col ${bg === 'slate' ? 'bg-vintiga-slate-50' : 'bg-vintiga-white'}`}>
-          <Navbar
-            device="desktop"
-            className="sticky top-0 z-30"
-            user={{ name: 'Tom Cook', initials: 'TC' }}
-            onMenuToggle={() => setCollapsed((c) => !c)}
-            onUserClick={() => {}}
-            onNotificationClick={() => {}}
-          />
+      {/* `fixed` Navbar pattern (see DS Navbar.tsx header):
+          parent is `relative`, navbar uses `fixed`, scroll sibling has `pt-16`. */}
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        <Navbar
+          device="desktop"
+          fixed
+          user={{ name: 'Tom Cook', initials: 'TC' }}
+          onMenuToggle={() => setCollapsed((c) => !c)}
+          onUserClick={() => {}}
+          onNotificationClick={() => {}}
+        />
+        <main className={`flex-1 overflow-y-auto flex flex-col pt-16 ${bg === 'slate' ? 'bg-vintiga-slate-50' : 'bg-vintiga-white'}`}>
           {children}
         </main>
       </div>

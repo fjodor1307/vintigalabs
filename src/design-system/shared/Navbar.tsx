@@ -9,6 +9,29 @@ import { Avatar } from '@ds/shared/Avatar'
 //     mobile  — hamburger menu on left · right cluster
 //   The component reads its own viewport via Tailwind: pass a single `Navbar` and it adapts.
 //   Pass `device="desktop"` or `"mobile"` to lock a specific layout (showcase / responsive override).
+//
+// ─── Fixed-at-top pattern ───────────────────────────────────────────────────
+// Pass `fixed` when the Navbar should pin to the top of its content column
+// regardless of scroll boundary or overscroll bounce. The component absolute-
+// positions itself with `inset-x-0 top-0 z-30`. The consumer's layout must:
+//
+//   1. Mark the immediate parent `position: relative` so the absolute Navbar
+//      anchors there (otherwise it climbs up to the next positioned ancestor).
+//   2. Add `pt-16` (= h-16, the navbar's own height) to the scrolling content
+//      so the first row clears the bar at scroll-top. Content scrolls under
+//      the bar at higher scroll values, producing the iOS-style blur.
+//
+//   <div className="flex-1 flex flex-col min-w-0 relative">  ← anchor
+//     <Navbar fixed user={…} onMenuToggle={…} />
+//     <main className="flex-1 overflow-y-auto pt-16">       ← clears bar
+//       {children}
+//     </main>
+//   </div>
+//
+// Why `absolute` instead of `position: sticky`? Sticky elements get pushed
+// around by overscroll bounce on macOS / iOS and behave inconsistently when
+// the scroll container's overflow setup is brittle. Absolute positions the
+// navbar once and never lets it move.
 
 export interface NavbarUser {
   name: string
@@ -35,6 +58,13 @@ export interface NavbarProps {
    * (mobile below md, desktop md+).
    */
   device?: 'responsive' | 'desktop' | 'mobile'
+  /**
+   * When true, the navbar absolute-positions itself at the top of its
+   * containing column (`inset-x-0 top-0 z-30`). The parent must be
+   * `position: relative` and the scrolling sibling must reserve `pt-16` for
+   * the first row to clear the bar. See file header for the full pattern.
+   */
+  fixed?: boolean
   className?: string
 }
 
@@ -100,6 +130,7 @@ export function Navbar({
   hasNotifications,
   center,
   device = 'responsive',
+  fixed = false,
   className = '',
 }: NavbarProps) {
   // Visibility helpers for responsive vs locked layouts
@@ -116,14 +147,18 @@ export function Navbar({
   return (
     <header
       className={[
-        // iOS-style translucent bar — pair with `sticky top-0 z-30` on the
-        // parent so content blurs through as it scrolls under the bar. Bg is
-        // mostly opaque (85%) with a strong saturation boost on the blur so
-        // the bar reads as a solid fixed surface even when long table rows
+        // iOS-style translucent bar — pair with `fixed` (or pin via your own
+        // positioning) so content blurs through as it scrolls under the bar.
+        // Bg is mostly opaque (85%) with a strong saturation boost on the blur
+        // so the bar reads as a solid fixed surface even when long table rows
         // scroll beneath it; a soft shadow reinforces the elevation.
         'flex items-center justify-between h-16 w-full',
         'bg-vintiga-white/85 backdrop-blur-md backdrop-saturate-150',
         'border-b border-vintiga-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)]',
+        // `fixed` mode: pin to the top of the nearest positioned ancestor.
+        // Document: parent must be `relative`; sibling scroll content needs
+        // `pt-16` to clear this bar at scroll-top.
+        fixed ? 'absolute inset-x-0 top-0 z-30' : '',
         padding,
         className,
       ].join(' ')}
