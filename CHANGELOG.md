@@ -14,6 +14,7 @@
 
 | Prototype | Last updated | Changelog |
 |-----------|--------------|-----------|
+| Experiences | 2026-04-30 | [src/prototypes/experiences/CHANGELOG.md](src/prototypes/experiences/CHANGELOG.md) |
 | Onboarding | 2026-04-27 | [src/prototypes/onboarding/CHANGELOG.md](src/prototypes/onboarding/CHANGELOG.md) |
 | Products | — | [src/prototypes/products/CHANGELOG.md](src/prototypes/products/CHANGELOG.md) |
 

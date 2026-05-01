@@ -150,6 +150,20 @@ const initial: ProductState = {
     { id: 'p11', name: '2021 Sauvignon Blanc',             sku: 'SKU-1234-1237', price: '22.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'White Wine'], channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1588982766898-4a826e5ef631?w=320&h=320&fit=crop&q=80' },
     { id: 'p12', name: '2019 Brut Sparkling',              sku: 'SKU-1234-1238', price: '38.00', type: 'Wine', availability: 'Public', collections: ['Wine'],               channels: ['Website'],        imageUrl: 'https://images.unsplash.com/photo-1614208406223-5b78888e8b4b?w=320&h=320&fit=crop&q=80' },
     { id: 'p13', name: '2022 Late Harvest Riesling',       sku: 'SKU-1234-1239', price: '28.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'White Wine'], channels: ['POS'],            imageUrl: 'https://images.unsplash.com/photo-1605701061257-37892a5cc0ab?w=320&h=320&fit=crop&q=80' },
+    // ── Experiences ───────────────────────────────────────────────────────────
+    // Surface bookable experiences in the products catalogue under the
+    // Experiences tab. IDs are e-prefixed and mirror the experiences prototype's
+    // catalogue (`src/prototypes/experiences/productStore.ts`); clicking a row
+    // routes to `#/web/experiences/general?id=eX` so the experience editor
+    // (with experience-specific fields) loads instead of the generic one.
+    { id: 'e1',  name: 'Reserve Cellar Tasting',           sku: 'EXP-1001',     price: '45.00', type: 'Experience', availability: 'Public',  collections: ['Experiences', 'Tastings'], channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1558346489-19413928158b?w=320&h=320&fit=crop&q=80' },
+    { id: 'e2',  name: 'Vineyard Walking Tour',            sku: 'EXP-1002',     price: '35.00', type: 'Experience', availability: 'Public',  collections: ['Experiences', 'Tours'],    channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1559528691-a48bcdb6d97b?w=320&h=320&fit=crop&q=80' },
+    { id: 'e3',  name: 'Library Vintage Flight',           sku: 'EXP-1003',     price: '85.00', type: 'Experience', availability: 'Public',  collections: ['Experiences', 'Tastings'], channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=320&h=320&fit=crop&q=80' },
+    { id: 'e4',  name: 'Sunset Estate Tour',               sku: 'EXP-1004',     price: '60.00', type: 'Experience', availability: 'Public',  collections: ['Experiences', 'Tours'],    channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=320&h=320&fit=crop&q=80' },
+    { id: 'e5',  name: 'Blending Workshop',                sku: 'EXP-1005',     price: '125.00',type: 'Experience', availability: 'Public',  collections: ['Experiences', 'Workshops'],channels: ['Website'],        imageUrl: 'https://images.unsplash.com/photo-1474722883778-792e7990302f?w=320&h=320&fit=crop&q=80' },
+    { id: 'e6',  name: 'Barrel Room Private Tasting',      sku: 'EXP-1006',     price: '95.00', type: 'Experience', availability: 'Public',  collections: ['Experiences', 'Tastings'], channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1515779122185-2390ccdf060b?w=320&h=320&fit=crop&q=80' },
+    { id: 'e7',  name: 'Harvest Day Experience',           sku: 'EXP-1007',     price: '150.00',type: 'Experience', availability: 'Private', collections: ['Experiences', 'Seasonal'], channels: ['Website'],        imageUrl: 'https://images.unsplash.com/photo-1506377585622-bedcbb027afc?w=320&h=320&fit=crop&q=80' },
+    { id: 'e8',  name: 'Food + Wine Pairing',              sku: 'EXP-1008',     price: '75.00', type: 'Experience', availability: 'Public',  collections: ['Experiences', 'Tastings'], channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=320&h=320&fit=crop&q=80' },
   ],
   allCollections: [
     { id: 'c1', name: 'Mix Wines',  type: 'Wine Type',  productIds: ['p1', 'p2', 'p3', 'p4', 'p5', 'p8'] },

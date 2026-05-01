@@ -37,6 +37,7 @@ import { Breadcrumb, BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { Field } from '@ds/shared/Field'
 import { AiSuggestButton } from '@ds/shared/AiSuggestButton'
+import { NoImageArt } from '@ds/shared/NoImageArt'
 import { ListCard } from '@ds/shared/ListCard'
 import { SelectionCard } from '@ds/shared/SelectionCard'
 import { Widget, WidgetHeader, WidgetBody, WidgetFooter } from '@ds/shared/Widget'
@@ -1790,6 +1791,37 @@ function FieldSection() {
   )
 }
 
+function NoImageArtSection() {
+  return (
+    <SubSection
+      id="ds-no-image-art"
+      title="No-Image Placeholder"
+      description="Square SVG used as a thumbnail fallback whenever a catalogue row, collection table, or editor header has no uploaded image. Sizes to its container — wrap in a fixed-size div with overflow-hidden + rounded corners."
+    >
+      <div className="flex items-end gap-vintiga-md flex-wrap">
+        <div className="flex flex-col gap-2 items-center">
+          <div className="w-16 h-16 rounded-vintiga-md border border-vintiga-slate-200 overflow-hidden">
+            <NoImageArt className="w-full h-full" />
+          </div>
+          <span className="typo-caption text-vintiga-foreground-muted">64 × 64 (table thumb)</span>
+        </div>
+        <div className="flex flex-col gap-2 items-center">
+          <div className="w-24 h-24 rounded-vintiga-lg border border-vintiga-slate-200 overflow-hidden">
+            <NoImageArt className="w-full h-full" />
+          </div>
+          <span className="typo-caption text-vintiga-foreground-muted">96 × 96</span>
+        </div>
+        <div className="flex flex-col gap-2 items-center">
+          <div className="w-32 h-32 rounded-vintiga-lg border border-vintiga-slate-200 overflow-hidden">
+            <NoImageArt className="w-full h-full" />
+          </div>
+          <span className="typo-caption text-vintiga-foreground-muted">128 × 128 (editor header)</span>
+        </div>
+      </div>
+    </SubSection>
+  )
+}
+
 function AiSuggestButtonSection() {
   const [generating, setGenerating] = useState(false)
   const fakeGen = () => {
@@ -1852,6 +1884,7 @@ export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-section-card':   SectionCardSection,
   'ds-field':          FieldSection,
   'ds-ai-suggest-button': AiSuggestButtonSection,
+  'ds-no-image-art':   NoImageArtSection,
 }
 
 export function ComponentsSection() {

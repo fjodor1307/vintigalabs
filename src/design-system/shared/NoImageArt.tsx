@@ -1,6 +1,6 @@
-// "No image" placeholder — pulled directly from the Figma asset
-// (Desktop/no-image.svg). Used as the product-thumb fallback when a
-// catalogue entry has no `imageUrl`.
+// "No image" placeholder — Figma asset (Desktop/no-image.svg).
+// Used as the thumbnail fallback in catalogue rows, collection product tables,
+// and the product / experience editor header when no image has been uploaded.
 
 interface NoImageArtProps {
   className?: string
@@ -14,6 +14,7 @@ export function NoImageArt({ className = '' }: NoImageArtProps) {
       fill="none"
       className={className}
       aria-hidden="true"
+      preserveAspectRatio="xMidYMid meet"
     >
       <rect width="64" height="64" fill="#F3F4F6" />
       <path
