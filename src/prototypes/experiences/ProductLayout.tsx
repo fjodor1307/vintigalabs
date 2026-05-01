@@ -135,10 +135,15 @@ export function ProductLayout({
             <main className="flex-1 flex flex-col">
               <div className="p-vintiga-xl flex flex-col gap-6">
               <div className="flex items-center justify-between gap-4">
+                {/* Experiences live under Products in the IA, so the breadcrumb
+                    chain reflects that: Home → Products → Experiences → … .
+                    The Experiences crumb routes back to the products list with
+                    the Experiences tab pre-selected (`?type=experiences`). */}
                 <Breadcrumb
                   items={[
-                    { icon: <BreadcrumbHomeIcon />, href: '#/web/experiences/list' },
-                    { label: 'Experiences', href: '#/web/experiences/list' },
+                    { icon: <BreadcrumbHomeIcon />, href: '#/web/products/list' },
+                    { label: 'Products', href: '#/web/products/list' },
+                    { label: 'Experiences', href: '#/web/products/list?type=experiences' },
                     { label: product.name || 'New experience' },
                   ]}
                 />

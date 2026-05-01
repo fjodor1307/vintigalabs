@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { OverviewLayout } from './OverviewLayout'
 import { useProductState, productActions } from './productStore'
 import { SelectProductTypeModal, type ProductType } from './SelectProductTypeModal'
@@ -160,15 +160,34 @@ function categoryKeyFor(p: { type: string }): ProductFilter {
   }
 }
 
+// Read `?type=…` off the hash query string. Lets breadcrumbs / inbound links
+// land on a specific category tab (e.g. `#/web/products/list?type=experiences`
+// from the experience editor's breadcrumb). Falls back to 'all'.
+function initialFilterFromHash(): ProductFilter {
+  if (typeof window === 'undefined') return 'all'
+  const query = window.location.hash.split('?')[1] ?? ''
+  const value = new URLSearchParams(query).get('type')
+  const valid: ProductFilter[] = ['all', 'wines', 'beer', 'spirits', 'events', 'merch', 'experiences', 'tastings', 'food', 'bookings', 'bundles', 'gifts', 'vouchers', 'tickets']
+  return value && (valid as string[]).includes(value) ? (value as ProductFilter) : 'all'
+}
+
 export function ProductsListScreen() {
   const { catalogue } = useProductState()
   const [selected, setSelected]       = useState<Set<string>>(new Set())
-  const [filterType, setFilterType]   = useState<ProductFilter>('all')
+  const [filterType, setFilterType]   = useState<ProductFilter>(() => initialFilterFromHash())
   const [typeFilter, setTypeFilter]   = useState<Set<ProductFilter>>(new Set())
   const [statusFilter, setStatusFilter] = useState<Set<StatusFilter>>(new Set())
   const [search, setSearch]           = useState('')
   const [showExport, setShowExport]   = useState(false)
   const [showAddType, setShowAddType] = useState(false)
+
+  // Re-sync the segmented control if the user navigates here from another
+  // hash route (e.g. clicking a breadcrumb link to a different ?type=…).
+  useEffect(() => {
+    const onHash = () => setFilterType(initialFilterFromHash())
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
 
   const onSelectType = (type: ProductType) => {
     setShowAddType(false)
