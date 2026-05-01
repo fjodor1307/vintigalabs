@@ -15,28 +15,28 @@ export function PosScreen() {
 
         <Field
           label="Hook"
-          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} iconOnly />}
         >
           <TextInput placeholder="Enter hook" />
         </Field>
 
         <Field
           label="Product pairings"
-          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} iconOnly />}
         >
           <TextArea placeholder="Add food pairings (e.g., cheese, meats, dishes)" />
         </Field>
 
         <Field
           label="Tasting suggestions"
-          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} iconOnly />}
         >
           <TextArea placeholder="Describe how to serve or taste this product" />
         </Field>
 
         <Field
           label="Upsell"
-          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} iconOnly />}
         >
           <TextArea placeholder="Suggest related products or upgrades" />
         </Field>

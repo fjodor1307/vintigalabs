@@ -16,7 +16,7 @@ export function PosScreen() {
         <Field
           label="POS Hook"
           helper="A one-liner the host can lead with at the till."
-          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} iconOnly />}
         >
           <TextInput placeholder="Enter hook" />
         </Field>
@@ -24,7 +24,7 @@ export function PosScreen() {
         <Field
           label="Product Pairings"
           helper="Wines, food, or merch that go well alongside this experience."
-          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} iconOnly />}
         >
           <TextArea placeholder="Add pairings (e.g. estate Cab, cheese plate, take-home magnum)" />
         </Field>
@@ -32,7 +32,7 @@ export function PosScreen() {
         <Field
           label="Tasting Suggestions"
           helper="What the host should pour, when, and why."
-          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} iconOnly />}
         >
           <TextArea placeholder="Describe how to taste, pace, or guide guests through the experience" />
         </Field>
@@ -40,7 +40,7 @@ export function PosScreen() {
         <Field
           label="Upsell"
           helper="Add-ons or upgrades to offer at the till."
-          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} iconOnly />}
         >
           <TextArea placeholder="Suggest upgrades (e.g. premium flight, private guide, take-home bottle)" />
         </Field>

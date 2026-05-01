@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { OverviewLayout } from './OverviewLayout'
 import { useProductState, productActions } from './productStore'
 import { SelectProductTypeModal, type ProductType } from './SelectProductTypeModal'
-import { NoImageArt } from '@ds/shared/NoImageArt'
+import { Thumbnail } from '@ds/shared/Thumbnail'
 import { SelectAllCheckbox } from './SelectAllCheckbox'
 import { Tag } from '@ds/shared/Tag'
 import { Button } from '@ds/shared/Button'
@@ -132,9 +132,7 @@ const PRODUCT_CATEGORIES = TYPE_FILTER_OPTIONS
 function ProductThumb({ name, imageUrl }: { name: string; imageUrl?: string }) {
   return (
     <div className="w-16 h-16 rounded-vintiga-md border border-vintiga-slate-200 overflow-hidden flex items-center justify-center shrink-0 bg-vintiga-slate-50">
-      {imageUrl
-        ? <img src={imageUrl} alt={name} className="w-full h-full object-cover" loading="lazy" />
-        : <NoImageArt className="w-full h-full" />}
+      <Thumbnail src={imageUrl} alt={name} className="w-full h-full object-cover" />
     </div>
   )
 }
@@ -230,7 +228,13 @@ export function ProductsListScreen() {
         <div className="flex items-center justify-between gap-vintiga-md">
           <SegmentedControl<ProductFilter>
             value={filterType}
-            onChange={setFilterType}
+            onChange={(next) => {
+              setFilterType(next)
+              // Type chips are only available on the "All" tab — clear any
+              // residual selection when switching to a specific category so
+              // the chips don't keep silently filtering things out.
+              if (next !== 'all') setTypeFilter(new Set())
+            }}
             options={TYPE_FILTER_OPTIONS}
             collapseInactive
             aria-label="Filter by product type"
@@ -258,12 +262,16 @@ export function ProductsListScreen() {
             />
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <FilterDropdown<ProductFilter>
-              label="Type"
-              options={PRODUCT_CATEGORIES}
-              value={typeFilter}
-              onChange={setTypeFilter}
-            />
+            {/* Type filter is only relevant on the "All" tab — every other
+                segmented tab already narrows the catalogue to a single type. */}
+            {filterType === 'all' && (
+              <FilterDropdown<ProductFilter>
+                label="Type"
+                options={PRODUCT_CATEGORIES}
+                value={typeFilter}
+                onChange={setTypeFilter}
+              />
+            )}
             <FilterDropdown<StatusFilter>
               label="Status"
               options={STATUS_FILTER_OPTIONS}

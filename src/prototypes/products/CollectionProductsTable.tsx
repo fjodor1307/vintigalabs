@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { NoImageArt } from '@ds/shared/NoImageArt'
+import { Thumbnail } from '@ds/shared/Thumbnail'
 import { SelectAllCheckbox } from './SelectAllCheckbox'
 import { Tag } from '@ds/shared/Tag'
 import { TextField } from '@ds/shared/TextField'
@@ -36,9 +36,7 @@ function ProductThumb({ name, imageUrl, size = 64 }: { name: string; imageUrl?: 
       className="rounded-vintiga-md border border-vintiga-slate-200 overflow-hidden flex items-center justify-center shrink-0 bg-vintiga-slate-50"
       style={{ width: size, height: size }}
     >
-      {imageUrl
-        ? <img src={imageUrl} alt={name} className="w-full h-full object-cover" loading="lazy" />
-        : <NoImageArt className="w-full h-full" />}
+      <Thumbnail src={imageUrl} alt={name} className="w-full h-full object-cover" />
     </div>
   )
 }

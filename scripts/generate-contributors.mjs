@@ -15,7 +15,16 @@ const repoRoot = resolve(__dirname, '..')
 const prototypesDir = join(repoRoot, 'src/prototypes')
 const outputPath = join(repoRoot, 'src/generated/contributors.json')
 
+// Per-contributor avatar overrides — keyed by lowercased name. Lets specific
+// contributors pin their own colour (and initials, if needed) instead of the
+// auto-hashed default. Add new entries here.
+const CONTRIBUTOR_OVERRIDES = {
+  'fedja djukic': { colour: '#000000' },
+}
+
 function colourFromName(name) {
+  const override = CONTRIBUTOR_OVERRIDES[name.toLowerCase()]
+  if (override?.colour) return override.colour
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
   const hue = Math.abs(hash) % 360
@@ -23,6 +32,8 @@ function colourFromName(name) {
 }
 
 function initialsFromName(name) {
+  const override = CONTRIBUTOR_OVERRIDES[name.toLowerCase()]
+  if (override?.initials) return override.initials
   const parts = name.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return '?'
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()

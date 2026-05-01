@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { OverviewLayout } from './OverviewLayout'
 import { useProductState, productActions } from './productStore'
-import { NoImageArt } from '@ds/shared/NoImageArt'
+import { Thumbnail } from '@ds/shared/Thumbnail'
 import { SelectAllCheckbox } from './SelectAllCheckbox'
 import { Tag } from '@ds/shared/Tag'
 import { Button } from '@ds/shared/Button'
@@ -110,9 +110,7 @@ const EXPERIENCE_CATEGORIES = TYPE_FILTER_OPTIONS
 function ExperienceThumb({ name, imageUrl }: { name: string; imageUrl?: string }) {
   return (
     <div className="w-16 h-16 rounded-vintiga-md border border-vintiga-slate-200 overflow-hidden flex items-center justify-center shrink-0 bg-vintiga-slate-50">
-      {imageUrl
-        ? <img src={imageUrl} alt={name} className="w-full h-full object-cover" loading="lazy" />
-        : <NoImageArt className="w-full h-full" />}
+      <Thumbnail src={imageUrl} alt={name} className="w-full h-full object-cover" />
     </div>
   )
 }
