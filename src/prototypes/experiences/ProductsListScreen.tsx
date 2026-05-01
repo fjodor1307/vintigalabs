@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { OverviewLayout } from './OverviewLayout'
 import { useProductState, productActions } from './productStore'
-import { SelectProductTypeModal, type ProductType } from './SelectProductTypeModal'
 import { NoImageArt } from '@ds/shared/NoImageArt'
 import { SelectAllCheckbox } from './SelectAllCheckbox'
 import { Tag } from '@ds/shared/Tag'
@@ -18,45 +17,26 @@ import {
   ChevronDownIcon,
   EllipsisIcon,
   BoxIcon,
-  BottleWineIcon,
-  BeerIcon,
-  MartiniIcon,
-  PartyPopperIcon,
-  ShirtIcon,
-  HandHeartIcon,
   WineIcon,
-  SandwichIcon,
+  HandHeartIcon,
   CalendarIcon,
-  PackageOpenIcon,
   GiftIcon,
-  NotebookPenIcon,
-  TicketIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   DownloadIcon,
   XIcon,
 } from '@ds/icons/Icons'
 
-type ProductFilter =
-  | 'all' | 'wines' | 'beer' | 'spirits' | 'events'
-  | 'merch' | 'experiences' | 'tastings' | 'food'
-  | 'bookings' | 'bundles' | 'gifts' | 'vouchers' | 'tickets'
+// Experience subtypes — derived from the collection a row belongs to.
+type ExperienceFilter = 'all' | 'tastings' | 'tours' | 'workshops' | 'seasonal' | 'private'
 
 const TYPE_FILTER_OPTIONS = [
-  { value: 'all'         as ProductFilter, label: 'All',          icon: <BoxIcon          className="w-3.5 h-3.5" /> },
-  { value: 'wines'       as ProductFilter, label: 'Wines',        icon: <BottleWineIcon   className="w-3.5 h-3.5" /> },
-  { value: 'beer'        as ProductFilter, label: 'Beer',         icon: <BeerIcon         className="w-3.5 h-3.5" /> },
-  { value: 'spirits'     as ProductFilter, label: 'Spirits',      icon: <MartiniIcon      className="w-3.5 h-3.5" /> },
-  { value: 'events'      as ProductFilter, label: 'Events',       icon: <PartyPopperIcon  className="w-3.5 h-3.5" /> },
-  { value: 'merch'       as ProductFilter, label: 'Merchandise',  icon: <ShirtIcon        className="w-3.5 h-3.5" /> },
-  { value: 'experiences' as ProductFilter, label: 'Experiences',  icon: <HandHeartIcon    className="w-3.5 h-3.5" /> },
-  { value: 'tastings'    as ProductFilter, label: 'Tastings',     icon: <WineIcon         className="w-3.5 h-3.5" /> },
-  { value: 'food'        as ProductFilter, label: 'Food',         icon: <SandwichIcon     className="w-3.5 h-3.5" /> },
-  { value: 'bookings'    as ProductFilter, label: 'Bookings',     icon: <CalendarIcon     className="w-3.5 h-3.5" /> },
-  { value: 'bundles'     as ProductFilter, label: 'Bundles',      icon: <PackageOpenIcon  className="w-3.5 h-3.5" /> },
-  { value: 'gifts'       as ProductFilter, label: 'Gifts',        icon: <GiftIcon         className="w-3.5 h-3.5" /> },
-  { value: 'vouchers'    as ProductFilter, label: 'Vouchers',     icon: <NotebookPenIcon  className="w-3.5 h-3.5" /> },
-  { value: 'tickets'     as ProductFilter, label: 'Tickets',      icon: <TicketIcon       className="w-3.5 h-3.5" /> },
+  { value: 'all'        as ExperienceFilter, label: 'All',        icon: <BoxIcon        className="w-3.5 h-3.5" /> },
+  { value: 'tastings'   as ExperienceFilter, label: 'Tastings',   icon: <WineIcon       className="w-3.5 h-3.5" /> },
+  { value: 'tours'      as ExperienceFilter, label: 'Tours',      icon: <HandHeartIcon  className="w-3.5 h-3.5" /> },
+  { value: 'workshops'  as ExperienceFilter, label: 'Workshops',  icon: <CalendarIcon   className="w-3.5 h-3.5" /> },
+  { value: 'seasonal'   as ExperienceFilter, label: 'Seasonal',   icon: <GiftIcon       className="w-3.5 h-3.5" /> },
+  { value: 'private'    as ExperienceFilter, label: 'Private',    icon: <HandHeartIcon  className="w-3.5 h-3.5" /> },
 ]
 
 type StatusFilter = 'active' | 'inactive'
@@ -71,12 +51,10 @@ const STATUS_FILTER_OPTIONS = [
 function ExportModal({ count, onClose }: { count: number; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      {/* Dialog */}
       <div className="relative bg-vintiga-white rounded-vintiga-xl shadow-vintiga-xl w-full max-w-md mx-4 p-vintiga-lg flex flex-col gap-vintiga-md">
         <div className="flex items-center justify-between gap-vintiga-md">
-          <h2 className="typo-title-section font-semibold text-vintiga-slate-900">Export Products</h2>
+          <h2 className="typo-title-section font-semibold text-vintiga-slate-900">Export Experiences</h2>
           <button
             type="button"
             onClick={onClose}
@@ -88,13 +66,13 @@ function ExportModal({ count, onClose }: { count: number; onClose: () => void })
         </div>
 
         <div className="flex flex-col gap-1">
-          <p className="typo-body-sm font-semibold text-vintiga-slate-900">Export CSV ({count} Wines)</p>
+          <p className="typo-body-sm font-semibold text-vintiga-slate-900">Export CSV ({count} Experiences)</p>
           <p className="typo-body-sm text-vintiga-slate-500">You'll receive an email when the export is ready.</p>
         </div>
 
         <div className="flex items-center justify-end gap-2 pt-vintiga-sm border-t border-vintiga-slate-100">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={onClose}>Export {count} Wines</Button>
+          <Button onClick={onClose}>Export {count} Experiences</Button>
         </div>
       </div>
     </div>
@@ -114,22 +92,22 @@ function ActionsDropdown({ onExport }: { onExport: () => void }) {
         </Button>
       )}
       items={[
-        { label: 'Export Products', onClick: onExport },
-        { label: 'Duplicate',       onClick: () => {} },
+        { label: 'Export Experiences', onClick: onExport },
+        { label: 'Duplicate',          onClick: () => {} },
       ]}
     />
   )
 }
 
-// ─── Type filter dropdown (multi-select checkbox list) ────────────────────
+// ─── Type filter dropdown options ─────────────────────────────────────────
 
-const PRODUCT_CATEGORIES = TYPE_FILTER_OPTIONS
+const EXPERIENCE_CATEGORIES = TYPE_FILTER_OPTIONS
   .filter((o) => o.value !== 'all')
   .map((o) => ({ value: o.value, label: o.label, icon: o.icon }))
 
-// ─── Product thumbnail ─────────────────────────────────────────────────────
+// ─── Experience thumbnail ──────────────────────────────────────────────────
 
-function ProductThumb({ name, imageUrl }: { name: string; imageUrl?: string }) {
+function ExperienceThumb({ name, imageUrl }: { name: string; imageUrl?: string }) {
   return (
     <div className="w-16 h-16 rounded-vintiga-md border border-vintiga-slate-200 overflow-hidden flex items-center justify-center shrink-0 bg-vintiga-slate-50">
       {imageUrl
@@ -139,75 +117,41 @@ function ProductThumb({ name, imageUrl }: { name: string; imageUrl?: string }) {
   )
 }
 
-// ─── Main screen ───────────────────────────────────────────────────────────
+// ─── Map a row → SegmentedControl filter key based on its collections ─────
 
-// ─── Map a product type string → SegmentedControl filter key ──────────────
-
-function categoryKeyFor(p: { type: string }): ProductFilter {
-  switch (p.type.toLowerCase()) {
-    case 'wine':       return 'wines'
-    case 'beer':       return 'beer'
-    case 'spirit':     return 'spirits'
-    case 'event':      return 'events'
-    case 'merch':      return 'merch'
-    case 'experience': return 'experiences'
-    case 'tasting':    return 'tastings'
-    case 'food':       return 'food'
-    case 'booking':    return 'bookings'
-    case 'bundle':     return 'bundles'
-    case 'gift':       return 'gifts'
-    case 'voucher':    return 'vouchers'
-    case 'ticket':     return 'tickets'
-    default:           return 'wines'
-  }
+function categoryKeyFor(p: { collections: string[] }): ExperienceFilter {
+  const cs = p.collections.map((c) => c.toLowerCase())
+  if (cs.includes('private'))   return 'private'
+  if (cs.includes('seasonal'))  return 'seasonal'
+  if (cs.includes('workshops')) return 'workshops'
+  if (cs.includes('tours'))     return 'tours'
+  return 'tastings'
 }
+
+// ─── Main screen ───────────────────────────────────────────────────────────
 
 export function ProductsListScreen() {
   const { catalogue } = useProductState()
-  const [selected, setSelected]       = useState<Set<string>>(new Set())
-  const [filterType, setFilterType]   = useState<ProductFilter>('all')
-  const [typeFilter, setTypeFilter]   = useState<Set<ProductFilter>>(new Set())
+  const [selected, setSelected]         = useState<Set<string>>(new Set())
+  const [filterType, setFilterType]     = useState<ExperienceFilter>('all')
+  const [typeFilter, setTypeFilter]     = useState<Set<ExperienceFilter>>(new Set())
   const [statusFilter, setStatusFilter] = useState<Set<StatusFilter>>(new Set())
-  const [search, setSearch]           = useState('')
-  const [showExport, setShowExport]   = useState(false)
-  const [showAddType, setShowAddType] = useState(false)
+  const [search, setSearch]             = useState('')
+  const [showExport, setShowExport]     = useState(false)
 
-  const onSelectType = (type: ProductType) => {
-    setShowAddType(false)
-    // Map the modal's ProductType slug to the human-readable label that
-    // ProductState.productType expects.
-    const label: Record<ProductType, string> = {
-      wine: 'Wine', beer: 'Beer', spirit: 'Spirit',
-      experience: 'Experience', merchandise: 'Merchandise', 'drink-token': 'Drink Token',
-      food: 'Food', tasting: 'Tasting', reservation: 'Reservation',
-      bundle: 'Bundle', 'gift-card': 'Gift Card', collateral: 'Collateral',
-      'event-ticket': 'Event Ticket',
-    }
-    // Experiences have their own editor (different fields, different model);
-    // the experiences prototype owns it. Other types stay on the generic
-    // products editor for now.
-    if (type === 'experience') {
-      window.location.hash = '#/web/experiences/general?new=1'
-      return
-    }
-    // Start a clean editor — no name, no images, no content, no variants —
-    // pre-filled with the picked product type.
-    productActions.startNewProduct(label[type])
-    window.location.hash = '#/web/products/general'
+  const onAddExperience = () => {
+    productActions.startNewProduct('Experience')
+    window.location.hash = '#/web/experiences/general'
   }
 
-  // Derived: visible products after segmented tab + filter chips + search
+  // Derived: visible experiences after segmented tab + filter chips + search
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase()
     return catalogue.filter((p) => {
-      // Segmented control tab (exclusive: 'all' shows all, otherwise match)
       if (filterType !== 'all' && categoryKeyFor(p) !== filterType) return false
-      // Type chip filter (additive: show if any picked type matches)
       if (typeFilter.size > 0 && !typeFilter.has(categoryKeyFor(p))) return false
-      // Status chip filter — products in the catalogue are all "active" placeholders;
-      // a real impl would read p.status. For now: 'inactive' filter hides everything.
+      // All seeded experiences are 'active'; the inactive filter hides everything.
       if (statusFilter.size > 0 && !statusFilter.has('active')) return false
-      // Search by name or SKU
       if (q && !p.name.toLowerCase().includes(q) && !p.sku.toLowerCase().includes(q)) return false
       return true
     })
@@ -223,20 +167,24 @@ export function ProductsListScreen() {
   }
 
   return (
-    <OverviewLayout title="Products" description="Manage your inventory, wines, and merchandise" activeTab="products">
+    <OverviewLayout
+      title="Experiences"
+      description="Manage your bookable tastings, tours, and workshops."
+      activeTab="experiences"
+    >
       <div className="bg-vintiga-white border border-vintiga-slate-200 rounded-vintiga-2xl p-vintiga-lg flex flex-col gap-vintiga-md">
 
-        {/* Top filter rail + Add Product */}
+        {/* Top filter rail + Add Experience */}
         <div className="flex items-center justify-between gap-vintiga-md">
-          <SegmentedControl<ProductFilter>
+          <SegmentedControl<ExperienceFilter>
             value={filterType}
             onChange={setFilterType}
             options={TYPE_FILTER_OPTIONS}
             collapseInactive
-            aria-label="Filter by product type"
+            aria-label="Filter by experience type"
           />
           <div className="flex items-center gap-2">
-            <Button leftIcon={<PlusIcon />} onClick={() => setShowAddType(true)}>Add Product</Button>
+            <Button leftIcon={<PlusIcon />} onClick={onAddExperience}>Add Experience</Button>
             <IconButton
               variant="outline"
               size="md"
@@ -251,16 +199,16 @@ export function ProductsListScreen() {
         <div className="flex items-center gap-vintiga-sm">
           <div className="flex-1 max-w-sm">
             <TextField
-              placeholder="Search Products"
+              placeholder="Search Experiences"
               leftIcon={<SearchIcon className="w-4 h-4" />}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <FilterDropdown<ProductFilter>
+            <FilterDropdown<ExperienceFilter>
               label="Type"
-              options={PRODUCT_CATEGORIES}
+              options={EXPERIENCE_CATEGORIES}
               value={typeFilter}
               onChange={setTypeFilter}
             />
@@ -297,29 +245,23 @@ export function ProductsListScreen() {
             <div className="px-vintiga-md py-vintiga-2xl text-center">
               <p className="typo-body-sm text-vintiga-slate-500">
                 {search.trim()
-                  ? `No products match "${search}"`
-                  : 'No products match these filters'}
+                  ? `No experiences match "${search}"`
+                  : 'No experiences match these filters'}
               </p>
             </div>
           )}
 
-          {visible.map((p) => {
-            // Experiences open in their own editor (different fields / model);
-            // everything else opens in the generic products editor.
-            const editorHref = p.type === 'Experience'
-              ? `#/web/experiences/general?id=${p.id}`
-              : `#/web/products/general?id=${p.id}`
-            return (
+          {visible.map((p) => (
             <div
               key={p.id}
               role="link"
               tabIndex={0}
               onClick={(e) => {
                 if ((e.target as HTMLElement).closest('[data-row-stop]')) return
-                window.location.hash = editorHref
+                window.location.hash = `#/web/experiences/general?id=${p.id}`
               }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') window.location.hash = editorHref
+                if (e.key === 'Enter') window.location.hash = `#/web/experiences/general?id=${p.id}`
               }}
               className="grid grid-cols-[40px_1fr_120px_100px_120px_220px_40px] items-center gap-4 px-vintiga-md h-24 border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
             >
@@ -327,7 +269,7 @@ export function ProductsListScreen() {
                 <Checkbox size="sm" checked={selected.has(p.id)} onChange={() => toggle(p.id)} />
               </span>
               <div className="flex items-center gap-3 min-w-0">
-                <ProductThumb name={p.name} imageUrl={p.imageUrl} />
+                <ExperienceThumb name={p.name} imageUrl={p.imageUrl} />
                 <div className="flex flex-col min-w-0">
                   <span className="typo-body-sm font-medium text-vintiga-slate-900 truncate">{p.name}</span>
                   <span className="typo-caption text-vintiga-slate-500">{p.sku}</span>
@@ -359,14 +301,13 @@ export function ProductsListScreen() {
                     </button>
                   )}
                   items={[
-                    { label: 'View',      onClick: () => { window.location.hash = editorHref } },
+                    { label: 'View',      onClick: () => { window.location.hash = `#/web/experiences/general?id=${p.id}` } },
                     { label: 'Duplicate', onClick: () => {} },
                   ]}
                 />
               </span>
             </div>
-            )
-          })}
+          ))}
         </div>
 
         {/* Pagination */}
@@ -381,7 +322,7 @@ export function ProductsListScreen() {
               50
               <ChevronDownIcon className="w-3.5 h-3.5" />
             </button>
-            <span className="typo-body-sm text-vintiga-slate-700">Page 1 of 3</span>
+            <span className="typo-body-sm text-vintiga-slate-700">Page 1 of 1</span>
             <div className="flex items-center gap-1">
               <button type="button" className="w-8 h-8 rounded-vintiga-md flex items-center justify-center border border-vintiga-slate-200 bg-vintiga-white text-vintiga-slate-500 hover:bg-vintiga-slate-50 transition-colors cursor-pointer disabled:opacity-50" disabled>
                 <ChevronLeftIcon className="w-4 h-4" />
@@ -390,10 +331,10 @@ export function ProductsListScreen() {
               <button type="button" className="w-8 h-8 rounded-vintiga-md flex items-center justify-center border border-vintiga-slate-200 bg-vintiga-white text-vintiga-slate-500 hover:bg-vintiga-slate-50 transition-colors cursor-pointer disabled:opacity-50" disabled>
                 <ChevronLeftIcon className="w-4 h-4" />
               </button>
-              <button type="button" className="w-8 h-8 rounded-vintiga-md flex items-center justify-center border border-vintiga-slate-200 bg-vintiga-white text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer">
+              <button type="button" className="w-8 h-8 rounded-vintiga-md flex items-center justify-center border border-vintiga-slate-200 bg-vintiga-white text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer disabled:opacity-50" disabled>
                 <ChevronRightIcon className="w-4 h-4" />
               </button>
-              <button type="button" className="w-8 h-8 rounded-vintiga-md flex items-center justify-center border border-vintiga-slate-200 bg-vintiga-white text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer">
+              <button type="button" className="w-8 h-8 rounded-vintiga-md flex items-center justify-center border border-vintiga-slate-200 bg-vintiga-white text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer disabled:opacity-50" disabled>
                 <ChevronRightIcon className="w-4 h-4" />
                 <ChevronRightIcon className="w-4 h-4 -ml-2" />
               </button>
@@ -406,13 +347,6 @@ export function ProductsListScreen() {
       {showExport && (
         <ExportModal count={catalogue.length} onClose={() => setShowExport(false)} />
       )}
-
-      {/* Select product type modal */}
-      <SelectProductTypeModal
-        open={showAddType}
-        onClose={() => setShowAddType(false)}
-        onSelect={onSelectType}
-      />
     </OverviewLayout>
   )
 }

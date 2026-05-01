@@ -34,7 +34,7 @@ import { Breadcrumb, BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
 import { SectionCard as DSSectionCard } from '@ds/shared/SectionCard'
 import { Field as DSField } from '@ds/shared/Field'
 
-type TabKey = 'general' | 'pos' | 'website' | 'advanced' | 'modifiers'
+type TabKey = 'general' | 'pos' | 'website' | 'advanced'
 
 const NAV_TOP = [
   { icon: HomeIcon,          label: 'Dashboard' },
@@ -49,7 +49,7 @@ const NAV_TOP = [
 
 const NAV_BOTTOM_GROUP = [
   { icon: UsersIcon,         label: 'Customers' },
-  { icon: PackageIcon,       label: 'Products', active: true, href: '#/web/products/list' },
+  { icon: PackageIcon,       label: 'Experiences', active: true, href: '#/web/experiences/list' },
   { icon: ShoppingCartIcon,  label: 'Orders' },
   { icon: CalendarIcon,      label: 'Reservations' },
   { icon: BookmarkIcon,      label: 'Clubs' },
@@ -189,7 +189,7 @@ function ProductActions() {
 function ProductHeader() {
   const product = useProductState()
   const primaryImage = product.images[0]
-  const displayName = product.name || 'New product'
+  const displayName = product.name || 'New experience'
 
   return (
     <div className="flex items-start gap-5">
@@ -227,11 +227,10 @@ function Tabs({ active }: { active: TabKey }) {
       value={active}
       aria-label="Product editor tabs"
       options={[
-        { value: 'general',   label: 'General',   href: '#/web/products/general' },
-        { value: 'pos',       label: 'POS',       href: '#/web/products/pos' },
-        { value: 'website',   label: 'Website',   href: '#/web/products/website' },
-        { value: 'advanced',  label: 'Advanced',  href: '#/web/products/advanced' },
-        { value: 'modifiers', label: 'Modifiers', href: '#/web/products/modifiers' },
+        { value: 'general',   label: 'General',   href: '#/web/experiences/general' },
+        { value: 'pos',       label: 'POS',       href: '#/web/experiences/pos' },
+        { value: 'website',   label: 'Website',   href: '#/web/experiences/website' },
+        { value: 'advanced',  label: 'Advanced',  href: '#/web/experiences/advanced' },
       ]}
     />
   )
@@ -269,12 +268,14 @@ export function ProductLayout({
   const product = useProductState()
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  // If the URL carries ?id=pX (set by row-click on the catalogue), pre-fill the
-  // editor with that catalogue product. Runs once per id change.
+  // ?id=eX  — pre-fill the editor with that catalogue experience.
+  // ?new=1  — start a clean editor (used when "Add Experience" is picked from
+  //           the products prototype's Add Product modal).
   useEffect(() => {
     const params = new URLSearchParams(window.location.hash.split('?')[1] ?? '')
     const id = params.get('id')
     if (id) productActions.loadFromCatalogue(id)
+    else if (params.get('new')) productActions.startNewProduct('Experience')
   }, [])
 
   return (
@@ -290,9 +291,9 @@ export function ProductLayout({
               <div className="flex items-center justify-between gap-4">
                 <Breadcrumb
                   items={[
-                    { icon: <BreadcrumbHomeIcon />, href: '#/web/products/list' },
-                    { label: 'Products', href: '#/web/products/list' },
-                    { label: product.name || 'New product' },
+                    { icon: <BreadcrumbHomeIcon />, href: '#/web/experiences/list' },
+                    { label: 'Experiences', href: '#/web/experiences/list' },
+                    { label: product.name || 'New experience' },
                   ]}
                 />
                 <ProductActions />

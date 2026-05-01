@@ -113,6 +113,7 @@ const NAV: NavGroup[] = [
           { id: 'ds-empty-states', label: 'Empty States' },
           { id: 'ds-skeletons',    label: 'Skeletons' },
           { id: 'ds-error-states', label: 'Error States' },
+          { id: 'ds-no-image-art', label: 'No-Image Placeholder' },
         ],
       },
       {
