@@ -1228,7 +1228,7 @@ function NavbarSection() {
     <SubSection
       id="ds-navbar"
       title="Navbar"
-      description="App-shell top bar — sidebar toggle on the left, optional centre slot (e.g. global search), and a right cluster (notifications · divider · avatar pill). Layout adapts: hamburger on mobile, panel-left toggle on desktop."
+      description="App-shell top bar — sidebar toggle on the left, optional centre slot (e.g. global search), and a right cluster (notifications · divider · avatar pill). Layout adapts: hamburger on mobile, panel-left toggle on desktop. Pass `fixed` to pin it to the top of its column (parent must be `relative`; the scrolling sibling needs `pt-16` so the first row clears the bar)."
     >
       <div className="flex flex-col gap-vintiga-lg">
         <ReferenceCard label="Desktop">
@@ -1281,6 +1281,32 @@ function NavbarSection() {
 
         <ReferenceCard label="Wired with sidebar — interactive collapse">
           <AppShellDemo />
+        </ReferenceCard>
+
+        <ReferenceCard label="Fixed at top of scroll container — content scrolls under (iOS-blur)">
+          {/* Demo container plays the role of the consumer's content column —
+              `relative` for the absolute Navbar to anchor; the scrolling
+              sibling has `pt-16` so the first row clears the bar. */}
+          <div className="relative h-72 border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
+            <Navbar
+              device="desktop"
+              fixed
+              user={{ name: 'Tom Cook', initials: 'TC' }}
+              hasNotifications
+              onMenuToggle={() => {}}
+              onUserClick={() => {}}
+              onNotificationClick={() => {}}
+            />
+            <div className="h-full overflow-y-auto pt-16 bg-vintiga-slate-50">
+              <div className="p-vintiga-lg flex flex-col gap-vintiga-sm">
+                {Array.from({ length: 24 }).map((_, i) => (
+                  <div key={i} className="h-10 rounded-vintiga-md bg-vintiga-white border border-vintiga-slate-200 flex items-center px-vintiga-md typo-body-sm text-vintiga-slate-700">
+                    Row {i + 1}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </ReferenceCard>
       </div>
     </SubSection>
