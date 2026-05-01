@@ -25,7 +25,7 @@ export function WebsiteScreen() {
 
         <Field
           label="Subtitle"
-          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} iconOnly />}
         >
           <TextInput placeholder="Enter subtitle" />
         </Field>
@@ -33,7 +33,7 @@ export function WebsiteScreen() {
         <Field
           label="Teaser"
           helper="Displayed on the product collection page online"
-          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} iconOnly />}
         >
           <TextArea placeholder="Enter teaser" />
         </Field>
@@ -42,14 +42,14 @@ export function WebsiteScreen() {
       <SectionCard title="SEO">
         <Field
           label="Meta Tag Title"
-          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} iconOnly />}
         >
           <TextInput placeholder="Enter title" />
         </Field>
 
         <Field
           label="Meta Tag Description"
-          action={<AiSuggestButton onClick={fakeGen} generating={generating} />}
+          action={<AiSuggestButton onClick={fakeGen} generating={generating} iconOnly />}
         >
           <TextArea placeholder="Enter description" />
         </Field>

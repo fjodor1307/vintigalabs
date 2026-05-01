@@ -1829,7 +1829,7 @@ function AiSuggestButtonSection() {
     setTimeout(() => setGenerating(false), 1200)
   }
   return (
-    <SubSection id="ds-ai-suggest-button" title="AI Suggest Button" description="Outline button with a sparkles icon and a 'generating…' loading state. Drop into a Field's `action` slot.">
+    <SubSection id="ds-ai-suggest-button" title="AI Suggest Button" description="Outline button with a sparkles icon and a 'generating…' loading state. Drop into a Field's `action` slot. Use `iconOnly` in dense layouts (e.g. multiple AI fields stacked in a single editor) — the sparkles icon alone communicates intent and the aria-label keeps it accessible.">
       <div className="flex flex-col gap-4">
         <div className="flex gap-3 items-center">
           <AiSuggestButton onClick={fakeGen} generating={generating} />
@@ -1839,6 +1839,13 @@ function AiSuggestButtonSection() {
           <AiSuggestButton onClick={() => {}} size="sm" label="Suggest" />
           <AiSuggestButton onClick={() => {}} size="md" />
           <AiSuggestButton onClick={() => {}} size="lg" />
+        </div>
+        <div className="flex gap-3 items-center">
+          <AiSuggestButton onClick={fakeGen} generating={generating} iconOnly />
+          <AiSuggestButton onClick={() => {}} size="sm" iconOnly />
+          <AiSuggestButton onClick={() => {}} size="md" iconOnly />
+          <AiSuggestButton onClick={() => {}} size="lg" iconOnly />
+          <span className="typo-caption text-vintiga-foreground-muted">Icon-only variant for dense layouts.</span>
         </div>
       </div>
     </SubSection>

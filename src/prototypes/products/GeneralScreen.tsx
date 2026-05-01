@@ -244,8 +244,6 @@ export function GeneralScreen() {
 
   return (
     <ProductLayout activeTab="general">
-      <MediaSection />
-
       <SectionCard title="Summary">
         <Field label="Name" required>
           <TextInput
@@ -257,11 +255,13 @@ export function GeneralScreen() {
 
         <Field
           label="Content"
-          action={<AiSuggestButton onClick={generateContent} generating={generating} />}
+          action={<AiSuggestButton onClick={generateContent} generating={generating} iconOnly />}
         >
           <RichTextEditor editorRef={editorRef} />
         </Field>
       </SectionCard>
+
+      <MediaSection />
 
       <SectionCard
         title="Variants & Pricing"

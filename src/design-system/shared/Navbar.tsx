@@ -116,7 +116,14 @@ export function Navbar({
   return (
     <header
       className={[
-        'flex items-center justify-between h-16 w-full bg-vintiga-white border-b border-vintiga-slate-200',
+        // iOS-style translucent bar — pair with `sticky top-0 z-30` on the
+        // parent so content blurs through as it scrolls under the bar. Bg is
+        // mostly opaque (85%) with a strong saturation boost on the blur so
+        // the bar reads as a solid fixed surface even when long table rows
+        // scroll beneath it; a soft shadow reinforces the elevation.
+        'flex items-center justify-between h-16 w-full',
+        'bg-vintiga-white/85 backdrop-blur-md backdrop-saturate-150',
+        'border-b border-vintiga-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)]',
         padding,
         className,
       ].join(' ')}
