@@ -200,13 +200,6 @@ export function ProductsListScreen() {
       bundle: 'Bundle', 'gift-card': 'Gift Card', collateral: 'Collateral',
       'event-ticket': 'Event Ticket',
     }
-    // Experiences have their own editor (different fields, different model);
-    // the experiences prototype owns it. Other types stay on the generic
-    // products editor for now.
-    if (type === 'experience') {
-      window.location.hash = '#/web/experiences/general?new=1'
-      return
-    }
     // Start a clean editor — no name, no images, no content, no variants —
     // pre-filled with the picked product type.
     productActions.startNewProduct(label[type])
@@ -331,11 +324,7 @@ export function ProductsListScreen() {
           )}
 
           {visible.map((p) => {
-            // Experiences open in their own editor (different fields / model);
-            // everything else opens in the generic products editor.
-            const editorHref = p.type === 'Experience'
-              ? `#/web/experiences/general?id=${p.id}`
-              : `#/web/products/general?id=${p.id}`
+            const editorHref = `#/web/products/general?id=${p.id}`
             return (
             <div
               key={p.id}
