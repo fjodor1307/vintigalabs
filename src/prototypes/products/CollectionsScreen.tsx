@@ -166,7 +166,21 @@ function iconForType(type: string): React.ReactNode {
 
 // ─── Row kebab — used inside each ListCard ──────────────────────────────────
 
-function RowKebabMenu({ collectionName, selected = false }: { collectionName: string; selected?: boolean }) {
+function RowKebabMenu({
+  collectionId,
+  collectionName,
+  selected = false,
+  onView,
+  onDuplicate,
+  onArchive,
+}: {
+  collectionId: string
+  collectionName: string
+  selected?: boolean
+  onView: (id: string) => void
+  onDuplicate: (id: string) => void
+  onArchive: (id: string) => void
+}) {
   return (
     <PopoverMenu
       align="right"
@@ -186,9 +200,9 @@ function RowKebabMenu({ collectionName, selected = false }: { collectionName: st
         </button>
       )}
       items={[
-        { label: 'View',      onClick: () => {} },
-        { label: 'Duplicate', onClick: () => {} },
-        { label: 'Archive',   onClick: () => {}, danger: true },
+        { label: 'View',      onClick: () => onView(collectionId) },
+        { label: 'Duplicate', onClick: () => onDuplicate(collectionId) },
+        { label: 'Archive',   onClick: () => onArchive(collectionId), danger: true },
       ]}
     />
   )
@@ -198,10 +212,14 @@ function CollectionList({
   collections,
   selectedId,
   onSelect,
+  onDuplicate,
+  onArchive,
 }: {
   collections: Collection[]
   selectedId: string | null
   onSelect: (id: string) => void
+  onDuplicate: (id: string) => void
+  onArchive: (id: string) => void
 }) {
   return (
     <div className="flex flex-col gap-vintiga-md">
@@ -223,7 +241,16 @@ function CollectionList({
               icon={iconForType(c.type)}
               selected={selectedId === c.id}
               onClick={() => onSelect(c.id)}
-              action={<RowKebabMenu collectionName={c.name} selected={selectedId === c.id} />}
+              action={
+                <RowKebabMenu
+                  collectionId={c.id}
+                  collectionName={c.name}
+                  selected={selectedId === c.id}
+                  onView={onSelect}
+                  onDuplicate={onDuplicate}
+                  onArchive={onArchive}
+                />
+              }
             />
           ))}
         </div>
@@ -249,10 +276,14 @@ function ProductsPanel({
   collection,
   products,
   onRemove,
+  onDuplicate,
+  onArchive,
 }: {
   collection: Collection
   products: CatalogueProduct[]
   onRemove: (productId: string) => void
+  onDuplicate: (id: string) => void
+  onArchive: (id: string) => void
 }) {
   const [tab, setTab] = useState<'products' | 'summary'>('products')
   const alreadyAddedIds = new Set(products.map((p) => p.id))
@@ -276,8 +307,8 @@ function ProductsPanel({
               />
             )}
             items={[
-              { label: 'Duplicate', onClick: () => {} },
-              { label: 'Archive',   onClick: () => {}, danger: true },
+              { label: 'Duplicate', onClick: () => onDuplicate(collection.id) },
+              { label: 'Archive',   onClick: () => onArchive(collection.id), danger: true },
             ]}
           />
         </div>
@@ -295,41 +326,43 @@ function ProductsPanel({
         ]}
       />
 
-      {tab === 'summary' ? (
-        <SummaryForm collection={collection} />
-      ) : products.length > 0 ? (
-        <CollectionProductsTable
-          products={products}
-          onRemove={onRemove}
-          onAdd={(productId) => productActions.addProductToCollection(collection.id, productId)}
-          onReorder={(from, to) => productActions.reorderProductInCollection(collection.id, from, to)}
-        />
-      ) : (
-        <>
-          <div className="flex items-center gap-vintiga-md">
-            <AddProductsSearch
-              alreadyAddedIds={alreadyAddedIds}
-              onAdd={(productId) => productActions.addProductToCollection(collection.id, productId)}
-            />
-            <span className="typo-body-sm text-vintiga-slate-500 shrink-0">0 products selected</span>
-            <IconButton
-              variant="outline"
-              size="md"
-              icon={<TrashIcon />}
-              aria-label="Bulk delete"
-              disabled
-            />
-          </div>
-          <div className="flex-1 min-h-[280px] flex items-center justify-center">
-            <EmptyState
-              bordered={false}
-              icon={<PackageIcon className="w-5 h-5" />}
-              title="No Products"
-              description="Looks like your collection doesn't have any products yet. Why not start by adding one?"
-            />
-          </div>
-        </>
-      )}
+      <div className="flex-1 min-h-0 overflow-y-auto -mx-vintiga-lg px-vintiga-lg flex flex-col gap-vintiga-md">
+        {tab === 'summary' ? (
+          <SummaryForm collection={collection} />
+        ) : products.length > 0 ? (
+          <CollectionProductsTable
+            products={products}
+            onRemove={onRemove}
+            onAdd={(productId) => productActions.addProductToCollection(collection.id, productId)}
+            onReorder={(from, to) => productActions.reorderProductInCollection(collection.id, from, to)}
+          />
+        ) : (
+          <>
+            <div className="flex items-center gap-vintiga-md">
+              <AddProductsSearch
+                alreadyAddedIds={alreadyAddedIds}
+                onAdd={(productId) => productActions.addProductToCollection(collection.id, productId)}
+              />
+              <span className="typo-body-sm text-vintiga-slate-500 shrink-0">0 products selected</span>
+              <IconButton
+                variant="outline"
+                size="md"
+                icon={<TrashIcon />}
+                aria-label="Bulk delete"
+                disabled
+              />
+            </div>
+            <div className="flex-1 min-h-[280px] flex items-center justify-center">
+              <EmptyState
+                bordered={false}
+                icon={<PackageIcon className="w-5 h-5" />}
+                title="No Products"
+                description="Looks like your collection doesn't have any products yet. Why not start by adding one?"
+              />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }
@@ -355,13 +388,32 @@ export function CollectionsScreen() {
     ? catalogue.filter((p) => selected.productIds.includes(p.id))
     : []
 
+  function handleDuplicate(id: string) {
+    const newId = productActions.duplicateCollection(id)
+    if (newId) setSelectedId(newId)
+  }
+
+  function handleArchive(id: string) {
+    productActions.removeCollection(id)
+    if (selectedId === id) {
+      const remaining = allCollections.filter((c) => c.id !== id)
+      setSelectedId(remaining[0]?.id ?? null)
+    }
+  }
+
   return (
     <OverviewLayout title="Collections" description="View and manage all your collections" activeTab="collections">
       <div className="bg-vintiga-white border border-vintiga-slate-200 rounded-vintiga-2xl overflow-hidden flex-1 min-h-0">
-        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] h-full min-h-[500px]">
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] grid-rows-[minmax(0,1fr)] h-full min-h-[500px]">
           {/* Left column — full-height divider via right border on this column */}
           <div className="lg:border-r lg:border-vintiga-slate-200 p-vintiga-lg">
-            <CollectionList collections={allCollections} selectedId={selectedId} onSelect={setSelectedId} />
+            <CollectionList
+              collections={allCollections}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              onDuplicate={handleDuplicate}
+              onArchive={handleArchive}
+            />
           </div>
 
           {/* Right column */}
@@ -371,6 +423,8 @@ export function CollectionsScreen() {
                 collection={selected}
                 products={productsInSelected}
                 onRemove={(pid) => productActions.removeProductFromCollection(selected.id, pid)}
+                onDuplicate={handleDuplicate}
+                onArchive={handleArchive}
               />
             ) : (
               <NoSelectionPanel />

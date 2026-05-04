@@ -285,6 +285,18 @@ export const productActions = {
     state = { ...state, allCollections: state.allCollections.filter((c) => c.id !== id) }
     emit()
   },
+  duplicateCollection(id: string): string | null {
+    const src = state.allCollections.find((c) => c.id === id)
+    if (!src) return null
+    const newId = uid('c')
+    const dup: Collection = { id: newId, name: `${src.name} Copy`, type: src.type, productIds: [...src.productIds] }
+    const idx = state.allCollections.findIndex((c) => c.id === id)
+    const next = [...state.allCollections]
+    next.splice(idx + 1, 0, dup)
+    state = { ...state, allCollections: next }
+    emit()
+    return newId
+  },
   removeProductFromCollection(collectionId: string, productId: string) {
     state = {
       ...state,
