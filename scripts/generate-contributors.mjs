@@ -20,6 +20,10 @@ const outputPath = join(repoRoot, 'src/generated/contributors.json')
 // auto-hashed default. Add new entries here.
 const CONTRIBUTOR_OVERRIDES = {
   'fedja djukic': { colour: '#000000' },
+  // GitHub web-UI merges author commits as the GH username (`fjodor1307`),
+  // which would otherwise show as "FJ". Alias to the same identity as
+  // local commits so the avatar is consistent everywhere.
+  'fjodor1307':   { initials: 'FD', colour: '#000000' },
 }
 
 function colourFromName(name) {
