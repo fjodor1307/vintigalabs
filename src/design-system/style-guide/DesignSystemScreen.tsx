@@ -145,9 +145,11 @@ const NAV: NavGroup[] = [
           { id: 'ds-cards',    label: 'Cards' },
           { id: 'ds-section-card', label: 'Section Card' },
           { id: 'ds-list-card', label: 'List Card' },
+          { id: 'ds-club-card', label: 'Club Card' },
           { id: 'ds-selection-card', label: 'Selection Card' },
           { id: 'ds-widget',   label: 'Widget' },
           { id: 'ds-kpi-card', label: 'KPI Card' },
+          { id: 'ds-media',    label: 'Media' },
           { id: 'ds-avatars',  label: 'Avatars' },
           { id: 'ds-tags',     label: 'Tags' },
           { id: 'ds-pill',     label: 'Pill' },
@@ -160,6 +162,13 @@ const NAV: NavGroup[] = [
         items: [
           { id: 'ds-screen-header', label: 'Screen Header' },
           { id: 'ds-screen-footer', label: 'Screen Footer' },
+        ],
+      },
+      {
+        label: 'Templates',
+        icon: BoxIcon,
+        items: [
+          { id: 'ds-template-products', label: 'Products' },
         ],
       },
     ],

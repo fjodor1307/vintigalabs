@@ -19,11 +19,11 @@ const outputPath = join(repoRoot, 'src/generated/contributors.json')
 // contributors pin their own colour (and initials, if needed) instead of the
 // auto-hashed default. Add new entries here.
 const CONTRIBUTOR_OVERRIDES = {
-  'fedja djukic': { colour: '#000000' },
-  // GitHub web-UI merges author commits as the GH username (`fjodor1307`),
-  // which would otherwise show as "FJ". Alias to the same identity as
-  // local commits so the avatar is consistent everywhere.
-  'fjodor1307':   { initials: 'FD', colour: '#000000' },
+  // Pin both author identities (local = "Fedja Djukic", GitHub web-merge =
+  // `fjodor1307`) to the same avatar — black circle, "FJ" initials — so the
+  // prototype-card avatar looks identical on local and the deployed site.
+  'fedja djukic': { initials: 'FJ', colour: '#000000' },
+  'fjodor1307':   { initials: 'FJ', colour: '#000000' },
 }
 
 function colourFromName(name) {
