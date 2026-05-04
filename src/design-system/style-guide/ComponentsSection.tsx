@@ -39,6 +39,11 @@ import { Field } from '@ds/shared/Field'
 import { AiSuggestButton } from '@ds/shared/AiSuggestButton'
 import { NoImageArt } from '@ds/shared/NoImageArt'
 import { ListCard } from '@ds/shared/ListCard'
+import { ClubCard } from '@ds/shared/ClubCard'
+import { Media } from '@ds/shared/Media'
+import { PageTemplate } from '@ds/shared/PageTemplate'
+import { RailSection } from '@ds/shared/RightRail'
+import { EllipsisVerticalIcon } from '@ds/icons/Icons'
 import { SelectionCard } from '@ds/shared/SelectionCard'
 import { Widget, WidgetHeader, WidgetBody, WidgetFooter } from '@ds/shared/Widget'
 import { VintigaIconIndigo } from '@ds/shared/VintigaLogo'
@@ -960,24 +965,86 @@ function TagsSection() {
 
 function KpiCardsSection() {
   return (
-    <SubSection id="ds-kpi-card" title="KPI Card" description="Metric summary with optional icon and progress bar.">
+    <SubSection
+      id="ds-kpi-card"
+      title="KPI Card"
+      description="Metric summary tile. Slots are: label, value, icon, optional inline status pill, and an optional goal/progress strip. The strip renders whenever goalLabel is set — pass real progress for a filled bar, or pass goalLabel='No goal set' to render the empty state (works whether the value is zero or not). Matches Figma 132:6062."
+    >
       <div className="flex flex-col gap-vintiga-lg">
-        <PlaygroundStage>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md w-full max-w-lg">
+        <ReferenceCard label="① Plain">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-md w-full">
+            <KpiCard
+              label="Active customers"
+              value="1,284"
+              icon={<UsersIcon />}
+            />
+            <KpiCard
+              label="New Members"
+              value="50"
+              icon={<GemIcon />}
+            />
+            <KpiCard
+              label="Pending"
+              value="14"
+              icon={<UsersIcon />}
+            />
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="② Goal / progress">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md w-full">
             <KpiCard
               label="Total Revenue"
               value="$45,231.89"
-              icon={<DollarIcon className="w-4 h-4" />}
+              icon={<DollarIcon />}
               goalLabel="Goal: $10,000.00"
               progressPercent={25}
             />
             <KpiCard
-              label="Active customers"
-              value="1,284"
-              icon={<TrendUpIcon className="w-4 h-4" />}
+              label="Year-to-date"
+              value="$132,400"
+              icon={<TrendUpIcon />}
+              goalLabel="Goal: $200,000"
+              progressPercent={66}
             />
           </div>
-        </PlaygroundStage>
+        </ReferenceCard>
+
+        <ReferenceCard label="③ No goal set — value present (no pill)">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md w-full">
+            <KpiCard
+              label="AOV"
+              value="$84.20"
+              icon={<DollarIcon />}
+              goalLabel="No goal set"
+            />
+            <KpiCard
+              label="Total Revenue"
+              value="$12,840"
+              icon={<DollarIcon />}
+              goalLabel="No goal set"
+            />
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="④ No goal set — empty (with status pill)">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md w-full">
+            <KpiCard
+              label="AOV"
+              value="$0"
+              icon={<DollarIcon />}
+              status={<Tag variant="outline" size="sm">Awaiting first order</Tag>}
+              goalLabel="No goal set"
+            />
+            <KpiCard
+              label="Conversion"
+              value="0%"
+              icon={<TrendUpIcon />}
+              status={<Tag variant="outline" size="sm">Awaiting first sale</Tag>}
+              goalLabel="No goal set"
+            />
+          </div>
+        </ReferenceCard>
       </div>
     </SubSection>
   )
@@ -1593,6 +1660,189 @@ function ListCardSection() {
   )
 }
 
+function MediaSection() {
+  // Local in-memory items so the showcase is interactive without a real upload backend.
+  type Item = { id: string; url: string; name: string }
+  const [items, setItems] = useState<Item[]>([
+    { id: 'demo', url: 'https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=400&h=400&fit=crop', name: 'Demo bottle' },
+  ])
+  return (
+    <SubSection
+      id="ds-media"
+      title="Media"
+      description={'Image library section. Header has a title + Upload button; body is a 4-col grid of square tiles. The first tile carries a "Primary" badge; the trailing tile is a dashed indigo dropzone. With zero items, the body collapses to a single empty-state dropzone. Pass variant="bare" to skip the SectionCard wrapper and drop the grid into a parent card or Field.'}
+    >
+      <div className="flex flex-col gap-vintiga-lg">
+        <ReferenceCard label="With items">
+          <Media
+            items={items}
+            onUpload={(files) =>
+              setItems((prev) => [
+                ...prev,
+                ...files.map((f) => ({ id: `${Date.now()}-${f.name}`, url: URL.createObjectURL(f), name: f.name })),
+              ])
+            }
+            onRemove={(id) => setItems((prev) => prev.filter((i) => i.id !== id))}
+          />
+        </ReferenceCard>
+
+        <ReferenceCard label="Empty state">
+          <Media
+            items={[]}
+            onUpload={() => {}}
+            onRemove={() => {}}
+          />
+        </ReferenceCard>
+      </div>
+    </SubSection>
+  )
+}
+
+function ProductsTemplateSection() {
+  return (
+    <SubSection
+      id="ds-template-products"
+      title="Products"
+      description={'Products editor page template — Breadcrumb · Title + Save/Kebab · Tabs · body sections · 360-px right rail with Status / Collections / Availability. Built on the shared `PageTemplate` primitive (Figma 5640:28214 — "Page Layout"). Padding 32 px on every side of the main column with 32-px gaps between header rows.'}
+    >
+      <div className="flex flex-col gap-vintiga-lg">
+        <ReferenceCard label="Full layout — breadcrumb · title + actions · tabs · body · sidebar">
+          <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
+            <PageTemplate
+              breadcrumbs={[
+                { icon: <BreadcrumbHomeIcon />, href: '#' },
+                { label: 'Section', href: '#' },
+                { label: 'Page' },
+              ]}
+              title="Title"
+              actions={
+                <>
+                  <Button>Save</Button>
+                  <IconButton variant="outline" icon={<EllipsisVerticalIcon />} aria-label="More actions" />
+                </>
+              }
+              tabs={
+                <SegmentedControl<string>
+                  value="one"
+                  options={[
+                    { value: 'one',   label: 'Label' },
+                    { value: 'two',   label: 'Label' },
+                    { value: 'three', label: 'Label' },
+                    { value: 'four',  label: 'Label' },
+                    { value: 'five',  label: 'Label' },
+                  ]}
+                />
+              }
+              rail={
+                <RailSection title="Title">
+                  <div className="h-[88px]" />
+                </RailSection>
+              }
+            >
+              <SectionCard title="Label">
+                <Field label="Label" required>
+                  <TextField placeholder="Enter Label" />
+                </Field>
+              </SectionCard>
+            </PageTemplate>
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="Without tabs or rail — single-column form">
+          <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
+            <PageTemplate
+              breadcrumbs={[
+                { icon: <BreadcrumbHomeIcon />, href: '#' },
+                { label: 'Settings' },
+              ]}
+              title="Account settings"
+              actions={<Button>Save changes</Button>}
+            >
+              <SectionCard title="Profile">
+                <Field label="Display name" required>
+                  <TextField placeholder="Enter your display name" />
+                </Field>
+                <Field label="Email" required>
+                  <TextField placeholder="you@example.com" />
+                </Field>
+              </SectionCard>
+              <SectionCard title="Preferences">
+                <Field label="Time zone">
+                  <TextField placeholder="UTC" />
+                </Field>
+              </SectionCard>
+            </PageTemplate>
+          </div>
+        </ReferenceCard>
+      </div>
+    </SubSection>
+  )
+}
+
+function ClubCardSection() {
+  return (
+    <SubSection
+      id="ds-club-card"
+      title="Club Card"
+      description="Bordered media-rich list row with a 96 px image, title, tag cluster, meta line, and a trailing kebab. Each row owns its border + radius and lights up on hover (slate-50 bg, slate-400 border). Built from Figma 5636:24752 — used for the Clubs surface but generic enough for any catalogue list with imagery (Campaigns, Curated Collections). Stack rows in a plain `flex-col gap-vintiga-md` container."
+    >
+      <div className="flex flex-col gap-vintiga-lg">
+        <ReferenceCard label="Default + hover (try it)">
+          <div className="flex flex-col gap-vintiga-md">
+            <ClubCard
+              image={
+                <img
+                  src="https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=200&h=200&fit=crop"
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              }
+              title="C7"
+              tags={[
+                <Tag tone="info" size="sm">Commerce7</Tag>,
+                <Tag tone="violet" size="sm">Traditional</Tag>,
+              ]}
+              meta="10 Active | 2 On-hold | 2 New | 1 Canceled"
+              action={
+                <button
+                  type="button"
+                  className="w-8 h-8 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-none cursor-pointer"
+                  aria-label="More"
+                >
+                  <EllipsisIcon className="w-4 h-4 text-vintiga-slate-500" />
+                </button>
+              }
+              onClick={() => {}}
+            />
+            <ClubCard
+              image={
+                <img
+                  src="https://images.unsplash.com/photo-1474722883778-792e7990302f?w=200&h=200&fit=crop"
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              }
+              title="Vintiga Heritage"
+              tags={[<Tag tone="violet" size="sm">Curated Club</Tag>]}
+              meta="10 Active | 2 On-hold | 2 New | 1 Canceled"
+              action={
+                <button
+                  type="button"
+                  className="w-8 h-8 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-none cursor-pointer"
+                  aria-label="More"
+                >
+                  <EllipsisIcon className="w-4 h-4 text-vintiga-slate-500" />
+                </button>
+              }
+              onClick={() => {}}
+            />
+          </div>
+        </ReferenceCard>
+      </div>
+    </SubSection>
+  )
+}
+
 const SELECTION_CARD_CONTROLS: ControlSchema = {
   orientation: { type: 'select',  options: ['horizontal', 'vertical'],   default: 'horizontal' },
   align:       { type: 'select',  options: ['start', 'center'],          default: 'start' },
@@ -1912,6 +2162,9 @@ export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-sidebar':        SidebarSection,
   'ds-widget':         WidgetSection,
   'ds-list-card':      ListCardSection,
+  'ds-club-card':      ClubCardSection,
+  'ds-media':          MediaSection,
+  'ds-template-products': ProductsTemplateSection,
   'ds-selection-card': SelectionCardSection,
   'ds-breadcrumb':     BreadcrumbSection,
   'ds-section-card':   SectionCardSection,

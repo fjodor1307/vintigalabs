@@ -1,15 +1,17 @@
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
-import { ChevronDownIcon, SearchIcon } from '@ds/icons/Icons'
+import { ChevronDownIcon, SearchIcon, EllipsisVerticalIcon } from '@ds/icons/Icons'
 import { useProductState, productActions } from './productStore'
-import { Thumbnail } from '@ds/shared/Thumbnail'
 import { AppSidebar } from '@ds/shared/AppSidebar'
 import { Navbar } from '@ds/shared/Navbar'
 import { Button } from '@ds/shared/Button'
+import { IconButton } from '@ds/shared/IconButton'
 import { TextField } from '@ds/shared/TextField'
-import { RightRail, RailSection } from '@ds/shared/RightRail'
+import { RailSection } from '@ds/shared/RightRail'
+import { PageTemplate } from '@ds/shared/PageTemplate'
+import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
-import { Breadcrumb, BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
+import { BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
 import { SectionCard as DSSectionCard } from '@ds/shared/SectionCard'
 import { Field as DSField } from '@ds/shared/Field'
 
@@ -17,41 +19,26 @@ type TabKey = 'general' | 'pos' | 'website' | 'advanced' | 'modifiers'
 
 function ProductActions() {
   return (
-    <div className="flex items-center gap-2">
-      <Button variant="outline" size="lg">Cancel</Button>
-      <Button size="lg">Save</Button>
-    </div>
-  )
-}
-
-function ProductHeader() {
-  const product = useProductState()
-  const primaryImage = product.images[0]
-  const displayName = product.name || 'New product'
-
-  return (
-    <div className="flex items-start gap-5">
-      {/* Thumbnail */}
-      <div className="w-[128px] h-[128px] shrink-0 rounded-vintiga-lg border border-vintiga-slate-200 overflow-hidden flex items-center justify-center">
-        <Thumbnail src={primaryImage?.url} alt="" className="w-full h-full object-cover" />
-      </div>
-
-      {/* Title + meta */}
-      <div className="flex-1 min-w-0 flex flex-col gap-2">
-        <h1 className="typo-title-section font-semibold text-vintiga-slate-900 truncate">{displayName}</h1>
-        <p className="typo-body-sm text-vintiga-slate-500">Product Type: {product.productType}</p>
-        <div className="flex flex-wrap gap-2 mt-1">
-          {product.collections.map((c) => (
-            <span
-              key={c}
-              className="inline-flex items-center px-2.5 py-1 rounded-full border border-vintiga-slate-200 bg-vintiga-white typo-caption text-vintiga-slate-700"
-            >
-              {c}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
+    <>
+      <Button onClick={() => {}}>Save</Button>
+      <PopoverMenu
+        align="right"
+        width="w-44"
+        trigger={(_open, toggle) => (
+          <IconButton
+            variant="outline"
+            size="md"
+            icon={<EllipsisVerticalIcon />}
+            onClick={toggle}
+            aria-label="More actions"
+          />
+        )}
+        items={[
+          { label: 'Duplicate', onClick: () => {} },
+          { label: 'Archive',   onClick: () => {}, danger: true },
+        ]}
+      />
+    </>
   )
 }
 
@@ -74,7 +61,7 @@ function Tabs({ active }: { active: TabKey }) {
 
 function RightPanel() {
   return (
-    <RightRail>
+    <>
       <RailSection title="Status">
         <span className="typo-body-sm text-vintiga-slate-500">Available</span>
       </RailSection>
@@ -89,7 +76,7 @@ function RightPanel() {
       <RailSection title="Availability">
         <span className="typo-body-sm text-vintiga-slate-500">Secure To: Public</span>
       </RailSection>
-    </RightRail>
+    </>
   )
 }
 
@@ -127,38 +114,19 @@ export function ProductLayout({
           onNotificationClick={() => {}}
         />
         <div className="flex-1 overflow-y-auto pt-16">
-          <div className="flex">
-            <main className="flex-1 flex flex-col">
-              <div className="p-vintiga-xl flex flex-col gap-6">
-              <div className="flex items-center justify-between gap-4">
-                <Breadcrumb
-                  items={[
-                    { icon: <BreadcrumbHomeIcon />, href: '#/web/products/list' },
-                    { label: 'Products', href: '#/web/products/list' },
-                    { label: product.name || 'New product' },
-                  ]}
-                />
-                <ProductActions />
-              </div>
-
-              <ProductHeader />
-
-              <Tabs active={activeTab} />
-
-              <div className="flex flex-col gap-6 pb-12">{children}</div>
-            </div>
-
-            {/* Mobile: right rail stacks under content (hidden on desktop) */}
-            <div className="lg:hidden">
-              <RightPanel />
-            </div>
-          </main>
-
-          {/* Desktop: right rail sits beside main */}
-          <div className="hidden lg:flex">
-            <RightPanel />
-          </div>
-          </div>
+          <PageTemplate
+            breadcrumbs={[
+              { icon: <BreadcrumbHomeIcon />, href: '#/web/products/list' },
+              { label: 'Products', href: '#/web/products/list' },
+              { label: product.name || 'New product' },
+            ]}
+            title={product.name || 'New product'}
+            actions={<ProductActions />}
+            tabs={<Tabs active={activeTab} />}
+            rail={<RightPanel />}
+          >
+            {children}
+          </PageTemplate>
         </div>
       </div>
     </div>

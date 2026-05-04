@@ -214,6 +214,9 @@ export const productActions = {
     syncCatalogueThumb()
     emit()
   },
+  addImages(files: File[]) {
+    files.forEach((f) => this.addImage(f))
+  },
   removeImage(id: string) {
     const img = state.images.find((i) => i.id === id)
     if (img && img.url.startsWith('blob:')) URL.revokeObjectURL(img.url)

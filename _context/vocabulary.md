@@ -91,6 +91,7 @@ This is the canonical list of design-system components. **Always check this list
 - **`Navbar`** — top app bar.
 - **`PhoneFrame`** — mobile preview shell.
 - **`RightRail`** + `RailSection` — right-side stacked rail with bordered sections.
+- **`PageTemplate`** — the canonical editor / detail page layout (Figma 5640:28214). Composes existing DS pieces — Breadcrumb · Title + actions · optional Tabs · body sections — plus an optional 360-px right rail. Padding 32 px on the main column with 32-px gaps between header rows. Sidebar uses pt-84 / pr-32 / pb-32 so its first card lines up with the page title. Use this for any page that fits the "header + body (+ rail)" shape.
 - **`StatusBar`**, **`ScreenHeader`**, **`ScreenFooter`** — mobile screen primitives.
 
 ## Navigation
@@ -102,6 +103,7 @@ This is the canonical list of design-system components. **Always check this list
 ## Inputs
 
 - **`TextField`** — text input (with optional `leftIcon`).
+- **`Select`** — native styled `<select>` matching `TextField` chrome. Accepts a string-or-`{value,label}` array via `options`, or raw `<option>` children for full control.
 - **`Field`** — generic label + control + helper + optional inline action (e.g. AiSuggestButton chip). Wrap any custom input in `Field`.
 - **`Checkbox`** / **`Radio`** / **`Switch`**.
 - **`OtpInput`** + `OtpInputGroup`.
@@ -118,6 +120,8 @@ This is the canonical list of design-system components. **Always check this list
 - **`Card`** — basic surface container.
 - **`SectionCard`** — bordered card with title + optional icon + optional action + children. Use for grouped form content (the white "Website / SEO / etc." sections in the product editor).
 - **`ListCard`** — 44px bordered list-item row with leading icon + label + trailing kebab (or custom action). Three states: default / hover / selected. Selected propagates indigo to leading icon, label, and the **default** kebab. If you pass a custom `action`, propagate `selected` yourself.
+- **`ClubCard`** — bordered media-rich list row with a 96px square image + title + tag cluster + single-line meta + trailing action. Has its own border + hover state (slate-50 bg / slate-400 border). Use for catalogue-style lists with imagery (Clubs, Campaigns, Curated Collections). Stack rows in a plain `flex-col gap-vintiga-md` container.
+- **`Media`** — image library section. SectionCard with title + Upload button + 4-col grid of square tiles. First tile gets a "Primary" badge; trailing tile is a dashed indigo dropzone. Empty state collapses to a full-width dropzone. Used by both `clubs/ClubOverviewScreen` and `products/MediaSection`. Use `variant="bare"` to drop the grid inside an existing SectionCard / Field.
 - **`SelectionCard`** — radio-like pick-one card. No `size` variant in this DS; use `orientation` / `align` / `tone`.
 - **`Widget`** + `WidgetHeader` / `WidgetBody` / `WidgetFooter` — dashboard widget shell.
 - **`KpiCard`** — single KPI tile with label + value + delta.
