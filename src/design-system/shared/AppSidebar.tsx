@@ -27,15 +27,15 @@ import type { ReactNode } from 'react'
 
 // ─── Vintiga app sidebar ──────────────────────────────────────────────────────
 // Single source of truth for the Vintiga dashboard's sidebar navigation. Used
-// by every prototype that lives inside the Vintiga app shell — products,
-// experiences, future ones — so the chrome can't drift between flows.
+// by every prototype that lives inside the Vintiga app shell — so the chrome
+// can't drift between flows.
 //
 // Usage:
 //   <AppSidebar collapsed={collapsed} activeNav="Products" />
 //
 // `activeNav` is matched against the item label. Sub-flows that don't have
-// their own top-level nav entry (e.g. experiences live under Products) should
-// pass the parent label so the right item stays highlighted.
+// their own top-level nav entry should pass the parent label so the right
+// item stays highlighted.
 
 interface NavItemDef {
   icon: ReactNode
@@ -73,8 +73,8 @@ export interface AppSidebarProps {
   collapsed?: boolean
   /**
    * Label of the currently selected top-level nav item. Sub-flows that don't
-   * have their own entry (e.g. experiences live under Products) should pass
-   * the parent's label so the right item stays highlighted.
+   * have their own entry should pass the parent's label so the right item
+   * stays highlighted.
    */
   activeNav?: string
 }
