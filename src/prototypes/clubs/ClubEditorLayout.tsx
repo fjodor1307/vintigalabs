@@ -80,18 +80,11 @@ function ClubDetailsRail({ tab }: { tab: ClubEditorTab }) {
         )}
 
         {club.type === 'membership' && (
-          <>
-            <DetailRow label="Membership Fee">
-              <span className="typo-body-sm text-vintiga-slate-700">
-                ${club.membershipFee.toFixed(2)}
-              </span>
-            </DetailRow>
-            <DetailRow label="Auto Renew">
-              <span className="typo-body-sm text-vintiga-slate-700">
-                {club.autoRenew ? 'Yes' : 'No'}
-              </span>
-            </DetailRow>
-          </>
+          <DetailRow label="Membership Fee">
+            <span className="typo-body-sm text-vintiga-slate-700">
+              ${club.membershipFee.toFixed(2)}
+            </span>
+          </DetailRow>
         )}
 
         {tab === 'releases' && (
