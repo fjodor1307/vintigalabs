@@ -57,16 +57,13 @@ PR body template:
 
 <one-paragraph plain-language description of what changed and why>
 
-## Review
-
-- Prototype: https://ogiogi-sy.github.io/vintiga-prototypes/#/web/<slug>/<first-screen>
-- Review link: https://ogiogi-sy.github.io/vintiga-prototypes/#/review/<slug>
-
 ## Test plan
 
 - [ ] Open the prototype, walk the flow
 - [ ] Check any edge cases mentioned in NOTES.md
 ```
+
+> **Don't add a "Review" / live-URL section unless you actually know the deploy URL for this repo.** Check `wrangler.*`, `.github/workflows/*.yml`, or the most recent successful deploy. Never paste a placeholder URL — leave the section out.
 
 ## Watch CI + merge
 
@@ -78,8 +75,7 @@ PR body template:
 
 Tell the designer, in one short message:
 - "Merged. Your prototype is live."
-- Give them the live URL: `https://ogiogi-sy.github.io/vintiga-prototypes/#/web/<slug>/<first-screen>`
-- Give them the shareable review URL: `https://ogiogi-sy.github.io/vintiga-prototypes/#/review/<slug>` — "Send this to stakeholders for feedback."
+- Only include a live URL if you actually know it (custom domain configured for this repo, or a confirmed Cloudflare Workers / GitHub Pages URL). If you don't, just confirm the merge — don't fabricate or paste a placeholder URL.
 
 ## Tone
 

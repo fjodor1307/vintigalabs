@@ -17,7 +17,7 @@ End state: the designer has a duplicate of the source prototype under a new slug
 1. **Which prototype do you want to clone?** → list the existing ones from `src/prototypes/` so they can pick. If they already mentioned one ("Fedja's onboarding"), confirm it matches a real folder.
 2. **What's your name / GitHub handle?** → needed for the new slug and CODEOWNERS. Skip if already known.
 
-The new slug is auto-generated: `<source-slug>-<designer-name>` (e.g. `invited-director-ogi`). Show it and let them override if they want something different.
+The new slug is auto-generated: `<source-slug>-<designer-name>` (e.g. `invited-director-fedja`). Show it and let them override if they want something different.
 
 ## Steps you run (silently, narrating phases only)
 
