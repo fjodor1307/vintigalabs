@@ -40,7 +40,7 @@ Only narrate major phases ("Setting you up…", "Scaffolding…", "Opening your 
    ```bash
    npm run new-prototype <slug>
    ```
-   If the slug already exists, suggest appending the designer's name (e.g. `card-activation-ogi`).
+   If the slug already exists, suggest appending the designer's name (e.g. `card-activation-fedja`).
 
 4. **Claim ownership in CODEOWNERS**
    Edit `.github/CODEOWNERS` — append a line:
