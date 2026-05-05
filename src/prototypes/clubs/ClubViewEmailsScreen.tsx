@@ -3,6 +3,7 @@ import { ClubViewLayout } from './ClubViewLayout'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
+import { Textarea } from '@ds/shared/Textarea'
 import { Switch } from '@ds/shared/Switch'
 import { MailIcon } from '@ds/icons/Icons'
 
@@ -114,11 +115,11 @@ export function ClubViewEmailsScreen() {
                       />
                     </Field>
                     <Field label="Body" required>
-                      <textarea
+                      <Textarea
                         value={draft.body}
                         onChange={(e) => patch(tmpl.id, { body: e.target.value })}
                         placeholder="Email body"
-                        className="min-h-[120px] w-full rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white px-3 py-2.5 typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors resize-y"
+                        className="min-h-[120px]"
                       />
                     </Field>
                   </div>

@@ -11,7 +11,7 @@ import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@
 import {
   PackageIcon,
   DollarIcon,
-  UsersGroupIcon,
+  UserCheckIcon,
   ShoppingCartIcon,
   CheckCircleIcon,
   PlusIcon,
@@ -70,13 +70,14 @@ export function ClubViewReleasesScreen() {
   return (
     <ClubViewLayout activeTab="releases">
       <div className="flex flex-col gap-vintiga-lg">
-        {/* KPI grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-vintiga-md">
-          <KpiCard label="Total Releases"          value="12"        icon={<PackageIcon />} />
-          <KpiCard label="Estimated Revenue"       value="$48,250"   icon={<DollarIcon />} />
-          <KpiCard label="Qualified Members"       value="14"        icon={<UsersGroupIcon />} />
-          <KpiCard label="Processed Orders"        value="32"        icon={<ShoppingCartIcon />} />
-          <KpiCard label="Draft Orders Finalized"  value="18"        icon={<CheckCircleIcon />} />
+        {/* KPI grid — sm variant in a 3 × 2 layout (Figma 5347:77005). */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-vintiga-md">
+          <KpiCard size="sm" label="Total releases"         value="12"       icon={<PackageIcon />} />
+          <KpiCard size="sm" label="Estimated revenue"      value="$12,500"  icon={<DollarIcon />} />
+          <KpiCard size="sm" label="Revenue"                value="$7,400"   icon={<DollarIcon />} />
+          <KpiCard size="sm" label="Qualified members"      value="14"       icon={<UserCheckIcon />} />
+          <KpiCard size="sm" label="Processed orders"       value="32"       icon={<ShoppingCartIcon />} />
+          <KpiCard size="sm" label="Draft orders finalized" value="32"       icon={<CheckCircleIcon />} />
         </div>
 
         {/* Releases card */}

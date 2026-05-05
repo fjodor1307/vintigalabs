@@ -89,11 +89,11 @@ export function ClubViewOverviewScreen() {
           </Field>
 
           <Field label="Description" required>
-            <textarea
+            <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What makes this club special?"
-              className="min-h-[96px] w-full rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white px-3 py-2.5 typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors resize-y"
+              className="min-h-[96px]"
             />
           </Field>
 
@@ -170,11 +170,11 @@ export function ClubViewOverviewScreen() {
             <TextField value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} placeholder="Page title shown in search results" />
           </Field>
           <Field label="Meta Tag Description" helper={`${metaRemaining} characters remaining`}>
-            <textarea
+            <Textarea
               value={metaDesc}
               onChange={(e) => setMetaDesc(e.target.value.slice(0, 160))}
               placeholder="Page description shown in search results"
-              className="min-h-[96px] w-full rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white px-3 py-2.5 typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors resize-y"
+              className="min-h-[96px]"
             />
           </Field>
           <Field label="Slug">

@@ -10,60 +10,9 @@ import { Tag } from '@ds/shared/Tag'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
 import { RightRail, RailSection } from '@ds/shared/RightRail'
 import { Breadcrumb, BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
-import {
-  BoldIcon,
-  ItalicIcon,
-  UnderlineIcon,
-  UndoIcon,
-  RedoIcon,
-  AlignLeftIcon,
-  AlignCenterIcon,
-  AlignRightIcon,
-  AlignJustifyIcon,
-  LinkIcon,
-  ImageIcon,
-  SearchIcon,
-} from '@ds/icons/Icons'
-
-function RichTextEditor() {
-  const tools: { icon: React.ComponentType<{ className?: string }>; label: string }[] = [
-    { icon: UndoIcon, label: 'Undo' },
-    { icon: RedoIcon, label: 'Redo' },
-    { icon: BoldIcon, label: 'Bold' },
-    { icon: ItalicIcon, label: 'Italic' },
-    { icon: UnderlineIcon, label: 'Underline' },
-    { icon: AlignLeftIcon, label: 'Align left' },
-    { icon: AlignCenterIcon, label: 'Align center' },
-    { icon: AlignRightIcon, label: 'Align right' },
-    { icon: AlignJustifyIcon, label: 'Justify' },
-    { icon: LinkIcon, label: 'Link' },
-    { icon: ImageIcon, label: 'Image' },
-  ]
-  return (
-    <div className="flex flex-col">
-      <div className="flex items-center gap-0.5 px-2 py-1.5 border border-vintiga-slate-200 border-b-0 rounded-t-vintiga-md bg-vintiga-white">
-        {tools.map((t) => {
-          const Icon = t.icon
-          return (
-            <button
-              key={t.label}
-              type="button"
-              title={t.label}
-              className="w-7 h-7 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-none cursor-pointer"
-            >
-              <Icon className="w-3.5 h-3.5 text-vintiga-slate-600" />
-            </button>
-          )
-        })}
-      </div>
-      <div
-        className="min-h-[180px] border border-vintiga-slate-200 rounded-b-vintiga-md bg-vintiga-white px-3 py-3 typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500"
-        contentEditable
-        suppressContentEditableWarning
-      />
-    </div>
-  )
-}
+import { RichTextEditor } from '@ds/shared/RichTextEditor'
+import { Textarea } from '@ds/shared/Textarea'
+import { SearchIcon } from '@ds/icons/Icons'
 
 export function AddCollectionScreen() {
   const { catalogue } = useProductState()
@@ -139,7 +88,7 @@ export function AddCollectionScreen() {
                 </div>
 
                 <Field label="Content">
-                  <RichTextEditor />
+                  <RichTextEditor minHeightClass="min-h-[180px]" />
                 </Field>
               </SectionCard>
 
@@ -153,11 +102,10 @@ export function AddCollectionScreen() {
                 </Field>
 
                 <Field label="Meta Tag Description" helper={`${Math.max(0, remaining)} characters remaining`}>
-                  <textarea
+                  <Textarea
                     placeholder="Enter description"
                     value={metaDescription}
                     onChange={(e) => setMetaDescription(e.target.value.slice(0, 160))}
-                    className="px-3 py-2.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors min-h-[72px] resize-y"
                   />
                 </Field>
 

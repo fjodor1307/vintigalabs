@@ -5,13 +5,18 @@ import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
 import { Select } from '@ds/shared/Select'
 import { Checkbox } from '@ds/shared/Checkbox'
+import { Textarea } from '@ds/shared/Textarea'
 import { Media } from '@ds/shared/Media'
 
 // ─── ClubOverviewScreen ───────────────────────────────────────────────────────
 // First (and primary) tab of the club editor. Field set is shared across all
 // three club types — Curated, Account Credit, Membership — minor differences:
-//   • Curated / Membership → Duration of Membership + Membership Fee + Auto-renew
+//   • Curated / Membership → Duration of Membership + Membership Fee
 //   • Account Credit → Levels live on a separate tab; Overview shows core only
+//
+// Terms & Conditions: the textarea only renders once the operator opts in via
+// the "Require members to accept" checkbox (defaults off). Auto-renew has been
+// removed for every club type.
 
 export function ClubOverviewScreen() {
   const club = useClubState()
@@ -71,11 +76,11 @@ export function ClubOverviewScreen() {
         )}
 
         <Field label="Description" required>
-          <textarea
+          <Textarea
             placeholder=""
             value={club.description}
             onChange={(e) => clubActions.patch('description', e.target.value)}
-            className="px-3 py-2.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors min-h-[96px] resize-y"
+            className="min-h-[96px]"
           />
         </Field>
 
@@ -101,12 +106,6 @@ export function ClubOverviewScreen() {
                 </div>
               </Field>
             </div>
-
-            <Checkbox
-              checked={club.autoRenew}
-              onChange={(next) => clubActions.patch('autoRenew', next)}
-              label="Auto-renew membership"
-            />
           </>
         )}
 
@@ -133,14 +132,16 @@ export function ClubOverviewScreen() {
           onChange={(next) => clubActions.patch('requireAcceptTerms', next)}
           label="Require members to accept terms & conditions"
         />
-        <Field label="Terms & Conditions" required helper="These terms will be displayed to members during the signup process and they must accept to continue.">
-          <textarea
-            placeholder="Enter terms and conditions that members must agree to…"
-            value={club.termsBody}
-            onChange={(e) => clubActions.patch('termsBody', e.target.value)}
-            className="px-3 py-2.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors min-h-[96px] resize-y"
-          />
-        </Field>
+        {club.requireAcceptTerms && (
+          <Field label="Terms & Conditions" required helper="These terms will be displayed to members during the signup process and they must accept to continue.">
+            <Textarea
+              placeholder="Enter terms and conditions that members must agree to…"
+              value={club.termsBody}
+              onChange={(e) => clubActions.patch('termsBody', e.target.value)}
+              className="min-h-[96px]"
+            />
+          </Field>
+        )}
       </SectionCard>
 
       {/* Section: SEO */}
@@ -153,11 +154,10 @@ export function ClubOverviewScreen() {
           />
         </Field>
         <Field label="Meta Tag Description" helper={`${Math.max(0, 5 - club.metaDescription.length)} characters remaining`}>
-          <textarea
+          <Textarea
             placeholder="Enter description"
             value={club.metaDescription}
             onChange={(e) => clubActions.patch('metaDescription', e.target.value)}
-            className="px-3 py-2.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors min-h-[72px] resize-y"
           />
         </Field>
         <Field label="Slug">

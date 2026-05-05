@@ -3,77 +3,17 @@ import { ProductLayout, SectionCard, Field, TextInput, Select } from './ProductL
 import { MediaSection } from './MediaSection'
 import { AiSuggestButton } from './AiSuggestButton'
 import { Switch } from '@ds/shared/Switch'
+import { RichTextEditor } from '@ds/shared/RichTextEditor'
 import { useProductState, productActions, type Variant } from './productStore'
 import { VariantModal } from './VariantModal'
 import { useRowDrag } from './useRowDrag'
 import { EmptyState } from '@ds/components/EmptyState'
 import {
-  BoldIcon,
-  ItalicIcon,
-  UnderlineIcon,
-  UndoIcon,
-  RedoIcon,
-  AlignLeftIcon,
-  AlignCenterIcon,
-  AlignRightIcon,
-  AlignJustifyIcon,
-  LinkIcon,
-  ImageIcon,
   PlusIcon,
   TrashIcon,
   GripVerticalIcon,
   PackagePlusIcon,
 } from '@ds/icons/Icons'
-
-function RichTextToolbar() {
-  const tools: { icon: React.ComponentType<{ className?: string }>; label: string }[] = [
-    { icon: UndoIcon, label: 'Undo' },
-    { icon: RedoIcon, label: 'Redo' },
-    { icon: BoldIcon, label: 'Bold' },
-    { icon: ItalicIcon, label: 'Italic' },
-    { icon: UnderlineIcon, label: 'Underline' },
-    { icon: AlignLeftIcon, label: 'Align left' },
-    { icon: AlignCenterIcon, label: 'Align center' },
-    { icon: AlignRightIcon, label: 'Align right' },
-    { icon: AlignJustifyIcon, label: 'Justify' },
-    { icon: LinkIcon, label: 'Link' },
-    { icon: ImageIcon, label: 'Image' },
-  ]
-  return (
-    <div className="flex items-center gap-0.5 px-2 py-1.5 border border-vintiga-slate-200 border-b-0 rounded-t-vintiga-md bg-vintiga-white">
-      {tools.map((t, i) => {
-        const Icon = t.icon
-        const isGroupEnd = [1, 4].includes(i)
-        return (
-          <div key={t.label} className="contents">
-            <button
-              type="button"
-              title={t.label}
-              className="w-7 h-7 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-none cursor-pointer"
-            >
-              <Icon className="w-3.5 h-3.5 text-vintiga-slate-600" />
-            </button>
-            {isGroupEnd && <span className="w-px h-4 bg-vintiga-slate-200 mx-1" />}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function RichTextEditor({ editorRef }: { editorRef?: React.RefObject<HTMLDivElement | null> }) {
-  return (
-    <div className="flex flex-col">
-      <RichTextToolbar />
-      <div
-        ref={editorRef}
-        className="min-h-[200px] border border-vintiga-slate-200 rounded-b-vintiga-md bg-vintiga-white px-3 py-3 typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 [&_p]:my-2 [&_strong]:font-semibold"
-        contentEditable
-        suppressContentEditableWarning
-      />
-    </div>
-  )
-}
 
 // ─── Per-field "Suggest with AI" trigger ──────────────────────────────────────
 // Reusable secondary button — pass it to <Field action={…}>. Lives in its own
@@ -278,7 +218,7 @@ export function GeneralScreen() {
           label="Content"
           action={<AiSuggestButton onClick={generateContent} generating={generating} iconOnly />}
         >
-          <RichTextEditor editorRef={editorRef} />
+          <RichTextEditor editorRef={editorRef} minHeightClass="min-h-[200px]" />
         </Field>
       </SectionCard>
 
