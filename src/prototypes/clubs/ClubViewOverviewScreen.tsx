@@ -6,6 +6,7 @@ import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
 import { Select } from '@ds/shared/Select'
 import { Switch } from '@ds/shared/Switch'
+import { Checkbox } from '@ds/shared/Checkbox'
 import { Media } from '@ds/shared/Media'
 import {
   PackageIcon,
@@ -28,7 +29,7 @@ export function ClubViewOverviewScreen() {
   const [description, setDescription]  = useState('')
   const [duration, setDuration]        = useState('12 Months')
   const [fee, setFee]                  = useState('0')
-  const [autoRenew, setAutoRenew]      = useState(true)
+  const [requireTerms, setRequireTerms] = useState(false)
   const [terms, setTerms]              = useState('')
   const [metaTitle, setMetaTitle]      = useState('')
   const [metaDesc, setMetaDesc]        = useState('')
@@ -122,33 +123,39 @@ export function ClubViewOverviewScreen() {
             </Field>
           </div>
 
-          <Field label="Auto-renew membership">
-            <Switch checked={autoRenew} onChange={setAutoRenew} labelPosition="right" label={autoRenew ? 'On' : 'Off'} />
-          </Field>
         </SectionCard>
 
-        {/* Terms */}
+        {/* Terms & Conditions — checkbox-gated. Defaults off; textarea only
+            renders once the operator opts in. Mirrors the editor's behaviour. */}
         <SectionCard
           title={
             <div className="flex flex-col gap-1">
-              <span>Terms</span>
+              <span>Terms &amp; Conditions</span>
               <span className="typo-body-sm font-normal text-vintiga-slate-500">
                 Set the rules and commitments members agree to upon signup.
               </span>
             </div>
           }
         >
-          <Field
-            label="Terms & Conditions"
-            helper="These terms will be displayed to members during the signup process and they must accept to continue."
-          >
-            <textarea
-              value={terms}
-              onChange={(e) => setTerms(e.target.value)}
-              placeholder="Enter terms and conditions"
-              className="min-h-[160px] w-full rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white px-3 py-2.5 typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors resize-y"
-            />
-          </Field>
+          <Checkbox
+            checked={requireTerms}
+            onChange={setRequireTerms}
+            label="Require members to accept terms &amp; conditions"
+          />
+          {requireTerms && (
+            <Field
+              label="Terms & Conditions"
+              required
+              helper="These terms will be displayed to members during the signup process and they must accept to continue."
+            >
+              <textarea
+                value={terms}
+                onChange={(e) => setTerms(e.target.value)}
+                placeholder="Enter terms and conditions that members must agree to..."
+                className="min-h-[160px] w-full rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white px-3 py-2.5 typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors resize-y"
+              />
+            </Field>
+          )}
         </SectionCard>
 
         {/* SEO */}

@@ -49,7 +49,6 @@ export interface ClubDraft {
   // Curated / Membership-specific
   durationOfMembership: '3 Months' | '6 Months' | '12 Months' | 'Indefinite'
   membershipFee: number
-  autoRenew: boolean
 
   // Account Credit-specific
   contributionCadence: 'Monthly' | 'Quarterly' | 'Annually'
@@ -89,7 +88,6 @@ function emptyDraft(type: ClubKind): ClubDraft {
     description: '',
     durationOfMembership: '12 Months',
     membershipFee: 0,
-    autoRenew: true,
     contributionCadence: 'Monthly',
     levels:
       type === 'account-credit'
@@ -100,7 +98,7 @@ function emptyDraft(type: ClubKind): ClubDraft {
         : [],
     releases: [],
     images: [],
-    requireAcceptTerms: true,
+    requireAcceptTerms: false,
     termsBody: '',
     metaTitle: '',
     metaDescription: '',
