@@ -24,52 +24,8 @@ import {
   WineIcon,
   SandwichIcon,
   FolderIcon,
-  BoldIcon, ItalicIcon, UnderlineIcon, UndoIcon, RedoIcon,
-  AlignLeftIcon, AlignCenterIcon, AlignRightIcon, AlignJustifyIcon,
-  LinkIcon, ImageIcon,
 } from '@ds/icons/Icons'
-
-// ─── Inline rich-text editor (visual placeholder) ─────────────────────────────
-
-function RichTextEditor() {
-  const tools: { icon: React.ComponentType<{ className?: string }>; label: string }[] = [
-    { icon: UndoIcon, label: 'Undo' },
-    { icon: RedoIcon, label: 'Redo' },
-    { icon: BoldIcon, label: 'Bold' },
-    { icon: ItalicIcon, label: 'Italic' },
-    { icon: UnderlineIcon, label: 'Underline' },
-    { icon: AlignLeftIcon, label: 'Align left' },
-    { icon: AlignCenterIcon, label: 'Align center' },
-    { icon: AlignRightIcon, label: 'Align right' },
-    { icon: AlignJustifyIcon, label: 'Justify' },
-    { icon: LinkIcon, label: 'Link' },
-    { icon: ImageIcon, label: 'Image' },
-  ]
-  return (
-    <div className="flex flex-col">
-      <div className="flex items-center gap-0.5 px-2 py-1.5 border border-vintiga-slate-200 border-b-0 rounded-t-vintiga-md bg-vintiga-white">
-        {tools.map((t) => {
-          const Icon = t.icon
-          return (
-            <button
-              key={t.label}
-              type="button"
-              title={t.label}
-              className="w-7 h-7 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-none cursor-pointer"
-            >
-              <Icon className="w-3.5 h-3.5 text-vintiga-slate-600" />
-            </button>
-          )
-        })}
-      </div>
-      <div
-        className="min-h-[140px] border border-vintiga-slate-200 rounded-b-vintiga-md bg-vintiga-white px-3 py-3 typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500"
-        contentEditable
-        suppressContentEditableWarning
-      />
-    </div>
-  )
-}
+import { RichTextEditor } from '@ds/shared/RichTextEditor'
 
 // ─── Summary form (Figma 5594:18632) ─────────────────────────────────────────
 
