@@ -141,12 +141,15 @@ export function ClubEditorLayout({
   extraCrumbs,
   /** Replace the default Save action cluster (e.g. show only Save on sub-pages). */
   actions,
+  /** Override the auto-derived H1 — useful when a status pill needs to sit inline. */
+  titleOverride,
   children,
 }: {
   activeTab: ClubEditorTab | null
   hideRail?: boolean
   extraCrumbs?: { label: string; href?: string }[]
   actions?: ReactNode
+  titleOverride?: ReactNode
   children: ReactNode
 }) {
   const club = useClubState()
@@ -184,9 +187,11 @@ export function ClubEditorLayout({
               ...(extraCrumbs ?? [{ label: displayName }]),
             ]}
             title={
-              extraCrumbs && extraCrumbs.length > 1
-                ? extraCrumbs[extraCrumbs.length - 1].label
-                : displayName
+              titleOverride
+                ? titleOverride
+                : extraCrumbs && extraCrumbs.length > 1
+                  ? extraCrumbs[extraCrumbs.length - 1].label
+                  : displayName
             }
             actions={
               actions ?? (

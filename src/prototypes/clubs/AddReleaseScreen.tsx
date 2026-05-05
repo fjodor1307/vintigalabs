@@ -1,247 +1,338 @@
 import { useState } from 'react'
 import { ClubEditorLayout } from './ClubEditorLayout'
+import { ClubViewLayout } from './ClubViewLayout'
+import { VIEW_CLUB } from './clubViewSample'
 import { useClubState, clubActions } from './clubStore'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
-import { Select } from '@ds/shared/Select'
 import { Switch } from '@ds/shared/Switch'
+import { Radio } from '@ds/shared/Radio'
+import { Tag } from '@ds/shared/Tag'
 import { Button } from '@ds/shared/Button'
+import { IconButton } from '@ds/shared/IconButton'
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@ds/shared/Table'
 import {
   SearchIcon,
   CalendarIcon,
-  BoldIcon,
-  ItalicIcon,
-  UnderlineIcon,
-  AlignLeftIcon,
-  AlignCenterIcon,
-  AlignRightIcon,
-  AlignJustifyIcon,
-  LinkIcon,
-  ImageIcon,
-  UndoIcon,
-  RedoIcon,
+  GripVerticalIcon,
+  TrashIcon,
 } from '@ds/icons/Icons'
 
 // ─── AddReleaseScreen ─────────────────────────────────────────────────────────
-// Sub-page from the Releases tab. Two-column layout — Products + Shipment on
-// the left, Settings panel on the right (replaces the Club Details rail). Save
-// button in the page header writes the release into the store and navigates
-// back to the Releases tab.
+// Sub-page from the Releases tab — supports both flows:
+//   • Editor flow  (#/web/clubs/new/releases/add)            for a brand-new club
+//   • View flow    (#/web/clubs/view/releases/add)           for an existing club
+//
+// Layout matches the refreshed Figma: header carries a "Planning" status tag,
+// main column hosts the Overview card (Title + Add Product search +
+// products table), and the right Settings card collects qty rules,
+// Manual/Auto processing radios (Auto reveals an "Auto Process Date" field),
+// the KEY DATES group, and the "skip shipment" switch.
+
+const SAMPLE_PRODUCTS: Product[] = [
+  {
+    id: 'p1',
+    name: '2021 Chardonnay',
+    sku: 'SKU-1234-1234',
+    image: 'https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=120&h=120&fit=crop',
+    defaultQty: 1,
+    minQty: 1,
+    maxQty: 12,
+    price: 100,
+  },
+]
+
+interface Product {
+  id: string
+  name: string
+  sku: string
+  image: string
+  defaultQty: number
+  minQty: number
+  maxQty: number
+  price: number
+}
+
+type Mode = 'editor' | 'view'
 
 export function AddReleaseScreen() {
+  return <AddReleaseInner mode="editor" />
+}
+
+export function AddReleaseExistingScreen() {
+  return <AddReleaseInner mode="view" />
+}
+
+function AddReleaseInner({ mode }: { mode: Mode }) {
   const club = useClubState()
+  const parentLabel  = mode === 'editor' ? (club.name || 'New club') : VIEW_CLUB.name
+  const parentHref   = mode === 'editor' ? '#/web/clubs/new/releases'  : '#/web/clubs/view/releases'
+
   const [title, setTitle]                       = useState('')
-  const [minQty, setMinQty]                     = useState(1)
-  const [maxQty, setMaxQty]                     = useState<string>('')
-  const [minOrderSubtotal, setMinOrderSubtotal] = useState(0)
+  const [products, setProducts]                 = useState<Product[]>(SAMPLE_PRODUCTS)
+  const [productSearch, setProductSearch]       = useState('')
+  const [minQty, setMinQty]                     = useState('1')
+  const [maxQty, setMaxQty]                     = useState('')
+  const [minOrderSubtotal, setMinOrderSubtotal] = useState('0')
+  const [processing, setProcessing]             = useState<'manual' | 'auto' | null>('auto')
   const [autoProcessDate, setAutoProcessDate]   = useState('')
-  const [startTime, setStartTime]               = useState('')
-  const [startMeridiem, setStartMeridiem]       = useState<'AM' | 'PM'>('PM')
-  const [shipmentInstructions, setShipmentInstructions] = useState('')
-  const [letMembersProcessEarly, setLetMembersProcessEarly] = useState(false)
+  const [availableDate, setAvailableDate]       = useState('')
+  const [shippingDate, setShippingDate]         = useState('')
+  const [pickupDate, setPickupDate]             = useState('')
   const [allowSkipOnline, setAllowSkipOnline]   = useState(false)
 
+  function patchProduct(id: string, partial: Partial<Product>) {
+    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...partial } : p)))
+  }
+
+  function removeProduct(id: string) {
+    setProducts((prev) => prev.filter((p) => p.id !== id))
+  }
+
   function save() {
-    clubActions.addRelease({
-      id: `r${club.releases.length + 1}`,
-      title: title || 'Untitled Release',
-      minQty,
-      maxQty: maxQty ? Number(maxQty) : undefined,
-      minOrderSubtotal,
-      autoProcessDate,
-      startTime: startTime ? `${startTime} ${startMeridiem}` : undefined,
-      shipmentInstructions,
-      letMembersProcessEarly,
-      allowSkipOnline,
-      productCount: 0,
-    })
-    window.location.hash = '#/web/clubs/new/releases'
+    if (mode === 'editor') {
+      clubActions.addRelease({
+        id: `r${club.releases.length + 1}`,
+        title: title || 'Untitled Release',
+        minQty: Number(minQty) || 1,
+        maxQty: maxQty ? Number(maxQty) : undefined,
+        minOrderSubtotal: Number(minOrderSubtotal) || 0,
+        autoProcessDate,
+        shipmentInstructions: '',
+        letMembersProcessEarly: false,
+        allowSkipOnline,
+        productCount: products.length,
+      })
+    }
+    window.location.hash = parentHref
+  }
+
+  const headerTitle = (
+    <span className="inline-flex items-center gap-vintiga-md">
+      <span>Add Club Release</span>
+      <Tag variant="neutral-light" tone="default" size="md">Planning</Tag>
+    </span>
+  )
+
+  const body = (
+    <div className="flex gap-vintiga-lg">
+      {/* Main column */}
+      <div className="flex-1 min-w-0 flex flex-col gap-vintiga-lg">
+        <SectionCard title="Overview">
+          <Field label="Title">
+            <TextField
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter title"
+            />
+          </Field>
+
+          <Field label="Add Product">
+            <TextField
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              placeholder="Search products"
+              leftIcon={<SearchIcon className="w-4 h-4" />}
+            />
+          </Field>
+
+          {products.length > 0 && (
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeader className="!px-vintiga-sm w-9" />
+                  <TableHeader>Product</TableHeader>
+                  <TableHeader className="w-24">Default</TableHeader>
+                  <TableHeader className="w-24">Min Qty</TableHeader>
+                  <TableHeader className="w-24">Max Qty</TableHeader>
+                  <TableHeader className="w-28">Price</TableHeader>
+                  <TableHeader className="w-12" />
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {products.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="!px-vintiga-sm">
+                      <span className="inline-flex w-6 h-6 items-center justify-center text-vintiga-slate-400 cursor-grab">
+                        <GripVerticalIcon className="w-4 h-4" />
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-vintiga-sm">
+                        <img
+                          src={p.image}
+                          alt=""
+                          className="w-12 h-12 rounded-vintiga-md object-cover border border-vintiga-slate-200"
+                          loading="lazy"
+                        />
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-medium text-vintiga-slate-900 truncate">{p.name}</span>
+                          <span className="typo-caption text-vintiga-slate-500 truncate">{p.sku}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        type="number"
+                        value={String(p.defaultQty)}
+                        onChange={(e) => patchProduct(p.id, { defaultQty: Number(e.target.value) || 0 })}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        type="number"
+                        value={String(p.minQty)}
+                        onChange={(e) => patchProduct(p.id, { minQty: Number(e.target.value) || 0 })}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        type="number"
+                        value={String(p.maxQty)}
+                        onChange={(e) => patchProduct(p.id, { maxQty: Number(e.target.value) || 0 })}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-vintiga-slate-900">${p.price.toFixed(2)}</span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <IconButton
+                        variant="outline"
+                        size="sm"
+                        icon={<TrashIcon />}
+                        aria-label={`Remove ${p.name}`}
+                        onClick={() => removeProduct(p.id)}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </SectionCard>
+      </div>
+
+      {/* Settings column */}
+      <aside className="hidden lg:flex w-[412px] shrink-0">
+        <SectionCard title="Settings" className="w-full">
+          <Field label="Min Quantity of Products">
+            <TextField
+              type="number"
+              value={minQty}
+              onChange={(e) => setMinQty(e.target.value)}
+            />
+          </Field>
+          <Field label="Max Quantity of Products">
+            <TextField
+              type="number"
+              value={maxQty}
+              onChange={(e) => setMaxQty(e.target.value)}
+              placeholder=""
+            />
+          </Field>
+          <Field label="Minimum Order Subtotal">
+            <TextField
+              type="number"
+              value={minOrderSubtotal}
+              onChange={(e) => setMinOrderSubtotal(e.target.value)}
+              rightIcon={<span className="typo-body-sm text-vintiga-slate-400">$</span>}
+            />
+          </Field>
+
+          {/* Manual / Auto */}
+          <Field label="How should orders be processed?">
+            <div className="flex flex-col gap-vintiga-sm pt-1">
+              <Radio
+                checked={processing === 'manual'}
+                onChange={() => setProcessing('manual')}
+                label="Manual"
+              />
+              <Radio
+                checked={processing === 'auto'}
+                onChange={() => setProcessing('auto')}
+                label="Auto"
+              />
+            </div>
+          </Field>
+
+          {processing === 'auto' && (
+            <Field
+              label="Auto Process Date"
+              helper="Orders are finalized and charged on this date."
+            >
+              <DateInput value={autoProcessDate} onChange={setAutoProcessDate} />
+            </Field>
+          )}
+
+          {/* Key dates */}
+          <div className="pt-vintiga-sm">
+            <span className="typo-caption font-semibold uppercase tracking-wide text-vintiga-slate-500">
+              Key dates
+            </span>
+          </div>
+
+          <Field
+            label="Available to Customer"
+            helper="Customers can view and edit their order from this date."
+          >
+            <DateInput value={availableDate} onChange={setAvailableDate} />
+          </Field>
+
+          <Field label="Estimated Shipping Date">
+            <DateInput value={shippingDate} onChange={setShippingDate} />
+          </Field>
+
+          <Field label="Pickup Available Date">
+            <DateInput value={pickupDate} onChange={setPickupDate} />
+          </Field>
+
+          <div className="flex items-start justify-between gap-vintiga-md pt-vintiga-sm">
+            <span className="typo-body-sm text-vintiga-slate-900 flex-1 min-w-0">
+              Allow members to skip their shipment online
+            </span>
+            <Switch checked={allowSkipOnline} onChange={setAllowSkipOnline} />
+          </div>
+        </SectionCard>
+      </aside>
+    </div>
+  )
+
+  const sharedProps = {
+    extraCrumbs: [
+      { label: parentLabel, href: parentHref.replace('/releases', '/overview') },
+      { label: 'Add Club Release' },
+    ],
+    actions: <Button onClick={save}>Save</Button>,
+    titleOverride: headerTitle,
+  }
+
+  if (mode === 'view') {
+    return (
+      <ClubViewLayout activeTab={null} hideRail {...sharedProps}>
+        {body}
+      </ClubViewLayout>
+    )
   }
 
   return (
-    <ClubEditorLayout
-      activeTab={null}
-      hideRail
-      extraCrumbs={[
-        { label: club.name || 'New club', href: '#/web/clubs/new/overview' },
-        { label: 'Add Club Release' },
-      ]}
-      actions={<Button onClick={save}>Save</Button>}
-    >
-      <div className="flex gap-vintiga-lg">
-        {/* Main column */}
-        <div className="flex-1 min-w-0 flex flex-col gap-vintiga-lg">
-          <SectionCard title="Products">
-            <Field label="Add Product">
-              <TextField placeholder="Search products" leftIcon={<SearchIcon className="w-4 h-4" />} />
-            </Field>
-          </SectionCard>
-
-          <SectionCard title="Shipment">
-            <Field
-              label="Shipment Instructions"
-              helper={<>Content will be embed into the shipment reminder emails through the <code className="px-1 py-0.5 rounded bg-vintiga-slate-100 typo-caption">{'{{emailinstructions}}'}</code> variable.</>}
-            >
-              <RichTextStub value={shipmentInstructions} onChange={setShipmentInstructions} />
-            </Field>
-          </SectionCard>
-        </div>
-
-        {/* Right settings column */}
-        <aside className="hidden lg:flex w-[360px] shrink-0">
-          <SectionCard title="Settings" className="w-full">
-            <Field label="Title">
-              <TextField placeholder="Enter title" value={title} onChange={(e) => setTitle(e.target.value)} />
-            </Field>
-            <Field label="Min Quantity of Products">
-              <TextField
-                type="number"
-                value={String(minQty)}
-                onChange={(e) => setMinQty(Number(e.target.value))}
-              />
-            </Field>
-            <Field label="Max Quantity of Products">
-              <TextField
-                type="number"
-                placeholder=""
-                value={maxQty}
-                onChange={(e) => setMaxQty(e.target.value)}
-              />
-            </Field>
-            <Field label="Minimum Order Subtotal">
-              <div className="relative">
-                <input
-                  type="number"
-                  value={minOrderSubtotal}
-                  onChange={(e) => setMinOrderSubtotal(Number(e.target.value))}
-                  className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
-                />
-                <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">$</span>
-              </div>
-            </Field>
-
-            <div className="grid grid-cols-2 gap-vintiga-sm">
-              <Field label="Auto Process Date">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="dd.mm.yyyy"
-                    value={autoProcessDate}
-                    onChange={(e) => setAutoProcessDate(e.target.value)}
-                    className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
-                  />
-                  <CalendarIcon className="absolute top-1/2 -translate-y-1/2 right-3 w-4 h-4 text-vintiga-slate-400 pointer-events-none" />
-                </div>
-              </Field>
-              <Field label="Start Time">
-                <div className="flex gap-1">
-                  <input
-                    type="text"
-                    placeholder="--:--"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="h-10 flex-1 min-w-0 px-3 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
-                  />
-                  <Select
-                    value={startMeridiem}
-                    onChange={(e) => setStartMeridiem(e.target.value as 'AM' | 'PM')}
-                    options={['AM', 'PM']}
-                    className="!w-[72px]"
-                  />
-                </div>
-              </Field>
-            </div>
-
-            <div className="flex flex-col gap-vintiga-md pt-vintiga-sm">
-              <SwitchRow
-                label="Let members process and receive order before processing date"
-                helper={'Displays a "Ship Now" option'}
-                checked={letMembersProcessEarly}
-                onChange={setLetMembersProcessEarly}
-              />
-              <SwitchRow
-                label="Allow members to skip their shipment online"
-                checked={allowSkipOnline}
-                onChange={setAllowSkipOnline}
-              />
-            </div>
-          </SectionCard>
-        </aside>
-      </div>
+    <ClubEditorLayout activeTab={null} hideRail {...sharedProps}>
+      {body}
     </ClubEditorLayout>
   )
 }
 
-// ─── Rich-text editor stub ────────────────────────────────────────────────────
-// Toolbar is decorative (matches Figma) — the actual editor is a plain
-// textarea. Real RTE wiring is a future build.
-
-function ToolBtn({ children, label }: { children: React.ReactNode; label: string }) {
+function DateInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      className="w-8 h-8 inline-flex items-center justify-center rounded-vintiga-md text-vintiga-slate-500 hover:bg-vintiga-white hover:text-vintiga-slate-900 transition-colors bg-transparent border-none cursor-pointer [&>svg]:w-4 [&>svg]:h-4"
-    >
-      {children}
-    </button>
-  )
-}
-
-function RichTextStub({
-  value,
-  onChange,
-}: {
-  value: string
-  onChange: (v: string) => void
-}) {
-  return (
-    <div className="border border-vintiga-slate-200 rounded-vintiga-md overflow-hidden bg-vintiga-white">
-      <div className="flex items-center gap-1 px-2 py-1 bg-vintiga-slate-50 border-b border-vintiga-slate-200 flex-wrap">
-        <ToolBtn label="Undo"><UndoIcon /></ToolBtn>
-        <ToolBtn label="Redo"><RedoIcon /></ToolBtn>
-        <span className="w-px h-5 bg-vintiga-slate-200 mx-1" />
-        <ToolBtn label="Bold"><BoldIcon /></ToolBtn>
-        <ToolBtn label="Italic"><ItalicIcon /></ToolBtn>
-        <ToolBtn label="Underline"><UnderlineIcon /></ToolBtn>
-        <span className="w-px h-5 bg-vintiga-slate-200 mx-1" />
-        <ToolBtn label="Align left"><AlignLeftIcon /></ToolBtn>
-        <ToolBtn label="Align center"><AlignCenterIcon /></ToolBtn>
-        <ToolBtn label="Align right"><AlignRightIcon /></ToolBtn>
-        <ToolBtn label="Justify"><AlignJustifyIcon /></ToolBtn>
-        <span className="w-px h-5 bg-vintiga-slate-200 mx-1" />
-        <ToolBtn label="Link"><LinkIcon /></ToolBtn>
-        <ToolBtn label="Image"><ImageIcon /></ToolBtn>
-      </div>
-      <textarea
+    <div className="relative">
+      <input
+        type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2.5 typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none min-h-[160px] resize-y bg-transparent"
+        placeholder="dd.mm.yyyy"
+        className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
       />
-    </div>
-  )
-}
-
-function SwitchRow({
-  label,
-  helper,
-  checked,
-  onChange,
-}: {
-  label: string
-  helper?: string
-  checked: boolean
-  onChange: (next: boolean) => void
-}) {
-  return (
-    <div className="flex items-start justify-between gap-vintiga-md">
-      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-        <span className="typo-body-sm font-medium text-vintiga-slate-900">{label}</span>
-        {helper && <span className="typo-caption text-vintiga-slate-500">{helper}</span>}
-      </div>
-      <Switch checked={checked} onChange={onChange} />
+      <CalendarIcon className="absolute top-1/2 -translate-y-1/2 right-3 w-4 h-4 text-vintiga-slate-400 pointer-events-none" />
     </div>
   )
 }

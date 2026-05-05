@@ -138,6 +138,8 @@ export {
   Gift           as GiftIcon,
   NotebookPen    as NotebookPenIcon,
   Ticket         as TicketIcon,
+  Flag           as FlagIcon,
+  ArrowUpDown    as ArrowUpDownIcon,
 } from 'lucide-react'
 
 import type { SVGProps } from 'react'
