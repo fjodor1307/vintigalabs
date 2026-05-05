@@ -1104,60 +1104,98 @@ function TextFieldsSectionV2() {
   )
 }
 
+const TEXTAREA_CONTROLS: ControlSchema = {
+  state:       { type: 'select',  options: ['default', 'success', 'destructive', 'disabled'], default: 'default' },
+  placeholder: { type: 'text',    default: 'Enter a description…' },
+  rows:        { type: 'select',  options: ['short (72)', 'medium (120)', 'tall (200)'], default: 'short (72)' },
+}
+
+const TEXTAREA_MIN_HEIGHT: Record<string, string> = {
+  'short (72)':  'min-h-[72px]',
+  'medium (120)': 'min-h-[120px]',
+  'tall (200)':  'min-h-[200px]',
+}
+
 function TextareaSection() {
+  const v = usePlayground(TEXTAREA_CONTROLS)
+  const state = v.state as 'default' | 'success' | 'destructive' | 'disabled'
   return (
     <SubSection
       id="ds-textarea"
       title="Textarea"
       description="Multi-line input. Shares chrome with TextField and Select — slate-200 default, slate-300 on hover, indigo-600 focus border + indigo-100 ring — so any field row in a form looks the same."
     >
-      <div className="flex flex-col gap-vintiga-lg max-w-md">
-        <ReferenceCard label="Default">
-          <Textarea placeholder="What makes this club special?" />
-        </ReferenceCard>
-        <ReferenceCard label="Filled">
-          <Textarea defaultValue="Estate-grown Cabernet Sauvignon, hand-harvested at sunrise." />
-        </ReferenceCard>
-        <ReferenceCard label="Success">
-          <Textarea state="success" defaultValue="Looks great" />
-        </ReferenceCard>
-        <ReferenceCard label="Destructive">
-          <Textarea state="destructive" defaultValue="Too short" />
-        </ReferenceCard>
-        <ReferenceCard label="Disabled">
-          <Textarea disabled defaultValue="Read-only" />
-        </ReferenceCard>
-        <ReferenceCard label="Taller body via className">
-          <Textarea placeholder="Long-form copy" className="min-h-[160px]" />
+      <div className="flex flex-col gap-vintiga-lg">
+        <PlaygroundStage>
+          <div className="w-full max-w-md">
+            <Textarea
+              state={state === 'default' || state === 'disabled' ? undefined : state}
+              disabled={state === 'disabled'}
+              placeholder={v.placeholder as string}
+              className={TEXTAREA_MIN_HEIGHT[v.rows as string] ?? 'min-h-[72px]'}
+            />
+          </div>
+        </PlaygroundStage>
+
+        <ReferenceCard label="States">
+          <div className="flex flex-col gap-vintiga-md max-w-md">
+            <Textarea placeholder="Default" />
+            <Textarea defaultValue="Estate-grown Cabernet Sauvignon, hand-harvested at sunrise." />
+            <Textarea state="success" defaultValue="Looks great" />
+            <Textarea state="destructive" defaultValue="Too short" />
+            <Textarea disabled defaultValue="Read-only" />
+            <Textarea placeholder="Taller body via className" className="min-h-[160px]" />
+          </div>
         </ReferenceCard>
       </div>
     </SubSection>
   )
 }
 
+const SELECT_CONTROLS: ControlSchema = {
+  options:  { type: 'select',  options: ['strings', 'labelled'], default: 'strings' },
+  disabled: { type: 'boolean', default: false },
+}
+
 function SelectSection() {
+  const v = usePlayground(SELECT_CONTROLS)
+  const stringOpts = ['Available', 'Not Available', 'Draft', 'Archived']
+  const labelledOpts = [
+    { value: 'curated',    label: 'Curated Club' },
+    { value: 'tasting',    label: 'Tasting Credit' },
+    { value: 'membership', label: 'Membership' },
+  ]
   return (
     <SubSection
       id="ds-select"
       title="Select"
       description="Native dropdown styled to match TextField and Textarea — same border, hover, focus and ring. Pass `options` as an array of strings or `{ label, value }` objects."
     >
-      <div className="flex flex-col gap-vintiga-lg max-w-md">
-        <ReferenceCard label="Default — string options">
-          <DsSelect defaultValue="Available" options={['Available', 'Not Available']} />
-        </ReferenceCard>
-        <ReferenceCard label="Default — labelled options">
-          <DsSelect
-            defaultValue="curated"
-            options={[
-              { value: 'curated', label: 'Curated Club' },
-              { value: 'tasting', label: 'Tasting Credit' },
-              { value: 'membership', label: 'Membership' },
-            ]}
-          />
-        </ReferenceCard>
-        <ReferenceCard label="Disabled">
-          <DsSelect disabled defaultValue="Inactive" options={['Inactive']} />
+      <div className="flex flex-col gap-vintiga-lg">
+        <PlaygroundStage>
+          <div className="w-full max-w-md">
+            {v.options === 'strings' ? (
+              <DsSelect
+                defaultValue={stringOpts[0]}
+                options={stringOpts}
+                disabled={v.disabled as boolean}
+              />
+            ) : (
+              <DsSelect
+                defaultValue={labelledOpts[0].value}
+                options={labelledOpts}
+                disabled={v.disabled as boolean}
+              />
+            )}
+          </div>
+        </PlaygroundStage>
+
+        <ReferenceCard label="States">
+          <div className="flex flex-col gap-vintiga-md max-w-md">
+            <DsSelect defaultValue="Available" options={stringOpts} />
+            <DsSelect defaultValue="curated" options={labelledOpts} />
+            <DsSelect disabled defaultValue="Inactive" options={['Inactive']} />
+          </div>
         </ReferenceCard>
       </div>
     </SubSection>
