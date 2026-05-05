@@ -27,6 +27,7 @@ import { Avatar, AvatarGroup, type AvatarSize } from '@ds/shared/Avatar'
 import { Tag, type TagTone, type TagVariant } from '@ds/shared/Tag'
 import { KpiCard } from '@ds/shared/KpiCard'
 import { TextField } from '@ds/shared/TextField'
+import { RichTextEditor } from '@ds/shared/RichTextEditor'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@ds/shared/Table'
 import { Toast, type ToastVariant } from '@ds/shared/Toast'
 import { DropdownMenu, DropdownItem, DropdownSection, DropdownSeparator } from '@ds/shared/Dropdown'
@@ -1090,6 +1091,36 @@ function TextFieldsSectionV2() {
   )
 }
 
+function RichTextEditorSection() {
+  return (
+    <SubSection
+      id="ds-rich-text-editor"
+      title="Rich Text Editor"
+      description="Toolbar + contentEditable body for long-form copy. The toolbar buttons are decorative in the prototype — formatting is not actually wired up."
+    >
+      <div className="flex flex-col gap-vintiga-lg">
+        <ReferenceCard label="Default (140 px body)">
+          <div className="max-w-[752px]">
+            <RichTextEditor placeholder="Start typing…" />
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="Taller body for long-form fields">
+          <div className="max-w-[752px]">
+            <RichTextEditor placeholder="Description, terms, or release notes…" minHeightClass="min-h-[200px]" />
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="Disabled">
+          <div className="max-w-[752px]">
+            <RichTextEditor placeholder="Read-only" disabled />
+          </div>
+        </ReferenceCard>
+      </div>
+    </SubSection>
+  )
+}
+
 function TablesSection() {
   type Row = { name: string; email: string; phone: string; tag: React.ReactNode; date: string; total: string }
   const ROWS: Row[] = [
@@ -2133,6 +2164,7 @@ export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-buttons':        ButtonsSection,
   'ds-icon-buttons':   IconButtonsSection,
   'ds-text-fields':    TextFieldsSectionV2,
+  'ds-rich-text-editor': RichTextEditorSection,
   'ds-checkbox':       CheckboxSection,
   'ds-radio':          RadioGroupSection,
   'ds-switch':         SwitchSection,
