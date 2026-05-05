@@ -65,7 +65,7 @@ const CLUBS: Club[] = [
     id: 'blind-enthusiasm',
     name: 'Blind Enthusiasm',
     status: 'active',
-    tags: [{ label: 'Account Credit', tone: 'violet' }],
+    tags: [{ label: 'Tasting Credit', tone: 'violet' }],
     active: 10, onHold: 2, newM: 2, canceled: 1,
     imageUrl: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=200&h=200&fit=crop',
   },

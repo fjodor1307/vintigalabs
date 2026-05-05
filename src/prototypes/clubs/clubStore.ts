@@ -76,7 +76,7 @@ export interface ClubDraft {
 
 const TYPE_LABEL: Record<ClubKind, string> = {
   curated:          'Curated Club',
-  'account-credit': 'Account Credit',
+  'account-credit': 'Tasting Credit',
   membership:       'Membership',
 }
 
