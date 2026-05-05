@@ -153,20 +153,10 @@ export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   )
 }
 
-export function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea
-      {...props}
-      className={[
-        'px-3 py-2.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white',
-        'typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400',
-        'focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors',
-        'min-h-[72px] resize-y',
-        props.className ?? '',
-      ].join(' ')}
-    />
-  )
-}
+// `TextArea` is kept here as a thin re-export from `@ds/shared/Textarea` so
+// existing call sites under `prototypes/products/` keep working. New code
+// should import the DS component directly.
+export { Textarea as TextArea } from '@ds/shared/Textarea'
 
 export function InputWithAdornment({
   adornment,

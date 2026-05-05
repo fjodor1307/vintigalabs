@@ -5,6 +5,7 @@ import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
 import { Select } from '@ds/shared/Select'
 import { Checkbox } from '@ds/shared/Checkbox'
+import { Textarea } from '@ds/shared/Textarea'
 import { Media } from '@ds/shared/Media'
 
 // ─── ClubOverviewScreen ───────────────────────────────────────────────────────
@@ -75,11 +76,11 @@ export function ClubOverviewScreen() {
         )}
 
         <Field label="Description" required>
-          <textarea
+          <Textarea
             placeholder=""
             value={club.description}
             onChange={(e) => clubActions.patch('description', e.target.value)}
-            className="px-3 py-2.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors min-h-[96px] resize-y"
+            className="min-h-[96px]"
           />
         </Field>
 
@@ -133,11 +134,11 @@ export function ClubOverviewScreen() {
         />
         {club.requireAcceptTerms && (
           <Field label="Terms & Conditions" required helper="These terms will be displayed to members during the signup process and they must accept to continue.">
-            <textarea
+            <Textarea
               placeholder="Enter terms and conditions that members must agree to…"
               value={club.termsBody}
               onChange={(e) => clubActions.patch('termsBody', e.target.value)}
-              className="px-3 py-2.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors min-h-[96px] resize-y"
+              className="min-h-[96px]"
             />
           </Field>
         )}
@@ -153,11 +154,10 @@ export function ClubOverviewScreen() {
           />
         </Field>
         <Field label="Meta Tag Description" helper={`${Math.max(0, 5 - club.metaDescription.length)} characters remaining`}>
-          <textarea
+          <Textarea
             placeholder="Enter description"
             value={club.metaDescription}
             onChange={(e) => clubActions.patch('metaDescription', e.target.value)}
-            className="px-3 py-2.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors min-h-[72px] resize-y"
           />
         </Field>
         <Field label="Slug">

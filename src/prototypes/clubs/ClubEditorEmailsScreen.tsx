@@ -3,6 +3,7 @@ import { ClubEditorLayout } from './ClubEditorLayout'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
+import { Textarea } from '@ds/shared/Textarea'
 import { Checkbox } from '@ds/shared/Checkbox'
 import { MailIcon, ChevronDownIcon } from '@ds/icons/Icons'
 
@@ -126,11 +127,11 @@ export function ClubEditorEmailsScreen() {
                       />
                     </Field>
                     <Field label="Body" required>
-                      <textarea
+                      <Textarea
                         value={draft.body}
                         onChange={(e) => patch(tmpl.id, { body: e.target.value })}
                         disabled={draft.useGlobal}
-                        className="px-3 py-2.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors min-h-[80px] resize-y disabled:bg-vintiga-slate-50 disabled:cursor-not-allowed"
+                        className="min-h-[80px]"
                       />
                     </Field>
                   </div>

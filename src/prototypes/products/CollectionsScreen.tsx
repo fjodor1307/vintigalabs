@@ -9,6 +9,7 @@ import { ListCard } from '@ds/shared/ListCard'
 import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import { EmptyState } from '@ds/components/EmptyState'
 import { CollectionProductsTable, AddProductsSearch } from './CollectionProductsTable'
+import { Textarea } from '@ds/shared/Textarea'
 import { Field, Select } from './ProductLayout'
 import {
   PlusIcon,
@@ -88,11 +89,11 @@ function SummaryForm({ collection }: { collection: Collection }) {
           />
         </Field>
         <Field label="Meta Tag Description" helper={`${Math.max(0, remaining)} characters remaining`}>
-          <textarea
+          <Textarea
             placeholder="Enter description"
             value={metaDescription}
             onChange={(e) => setMetaDescription(e.target.value.slice(0, 160))}
-            className="px-3 py-2.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors min-h-[100px] resize-y"
+            className="min-h-[100px]"
           />
         </Field>
         <Field label="Slug" required>
