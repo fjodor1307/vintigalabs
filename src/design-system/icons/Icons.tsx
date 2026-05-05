@@ -54,6 +54,7 @@ export {
   Calculator     as CalculatorIcon,
   Telescope      as TelescopeIcon,
   Users          as UsersGroupIcon,
+  UserCheck      as UserCheckIcon,
   Shield         as ShieldIcon,
   ChevronsUpDown as ChevronUpDownIcon,
   UserX          as UserXIcon,
