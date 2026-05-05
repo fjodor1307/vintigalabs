@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Button } from '@ds/shared/Button'
 import { TextField } from '@ds/shared/TextField'
+import { Select } from '@ds/shared/Select'
 import { Checkbox } from '@ds/shared/Checkbox'
-import { ChevronDownIcon } from '@ds/icons/Icons'
 import { SplitLayout, StepHeader, StepPips } from './SplitLayout'
 
 const HERO = 'https://images.unsplash.com/photo-1547595628-c61a29f496f0?auto=format&fit=crop&w=1200&q=80'
@@ -43,19 +43,13 @@ export function BusinessDetailsScreen() {
           placeholder="Vintiga Labs, Inc."
           value={businessName} onChange={(e) => setBusinessName(e.target.value)} required />
 
-        {/* Native select styled to match TextField */}
         <div className="flex flex-col gap-2.5 w-full">
           <label className="typo-body-sm font-medium text-vintiga-slate-900">Business type</label>
-          <div className="relative">
-            <select
-              value={businessType}
-              onChange={(e) => setBusinessType(e.target.value as typeof BUSINESS_TYPES[number])}
-              className="appearance-none w-full h-10 pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-600 focus:ring-2 focus:ring-vintiga-indigo-100 cursor-pointer"
-            >
-              {BUSINESS_TYPES.map((t) => <option key={t}>{t}</option>)}
-            </select>
-            <ChevronDownIcon className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 text-vintiga-slate-500 pointer-events-none" />
-          </div>
+          <Select
+            value={businessType}
+            onChange={(e) => setBusinessType(e.target.value as typeof BUSINESS_TYPES[number])}
+            options={BUSINESS_TYPES as unknown as string[]}
+          />
         </div>
 
         <TextField label="Location"

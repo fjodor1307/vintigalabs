@@ -37,10 +37,12 @@ export function Select({ options, children, className = '', ...rest }: SelectPro
         {...rest}
         className={[
           'h-10 w-full px-3 pr-9 rounded-vintiga-md',
-          'border border-vintiga-slate-200 bg-vintiga-white',
+          'border border-vintiga-slate-200 bg-vintiga-white transition-colors',
           'typo-body-sm text-vintiga-slate-900 appearance-none cursor-pointer',
-          'focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100',
-          rest.disabled ? 'opacity-60 cursor-not-allowed' : '',
+          // Match the TextField + Textarea chrome — slate-200 default,
+          // slate-300 on hover, indigo-600 focus + indigo-100 ring.
+          'hover:border-vintiga-slate-300 focus:outline-none focus:border-vintiga-indigo-600 focus:ring-2 focus:ring-vintiga-indigo-100',
+          rest.disabled ? 'opacity-60 cursor-not-allowed bg-vintiga-slate-100 hover:border-vintiga-slate-200' : '',
           className,
         ]
           .filter(Boolean)

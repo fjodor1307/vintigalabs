@@ -27,6 +27,8 @@ import { Avatar, AvatarGroup, type AvatarSize } from '@ds/shared/Avatar'
 import { Tag, type TagTone, type TagVariant } from '@ds/shared/Tag'
 import { KpiCard } from '@ds/shared/KpiCard'
 import { TextField } from '@ds/shared/TextField'
+import { Textarea } from '@ds/shared/Textarea'
+import { Select as DsSelect } from '@ds/shared/Select'
 import { RichTextEditor } from '@ds/shared/RichTextEditor'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@ds/shared/Table'
 import { Toast, type ToastVariant } from '@ds/shared/Toast'
@@ -1096,6 +1098,66 @@ function TextFieldsSectionV2() {
             <TextField label="Destructive" defaultValue="Bad input"  state="destructive" helperText="Must be a valid email" />
             <TextField label="Disabled"    defaultValue="Disabled"   disabled />
           </div>
+        </ReferenceCard>
+      </div>
+    </SubSection>
+  )
+}
+
+function TextareaSection() {
+  return (
+    <SubSection
+      id="ds-textarea"
+      title="Textarea"
+      description="Multi-line input. Shares chrome with TextField and Select — slate-200 default, slate-300 on hover, indigo-600 focus border + indigo-100 ring — so any field row in a form looks the same."
+    >
+      <div className="flex flex-col gap-vintiga-lg max-w-md">
+        <ReferenceCard label="Default">
+          <Textarea placeholder="What makes this club special?" />
+        </ReferenceCard>
+        <ReferenceCard label="Filled">
+          <Textarea defaultValue="Estate-grown Cabernet Sauvignon, hand-harvested at sunrise." />
+        </ReferenceCard>
+        <ReferenceCard label="Success">
+          <Textarea state="success" defaultValue="Looks great" />
+        </ReferenceCard>
+        <ReferenceCard label="Destructive">
+          <Textarea state="destructive" defaultValue="Too short" />
+        </ReferenceCard>
+        <ReferenceCard label="Disabled">
+          <Textarea disabled defaultValue="Read-only" />
+        </ReferenceCard>
+        <ReferenceCard label="Taller body via className">
+          <Textarea placeholder="Long-form copy" className="min-h-[160px]" />
+        </ReferenceCard>
+      </div>
+    </SubSection>
+  )
+}
+
+function SelectSection() {
+  return (
+    <SubSection
+      id="ds-select"
+      title="Select"
+      description="Native dropdown styled to match TextField and Textarea — same border, hover, focus and ring. Pass `options` as an array of strings or `{ label, value }` objects."
+    >
+      <div className="flex flex-col gap-vintiga-lg max-w-md">
+        <ReferenceCard label="Default — string options">
+          <DsSelect defaultValue="Available" options={['Available', 'Not Available']} />
+        </ReferenceCard>
+        <ReferenceCard label="Default — labelled options">
+          <DsSelect
+            defaultValue="curated"
+            options={[
+              { value: 'curated', label: 'Curated Club' },
+              { value: 'tasting', label: 'Tasting Credit' },
+              { value: 'membership', label: 'Membership' },
+            ]}
+          />
+        </ReferenceCard>
+        <ReferenceCard label="Disabled">
+          <DsSelect disabled defaultValue="Inactive" options={['Inactive']} />
         </ReferenceCard>
       </div>
     </SubSection>
@@ -2174,7 +2236,9 @@ function AiSuggestButtonSection() {
 export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-buttons':        ButtonsSection,
   'ds-icon-buttons':   IconButtonsSection,
-  'ds-text-fields':    TextFieldsSectionV2,
+  'ds-text-fields':      TextFieldsSectionV2,
+  'ds-textarea':         TextareaSection,
+  'ds-select':           SelectSection,
   'ds-rich-text-editor': RichTextEditorSection,
   'ds-checkbox':       CheckboxSection,
   'ds-radio':          RadioGroupSection,
