@@ -10,6 +10,11 @@
   - [Editor — Add Release (5331:59258)](https://www.figma.com/design/3DnxyYDZqDGQqvknlD4aTu/05.-Dashboard?node-id=5331-59258)
   - [Editor — Levels (5079:46371)](https://www.figma.com/design/3DnxyYDZqDGQqvknlD4aTu/05.-Dashboard?node-id=5079-46371)
   - [Editor — Emails (5079:57000)](https://www.figma.com/design/3DnxyYDZqDGQqvknlD4aTu/05.-Dashboard?node-id=5079-57000)
+  - [View — Overview (5078:4703)](https://www.figma.com/design/3DnxyYDZqDGQqvknlD4aTu/05.-Dashboard?node-id=5078-4703)
+  - [View — Members (5294:73309)](https://www.figma.com/design/3DnxyYDZqDGQqvknlD4aTu/05.-Dashboard?node-id=5294-73309)
+  - [View — Releases (5328:26446)](https://www.figma.com/design/3DnxyYDZqDGQqvknlD4aTu/05.-Dashboard?node-id=5328-26446)
+  - [View — Emails (5078:4930)](https://www.figma.com/design/3DnxyYDZqDGQqvknlD4aTu/05.-Dashboard?node-id=5078-4930)
+  - [View — Add Release (5330:52754)](https://www.figma.com/design/3DnxyYDZqDGQqvknlD4aTu/05.-Dashboard?node-id=5330-52754)
 - **Stories:** CL-01 … CL-09
 - **CONTEXT.md:** [`./CONTEXT.md`](./CONTEXT.md)
 
@@ -30,6 +35,11 @@
 | 8 | Operator edits the email templates members receive | CL-08 | `#/web/clubs/new/emails` | Done |
 | 9 | Operator switches to Memberships to manage members | -- | `#/web/clubs/memberships` | Gap (placeholder) |
 | 10 | Operator switches to Club Emails to review notifications | -- | `#/web/clubs/emails` | Gap (placeholder) |
+| 11 | Operator clicks a row to open the View Club detail page | CL-10 | `#/web/clubs/view/overview` | Done |
+| 12 | Operator switches to the Members tab to filter and manage members | CL-11 | `#/web/clubs/view/members` | Done |
+| 13 | Operator switches to the Releases tab and reads the KPI strip | CL-12 | `#/web/clubs/view/releases` | Done |
+| 14 | Operator adds a new release to the existing club | CL-12 | `#/web/clubs/view/releases/add` | Done |
+| 15 | Operator overrides a member-lifecycle email template | CL-13 | `#/web/clubs/view/emails` | Done |
 
 **Status values:**
 - **Done** — screen built and linked

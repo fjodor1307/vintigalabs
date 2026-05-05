@@ -192,7 +192,9 @@ export function ClubsScreen() {
               </Tag>
             ))}
             meta={`${club.active} Active | ${club.onHold} On-hold | ${club.newM} New | ${club.canceled} Canceled`}
-            onClick={() => {}}
+            onClick={() => {
+              window.location.hash = '#/web/clubs/view/overview'
+            }}
             action={
               <PopoverMenu
                 align="right"
@@ -211,7 +213,7 @@ export function ClubsScreen() {
                   </button>
                 )}
                 items={[
-                  { label: 'View',      onClick: () => {} },
+                  { label: 'View',      onClick: () => { window.location.hash = '#/web/clubs/view/overview' } },
                   { label: 'Duplicate', onClick: () => {} },
                   { label: 'Archive',   onClick: () => {}, danger: true },
                 ]}
