@@ -22,6 +22,8 @@ export interface Variant {
   weight: string
   volume: string
   physicalProduct: boolean
+  /** 0-based display order. Drag-reorder updates this in the variants table. */
+  sortOrder: number
 }
 
 export interface ModifierOption {
@@ -58,9 +60,28 @@ export interface Collection {
   productIds: string[]
 }
 
+export type ExperienceType = 'Tasting' | 'Tour' | 'Other'
+
 export interface ProductState {
   name: string
   productType: string
+  /** Top-level product status — Available / Not Available. */
+  status: 'Available' | 'Not Available'
+  /** Per-channel status. Web Status mirrors the spec values for experiences. */
+  webStatus: 'Available' | 'Not Available'
+  /** Eligible for redemption with loyalty points. Shared across product types. */
+  loyaltyPoints: boolean
+  /** Web Subtitle / Teaser — moved to state so the editor can pre-fill them. */
+  subtitle: string
+  teaser: string
+  /** SEO — store the values so we can auto-populate Meta Title + Slug from name. */
+  metaTitle: string
+  metaDescription: string
+  slug: string
+  /** True until the user types into the field — lets us replace the auto-filled
+   *  value silently as the name evolves, and stop once the user takes ownership. */
+  metaTitleAuto: boolean
+  slugAuto: boolean
   tags: string[]
   collections: string[]
   images: ProductImage[]
@@ -75,6 +96,13 @@ export interface ProductState {
   region: string
   appellation: string
   taste: { body: number; sweetness: number; acidity: number; tannin: number; fruitiness: number }
+  // Experience-specific
+  experienceType: ExperienceType
+  location: string
+  defaultLocation: string
+  durationMinutes: string
+  leadTimeHours: string
+  requiresHost: boolean
   // Modifiers
   modifierGroups: ModifierGroup[]
   // Catalogue (sibling list of products + collections, used by ProductsListScreen + CollectionsScreen)
@@ -85,12 +113,22 @@ export interface ProductState {
   editingId: string | null
 }
 
+/** Slugify a product name into a URL-safe slug (spaces → "-", lowercase). */
+export function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+}
+
 function uid(prefix = 'id'): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-export function emptyVariant(title = ''): Variant {
+export function emptyVariant(title = '', sortOrder = 0): Variant {
   return {
     id: uid('v'),
     title,
@@ -104,6 +142,7 @@ export function emptyVariant(title = ''): Variant {
     weight: '',
     volume: '',
     physicalProduct: true,
+    sortOrder,
   }
 }
 
@@ -121,6 +160,16 @@ export function emptyModifierGroup(name = ''): ModifierGroup {
 const initial: ProductState = {
   name: '',
   productType: 'Wine',
+  status: 'Available',
+  webStatus: 'Available',
+  loyaltyPoints: false,
+  subtitle: '',
+  teaser: '',
+  metaTitle: '',
+  metaDescription: '',
+  slug: '',
+  metaTitleAuto: true,
+  slugAuto: true,
   tags: [],
   collections: ['Wines', 'Red Wines'],
   images: [],
@@ -134,6 +183,12 @@ const initial: ProductState = {
   region: 'CA',
   appellation: 'Napa Valley',
   taste: { body: 1, sweetness: 3, acidity: 4, tannin: 2, fruitiness: 4 },
+  experienceType: 'Tasting',
+  location: '',
+  defaultLocation: '',
+  durationMinutes: '',
+  leadTimeHours: '',
+  requiresHost: false,
   modifierGroups: [],
   catalogue: [
     { id: 'p1',  name: '2016 Reserve Cabernet Sauvignon', sku: 'SKU-1234-1234', price: '27.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Red Wine'],   channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1697115355150-46dd3a5df633?w=320&h=320&fit=crop&q=80' },
@@ -204,8 +259,36 @@ export function useProductState(): ProductState {
 }
 
 export const productActions = {
-  setName(name: string) { state = { ...state, name }; emit() },
+  setName(name: string) {
+    // Mirror the name into auto-managed Meta Title + Slug until the user
+    // edits them directly. Spec: at creation time, Meta Title defaults to
+    // Product Title and Slug defaults to slugified Product Title.
+    const next: Partial<ProductState> = { name }
+    if (state.metaTitleAuto) next.metaTitle = name
+    if (state.slugAuto)      next.slug      = slugify(name)
+    state = { ...state, ...next }
+    emit()
+  },
   setProductType(productType: string) { state = { ...state, productType }; emit() },
+  setStatus(status: ProductState['status']) { state = { ...state, status }; emit() },
+  setWebStatus(webStatus: ProductState['webStatus']) { state = { ...state, webStatus }; emit() },
+  setLoyaltyPoints(loyaltyPoints: boolean) { state = { ...state, loyaltyPoints }; emit() },
+  setSubtitle(subtitle: string) { state = { ...state, subtitle }; emit() },
+  setTeaser(teaser: string) { state = { ...state, teaser }; emit() },
+  /** Direct Meta Title edit — flips auto-fill OFF so future name changes
+   *  don't overwrite what the user typed. */
+  setMetaTitle(metaTitle: string) {
+    state = { ...state, metaTitle, metaTitleAuto: false }
+    emit()
+  },
+  setMetaDescription(metaDescription: string) {
+    state = { ...state, metaDescription }
+    emit()
+  },
+  setSlug(slug: string) {
+    state = { ...state, slug, slugAuto: false }
+    emit()
+  },
 
   addImage(file: File) {
     const url = URL.createObjectURL(file)
@@ -357,16 +440,30 @@ export const productActions = {
       ? [{ id: uid('img'), url: p.imageUrl, name: p.name }]
       : []
 
+    // For experiences, seed a sensible variant title + tax type so the editor
+    // doesn't open with wine defaults bleeding through.
+    const isExperience = p.type === 'Experience'
+    const seedTitle = isExperience ? 'Standard' : 'Standard Bottle'
+    const seedTax   = isExperience ? 'Experience' : p.type
+
     state = {
       ...state,
       editingId: productId,
       name: p.name,
       productType: p.type,
+      // Department mirrors product type — keeps the Advanced tab on the right
+      // type-specific properties card (Wine vs Experience).
+      department: p.type,
       collections: p.collections,
       images,
+      // Reset SEO auto-fill so loading a product starts a clean cycle.
+      metaTitle: p.name,
+      slug: slugify(p.name),
+      metaTitleAuto: true,
+      slugAuto: true,
       // Variants: if catalogue product carries no variants, seed a single one.
       variants: state.variants.length > 0 ? state.variants : [
-        { ...emptyVariant('Standard Bottle'), sku: p.sku, price: p.price, taxType: p.type },
+        { ...emptyVariant(seedTitle, 0), sku: p.sku, price: p.price, taxType: seedTax },
       ],
     }
     emit()
@@ -391,10 +488,17 @@ export const productActions = {
       editingId: null,
       name: '',
       productType,
+      // Mirror department to drive the Advanced tab branching.
+      department: productType,
       tags: [],
       collections: [],
       images: [],
       variants: [],
+      // Reset SEO auto-fill so a fresh product starts with empty Meta Title + Slug.
+      metaTitle: '',
+      slug: '',
+      metaTitleAuto: true,
+      slugAuto: true,
     }
     emit()
   },

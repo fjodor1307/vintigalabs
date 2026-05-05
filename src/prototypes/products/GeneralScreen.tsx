@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { ProductLayout, SectionCard, Field, TextInput } from './ProductLayout'
+import { ProductLayout, SectionCard, Field, TextInput, Select } from './ProductLayout'
 import { MediaSection } from './MediaSection'
 import { AiSuggestButton } from './AiSuggestButton'
+import { Switch } from '@ds/shared/Switch'
 import { useProductState, productActions, type Variant } from './productStore'
 import { VariantModal } from './VariantModal'
 import { useRowDrag } from './useRowDrag'
@@ -252,6 +253,26 @@ export function GeneralScreen() {
             onChange={(e) => productActions.setName(e.target.value)}
           />
         </Field>
+
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Status" required>
+            <Select
+              value={product.status}
+              onChange={(v) => productActions.setStatus(v as typeof product.status)}
+              options={['Available', 'Not Available']}
+            />
+          </Field>
+          <div className="flex items-center justify-between gap-vintiga-md pt-vintiga-lg">
+            <div className="flex flex-col">
+              <span className="typo-body-sm font-medium text-vintiga-slate-900">Redeemable with Loyalty Points</span>
+              <span className="typo-caption text-vintiga-slate-500">Members can pay using loyalty points.</span>
+            </div>
+            <Switch
+              checked={product.loyaltyPoints}
+              onChange={(next) => productActions.setLoyaltyPoints(next)}
+            />
+          </div>
+        </div>
 
         <Field
           label="Content"

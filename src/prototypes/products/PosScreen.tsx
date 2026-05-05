@@ -41,7 +41,7 @@ export function PosScreen() {
           <TextArea placeholder="Suggest related products or upgrades" />
         </Field>
 
-        <Field label="Promotion">
+        <Field label="Promotions">
           <TextArea placeholder="Add any discount, bundle, or promo details" />
         </Field>
       </SectionCard>
