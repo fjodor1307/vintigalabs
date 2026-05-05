@@ -1046,6 +1046,17 @@ function KpiCardsSection() {
             />
           </div>
         </ReferenceCard>
+
+        <ReferenceCard label="⑤ Compact — size=sm (Figma 5347:77005)">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-md w-full">
+            <KpiCard size="sm" label="Total releases"         value="12"      icon={<PackageIcon />} />
+            <KpiCard size="sm" label="Estimated revenue"      value="$12,500" icon={<DollarIcon />} />
+            <KpiCard size="sm" label="Revenue"                value="$7,400"  icon={<DollarIcon />} />
+            <KpiCard size="sm" label="Qualified members"      value="14"      icon={<UsersIcon />} />
+            <KpiCard size="sm" label="Processed orders"       value="32"      icon={<ShoppingCartIcon />} />
+            <KpiCard size="sm" label="Draft orders finalized" value="32"      icon={<CheckIcon />} />
+          </div>
+        </ReferenceCard>
       </div>
     </SubSection>
   )

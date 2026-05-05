@@ -32,26 +32,36 @@ import type { ReactNode } from 'react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type KpiCardSize = 'md' | 'sm'
+
 export interface KpiCardProps {
   /** Card label — 14 px / `font-medium` / gray-900. */
   label: ReactNode
-  /** Value — 24 px / `font-semibold` / gray-900. */
+  /** Value — 24 px (md) or 16 px (sm), `font-semibold` / gray-900. */
   value: ReactNode
-  /** Optional 20 px icon shown in a 36×36 indigo circle. */
+  /** Optional icon shown in an indigo circle (36 px md, 32 px sm). */
   icon?: ReactNode
   /**
    * Optional pill / badge sitting inline next to the value. Typically a
    * `<Tag variant="outline">` carrying a status like "Awaiting first sale".
+   * `md` only — `sm` ignores this for layout simplicity.
    */
   status?: ReactNode
   /**
    * When set, the progress section renders below. Pair with `progressPercent`
    * for a filled bar, or pass `goalLabel="No goal set"` alone to render the
-   * empty 0% state.
+   * empty 0% state. `md` only — `sm` ignores progress for layout simplicity.
    */
   goalLabel?: ReactNode
   /** 0–100. Defaults to 0 when `goalLabel` is set without an explicit value. */
   progressPercent?: number
+  /**
+   * Layout density. Default `md` keeps the existing label-top + large value
+   * stack. `sm` is the compact variant from Figma 5347:77005 — icon top-left
+   * + label/value on a single row below. Use `sm` when packing many tiles
+   * into a 3-column grid (e.g. tab summary strips).
+   */
+  size?: KpiCardSize
   className?: string
 }
 
@@ -64,8 +74,11 @@ export function KpiCard({
   status,
   goalLabel,
   progressPercent,
+  size = 'md',
   className = '',
 }: KpiCardProps) {
+  if (size === 'sm') return <KpiCardSm label={label} value={value} icon={icon} className={className} />
+
   const showProgress = goalLabel != null || typeof progressPercent === 'number'
   const pct = Math.max(0, Math.min(100, progressPercent ?? 0))
 
@@ -119,6 +132,33 @@ export function KpiCard({
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── sm variant — Figma 5347:77005 ───────────────────────────────────────────
+// Icon top-left in a 32-px indigo circle, then a single row underneath with
+// label on the left + bold value on the right. Used in dense tab strips
+// (e.g. Releases tab on the View Club page).
+
+function KpiCardSm({ label, value, icon, className = '' }: { label: ReactNode; value: ReactNode; icon?: ReactNode; className?: string }) {
+  return (
+    <div
+      className={[
+        'bg-vintiga-white border border-vintiga-slate-200 rounded-vintiga-2xl p-vintiga-md',
+        'flex flex-col gap-vintiga-md',
+        className,
+      ].join(' ')}
+    >
+      {icon && (
+        <div className="w-8 h-8 rounded-full bg-vintiga-indigo-50 flex items-center justify-center text-vintiga-indigo-500 shrink-0 [&>svg]:w-4 [&>svg]:h-4">
+          {icon}
+        </div>
+      )}
+      <div className="flex items-center justify-between gap-vintiga-sm w-full">
+        <span className="typo-body-sm text-vintiga-gray-900 truncate">{label}</span>
+        <span className="typo-body font-semibold text-vintiga-gray-900 shrink-0">{value}</span>
+      </div>
     </div>
   )
 }
