@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { Tooltip } from '@base-ui/react/tooltip'
 import { AppSidebar } from '@ds/shared/AppSidebar'
 import { Navbar } from '@ds/shared/Navbar'
 import { BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
@@ -9,7 +10,7 @@ import { RailSection } from '@ds/shared/RightRail'
 import { PageTemplate } from '@ds/shared/PageTemplate'
 import { Tag } from '@ds/shared/Tag'
 import { PopoverMenu } from '@ds/shared/PopoverMenu'
-import { EllipsisVerticalIcon, CalendarIcon, FlagIcon } from '@ds/icons/Icons'
+import { EllipsisVerticalIcon, CalendarIcon, FlagIcon, InfoIcon } from '@ds/icons/Icons'
 import { VIEW_CLUB } from './clubViewSample'
 
 // ─── ClubViewLayout ───────────────────────────────────────────────────────────
@@ -74,7 +75,10 @@ function ClubSummaryRail() {
           </span>
         </DetailRow>
 
-        <DetailRow label="Manual Review">
+        <DetailRow
+          label="Manual Review"
+          info="Orders will be skipped in auto processing and need admin review."
+        >
           <span className="typo-body-sm text-vintiga-orange-700 inline-flex items-center gap-1.5">
             <FlagIcon className="w-4 h-4" />
             {VIEW_CLUB.flagged} Members flagged
@@ -85,11 +89,49 @@ function ClubSummaryRail() {
   )
 }
 
-function DetailRow({ label, action, children }: { label: string; action?: ReactNode; children: ReactNode }) {
+function DetailRow({
+  label,
+  action,
+  info,
+  children,
+}: {
+  label: string
+  action?: ReactNode
+  /** Optional helper copy. Renders an info icon next to the label that
+   *  reveals this text in a tooltip on hover or focus. */
+  info?: string
+  children: ReactNode
+}) {
   return (
     <div className="flex flex-col gap-vintiga-xs items-start">
       <div className="flex w-full items-center justify-between gap-vintiga-sm">
-        <span className="typo-body-sm font-semibold text-vintiga-slate-900">{label}</span>
+        <span className="inline-flex items-center gap-1 typo-body-sm font-semibold text-vintiga-slate-900">
+          {label}
+          {info && (
+            <Tooltip.Provider>
+              <Tooltip.Root>
+                <Tooltip.Trigger
+                  render={
+                    <button
+                      type="button"
+                      aria-label={`More info: ${label}`}
+                      className="inline-flex items-center justify-center text-vintiga-slate-400 hover:text-vintiga-slate-600 transition-colors bg-transparent border-none p-0 cursor-help"
+                    >
+                      <InfoIcon className="w-3.5 h-3.5" />
+                    </button>
+                  }
+                />
+                <Tooltip.Portal>
+                  <Tooltip.Positioner sideOffset={6}>
+                    <Tooltip.Popup className="max-w-[260px] bg-vintiga-foreground text-vintiga-surface typo-caption font-medium px-2 py-1.5 rounded shadow-lg">
+                      {info}
+                    </Tooltip.Popup>
+                  </Tooltip.Positioner>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+          )}
+        </span>
         {action}
       </div>
       {children}

@@ -5,7 +5,7 @@ import { KpiCard } from '@ds/shared/KpiCard'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
 import { Select } from '@ds/shared/Select'
-import { Switch } from '@ds/shared/Switch'
+import { Checkbox } from '@ds/shared/Checkbox'
 import { Media } from '@ds/shared/Media'
 import {
   PackageIcon,
@@ -24,11 +24,11 @@ import {
 export function ClubViewOverviewScreen() {
   const [name, setName]                = useState('Blind Enthusiasm')
   const [status, setStatus]            = useState<'active' | 'inactive'>('inactive')
-  const [available, setAvailable]      = useState(true)
+  const [webStatus, setWebStatus]      = useState<'available' | 'not-available'>('available')
   const [description, setDescription]  = useState('')
   const [duration, setDuration]        = useState('12 Months')
   const [fee, setFee]                  = useState('0')
-  const [autoRenew, setAutoRenew]      = useState(true)
+  const [requireTerms, setRequireTerms] = useState(true)
   const [terms, setTerms]              = useState('')
   const [metaTitle, setMetaTitle]      = useState('')
   const [metaDesc, setMetaDesc]        = useState('')
@@ -40,8 +40,8 @@ export function ClubViewOverviewScreen() {
   return (
     <ClubViewLayout activeTab="overview">
       <div className="flex flex-col gap-vintiga-lg">
-        {/* KPI grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-vintiga-md">
+        {/* KPI grid — 3 × 2 on desktop. */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-vintiga-md">
           <KpiCard label="Total Releases"   value="28" icon={<PackageIcon />} />
           <KpiCard label="Total Members"    value="15" icon={<UsersGroupIcon />} />
           <KpiCard label="Active Members"   value="10" icon={<CheckCircleIcon />} />
@@ -78,7 +78,14 @@ export function ClubViewOverviewScreen() {
           </div>
 
           <Field label="Available on Website">
-            <Switch checked={available} onChange={setAvailable} labelPosition="right" label={available ? 'Yes' : 'No'} />
+            <Select
+              value={webStatus}
+              onChange={(e) => setWebStatus(e.target.value as 'available' | 'not-available')}
+              options={[
+                { value: 'available',     label: 'Available' },
+                { value: 'not-available', label: 'Not Available' },
+              ]}
+            />
           </Field>
 
           <Field label="Description" required>
@@ -121,32 +128,38 @@ export function ClubViewOverviewScreen() {
               />
             </Field>
           </div>
-
-          <Field label="Auto-renew membership">
-            <Switch checked={autoRenew} onChange={setAutoRenew} labelPosition="right" label={autoRenew ? 'On' : 'Off'} />
-          </Field>
         </SectionCard>
 
-        {/* Terms */}
+        {/* Terms & Conditions — matches Figma 5304:7762 */}
         <SectionCard
           title={
             <div className="flex flex-col gap-1">
-              <span>Terms</span>
+              <span>Terms &amp; Conditions</span>
               <span className="typo-body-sm font-normal text-vintiga-slate-500">
                 Set the rules and commitments members agree to upon signup.
               </span>
             </div>
           }
         >
+          <div className="-mx-vintiga-lg border-t border-vintiga-slate-200" />
+
+          <Checkbox
+            checked={requireTerms}
+            onChange={setRequireTerms}
+            label="Require members to accept terms &amp; conditions"
+          />
+
           <Field
             label="Terms & Conditions"
+            required={requireTerms}
             helper="These terms will be displayed to members during the signup process and they must accept to continue."
           >
             <textarea
               value={terms}
               onChange={(e) => setTerms(e.target.value)}
-              placeholder="Enter terms and conditions"
-              className="min-h-[160px] w-full rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white px-3 py-2.5 typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors resize-y"
+              disabled={!requireTerms}
+              placeholder="Enter terms and conditions that members must agree to..."
+              className="min-h-[160px] w-full rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white px-3 py-2.5 typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors resize-y disabled:bg-vintiga-slate-50 disabled:cursor-not-allowed"
             />
           </Field>
         </SectionCard>
