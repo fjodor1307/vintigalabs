@@ -53,7 +53,7 @@ export function TableRow({
   )
 }
 
-export function TableHeader({ children, className = '' }: { children: ReactNode; className?: string }) {
+export function TableHeader({ children, className = '' }: { children?: ReactNode; className?: string }) {
   return (
     <th
       scope="col"

@@ -6,6 +6,7 @@ import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
 import { Select } from '@ds/shared/Select'
 import { Checkbox } from '@ds/shared/Checkbox'
+import { Textarea } from '@ds/shared/Textarea'
 import { Media } from '@ds/shared/Media'
 import {
   PackageIcon,
@@ -154,12 +155,12 @@ export function ClubViewOverviewScreen() {
             required={requireTerms}
             helper="These terms will be displayed to members during the signup process and they must accept to continue."
           >
-            <textarea
+            <Textarea
               value={terms}
               onChange={(e) => setTerms(e.target.value)}
               disabled={!requireTerms}
               placeholder="Enter terms and conditions that members must agree to..."
-              className="min-h-[160px] w-full rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white px-3 py-2.5 typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors resize-y disabled:bg-vintiga-slate-50 disabled:cursor-not-allowed"
+              className="min-h-[160px]"
             />
           </Field>
         </SectionCard>
