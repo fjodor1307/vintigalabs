@@ -1,27 +1,30 @@
 import { ClubEditorLayout } from './ClubEditorLayout'
-import { useClubState, clubActions, type ClubDraft } from './clubStore'
+import { useClubState, clubActions, type ClubDraft, type ContributionCadence } from './clubStore'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
 import { Select } from '@ds/shared/Select'
 import { Checkbox } from '@ds/shared/Checkbox'
 import { Textarea } from '@ds/shared/Textarea'
+import { Tag } from '@ds/shared/Tag'
 import { Media } from '@ds/shared/Media'
 
 // ─── ClubOverviewScreen ───────────────────────────────────────────────────────
-// First (and primary) tab of the club editor. Field set is shared across all
-// three club types — Curated, Account Credit, Membership — minor differences:
-//   • Curated / Membership → Duration of Membership + Membership Fee
-//   • Account Credit → Levels live on a separate tab; Overview shows core only
+// First (and primary) tab of the club editor. Field set varies by type:
+//   • Curated   → Duration / Membership Fee + SKU / Tax Code (Figma 5079:33614)
+//   • Membership → Duration / Membership Fee
+//   • Account Credit → inline default Level row (Name / Dollar / Cadence) —
+//                      additional levels live on the Levels tab (Figma 5079:43825)
 //
 // Terms & Conditions: the textarea only renders once the operator opts in via
-// the "Require members to accept" checkbox (defaults off). Auto-renew has been
-// removed for every club type.
+// the "Require members to accept" checkbox (defaults off).
 
 export function ClubOverviewScreen() {
   const club = useClubState()
   const showMembershipFields = club.type === 'curated' || club.type === 'membership'
-  const showCadenceField     = club.type === 'account-credit'
+  const showSkuFields        = club.type === 'curated'
+  const showInlineLevel      = club.type === 'account-credit'
+  const defaultLevel         = showInlineLevel ? club.levels.find((l) => l.isDefault) ?? club.levels[0] : null
 
   return (
     <ClubEditorLayout activeTab="overview">
@@ -65,14 +68,42 @@ export function ClubOverviewScreen() {
           </Field>
         </div>
 
-        {showCadenceField && (
-          <Field label="Contribution Cadence" required>
-            <Select
-              value={club.contributionCadence}
-              onChange={(e) => clubActions.patch('contributionCadence', e.target.value as ClubDraft['contributionCadence'])}
-              options={['Monthly', 'Quarterly', 'Annually']}
-            />
-          </Field>
+        {showInlineLevel && defaultLevel && (
+          // Inline default Level (Figma 5079:43825). Bordered card with name,
+          // dollar amount, and cadence — additional levels live on the Levels tab.
+          <div className="border border-vintiga-slate-200 rounded-vintiga-lg p-vintiga-md flex flex-col gap-vintiga-md">
+            <div className="flex items-center gap-vintiga-sm">
+              <h3 className="typo-body-sm font-semibold text-vintiga-slate-900">Level 1</h3>
+              <Tag variant="filled" tone="default" size="sm">Default</Tag>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-md">
+              <Field label="Level Name" required>
+                <TextField
+                  placeholder="e.g., Silver, Gold, Platinum"
+                  value={defaultLevel.name}
+                  onChange={(e) => clubActions.patchLevel(defaultLevel.id, { name: e.target.value })}
+                />
+              </Field>
+              <Field label="Dollar Amount" required>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={defaultLevel.amount}
+                    onChange={(e) => clubActions.patchLevel(defaultLevel.id, { amount: Number(e.target.value) })}
+                    className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+                  />
+                  <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">$</span>
+                </div>
+              </Field>
+              <Field label="Contribution Cadence" required>
+                <Select
+                  value={defaultLevel.cadence}
+                  onChange={(e) => clubActions.patchLevel(defaultLevel.id, { cadence: e.target.value as ContributionCadence })}
+                  options={['Monthly', 'Quarterly', 'Annually']}
+                />
+              </Field>
+            </div>
+          </div>
         )}
 
         <Field label="Description" required>
@@ -107,6 +138,34 @@ export function ClubOverviewScreen() {
               </Field>
             </div>
           </>
+        )}
+
+        {showSkuFields && (
+          // SKU + Tax Code — Curated club only (Figma 5079:33614). When a member
+          // signs up the system creates a real order against this SKU so revenue
+          // can be reconciled in accounting. US membership fees are usually
+          // non-taxable so Tax Code stays empty for most setups.
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+            <Field label="SKU">
+              <TextField
+                placeholder="1234-1234"
+                value={club.sku}
+                onChange={(e) => clubActions.patch('sku', e.target.value)}
+              />
+            </Field>
+            <Field label="Tax Code">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={club.taxCode}
+                  onChange={(e) => clubActions.patch('taxCode', e.target.value)}
+                  placeholder="V-1234"
+                  className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+                />
+                <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">%</span>
+              </div>
+            </Field>
+          </div>
         )}
 
       </SectionCard>

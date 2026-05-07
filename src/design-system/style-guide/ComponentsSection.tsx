@@ -1049,14 +1049,24 @@ function KpiCardsSection() {
           </div>
         </ReferenceCard>
 
-        <ReferenceCard label="⑤ Compact — size=sm (Figma 5347:77005)">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-md w-full">
-            <KpiCard size="sm" label="Total releases"         value="12"      icon={<PackageIcon />} />
-            <KpiCard size="sm" label="Estimated revenue"      value="$12,500" icon={<DollarIcon />} />
-            <KpiCard size="sm" label="Revenue"                value="$7,400"  icon={<DollarIcon />} />
-            <KpiCard size="sm" label="Qualified members"      value="14"      icon={<UsersIcon />} />
-            <KpiCard size="sm" label="Processed orders"       value="32"      icon={<ShoppingCartIcon />} />
-            <KpiCard size="sm" label="Draft orders finalized" value="32"      icon={<CheckIcon />} />
+        <ReferenceCard label="⑤ Compact — size=sm · KPI-small (Figma 5682:137241)">
+          <div className="flex flex-col gap-vintiga-md w-full">
+            <p className="typo-caption text-vintiga-slate-500">
+              Default — `href` absent. 64-px tall horizontal card: icon · label · value.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md w-full">
+              <KpiCard size="sm" label="Total releases"    value="12"      icon={<PackageIcon />} />
+              <KpiCard size="sm" label="Estimated revenue" value="$12,500" icon={<DollarIcon />} />
+              <KpiCard size="sm" label="Revenue"           value="$7,400"  icon={<DollarIcon />} />
+              <KpiCard size="sm" label="Qualified members" value="14"      icon={<UsersIcon />} />
+            </div>
+            <p className="typo-caption text-vintiga-slate-500 pt-vintiga-sm">
+              Clickable — `href` set. Renders as `&lt;a&gt;` with a trailing chevron and a slate-50 hover state.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md w-full">
+              <KpiCard size="sm" label="Account Balance" value="$320" icon={<DollarIcon />} href="#/web/design-system/components" />
+              <KpiCard size="sm" label="Loyalty Points"  value="20"   icon={<DollarIcon />} href="#/web/design-system/components" />
+            </div>
           </div>
         </ReferenceCard>
       </div>
@@ -1844,8 +1854,8 @@ function ProductsTemplateSection() {
   return (
     <SubSection
       id="ds-template-products"
-      title="Products"
-      description={'Products editor page template — Breadcrumb · Title + Save/Kebab · Tabs · body sections · 360-px right rail with Status / Collections / Availability. Built on the shared `PageTemplate` primitive (Figma 5640:28214 — "Page Layout"). Padding 32 px on every side of the main column with 32-px gaps between header rows.'}
+      title="Detail page"
+      description={'The standard editor / detail page layout — Breadcrumb · Title + actions · optional Tabs · stacked body sections · optional 360-px right rail. Built on the shared `PageTemplate` primitive (Figma 5640:28214 — "Page Layout"). Padding 32 px on every side of the main column with 32-px gaps between header rows. Use this for product editors, order details, customer profiles, and any other detail surface — never roll your own grid layout.'}
     >
       <div className="flex flex-col gap-vintiga-lg">
         <ReferenceCard label="Full layout — breadcrumb · title + actions · tabs · body · sidebar">
@@ -1913,6 +1923,97 @@ function ProductsTemplateSection() {
                   <TextField placeholder="UTC" />
                 </Field>
               </SectionCard>
+            </PageTemplate>
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="Stacked sections with rail — order / record detail">
+          <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
+            <PageTemplate
+              breadcrumbs={[
+                { icon: <BreadcrumbHomeIcon />, href: '#' },
+                { label: 'Orders', href: '#' },
+                { label: 'Order #100016' },
+              ]}
+              title="Order #100016"
+              actions={<Button>Create Refund</Button>}
+              rail={
+                <RailSection title="Order Info">
+                  <p className="typo-body-sm text-vintiga-slate-700">
+                    Sales Attribute: <span className="font-semibold text-vintiga-slate-900">POS</span>
+                  </p>
+                  <p className="typo-body-sm text-vintiga-slate-700">
+                    Sales Associate: <span className="font-semibold text-vintiga-slate-900">Geoff Spears</span>
+                  </p>
+                  <p className="typo-body-sm text-vintiga-slate-700">
+                    Sales Channel: <span className="font-semibold text-vintiga-slate-900">POS</span>
+                  </p>
+                </RailSection>
+              }
+            >
+              <SectionCard title="Order Items">
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>QTY</TableHeader>
+                      <TableHeader>Product</TableHeader>
+                      <TableHeader className="text-right">Price</TableHeader>
+                      <TableHeader className="text-right">Ext</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>1</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-vintiga-sm">
+                          <div className="w-10 h-10 rounded-vintiga-sm bg-vintiga-surface-element flex items-center justify-center shrink-0">
+                            <NoImageArt className="w-5 h-5 text-vintiga-slate-400" />
+                          </div>
+                          <div>
+                            <p className="typo-body-sm font-semibold text-vintiga-slate-900">Cola</p>
+                            <p className="typo-caption text-vintiga-slate-500">drink-cola · each</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">$3.00</TableCell>
+                      <TableCell className="text-right">$3.00</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </SectionCard>
+
+              <SectionCard
+                title="Order Summary"
+                action={<Tag tone="success">Fulfilled</Tag>}
+              >
+                <div className="flex flex-col gap-vintiga-xs">
+                  <div className="flex justify-between typo-body-sm text-vintiga-slate-700">
+                    <span>Subtotal</span><span>$3.00</span>
+                  </div>
+                  <div className="flex justify-between typo-body-sm text-vintiga-slate-700">
+                    <span>Shipping</span><span>$0.00</span>
+                  </div>
+                  <div className="flex justify-between typo-body-sm text-vintiga-slate-700">
+                    <span>Tax (8.8%)</span><span>$0.26</span>
+                  </div>
+                  <div className="flex justify-between border-t border-vintiga-slate-200 pt-vintiga-sm mt-vintiga-xs typo-body font-semibold text-vintiga-slate-900">
+                    <span>Total (1 item)</span><span>$3.26</span>
+                  </div>
+                </div>
+              </SectionCard>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-lg">
+                <SectionCard title="Fulfillment" icon={<PackageIcon />}>
+                  <p className="typo-body-sm font-semibold text-vintiga-slate-900">Status: Fulfilled</p>
+                  <p className="typo-body-sm text-vintiga-slate-500">Order fulfilled.</p>
+                </SectionCard>
+                <SectionCard title="Payment" icon={<DollarIcon />}>
+                  <div className="flex items-center justify-between">
+                    <p className="typo-body-sm font-semibold text-vintiga-slate-900">N/A</p>
+                    <p className="typo-body-sm text-vintiga-slate-700">$3.26</p>
+                  </div>
+                </SectionCard>
+              </div>
             </PageTemplate>
           </div>
         </ReferenceCard>

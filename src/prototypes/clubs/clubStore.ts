@@ -17,10 +17,14 @@ export interface ClubImage {
   name: string
 }
 
+export type ContributionCadence = 'Monthly' | 'Quarterly' | 'Annually'
+
 export interface ClubLevel {
   id: string
   name: string
   amount: number
+  /** Contribution cadence per level (Figma 5079:46371). */
+  cadence: ContributionCadence
   isDefault: boolean
 }
 
@@ -50,8 +54,18 @@ export interface ClubDraft {
   durationOfMembership: '3 Months' | '6 Months' | '12 Months' | 'Indefinite'
   membershipFee: number
 
+  // Curated-specific — purchased-product accounting fields (Figma 5079:33614).
+  // The membership signup creates a real order against this SKU so revenue can
+  // be reconciled. Tax code optional; US membership fees are non-taxable so
+  // the field stays empty for most setups.
+  sku: string
+  taxCode: string
+
+  // Membership-specific — surfaced in the rail as a static read-only flag
+  // (Figma 5079:44506). Always true for the membership type.
+  autoRenew: boolean
+
   // Account Credit-specific
-  contributionCadence: 'Monthly' | 'Quarterly' | 'Annually'
   levels: ClubLevel[]
 
   // Curated-specific
@@ -88,12 +102,14 @@ function emptyDraft(type: ClubKind): ClubDraft {
     description: '',
     durationOfMembership: '12 Months',
     membershipFee: 0,
-    contributionCadence: 'Monthly',
+    sku: '',
+    taxCode: '',
+    autoRenew: type === 'membership',
     levels:
       type === 'account-credit'
         ? [
-            { id: 'l1', name: '', amount: 0, isDefault: true },
-            { id: 'l2', name: '', amount: 0, isDefault: false },
+            { id: 'l1', name: '', amount: 0, cadence: 'Monthly', isDefault: true },
+            { id: 'l2', name: '', amount: 0, cadence: 'Monthly', isDefault: false },
           ]
         : [],
     releases: [],
@@ -142,7 +158,7 @@ export const clubActions = {
       ...state,
       levels: [
         ...state.levels,
-        { id, name: '', amount: 0, isDefault: state.levels.length === 0 },
+        { id, name: '', amount: 0, cadence: 'Monthly', isDefault: state.levels.length === 0 },
       ],
     }
     emit()

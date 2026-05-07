@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import { useState } from 'react'
 import { AppSidebar } from '@ds/shared/AppSidebar'
 import { Navbar } from '@ds/shared/Navbar'
+import { useResponsiveSidebar } from '@ds/shared/useResponsiveSidebar'
 
 export function Shell({
   children,
@@ -12,20 +12,25 @@ export function Shell({
   bg?: 'white' | 'slate'
   activeNav?: string
 }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
 
   return (
     <div className="flex h-full bg-vintiga-white">
-      <AppSidebar collapsed={collapsed} activeNav={activeNav} />
+      <AppSidebar
+        collapsed={collapsed}
+        mobileOpen={mobileOpen}
+        onMobileClose={closeMobile}
+        activeNav={activeNav}
+      />
 
       {/* `fixed` Navbar pattern (see DS Navbar.tsx header):
           parent is `relative`, navbar uses `fixed`, scroll sibling has `pt-16`. */}
       <div className="flex-1 flex flex-col min-w-0 relative">
         <Navbar
-          device="desktop"
+          device="responsive"
           fixed
           user={{ name: 'Tom Cook', initials: 'TC' }}
-          onMenuToggle={() => setCollapsed((c) => !c)}
+          onMenuToggle={onMenuToggle}
           onUserClick={() => {}}
           onNotificationClick={() => {}}
         />

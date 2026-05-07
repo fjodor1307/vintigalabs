@@ -12,8 +12,9 @@ import { Tag } from '@ds/shared/Tag'
 import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@ds/shared/Table'
+import { AddProductsSearch } from '@/prototypes/products/CollectionProductsTable'
+import { useProductState } from '@/prototypes/products/productStore'
 import {
-  SearchIcon,
   CalendarIcon,
   GripVerticalIcon,
   TrashIcon,
@@ -66,12 +67,12 @@ export function AddReleaseExistingScreen() {
 
 function AddReleaseInner({ mode }: { mode: Mode }) {
   const club = useClubState()
+  const { catalogue } = useProductState()
   const parentLabel  = mode === 'editor' ? (club.name || 'New club') : VIEW_CLUB.name
   const parentHref   = mode === 'editor' ? '#/web/clubs/new/releases'  : '#/web/clubs/view/releases'
 
   const [title, setTitle]                       = useState('')
   const [products, setProducts]                 = useState<Product[]>(SAMPLE_PRODUCTS)
-  const [productSearch, setProductSearch]       = useState('')
   const [minQty, setMinQty]                     = useState('1')
   const [maxQty, setMaxQty]                     = useState('')
   const [minOrderSubtotal, setMinOrderSubtotal] = useState('0')
@@ -89,6 +90,30 @@ function AddReleaseInner({ mode }: { mode: Mode }) {
   function removeProduct(id: string) {
     setProducts((prev) => prev.filter((p) => p.id !== id))
   }
+
+  function addProduct(id: string) {
+    const c = catalogue.find((p) => p.id === id)
+    if (!c) return
+    setProducts((prev) =>
+      prev.some((p) => p.id === id)
+        ? prev
+        : [
+            ...prev,
+            {
+              id: c.id,
+              name: c.name,
+              sku: c.sku,
+              image: c.imageUrl ?? '',
+              defaultQty: 1,
+              minQty: 1,
+              maxQty: 12,
+              price: Number(c.price) || 0,
+            },
+          ],
+    )
+  }
+
+  const addedIds = new Set(products.map((p) => p.id))
 
   function save() {
     if (mode === 'editor') {
@@ -129,12 +154,7 @@ function AddReleaseInner({ mode }: { mode: Mode }) {
           </Field>
 
           <Field label="Add Product">
-            <TextField
-              value={productSearch}
-              onChange={(e) => setProductSearch(e.target.value)}
-              placeholder="Search products"
-              leftIcon={<SearchIcon className="w-4 h-4" />}
-            />
+            <AddProductsSearch alreadyAddedIds={addedIds} onAdd={addProduct} />
           </Field>
 
           {products.length > 0 && (

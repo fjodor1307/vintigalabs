@@ -70,8 +70,8 @@ export function ClubViewReleasesScreen() {
   return (
     <ClubViewLayout activeTab="releases">
       <div className="flex flex-col gap-vintiga-lg">
-        {/* KPI grid — sm variant in a 3 × 2 layout (Figma 5347:77005). */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-vintiga-md">
+        {/* KPI grid — compact KPI-small in a 2-col grid (May 7 alignment). */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
           <KpiCard size="sm" label="Total releases"         value="12"       icon={<PackageIcon />} />
           <KpiCard size="sm" label="Estimated revenue"      value="$12,500"  icon={<DollarIcon />} />
           <KpiCard size="sm" label="Revenue"                value="$7,400"   icon={<DollarIcon />} />

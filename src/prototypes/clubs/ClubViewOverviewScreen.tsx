@@ -10,7 +10,6 @@ import { Textarea } from '@ds/shared/Textarea'
 import { Media } from '@ds/shared/Media'
 import {
   PackageIcon,
-  UsersGroupIcon,
   CheckCircleIcon,
   HandIcon,
   UserIcon,
@@ -41,14 +40,17 @@ export function ClubViewOverviewScreen() {
   return (
     <ClubViewLayout activeTab="overview">
       <div className="flex flex-col gap-vintiga-lg">
-        {/* KPI grid — 3 × 2 on desktop. */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-vintiga-md">
-          <KpiCard label="Total Releases"   value="28" icon={<PackageIcon />} />
-          <KpiCard label="Total Members"    value="15" icon={<UsersGroupIcon />} />
-          <KpiCard label="Active Members"   value="10" icon={<CheckCircleIcon />} />
-          <KpiCard label="On-hold Members"  value="2"  icon={<HandIcon />} />
-          <KpiCard label="New Members"      value="2"  icon={<UserIcon />} />
-          <KpiCard label="Canceled Members" value="1"  icon={<UserXIcon />} />
+        {/* KPI grid — compact KPI-small in a 2-col grid (May 7 alignment).
+            Active / On-hold paired on top, New / Canceled paired below, then
+            Total Releases pinned to the bottom-right as the least-important
+            metric (curated club always has releases). Removed Total Members
+            per the meeting — operators can sum Active + On-hold + New. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+          <KpiCard size="sm" label="Active Members"   value="10" icon={<CheckCircleIcon />} />
+          <KpiCard size="sm" label="On-hold Members"  value="2"  icon={<HandIcon />} />
+          <KpiCard size="sm" label="New Members"      value="2"  icon={<UserIcon />} />
+          <KpiCard size="sm" label="Canceled Members" value="1"  icon={<UserXIcon />} />
+          <KpiCard size="sm" label="Total Releases"   value="28" icon={<PackageIcon />} />
         </div>
 
         {/* Basic Info */}
