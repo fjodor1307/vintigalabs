@@ -8,6 +8,7 @@ import { Select } from '@ds/shared/Select'
 import { Checkbox } from '@ds/shared/Checkbox'
 import { Textarea } from '@ds/shared/Textarea'
 import { Media } from '@ds/shared/Media'
+import { TaxCodePicker } from './TaxCodePicker'
 import {
   PackageIcon,
   CheckCircleIcon,
@@ -28,6 +29,8 @@ export function ClubViewOverviewScreen() {
   const [description, setDescription]  = useState('')
   const [duration, setDuration]        = useState('12 Months')
   const [fee, setFee]                  = useState('0')
+  const [sku, setSku]                  = useState('1234-1234')
+  const [taxCode, setTaxCode]          = useState('V-1234')
   const [requireTerms, setRequireTerms] = useState(true)
   const [terms, setTerms]              = useState('')
   const [metaTitle, setMetaTitle]      = useState('')
@@ -100,20 +103,6 @@ export function ClubViewOverviewScreen() {
             />
           </Field>
 
-          <Field label="Images">
-            <Media
-              variant="bare"
-              items={images}
-              onUpload={(files) =>
-                setImages((prev) => [
-                  ...prev,
-                  ...files.map((f) => ({ id: `img-${Date.now()}-${f.name}`, url: URL.createObjectURL(f), name: f.name })),
-                ])
-              }
-              onRemove={(id) => setImages((prev) => prev.filter((i) => i.id !== id))}
-            />
-          </Field>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
             <Field label="Duration of Membership">
               <Select
@@ -131,6 +120,36 @@ export function ClubViewOverviewScreen() {
               />
             </Field>
           </div>
+
+          {/* SKU + Tax Code — Curated club only (Figma 5079:33614). Mirrors the
+              new-club editor: signup creates a real order against this SKU so
+              accounting can reconcile revenue. */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+            <Field label="SKU">
+              <TextField
+                value={sku}
+                onChange={(e) => setSku(e.target.value)}
+                placeholder="1234-1234"
+              />
+            </Field>
+            <Field label="Tax Code">
+              <TaxCodePicker value={taxCode} onChange={setTaxCode} />
+            </Field>
+          </div>
+
+          <Field label="Images">
+            <Media
+              variant="bare"
+              items={images}
+              onUpload={(files) =>
+                setImages((prev) => [
+                  ...prev,
+                  ...files.map((f) => ({ id: `img-${Date.now()}-${f.name}`, url: URL.createObjectURL(f), name: f.name })),
+                ])
+              }
+              onRemove={(id) => setImages((prev) => prev.filter((i) => i.id !== id))}
+            />
+          </Field>
         </SectionCard>
 
         {/* Terms & Conditions — matches Figma 5304:7762 */}
