@@ -45,10 +45,7 @@ function ClubSummaryRail() {
   return (
     <RailSection title="Club Details">
       <div className="flex flex-col gap-vintiga-md">
-        <DetailRow
-          label="Type"
-          action={<a href="#/web/clubs/new/overview" className="typo-body-sm font-semibold text-vintiga-indigo-600">Edit</a>}
-        >
+        <DetailRow label="Type">
           <Tag variant="filled" tone="violet" size="sm">{VIEW_CLUB.type}</Tag>
         </DetailRow>
 

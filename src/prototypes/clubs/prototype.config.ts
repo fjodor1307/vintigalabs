@@ -1,6 +1,7 @@
 import type { PrototypeConfig } from '../_registry'
 import { ClubsScreen } from './ClubsScreen'
 import { MembershipsScreen } from './MembershipsScreen'
+import { MembershipDetailScreen } from './MembershipDetailScreen'
 import { ClubEmailsScreen } from './ClubEmailsScreen'
 import { ClubOverviewScreen } from './ClubOverviewScreen'
 import { ClubReleasesScreen } from './ClubReleasesScreen'
@@ -28,6 +29,7 @@ export const config: PrototypeConfig = {
     // Page-level
     '#/web/clubs':                       ClubsScreen,
     '#/web/clubs/memberships':           MembershipsScreen,
+    '#/web/clubs/memberships/1004':      MembershipDetailScreen,
     '#/web/clubs/emails':                ClubEmailsScreen,
     // Club editor (new club)
     '#/web/clubs/new/overview':          ClubOverviewScreen,
