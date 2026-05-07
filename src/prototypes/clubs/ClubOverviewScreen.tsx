@@ -8,6 +8,7 @@ import { Checkbox } from '@ds/shared/Checkbox'
 import { Textarea } from '@ds/shared/Textarea'
 import { Tag } from '@ds/shared/Tag'
 import { Media } from '@ds/shared/Media'
+import { TaxCodePicker } from './TaxCodePicker'
 
 // ─── ClubOverviewScreen ───────────────────────────────────────────────────────
 // First (and primary) tab of the club editor. Field set varies by type:
@@ -154,16 +155,10 @@ export function ClubOverviewScreen() {
               />
             </Field>
             <Field label="Tax Code">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={club.taxCode}
-                  onChange={(e) => clubActions.patch('taxCode', e.target.value)}
-                  placeholder="V-1234"
-                  className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
-                />
-                <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">%</span>
-              </div>
+              <TaxCodePicker
+                value={club.taxCode}
+                onChange={(next) => clubActions.patch('taxCode', next)}
+              />
             </Field>
           </div>
         )}

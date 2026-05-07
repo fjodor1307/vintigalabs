@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Tooltip } from '@base-ui/react/tooltip'
 import { ClubsLayout } from './ClubsLayout'
 import { AddClubModal } from './AddClubModal'
 import { ClubCard } from '@ds/shared/ClubCard'
@@ -19,11 +20,16 @@ import {
 // ─── Demo data ────────────────────────────────────────────────────────────────
 
 type ClubStatus = 'active' | 'inactive'
+type ClubSource = 'vintiga' | 'commerce7'
 
 interface Club {
   id: string
   name: string
   status: ClubStatus
+  /** Where the club lives. `commerce7` clubs are read-only — they're managed
+   *  in the Commerce7 admin and surfaced here purely for visibility. The card
+   *  is non-clickable and every row action is disabled. */
+  source: ClubSource
   tags: { label: string; tone: 'info' | 'violet' | 'teal' | 'blue' | 'orange' }[]
   active: number
   onHold: number
@@ -38,6 +44,7 @@ const CLUBS: Club[] = [
     id: 'c7',
     name: 'C7',
     status: 'active',
+    source: 'commerce7',
     tags: [
       { label: 'Commerce7',   tone: 'info' },
       { label: 'Traditional', tone: 'violet' },
@@ -49,6 +56,7 @@ const CLUBS: Club[] = [
     id: 'vintiga-heritage',
     name: 'Vintiga Heritage',
     status: 'active',
+    source: 'vintiga',
     tags: [{ label: 'Curated Club', tone: 'violet' }],
     active: 10, onHold: 2, newM: 2, canceled: 1,
     imageUrl: 'https://images.unsplash.com/photo-1474722883778-792e7990302f?w=200&h=200&fit=crop',
@@ -57,6 +65,7 @@ const CLUBS: Club[] = [
     id: 'vintiga-signature',
     name: 'Vintiga Signature',
     status: 'active',
+    source: 'vintiga',
     tags: [{ label: 'Membership', tone: 'violet' }],
     active: 10, onHold: 2, newM: 2, canceled: 1,
     imageUrl: 'https://images.unsplash.com/photo-1568213816046-0ee1c42bd559?w=200&h=200&fit=crop',
@@ -65,6 +74,7 @@ const CLUBS: Club[] = [
     id: 'blind-enthusiasm',
     name: 'Blind Enthusiasm',
     status: 'active',
+    source: 'vintiga',
     tags: [{ label: 'Tasting Credit', tone: 'violet' }],
     active: 10, onHold: 2, newM: 2, canceled: 1,
     imageUrl: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=200&h=200&fit=crop',
@@ -174,53 +184,55 @@ export function ClubsScreen() {
             No {STATUS_LABEL[statusFilter].toLowerCase()} clubs.
           </div>
         )}
-        {filtered.map((club) => (
-          <ClubCard
-            key={club.id}
-            image={
-              <img
-                src={club.imageUrl}
-                alt=""
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            }
-            title={club.name}
-            tags={club.tags.map((t) => (
-              <Tag tone={t.tone} size="sm">
-                {t.label}
-              </Tag>
-            ))}
-            meta={`${club.active} Active | ${club.onHold} On-hold | ${club.newM} New | ${club.canceled} Canceled`}
-            onClick={() => {
-              window.location.hash = '#/web/clubs/view/overview'
-            }}
-            action={
-              <PopoverMenu
-                align="right"
-                width="w-44"
-                trigger={(_open, toggle) => (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggle()
-                    }}
-                    className="w-8 h-8 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-none cursor-pointer"
-                    aria-label={`${club.name} actions`}
-                  >
-                    <EllipsisIcon className="w-4 h-4 text-vintiga-slate-500" />
-                  </button>
-                )}
-                items={[
-                  { label: 'View',      onClick: () => { window.location.hash = '#/web/clubs/view/overview' } },
-                  { label: 'Duplicate', onClick: () => {} },
-                  { label: 'Archive',   onClick: () => {}, danger: true },
-                ]}
-              />
-            }
-          />
-        ))}
+        {filtered.map((club) =>
+          club.source === 'commerce7' ? (
+            <ReadOnlyClubRow key={club.id} club={club} />
+          ) : (
+            <ClubCard
+              key={club.id}
+              image={
+                <img
+                  src={club.imageUrl}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              }
+              title={club.name}
+              tags={club.tags.map((t) => (
+                <Tag tone={t.tone} size="sm">
+                  {t.label}
+                </Tag>
+              ))}
+              meta={`${club.active} Active | ${club.onHold} On-hold | ${club.newM} New | ${club.canceled} Canceled`}
+              onClick={() => { window.location.hash = '#/web/clubs/view/overview' }}
+              action={
+                <PopoverMenu
+                  align="right"
+                  width="w-44"
+                  trigger={(_open, toggle) => (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggle()
+                      }}
+                      className="w-8 h-8 rounded-vintiga-md flex items-center justify-center hover:bg-vintiga-slate-100 transition-colors bg-transparent border-none cursor-pointer"
+                      aria-label={`${club.name} actions`}
+                    >
+                      <EllipsisIcon className="w-4 h-4 text-vintiga-slate-500" />
+                    </button>
+                  )}
+                  items={[
+                    { label: 'View',      onClick: () => { window.location.hash = '#/web/clubs/view/overview' } },
+                    { label: 'Duplicate', onClick: () => {} },
+                    { label: 'Archive',   onClick: () => {}, danger: true },
+                  ]}
+                />
+              }
+            />
+          ),
+        )}
       </div>
 
       <AddClubModal
@@ -228,5 +240,75 @@ export function ClubsScreen() {
         onClose={() => setShowAddModal(false)}
       />
     </ClubsLayout>
+  )
+}
+
+// ─── ReadOnlyClubRow ─────────────────────────────────────────────────────────
+// Commerce7-synced clubs are surfaced for visibility but managed in C7. The
+// card stays hover-styled (so it reads as part of the list, not greyed out)
+// but its click is intercepted: instead of navigating, we flash the tooltip
+// anchored to the disabled action button so the operator knows why nothing
+// happened. Hover/focus on the action button shows the same tooltip via the
+// usual base-ui auto-open behaviour.
+
+function ReadOnlyClubRow({ club }: { club: Club }) {
+  const [tipOpen, setTipOpen] = useState(false)
+  const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => {
+    if (dismissTimer.current) clearTimeout(dismissTimer.current)
+  }, [])
+
+  const flashTooltip = () => {
+    setTipOpen(true)
+    if (dismissTimer.current) clearTimeout(dismissTimer.current)
+    dismissTimer.current = setTimeout(() => setTipOpen(false), 2500)
+  }
+
+  return (
+    <Tooltip.Provider>
+      <Tooltip.Root open={tipOpen} onOpenChange={setTipOpen}>
+        <ClubCard
+          image={
+            <img
+              src={club.imageUrl}
+              alt=""
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          }
+          title={club.name}
+          tags={club.tags.map((t) => (
+            <Tag tone={t.tone} size="sm">
+              {t.label}
+            </Tag>
+          ))}
+          meta={`${club.active} Active | ${club.onHold} On-hold | ${club.newM} New | ${club.canceled} Canceled`}
+          onClick={flashTooltip}
+          action={
+            <Tooltip.Trigger
+              render={
+                <button
+                  type="button"
+                  aria-disabled="true"
+                  aria-label={`${club.name} actions (read-only)`}
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); flashTooltip() }}
+                  className="w-8 h-8 rounded-vintiga-md flex items-center justify-center bg-transparent border-none cursor-not-allowed text-vintiga-slate-300"
+                >
+                  <EllipsisIcon className="w-4 h-4" />
+                </button>
+              }
+            />
+          }
+        />
+        <Tooltip.Portal>
+          <Tooltip.Positioner sideOffset={6}>
+            <Tooltip.Popup className="max-w-[260px] bg-vintiga-foreground text-vintiga-surface typo-caption font-medium px-2 py-1.5 rounded shadow-lg">
+              This club is synced from Commerce7. To make changes, manage it in Commerce7.
+            </Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   )
 }
