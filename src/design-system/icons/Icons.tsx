@@ -72,6 +72,8 @@ export {
   Phone          as PhoneIcon,
   Mail           as MailIcon,
   Building2      as BuildingIcon,
+  Truck          as TruckIcon,
+  Store          as StoreIcon,
   DollarSign     as DollarIcon,
   Upload         as ExportIcon,
   Eye            as EyeIcon,

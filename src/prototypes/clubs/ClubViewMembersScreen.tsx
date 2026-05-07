@@ -7,6 +7,7 @@ import { Tag } from '@ds/shared/Tag'
 import { Avatar } from '@ds/shared/Avatar'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@ds/shared/Table'
 import { IconButton } from '@ds/shared/IconButton'
+import { FlaggedFlag } from './FlaggedFlag'
 import {
   SearchIcon,
   ArrowUpDownIcon,
@@ -29,15 +30,17 @@ interface Member {
   city: string
   status: Status
   holdUntil?: string
+  /** Flagged for manual admin review — auto processing will skip orders. */
+  flagged?: boolean
 }
 
 const MEMBERS: Member[] = [
-  { name: 'Jane Davis',         photo: 'https://i.pravatar.cc/64?img=47', delivery: 'Delivery', city: 'San Francisco, CA', status: 'Active' },
-  { name: 'Leslie Alexander',   photo: 'https://i.pravatar.cc/64?img=12', delivery: 'Pickup',   city: 'Oakland, CA',       status: 'Pending' },
+  { name: 'Jane Davis',         photo: 'https://i.pravatar.cc/64?img=47', delivery: 'Delivery', city: 'San Francisco, CA', status: 'Active',  flagged: true },
+  { name: 'Leslie Alexander',   photo: 'https://i.pravatar.cc/64?img=12', delivery: 'Pickup',   city: 'Oakland, CA',       status: 'Pending', flagged: true },
   { name: 'Phoenix Baker',      photo: 'https://i.pravatar.cc/64?img=22', delivery: 'Delivery', city: 'Portland, OR',      status: 'Active' },
   { name: 'Ms Dorothy Ladner',  photo: 'https://i.pravatar.cc/64?img=32', delivery: 'Delivery', city: 'Seattle, WA',       status: 'On Hold', holdUntil: '22 Jan, 2026' },
   { name: 'Robert Fox',                                                   delivery: 'Pickup',   city: 'Napa, CA',          status: 'Active' },
-  { name: 'Jacob Jones',                                                  delivery: 'Delivery', city: 'Sonoma, CA',        status: 'Cancelled' },
+  { name: 'Jacob Jones',                                                  delivery: 'Delivery', city: 'Sonoma, CA',        status: 'Cancelled', flagged: true },
   { name: 'Albert Flores',      photo: 'https://i.pravatar.cc/64?img=15', delivery: 'Delivery', city: 'Berkeley, CA',      status: 'Active' },
   { name: 'Guy Hawkins',                                                  delivery: 'Pickup',   city: 'San Jose, CA',      status: 'Pending' },
   { name: 'Bessie Cooper',      photo: 'https://i.pravatar.cc/64?img=44', delivery: 'Delivery', city: 'Sacramento, CA',    status: 'Active' },
@@ -127,11 +130,15 @@ export function ClubViewMembersScreen() {
             {filtered.map((m) => {
               const tone = STATUS_TONE[m.status]
               return (
-                <TableRow key={m.name}>
+                <TableRow
+                  key={m.name}
+                  onClick={() => { window.location.hash = '#/web/clubs/memberships/1004' }}
+                >
                   <TableCell>
                     <div className="flex items-center gap-vintiga-sm">
                       <Avatar name={m.name} src={m.photo} size="sm" />
                       <span className="font-medium text-vintiga-slate-900">{m.name}</span>
+                      {m.flagged && <FlaggedFlag memberName={m.name} />}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -149,13 +156,18 @@ export function ClubViewMembersScreen() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <IconButton
-                      variant="outline"
-                      size="sm"
-                      icon={<EllipsisVerticalIcon />}
-                      aria-label={`${m.name} actions`}
-                      onClick={() => {}}
-                    />
+                    <span
+                      className="inline-flex"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <IconButton
+                        variant="outline"
+                        size="sm"
+                        icon={<EllipsisVerticalIcon />}
+                        aria-label={`${m.name} actions`}
+                        onClick={() => {}}
+                      />
+                    </span>
                   </TableCell>
                 </TableRow>
               )
