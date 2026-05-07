@@ -24,6 +24,7 @@ import {
 type Status = 'Active' | 'Pending' | 'On Hold' | 'Cancelled'
 
 interface Member {
+  id: string
   name: string
   photo?: string
   delivery: 'Delivery' | 'Pickup'
@@ -35,16 +36,16 @@ interface Member {
 }
 
 const MEMBERS: Member[] = [
-  { name: 'Jane Davis',         photo: 'https://i.pravatar.cc/64?img=47', delivery: 'Delivery', city: 'San Francisco, CA', status: 'Active',  flagged: true },
-  { name: 'Leslie Alexander',   photo: 'https://i.pravatar.cc/64?img=12', delivery: 'Pickup',   city: 'Oakland, CA',       status: 'Pending', flagged: true },
-  { name: 'Phoenix Baker',      photo: 'https://i.pravatar.cc/64?img=22', delivery: 'Delivery', city: 'Portland, OR',      status: 'Active' },
-  { name: 'Ms Dorothy Ladner',  photo: 'https://i.pravatar.cc/64?img=32', delivery: 'Delivery', city: 'Seattle, WA',       status: 'On Hold', holdUntil: '22 Jan, 2026' },
-  { name: 'Robert Fox',                                                   delivery: 'Pickup',   city: 'Napa, CA',          status: 'Active' },
-  { name: 'Jacob Jones',                                                  delivery: 'Delivery', city: 'Sonoma, CA',        status: 'Cancelled', flagged: true },
-  { name: 'Albert Flores',      photo: 'https://i.pravatar.cc/64?img=15', delivery: 'Delivery', city: 'Berkeley, CA',      status: 'Active' },
-  { name: 'Guy Hawkins',                                                  delivery: 'Pickup',   city: 'San Jose, CA',      status: 'Pending' },
-  { name: 'Bessie Cooper',      photo: 'https://i.pravatar.cc/64?img=44', delivery: 'Delivery', city: 'Sacramento, CA',    status: 'Active' },
-  { name: 'Jerome Bell',        photo: 'https://i.pravatar.cc/64?img=8',  delivery: 'Delivery', city: 'Santa Rosa, CA',    status: 'Active' },
+  { id: '1001', name: 'Jane Davis',         photo: 'https://i.pravatar.cc/64?img=47', delivery: 'Delivery', city: 'San Francisco, CA', status: 'Active',  flagged: true },
+  { id: '1002', name: 'Leslie Alexander',   photo: 'https://i.pravatar.cc/64?img=12', delivery: 'Pickup',   city: 'Oakland, CA',       status: 'Pending', flagged: true },
+  { id: '1003', name: 'Phoenix Baker',      photo: 'https://i.pravatar.cc/64?img=22', delivery: 'Delivery', city: 'Portland, OR',      status: 'Active' },
+  { id: '1004', name: 'Ms Dorothy Ladner',  photo: 'https://i.pravatar.cc/64?img=32', delivery: 'Delivery', city: 'Seattle, WA',       status: 'On Hold', holdUntil: '22 Jan, 2026' },
+  { id: '1005', name: 'Robert Fox',                                                   delivery: 'Pickup',   city: 'Napa, CA',          status: 'Active' },
+  { id: '1006', name: 'Jacob Jones',                                                  delivery: 'Delivery', city: 'Sonoma, CA',        status: 'Cancelled', flagged: true },
+  { id: '1007', name: 'Albert Flores',      photo: 'https://i.pravatar.cc/64?img=15', delivery: 'Delivery', city: 'Berkeley, CA',      status: 'Active' },
+  { id: '1008', name: 'Guy Hawkins',                                                  delivery: 'Pickup',   city: 'San Jose, CA',      status: 'Pending' },
+  { id: '1009', name: 'Bessie Cooper',      photo: 'https://i.pravatar.cc/64?img=44', delivery: 'Delivery', city: 'Sacramento, CA',    status: 'Active' },
+  { id: '1010', name: 'Jerome Bell',        photo: 'https://i.pravatar.cc/64?img=8',  delivery: 'Delivery', city: 'Santa Rosa, CA',    status: 'Active' },
 ]
 
 const STATUS_TONE: Record<Status, { tone: 'success' | 'orange' | 'default' | 'danger'; variant: 'filled' | 'outline' | 'neutral-light' }> = {
@@ -131,8 +132,8 @@ export function ClubViewMembersScreen() {
               const tone = STATUS_TONE[m.status]
               return (
                 <TableRow
-                  key={m.name}
-                  onClick={() => { window.location.hash = '#/web/clubs/memberships/1004' }}
+                  key={m.id}
+                  onClick={() => { window.location.hash = `#/web/clubs/memberships/${m.id}` }}
                 >
                   <TableCell>
                     <div className="flex items-center gap-vintiga-sm">

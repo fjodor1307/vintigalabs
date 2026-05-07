@@ -5,6 +5,8 @@ import { Tag } from '@ds/shared/Tag'
 import { IconButton } from '@ds/shared/IconButton'
 import { FilterDropdown } from '@ds/shared/FilterDropdown'
 import { FlaggedFlag } from './FlaggedFlag'
+import { MEMBERS, type Delivery, type MemberStatus } from './memberSamples'
+import { CLUBS_CATALOG, type ClubKey } from './clubsCatalog'
 import {
   Table,
   TableHead,
@@ -29,46 +31,13 @@ import {
 // shared `FilterDropdown` "checkbox list + Clear All / Apply" pattern), then
 // a paginated table with member, club, delivery method, and status.
 
-type Delivery = 'shipping' | 'pickup'
-type MemberStatus = 'pending' | 'active' | 'on-hold' | 'cancelled'
-type ClubKey = 'curators' | 'vintiga-signature' | 'vintiga-heritage' | 'blind-enthusiasm' | 'c7'
-
-interface Member {
-  id: string
-  name: string
-  initials: string
-  avatarUrl?: string
-  club: ClubKey
-  delivery: Delivery
-  city: string
-  status: MemberStatus
-  /** Optional date for `on-hold` / `cancelled` rows. */
-  statusDate?: string
-  /** Flagged for manual admin review — auto processing will skip orders. */
-  flagged?: boolean
-}
-
 const CLUB_LABEL: Record<ClubKey, string> = {
-  'curators':           'Curators Club',
-  'vintiga-signature':  'Vintiga Signature',
-  'vintiga-heritage':   'Vintiga Heritage',
-  'blind-enthusiasm':   'Blind Enthusiasm',
-  'c7':                 'C7',
+  'curators':           CLUBS_CATALOG.curators.name,
+  'vintiga-signature':  CLUBS_CATALOG['vintiga-signature'].name,
+  'vintiga-heritage':   CLUBS_CATALOG['vintiga-heritage'].name,
+  'blind-enthusiasm':   CLUBS_CATALOG['blind-enthusiasm'].name,
+  'c7':                 CLUBS_CATALOG.c7.name,
 }
-
-// Avatar URLs are public Unsplash portraits — same set used by the Customers prototype.
-const MEMBERS: Member[] = [
-  { id: 'm1',  name: 'Jane Davis',       initials: 'JD', avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=64&h=64&fit=crop&crop=faces', club: 'curators',          delivery: 'pickup',   city: 'San Francisco, CA', status: 'active', flagged: true },
-  { id: 'm2',  name: 'Leslie Alexander', initials: 'LA', avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=faces', club: 'vintiga-signature', delivery: 'shipping', city: 'San Francisco, CA', status: 'pending', flagged: true },
-  { id: 'm3',  name: 'Phoenix Baker',    initials: 'PB', avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=64&h=64&fit=crop&crop=faces', club: 'vintiga-heritage',  delivery: 'shipping', city: 'San Francisco, CA', status: 'on-hold' },
-  { id: 'm4',  name: 'Ms Dorothy Ladner',initials: 'DL', avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=64&h=64&fit=crop&crop=faces', club: 'curators',          delivery: 'pickup',   city: 'San Francisco, CA', status: 'active' },
-  { id: 'm5',  name: 'Robert Fox',       initials: 'RF',                                                                                                          club: 'vintiga-heritage',  delivery: 'pickup',   city: 'San Francisco, CA', status: 'active' },
-  { id: 'm6',  name: 'Jacob Jones',      initials: 'JJ', avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=faces', club: 'curators',          delivery: 'shipping', city: 'San Francisco, CA', status: 'active', flagged: true },
-  { id: 'm7',  name: 'Albert Flores',    initials: 'AF', avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=faces', club: 'vintiga-signature', delivery: 'pickup',   city: 'San Francisco, CA', status: 'on-hold', statusDate: 'Hold Until 22 Jan, 2026' },
-  { id: 'm8',  name: 'Guy Hawkins',      initials: 'GH', avatarUrl: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=64&h=64&fit=crop&crop=faces', club: 'curators',          delivery: 'shipping', city: 'San Francisco, CA', status: 'pending' },
-  { id: 'm9',  name: 'Bessie Cooper',    initials: 'BC', avatarUrl: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=64&h=64&fit=crop&crop=faces', club: 'vintiga-heritage',  delivery: 'shipping', city: 'San Francisco, CA', status: 'cancelled', statusDate: '22 Jan, 2026' },
-  { id: 'm10', name: 'Jerome Bell',      initials: 'JB', avatarUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=64&h=64&fit=crop&crop=faces', club: 'vintiga-signature', delivery: 'shipping', city: 'San Francisco, CA', status: 'active' },
-]
 
 // Status palette unified with `ClubViewMembersScreen` (per Figma 5078:4277).
 // Active = green-success · Pending = orange · On Hold = neutral-light gray
@@ -179,7 +148,7 @@ export function MembershipsScreen() {
             <TableRow
               key={m.id}
               className="cursor-pointer hover:bg-vintiga-slate-50 transition-colors"
-              onClick={() => { window.location.hash = '#/web/clubs/memberships/1004' }}
+              onClick={() => { window.location.hash = `#/web/clubs/memberships/${m.id}` }}
             >
               <TableCell>
                 <div className="flex items-center gap-vintiga-sm">
