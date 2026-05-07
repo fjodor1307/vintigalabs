@@ -13,7 +13,7 @@ import { Tag } from '@ds/shared/Tag'
 import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import { EllipsisVerticalIcon, CalendarIcon, FlagIcon, InfoIcon } from '@ds/icons/Icons'
 import { getViewClub } from './clubViewSample'
-import { getCurrentClubSlug } from './clubsCatalog'
+import { CLUBS_CATALOG, getCurrentClubSlug, type ClubKind } from './clubsCatalog'
 
 // ─── ClubViewLayout ───────────────────────────────────────────────────────────
 // Shell for the *existing* club detail flow: AppSidebar + Navbar + PageTemplate
@@ -24,15 +24,22 @@ import { getCurrentClubSlug } from './clubsCatalog'
 // Sample data is hard-coded — this is a prototype with a single canonical
 // club ("Blind Enthusiasm"). Real wiring loads by id.
 
-export type ClubViewTab = 'overview' | 'members' | 'releases' | 'emails'
+export type ClubViewTab = 'overview' | 'members' | 'releases' | 'levels' | 'emails'
 
-function tabsForSlug(slug: string): { value: ClubViewTab; label: string; href: string }[] {
-  return [
-    { value: 'overview', label: 'Overview', href: `#/web/clubs/view/${slug}/overview` },
-    { value: 'members',  label: 'Members',  href: `#/web/clubs/view/${slug}/members`  },
-    { value: 'releases', label: 'Releases', href: `#/web/clubs/view/${slug}/releases` },
-    { value: 'emails',   label: 'Emails',   href: `#/web/clubs/view/${slug}/emails`   },
-  ]
+// Tab set varies by kind — mirrors the editor side (`ClubEditorLayout`):
+//   • curated / traditional  → Overview / Members / Releases / Emails
+//   • membership             → Overview / Members / Emails
+//   • account-credit         → Overview / Members / Levels / Emails
+function tabsForSlug(slug: string, kind: ClubKind): { value: ClubViewTab; label: string; href: string }[] {
+  const overview = { value: 'overview' as ClubViewTab, label: 'Overview', href: `#/web/clubs/view/${slug}/overview` }
+  const members  = { value: 'members'  as ClubViewTab, label: 'Members',  href: `#/web/clubs/view/${slug}/members`  }
+  const emails   = { value: 'emails'   as ClubViewTab, label: 'Emails',   href: `#/web/clubs/view/${slug}/emails`   }
+  if (kind === 'membership') return [overview, members, emails]
+  if (kind === 'account-credit') {
+    return [overview, members, { value: 'levels', label: 'Levels', href: `#/web/clubs/view/${slug}/levels` }, emails]
+  }
+  // curated + traditional — release-driven fulfilment
+  return [overview, members, { value: 'releases', label: 'Releases', href: `#/web/clubs/view/${slug}/releases` }, emails]
 }
 
 // ─── Right rail — Club summary ────────────────────────────────────────────────
@@ -150,7 +157,8 @@ export function ClubViewLayout({
 }) {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
   const club = getViewClub()
-  const tabs = tabsForSlug(getCurrentClubSlug())
+  const slug = getCurrentClubSlug()
+  const tabs = tabsForSlug(slug, CLUBS_CATALOG[slug].kind)
 
   return (
     <div className="flex h-full bg-vintiga-white">
