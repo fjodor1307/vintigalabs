@@ -13,7 +13,8 @@ import { ClubViewOverviewScreen } from './ClubViewOverviewScreen'
 import { ClubViewMembersScreen } from './ClubViewMembersScreen'
 import { ClubViewReleasesScreen } from './ClubViewReleasesScreen'
 import { ClubViewEmailsScreen } from './ClubViewEmailsScreen'
-import { CLUB_KEYS } from './clubsCatalog'
+import { ClubViewLevelsScreen } from './ClubViewLevelsScreen'
+import { CLUBS_CATALOG, CLUB_KEYS } from './clubsCatalog'
 import { MEMBERS } from './memberSamples'
 
 const baseRoutes: Record<string, ComponentType> = {
@@ -36,13 +37,22 @@ const baseRoutes: Record<string, ComponentType> = {
 }
 
 // Per-club view routes — `#/web/clubs/view/{slug}/{tab}` so each club opens
-// with its own name in the header / breadcrumb / rail.
+// with its own name in the header / breadcrumb / rail. Tab set varies by kind:
+//   • curated / traditional  → Overview / Members / Releases / Emails
+//   • membership             → Overview / Members / Emails
+//   • account-credit         → Overview / Members / Levels / Emails
 for (const slug of CLUB_KEYS) {
-  baseRoutes[`#/web/clubs/view/${slug}/overview`]     = ClubViewOverviewScreen
-  baseRoutes[`#/web/clubs/view/${slug}/members`]      = ClubViewMembersScreen
-  baseRoutes[`#/web/clubs/view/${slug}/releases`]     = ClubViewReleasesScreen
-  baseRoutes[`#/web/clubs/view/${slug}/emails`]       = ClubViewEmailsScreen
-  baseRoutes[`#/web/clubs/view/${slug}/releases/add`] = AddReleaseExistingScreen
+  const { kind } = CLUBS_CATALOG[slug]
+  baseRoutes[`#/web/clubs/view/${slug}/overview`] = ClubViewOverviewScreen
+  baseRoutes[`#/web/clubs/view/${slug}/members`]  = ClubViewMembersScreen
+  baseRoutes[`#/web/clubs/view/${slug}/emails`]   = ClubViewEmailsScreen
+  if (kind === 'curated' || kind === 'traditional') {
+    baseRoutes[`#/web/clubs/view/${slug}/releases`]     = ClubViewReleasesScreen
+    baseRoutes[`#/web/clubs/view/${slug}/releases/add`] = AddReleaseExistingScreen
+  }
+  if (kind === 'account-credit') {
+    baseRoutes[`#/web/clubs/view/${slug}/levels`] = ClubViewLevelsScreen
+  }
 }
 
 // Per-member detail routes — every member id resolves to the same screen,
