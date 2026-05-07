@@ -24,6 +24,7 @@ import {
   IdCardIcon,
 } from '@ds/icons/Icons'
 import { BlindEnthusiasmLogo } from './BlindEnthusiasmLogo'
+import { AgeVerifiedBadge } from './AgeVerifiedBadge'
 
 // ─── MembershipDetailScreen ──────────────────────────────────────────────────
 // Drill-down from the Memberships table (Figma 5078:5161). Single canonical
@@ -161,7 +162,10 @@ function CustomerHeaderCard() {
   return (
     <Card>
       <div className="flex items-start gap-vintiga-md">
-        <Avatar name={MEMBER.name} src={MEMBER.photo} size="lg" />
+        <div className="relative shrink-0">
+          <Avatar name={MEMBER.name} src={MEMBER.photo} size="lg" />
+          <AgeVerifiedBadge memberName={MEMBER.name} />
+        </div>
 
         <div className="flex-1 min-w-0 flex flex-col gap-vintiga-sm">
           <h2 className="typo-title-section font-semibold text-vintiga-slate-900">{MEMBER.name}</h2>
@@ -204,8 +208,8 @@ function CustomerHeaderCard() {
 
 function ClubOrdersCard() {
   return (
-    <Card>
-      <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-md">
+    <div className="flex flex-col gap-vintiga-md">
+      <div className="flex items-center justify-between gap-vintiga-md">
         <h3 className="typo-title-section font-semibold text-vintiga-slate-900">Club Orders</h3>
         <Button variant="outline" size="sm" onClick={() => {}}>View All</Button>
       </div>
@@ -244,7 +248,7 @@ function ClubOrdersCard() {
           })}
         </TableBody>
       </Table>
-    </Card>
+    </div>
   )
 }
 
@@ -275,11 +279,19 @@ function PaymentMethodCard() {
 }
 
 function MastercardLogo() {
+  // Two interlocking circles — red, yellow, with orange in the intersection
+  // (clipped from the right circle) — wrapped in a card-shaped surface.
   return (
-    <svg width="48" height="32" viewBox="0 0 48 32" aria-label="Mastercard">
-      <circle cx="20" cy="16" r="10" fill="#EB001B" />
-      <circle cx="28" cy="16" r="10" fill="#F79E1B" />
-      <path d="M24 9.5a9.95 9.95 0 0 0-4 6.5 9.95 9.95 0 0 0 4 6.5 9.95 9.95 0 0 0 4-6.5 9.95 9.95 0 0 0-4-6.5z" fill="#FF5F00" />
+    <svg width="56" height="36" viewBox="0 0 56 36" aria-label="Mastercard" role="img">
+      <rect x="0.5" y="0.5" width="55" height="35" rx="5" fill="white" stroke="#E5E7EB" />
+      <defs>
+        <clipPath id="mc-left-circle">
+          <circle cx="24" cy="18" r="9" />
+        </clipPath>
+      </defs>
+      <circle cx="24" cy="18" r="9" fill="#EB001B" />
+      <circle cx="32" cy="18" r="9" fill="#F79E1B" />
+      <circle cx="32" cy="18" r="9" fill="#FF5F00" clipPath="url(#mc-left-circle)" />
     </svg>
   )
 }

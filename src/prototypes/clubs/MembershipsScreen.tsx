@@ -21,7 +21,6 @@ import {
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
-  IdCardIcon,
 } from '@ds/icons/Icons'
 
 // ─── Memberships tab ─────────────────────────────────────────────────────────
@@ -196,12 +195,7 @@ export function MembershipsScreen() {
                 </div>
               </TableCell>
               <TableCell>
-                <Tag
-                  variant="outline"
-                  tone="default"
-                  size="sm"
-                  leftIcon={<IdCardIcon className="w-3.5 h-3.5 text-vintiga-indigo-600" />}
-                >
+                <Tag variant="outline" tone="default" size="sm">
                   {CLUB_LABEL[m.club]}
                 </Tag>
               </TableCell>

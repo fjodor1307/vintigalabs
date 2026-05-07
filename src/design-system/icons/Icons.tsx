@@ -83,7 +83,7 @@ export {
   X              as XIcon,
   Menu           as MenuIcon,
   BookUser       as PassportIcon,
-  IdCard         as IdCardIcon,
+  IdCardLanyard  as IdCardIcon,
   UserPen        as UserPenIcon,
   CircleAlert    as CircleAlertIcon,
   CircleX        as CircleXIcon,
