@@ -3,6 +3,7 @@ import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
 import { Sidebar, SidebarHeader, SidebarBody, SidebarItem, SidebarDivider, SidebarFooter, SidebarBadge } from '@ds/shared/Sidebar'
 import { Navbar } from '@ds/shared/Navbar'
+import { useResponsiveSidebar } from '@ds/shared/useResponsiveSidebar'
 import { Widget } from '@ds/shared/Widget'
 import { EmptyState } from '@ds/shared/EmptyState'
 import { VintigaIconIndigo } from '@ds/shared/VintigaLogo'
@@ -71,8 +72,43 @@ function PageDropdown({ icon, label }: { icon: ReactNode; label: string }) {
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
+function DashboardSidebar({ collapsed, onItemClick }: { collapsed: boolean; onItemClick?: () => void }) {
+  return (
+    <Sidebar collapsed={collapsed} className="h-full">
+      <SidebarHeader
+        logo={<VintigaIconIndigo size={40} />}
+        title={collapsed ? undefined : 'Vintiga Labs, LLC'}
+      />
+      <SidebarBody>
+        <SidebarItem icon={<HomeIcon />}            label="Dashboard"     selected onClick={onItemClick} />
+        <SidebarItem icon={<MessagesSquareIcon />}  label="Sales Chat"    onClick={onItemClick} />
+        <SidebarItem icon={<MailIcon />}            label="Campaigns"     onClick={onItemClick} />
+        <SidebarItem icon={<GiftIcon />}            label="Promotions"    onClick={onItemClick} />
+        <SidebarItem icon={<GlobeIcon />}           label="Website" external onClick={onItemClick} />
+        <SidebarItem icon={<StarIcon />}            label="Reviews"       onClick={onItemClick} />
+        <SidebarItem icon={<CalendarIcon />}        label="Events"        onClick={onItemClick} />
+        <SidebarItem icon={<TrendUpIcon />}         label="Reports"       onClick={onItemClick} />
+        <SidebarDivider />
+        <SidebarItem icon={<UsersIcon />}           label="Customers"     onClick={onItemClick} />
+        <SidebarItem icon={<PackageIcon />}         label="Products"
+                     href="#/web/products/list"     onClick={onItemClick} />
+        <SidebarItem icon={<ShoppingCartIcon />}    label="Orders"        onClick={onItemClick} />
+        <SidebarItem icon={<CalendarCheckIcon />}   label="Reservations"
+                     badge={!collapsed ? <SidebarBadge>Coming Soon</SidebarBadge> : undefined}
+                     onClick={onItemClick} />
+        <SidebarItem icon={<IdCardIcon />}          label="Clubs" disabled
+                     badge={!collapsed ? <SidebarBadge>Available soon</SidebarBadge> : undefined} />
+        <SidebarFooter>
+          <SidebarItem icon={<MapPinIcon />}  label="POS Profiles" onClick={onItemClick} />
+          <SidebarItem icon={<SettingsIcon />} label="Settings"    onClick={onItemClick} />
+        </SidebarFooter>
+      </SidebarBody>
+    </Sidebar>
+  )
+}
+
 export function DashboardScreen() {
-  const [collapsed, setCollapsed] = useState(false)
+  const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
 
   // Show welcome modal on first visit; remember dismissal in sessionStorage
   // so it doesn't keep popping up while clicking around the prototype.
@@ -91,44 +127,28 @@ export function DashboardScreen() {
     <div className="h-screen flex bg-vintiga-slate-50 overflow-hidden">
       <WelcomeModal open={welcomeOpen} onClose={closeWelcome} />
 
-      {/* Sidebar */}
-      <Sidebar collapsed={collapsed}>
-        <SidebarHeader
-          logo={<VintigaIconIndigo size={40} />}
-          title={collapsed ? undefined : 'Vintiga Labs, LLC'}
-        />
-        <SidebarBody>
-          <SidebarItem icon={<HomeIcon />}            label="Dashboard"     selected />
-          <SidebarItem icon={<MessagesSquareIcon />}  label="Sales Chat" />
-          <SidebarItem icon={<MailIcon />}            label="Campaigns" />
-          <SidebarItem icon={<GiftIcon />}            label="Promotions" />
-          <SidebarItem icon={<GlobeIcon />}           label="Website" external />
-          <SidebarItem icon={<StarIcon />}            label="Reviews" />
-          <SidebarItem icon={<CalendarIcon />}        label="Events" />
-          <SidebarItem icon={<TrendUpIcon />}         label="Reports" />
-          <SidebarDivider />
-          <SidebarItem icon={<UsersIcon />}           label="Customers" />
-          <SidebarItem icon={<PackageIcon />}         label="Products"
-                       href="#/web/products/list" />
-          <SidebarItem icon={<ShoppingCartIcon />}    label="Orders" />
-          <SidebarItem icon={<CalendarCheckIcon />}   label="Reservations"
-                       badge={!collapsed ? <SidebarBadge>Coming Soon</SidebarBadge> : undefined} />
-          <SidebarItem icon={<IdCardIcon />}          label="Clubs" disabled
-                       badge={!collapsed ? <SidebarBadge>Available soon</SidebarBadge> : undefined} />
-          <SidebarFooter>
-            <SidebarItem icon={<MapPinIcon />}  label="POS Profiles" />
-            <SidebarItem icon={<SettingsIcon />} label="Settings" />
-          </SidebarFooter>
-        </SidebarBody>
-      </Sidebar>
+      {/* Desktop sidebar (md+) — inline, takes layout space */}
+      <div className="hidden md:flex">
+        <DashboardSidebar collapsed={collapsed} />
+      </div>
+
+      {/* Mobile sidebar (<md) — fixed overlay drawer */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-black/40" onClick={closeMobile} aria-hidden="true" />
+          <div className="relative h-full animate-slide-in-left">
+            <DashboardSidebar collapsed={false} onItemClick={closeMobile} />
+          </div>
+        </div>
+      )}
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar
-          device="desktop"
+          device="responsive"
           user={{ name: 'Tom Cook', initials: 'TC' }}
           hasNotifications
-          onMenuToggle={() => setCollapsed((c) => !c)}
+          onMenuToggle={onMenuToggle}
           onUserClick={() => {}}
           onNotificationClick={() => {}}
         />

@@ -1,18 +1,12 @@
-import { useState } from 'react'
 import { ClubViewLayout } from './ClubViewLayout'
 import { SectionCard } from '@ds/shared/SectionCard'
-import { Field } from '@ds/shared/Field'
-import { TextField } from '@ds/shared/TextField'
-import { Textarea } from '@ds/shared/Textarea'
-import { Switch } from '@ds/shared/Switch'
-import { MailIcon } from '@ds/icons/Icons'
+import { MailIcon, ArrowRightIcon } from '@ds/icons/Icons'
 
 // ─── ClubViewEmailsScreen ─────────────────────────────────────────────────────
-// Emails tab on the View Club detail page. Vertical list of email-template
-// cards — each row shows title, "Sent when…" descriptor and a "Use global
-// email template" Switch. Toggling the switch off reveals the Subject + Body
-// editor for an override. Differs from the editor's accordion (one-open) by
-// keeping every card visible and using per-card switches.
+// Emails tab on the View Club detail page. Mirrors the simplified template
+// list from the editor (Figma 5079:57000) — clicking a row would open the
+// per-template editor in a future revision (deferred per the May 7 meeting
+// pending pocket-flow investigation).
 
 interface EmailTemplate {
   id: string
@@ -33,32 +27,7 @@ const TEMPLATES: EmailTemplate[] = [
   { id: 'upcoming-club-order',     title: 'Upcoming Club Order',            description: 'Sent before an upcoming club order' },
 ]
 
-const DEFAULT_SUBJECTS: Record<string, string> = {
-  'application-pending': 'Your Application is Pending',
-}
-
-interface EmailDraft {
-  useGlobal: boolean
-  subject: string
-  body: string
-}
-
 export function ClubViewEmailsScreen() {
-  const [drafts, setDrafts] = useState<Record<string, EmailDraft>>(() =>
-    Object.fromEntries(
-      TEMPLATES.map((t) => [
-        t.id,
-        // First template starts customised so the override panel is visible
-        // on first land — matches the Figma reference state.
-        { useGlobal: t.id !== 'application-pending', subject: DEFAULT_SUBJECTS[t.id] ?? '', body: '' },
-      ]),
-    ),
-  )
-
-  function patch(id: string, partial: Partial<EmailDraft>) {
-    setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...partial } }))
-  }
-
   return (
     <ClubViewLayout activeTab="emails">
       <SectionCard
@@ -71,62 +40,24 @@ export function ClubViewEmailsScreen() {
           </div>
         }
       >
-        <div className="flex flex-col gap-vintiga-md">
-          {TEMPLATES.map((tmpl) => {
-            const draft = drafts[tmpl.id]
-            const overridden = !draft.useGlobal
-
-            return (
-              <div
-                key={tmpl.id}
-                className="border border-vintiga-slate-200 rounded-vintiga-lg bg-vintiga-white"
-              >
-                {/* Header */}
-                <div className="flex items-center justify-between gap-vintiga-md px-vintiga-md py-vintiga-sm">
-                  <div className="flex items-center gap-vintiga-md min-w-0">
-                    <span className="w-9 h-9 rounded-vintiga-md bg-vintiga-indigo-50 text-vintiga-indigo-600 flex items-center justify-center shrink-0 [&>svg]:w-4 [&>svg]:h-4">
-                      <MailIcon />
-                    </span>
-                    <div className="flex flex-col min-w-0">
-                      <span className="typo-body-sm font-semibold text-vintiga-slate-900 truncate">
-                        {tmpl.title}
-                      </span>
-                      <span className="typo-caption text-vintiga-slate-500 truncate">
-                        {tmpl.description}
-                      </span>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={draft.useGlobal}
-                    onChange={(next) => patch(tmpl.id, { useGlobal: next })}
-                    labelPosition="right"
-                    label={<span className="typo-body-sm text-vintiga-slate-700">Use global email template</span>}
-                  />
-                </div>
-
-                {/* Override editor */}
-                {overridden && (
-                  <div className="px-vintiga-md pb-vintiga-md pt-0 flex flex-col gap-vintiga-md border-t border-vintiga-slate-100">
-                    <Field label="Subject" required className="pt-vintiga-sm">
-                      <TextField
-                        value={draft.subject}
-                        onChange={(e) => patch(tmpl.id, { subject: e.target.value })}
-                        placeholder="Email subject"
-                      />
-                    </Field>
-                    <Field label="Body" required>
-                      <Textarea
-                        value={draft.body}
-                        onChange={(e) => patch(tmpl.id, { body: e.target.value })}
-                        placeholder="Email body"
-                        className="min-h-[120px]"
-                      />
-                    </Field>
-                  </div>
-                )}
-              </div>
-            )
-          })}
+        <div className="flex flex-col gap-vintiga-sm">
+          {TEMPLATES.map((tmpl) => (
+            <button
+              key={tmpl.id}
+              type="button"
+              onClick={() => {}}
+              className="w-full bg-vintiga-white border border-vintiga-slate-200 rounded-vintiga-lg px-vintiga-md py-vintiga-sm flex items-center gap-vintiga-md text-left hover:border-vintiga-slate-300 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
+            >
+              <span className="w-9 h-9 rounded-md bg-vintiga-indigo-50 flex items-center justify-center text-vintiga-indigo-500 shrink-0 [&>svg]:w-5 [&>svg]:h-5">
+                <MailIcon />
+              </span>
+              <span className="flex-1 min-w-0 flex flex-col">
+                <span className="typo-body-sm font-semibold text-vintiga-slate-900 truncate">{tmpl.title}</span>
+                <span className="typo-caption text-vintiga-slate-500 truncate">{tmpl.description}</span>
+              </span>
+              <ArrowRightIcon className="w-4 h-4 text-vintiga-slate-400 shrink-0" aria-hidden="true" />
+            </button>
+          ))}
         </div>
       </SectionCard>
     </ClubViewLayout>

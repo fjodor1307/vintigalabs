@@ -1,6 +1,7 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { AppSidebar } from '@ds/shared/AppSidebar'
 import { Navbar } from '@ds/shared/Navbar'
+import { useResponsiveSidebar } from '@ds/shared/useResponsiveSidebar'
 import { BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
 import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
@@ -80,11 +81,18 @@ function ClubDetailsRail({ tab }: { tab: ClubEditorTab }) {
         )}
 
         {club.type === 'membership' && (
-          <DetailRow label="Membership Fee">
-            <span className="typo-body-sm text-vintiga-slate-700">
-              ${club.membershipFee.toFixed(2)}
-            </span>
-          </DetailRow>
+          <>
+            <DetailRow label="Membership Fee">
+              <span className="typo-body-sm text-vintiga-slate-700">
+                ${club.membershipFee.toFixed(2)}
+              </span>
+            </DetailRow>
+            <DetailRow label="Auto Renew">
+              <span className="typo-body-sm text-vintiga-slate-700">
+                {club.autoRenew ? 'Yes' : 'No'}
+              </span>
+            </DetailRow>
+          </>
         )}
 
         {tab === 'releases' && (
@@ -146,7 +154,7 @@ export function ClubEditorLayout({
   children: ReactNode
 }) {
   const club = useClubState()
-  const [collapsed, setCollapsed] = useState(false)
+  const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
 
   // Honour ?type= when the user first lands from the Add Club modal.
   useEffect(() => {
@@ -161,14 +169,19 @@ export function ClubEditorLayout({
 
   return (
     <div className="flex h-full bg-vintiga-white">
-      <AppSidebar collapsed={collapsed} activeNav="Clubs" />
+      <AppSidebar
+        collapsed={collapsed}
+        mobileOpen={mobileOpen}
+        onMobileClose={closeMobile}
+        activeNav="Clubs"
+      />
 
       <div className="flex-1 flex flex-col min-w-0 relative">
         <Navbar
-          device="desktop"
+          device="responsive"
           fixed
           user={{ name: 'Tom Cook', initials: 'TC' }}
-          onMenuToggle={() => setCollapsed((c) => !c)}
+          onMenuToggle={onMenuToggle}
           onUserClick={() => {}}
           onNotificationClick={() => {}}
         />

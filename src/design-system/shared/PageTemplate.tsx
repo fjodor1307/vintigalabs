@@ -5,15 +5,21 @@ import { Breadcrumb, type BreadcrumbItem } from '@ds/shared/Breadcrumb'
 // The standard editor / detail page layout (Figma 5640:28214 — "Page Layout").
 // Lives inside whatever shell the prototype provides (AppSidebar + Navbar +
 // scroll container). Composes existing DS pieces — Breadcrumb, page title,
-// action cluster, optional tabs, body, and an optional 360-px right sidebar.
+// action cluster, optional tabs, body, and an optional right rail.
 //
-// Spacing (Figma-accurate):
-//   • Main column padding ............... 32 px on every side
+// Layout (matches Tailwind UI's main+rail page template):
+//   • Outer wrapper ..................... 32 px padding all around
+//   • Two-column grid when `rail` is set:
+//       grid grid-cols-1 gap-vintiga-lg lg:grid-cols-3
+//       — main column spans 2/3 (`lg:col-span-2`)
+//       — rail spans 1/3 (`lg:col-span-1`)
+//       — stacks vertically below `lg`
+//   • No rail → main fills the full width.
 //   • Gap between header rows ........... 32 px
 //     (breadcrumb → title → tabs → body)
 //   • Gap between body sections ......... configurable, default 24 px
-//   • Sidebar ........................... w-360 · pt-84 · pr-32 · pb-32
-//     (the 84-px top inset aligns the rail's first card with the page title)
+//   • Rail aligns to the top of the main column (breadcrumb level), so the
+//     first rail card sits beside the breadcrumb. No artificial top inset.
 //
 // Usage:
 //   <PageTemplate
@@ -41,8 +47,13 @@ const BODY_GAP = {
 export interface PageTemplateProps {
   /** Optional breadcrumb trail — passed straight to `<Breadcrumb>`. */
   breadcrumbs?: BreadcrumbItem[]
-  /** Page title — typically a string but accepts any node. Rendered as `<h1>`. */
-  title: ReactNode
+  /**
+   * Page title — typically a string but accepts any node. Rendered as `<h1>`.
+   * Omit (along with `actions`) when the screen renders its own header inside
+   * the body — the title row collapses entirely so the breadcrumb-to-tabs
+   * spacing stays at a single 32 px gap.
+   */
+  title?: ReactNode
   /** Right side of the title row — typically Save button + a kebab IconButton. */
   actions?: ReactNode
   /** Tabs row below the title — typically a `<SegmentedControl>`. */
@@ -66,12 +77,13 @@ export function PageTemplate({
   bodyGap = 'lg',
   className = '',
 }: PageTemplateProps) {
-  return (
-    <div className={['flex flex-col lg:flex-row w-full bg-vintiga-white', className].filter(Boolean).join(' ')}>
-      {/* Main column — padding 32 all around, 32-px gap between header rows + body */}
-      <main className="flex-1 min-w-0 p-vintiga-xl flex flex-col gap-vintiga-xl">
-        {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} />}
+  const hasTitleRow = title != null || actions != null
 
+  const mainColumn = (
+    <main className="min-w-0 flex flex-col gap-vintiga-xl">
+      {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} />}
+
+      {hasTitleRow && (
         <div className="flex items-start justify-between gap-vintiga-md">
           {/* Strings get the standard h1 chrome; complex nodes (e.g. a thumbnail
               header with its own heading) render as-is so the consumer keeps
@@ -87,28 +99,29 @@ export function PageTemplate({
             <div className="flex items-center gap-vintiga-sm shrink-0">{actions}</div>
           )}
         </div>
+      )}
 
-        {tabs}
+      {tabs}
 
-        {/* Body — sections stacked with their own gap */}
-        <div className={['flex flex-col', BODY_GAP[bodyGap]].join(' ')}>
-          {children}
+      {/* Body — sections stacked with their own gap */}
+      <div className={['flex flex-col', BODY_GAP[bodyGap]].join(' ')}>
+        {children}
+      </div>
+    </main>
+  )
+
+  return (
+    <div className={['w-full bg-vintiga-white p-vintiga-xl', className].filter(Boolean).join(' ')}>
+      {rail ? (
+        // Tailwind UI 2:1 page template — main spans 2/3, rail spans 1/3.
+        <div className="grid grid-cols-1 gap-vintiga-lg lg:grid-cols-3">
+          <div className="lg:col-span-2 min-w-0">{mainColumn}</div>
+          <aside className="lg:col-span-1 flex flex-col gap-vintiga-md">
+            {rail}
+          </aside>
         </div>
-      </main>
-
-      {/* Right sidebar at lg+, stacks below main on smaller screens. */}
-      {rail && (
-        <aside
-          className={[
-            'flex flex-col gap-vintiga-md',
-            // Stacked (< lg): full width below main, side padding matches main
-            'px-vintiga-xl pb-vintiga-xl',
-            // Side-by-side (lg+): 360-px right column with 84-px top inset
-            'lg:w-[360px] lg:shrink-0 lg:pt-[84px] lg:pl-0 lg:pr-vintiga-xl lg:pb-vintiga-xl',
-          ].join(' ')}
-        >
-          {rail}
-        </aside>
+      ) : (
+        mainColumn
       )}
     </div>
   )

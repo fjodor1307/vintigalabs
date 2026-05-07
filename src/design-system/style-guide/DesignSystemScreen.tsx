@@ -171,7 +171,7 @@ const NAV: NavGroup[] = [
         label: 'Templates',
         icon: BoxIcon,
         items: [
-          { id: 'ds-template-products', label: 'Products' },
+          { id: 'ds-template-products', label: 'Detail page' },
         ],
       },
     ],

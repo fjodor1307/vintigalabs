@@ -1,7 +1,8 @@
-import { useState, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { Tooltip } from '@base-ui/react/tooltip'
 import { AppSidebar } from '@ds/shared/AppSidebar'
 import { Navbar } from '@ds/shared/Navbar'
+import { useResponsiveSidebar } from '@ds/shared/useResponsiveSidebar'
 import { BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
 import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
@@ -56,10 +57,6 @@ function ClubSummaryRail() {
             <span className="typo-body-sm text-vintiga-slate-700">{VIEW_CLUB.emailTemplates.customized} customized</span>
             <span className="typo-body-sm text-vintiga-slate-500">{VIEW_CLUB.emailTemplates.global} using global</span>
           </div>
-        </DetailRow>
-
-        <DetailRow label="Total Releases">
-          <span className="typo-body-sm text-vintiga-slate-700">{VIEW_CLUB.totalReleases}</span>
         </DetailRow>
 
         <DetailRow label="Members">
@@ -157,18 +154,23 @@ export function ClubViewLayout({
   titleOverride?: ReactNode
   children: ReactNode
 }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
 
   return (
     <div className="flex h-full bg-vintiga-white">
-      <AppSidebar collapsed={collapsed} activeNav="Clubs" />
+      <AppSidebar
+        collapsed={collapsed}
+        mobileOpen={mobileOpen}
+        onMobileClose={closeMobile}
+        activeNav="Clubs"
+      />
 
       <div className="flex-1 flex flex-col min-w-0 relative">
         <Navbar
-          device="desktop"
+          device="responsive"
           fixed
           user={{ name: 'Tom Cook', initials: 'TC' }}
-          onMenuToggle={() => setCollapsed((c) => !c)}
+          onMenuToggle={onMenuToggle}
           onUserClick={() => {}}
           onNotificationClick={() => {}}
         />

@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { ChevronDownIcon, SearchIcon, EllipsisVerticalIcon } from '@ds/icons/Icons'
 import { useProductState, productActions } from './productStore'
 import { AppSidebar } from '@ds/shared/AppSidebar'
 import { Navbar } from '@ds/shared/Navbar'
+import { useResponsiveSidebar } from '@ds/shared/useResponsiveSidebar'
 import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
 import { TextField } from '@ds/shared/TextField'
@@ -88,7 +89,7 @@ export function ProductLayout({
   activeTab: TabKey
 }) {
   const product = useProductState()
-  const [collapsed, setCollapsed] = useState(false)
+  const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
 
   // If the URL carries ?id=pX (set by row-click on the catalogue), pre-fill the
   // editor with that catalogue product. Runs once per id change.
@@ -100,16 +101,21 @@ export function ProductLayout({
 
   return (
     <div className="flex h-full bg-vintiga-white">
-      <AppSidebar collapsed={collapsed} activeNav="Products" />
+      <AppSidebar
+        collapsed={collapsed}
+        mobileOpen={mobileOpen}
+        onMobileClose={closeMobile}
+        activeNav="Products"
+      />
 
       {/* `fixed` Navbar pattern (see DS Navbar.tsx header):
           parent is `relative`, navbar uses `fixed`, scroll sibling has `pt-16`. */}
       <div className="flex-1 flex flex-col min-w-0 relative">
         <Navbar
-          device="desktop"
+          device="responsive"
           fixed
           user={{ name: 'Tom Cook', initials: 'TC' }}
-          onMenuToggle={() => setCollapsed((c) => !c)}
+          onMenuToggle={onMenuToggle}
           onUserClick={() => {}}
           onNotificationClick={() => {}}
         />

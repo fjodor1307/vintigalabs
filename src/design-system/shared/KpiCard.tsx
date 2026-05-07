@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { ChevronRightIcon } from '@ds/icons/Icons'
 
 // ─── KpiCard ──────────────────────────────────────────────────────────────────
 // Vintiga KPI tile — Figma-accurate (132:6062 + 5568:21837 variants).
@@ -62,6 +63,12 @@ export interface KpiCardProps {
    * into a 3-column grid (e.g. tab summary strips).
    */
   size?: KpiCardSize
+  /**
+   * When set, the card renders as an `<a>` and gets an interactive hover state
+   * (border darkens, indigo tint). Used by KPIs that drill down into a
+   * dedicated tab — e.g. Account Balance / Loyalty Points routing to Billing.
+   */
+  href?: string
   className?: string
 }
 
@@ -75,18 +82,26 @@ export function KpiCard({
   goalLabel,
   progressPercent,
   size = 'md',
+  href,
   className = '',
 }: KpiCardProps) {
-  if (size === 'sm') return <KpiCardSm label={label} value={value} icon={icon} className={className} />
+  if (size === 'sm') return <KpiCardSm label={label} value={value} icon={icon} href={href} className={className} />
 
   const showProgress = goalLabel != null || typeof progressPercent === 'number'
   const pct = Math.max(0, Math.min(100, progressPercent ?? 0))
 
+  const Tag = href ? 'a' : 'div'
+  const interactiveCls = href
+    ? 'hover:border-vintiga-indigo-300 hover:bg-vintiga-indigo-50/30 transition-colors cursor-pointer no-underline'
+    : ''
+
   return (
-    <div
+    <Tag
+      {...(href ? { href } : {})}
       className={[
         'bg-vintiga-white border border-vintiga-slate-200 rounded-vintiga-2xl p-vintiga-lg',
         'flex flex-col gap-vintiga-sm',
+        interactiveCls,
         className,
       ].join(' ')}
     >
@@ -132,21 +147,36 @@ export function KpiCard({
           </div>
         </div>
       )}
-    </div>
+    </Tag>
   )
 }
 
-// ─── sm variant — Figma 5347:77005 ───────────────────────────────────────────
-// Icon top-left in a 32-px indigo circle, then a single row underneath with
-// label on the left + bold value on the right. Used in dense tab strips
-// (e.g. Releases tab on the View Club page).
+// ─── sm variant — KPI-small (Figma 5682:137241) ──────────────────────────────
+// Compact 64-px tall single-row card: icon (32-px indigo circle) on the left,
+// label takes the slack, value pinned right, optional chevron when `href` is
+// set. Replaces the older 2-row "icon-top + label/value" sm layout.
+//
+// Variants drive off `href`:
+//   • `href` absent  →  Default state, no chevron (Figma: Button=False)
+//   • `href` set     →  Renders as `<a>` with chevron + hover tint
+//                       (Figma: Button=True). Hover state matches the spec —
+//                       slate-50 fill, slate-300 border.
+//
+// Layout rhythm — outer card padding 16, gap 12 between icon and text block,
+// label uses `typo-body-sm` regular, value uses `typo-body` semibold.
 
-function KpiCardSm({ label, value, icon, className = '' }: { label: ReactNode; value: ReactNode; icon?: ReactNode; className?: string }) {
+function KpiCardSm({ label, value, icon, href, className = '' }: { label: ReactNode; value: ReactNode; icon?: ReactNode; href?: string; className?: string }) {
+  const Tag = href ? 'a' : 'div'
+  const interactiveCls = href
+    ? 'group hover:border-vintiga-slate-300 hover:bg-vintiga-slate-50 transition-colors cursor-pointer no-underline'
+    : ''
   return (
-    <div
+    <Tag
+      {...(href ? { href } : {})}
       className={[
-        'bg-vintiga-white border border-vintiga-slate-200 rounded-vintiga-2xl p-vintiga-md',
-        'flex flex-col gap-vintiga-md',
+        'bg-vintiga-white border border-vintiga-slate-200 rounded-vintiga-xl px-vintiga-md py-vintiga-sm',
+        'h-16 flex items-center gap-vintiga-md min-w-0',
+        interactiveCls,
         className,
       ].join(' ')}
     >
@@ -155,10 +185,14 @@ function KpiCardSm({ label, value, icon, className = '' }: { label: ReactNode; v
           {icon}
         </div>
       )}
-      <div className="flex items-center justify-between gap-vintiga-sm w-full">
-        <span className="typo-body-sm text-vintiga-gray-900 truncate">{label}</span>
-        <span className="typo-body font-semibold text-vintiga-gray-900 shrink-0">{value}</span>
-      </div>
-    </div>
+      <span className="flex-1 min-w-0 typo-body-sm text-vintiga-slate-900 truncate">{label}</span>
+      <span className="typo-body font-semibold text-vintiga-slate-900 shrink-0">{value}</span>
+      {href && (
+        <ChevronRightIcon
+          className="w-4 h-4 text-vintiga-slate-400 group-hover:text-vintiga-slate-700 transition-colors shrink-0"
+          aria-hidden="true"
+        />
+      )}
+    </Tag>
   )
 }

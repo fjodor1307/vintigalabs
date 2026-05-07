@@ -1,8 +1,9 @@
 import { ClubEditorLayout } from './ClubEditorLayout'
-import { useClubState, clubActions } from './clubStore'
+import { useClubState, clubActions, type ContributionCadence } from './clubStore'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
+import { Select } from '@ds/shared/Select'
 import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
 import { Tag } from '@ds/shared/Tag'
@@ -70,29 +71,38 @@ export function ClubLevelsScreen() {
                 />
               </div>
 
-              {/* Fields */}
-              <Field label="Level Name" required>
-                <TextField
-                  placeholder="e.g., Silver, Gold, Platinum"
-                  value={level.name}
-                  onChange={(e) => clubActions.patchLevel(level.id, { name: e.target.value })}
-                />
-              </Field>
-              <Field label="Dollar Amount" required>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={level.amount}
-                    onChange={(e) =>
-                      clubActions.patchLevel(level.id, { amount: Number(e.target.value) })
-                    }
-                    className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+              {/* Fields — Name / Dollar Amount / Cadence in a 3-col row (Figma 5079:46371) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-md">
+                <Field label="Level Name" required>
+                  <TextField
+                    placeholder="e.g., Silver, Gold, Platinum"
+                    value={level.name}
+                    onChange={(e) => clubActions.patchLevel(level.id, { name: e.target.value })}
                   />
-                  <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">
-                    $
-                  </span>
-                </div>
-              </Field>
+                </Field>
+                <Field label="Dollar Amount" required>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={level.amount}
+                      onChange={(e) =>
+                        clubActions.patchLevel(level.id, { amount: Number(e.target.value) })
+                      }
+                      className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+                    />
+                    <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">
+                      $
+                    </span>
+                  </div>
+                </Field>
+                <Field label="Contribution Cadence" required>
+                  <Select
+                    value={level.cadence}
+                    onChange={(e) => clubActions.patchLevel(level.id, { cadence: e.target.value as ContributionCadence })}
+                    options={['Monthly', 'Quarterly', 'Annually']}
+                  />
+                </Field>
+              </div>
             </div>
           ))}
         </div>

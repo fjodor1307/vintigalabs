@@ -6,6 +6,35 @@
 
 ---
 
+## 2026-05-07 — Fedja + Claude: May 7 review pass
+
+Aligned the Clubs prototype with the May 7 alignment meeting + 7 newly shared Figma frames (Curated `5079:33614` / `5079:57000`, Account Credit `5079:43825` / `5079:46371` / `5079:55546`, Membership `5079:44506` / `5079:58010`).
+
+**Curated club**
+- New `SKU` + `Tax Code` row under Membership Fee on the Overview tab. Per the meeting: a Curated club membership signup creates a real order against the SKU so accounting can reconcile revenue. US membership fees are usually non-taxable so Tax Code stays empty by default.
+
+**Account Credit (Tasting Credit)**
+- Overview: the old Duration / Fee row is gone. In its place, an inline **default Level** card with `Level Name` / `Dollar Amount` / `Contribution Cadence` (3-col). Edits the canonical `isDefault` level on the Levels tab.
+- Levels tab: every level now carries its own `cadence` (`Monthly` / `Quarterly` / `Annually`). Cadence used to be a single per-club setting; per Figma it's per-level.
+
+**Membership**
+- Rail now surfaces **Auto Renew: Yes** below Membership Fee (Membership clubs always auto-renew — flag is read-only by design).
+
+**Emails tab — across editor + view**
+- Replaced the accordion-with-inline-editor with a clean list of email template rows (envelope icon · title · description · right chevron · hover state). Per the meeting, the per-template editor is **deferred** pending pocket-flow investigation; rows are inert for now but the tab + IA stay so the journey reads correctly.
+
+**KPI unification (across the prototype)**
+- All club KPI strips switched from large `md` cards in 3-/5-col grids to the compact `KpiCard sm` (KPI-small) in a 2-col grid, matching the customers index pattern set on May 7.
+- `ClubsLayout` (top page): 5 KPIs (Active / On-hold / Pending / New / Canceled) → 2-col → 3 rows (2-2-1).
+- `ClubViewOverviewScreen`: removed `Total Members` per the meeting (operators sum Active + On-hold + New). Kept Active / On-hold / New / Canceled, with **Total Releases pinned bottom-right** as the least-important metric (curated only; column 2 of row 3).
+- `ClubViewReleasesScreen`: 6 release-stats KPIs → 2-col grid (was 3-col).
+
+**Store**
+- `ClubLevel` gained `cadence: ContributionCadence` and `ClubDraft` gained `sku`, `taxCode`, `autoRenew`. The top-level `contributionCadence` field is gone — moved into `ClubLevel`.
+- `addLevel()` seeds new levels with `cadence: 'Monthly'`. `autoRenew` defaults to `true` for membership type and `false` for the others.
+
+Verified across all club routes (`#/web/clubs`, `#/web/clubs/new/overview?type=curated|account-credit|membership`, `#/web/clubs/new/levels`, `#/web/clubs/new/emails`, `#/web/clubs/view/overview`, `#/web/clubs/view/releases`, `#/web/clubs/view/emails`).
+
 ## 2026-05-05 — fedja + Claude: View Club detail flow + refreshed Add Release
 
 End-to-end "view a club" detail flow, reachable by clicking any row on the

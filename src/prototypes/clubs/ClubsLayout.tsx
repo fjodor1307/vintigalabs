@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { AppSidebar } from '@ds/shared/AppSidebar'
 import { Navbar } from '@ds/shared/Navbar'
+import { useResponsiveSidebar } from '@ds/shared/useResponsiveSidebar'
 import { KpiCard } from '@ds/shared/KpiCard'
 import { Widget } from '@ds/shared/Widget'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
@@ -41,18 +42,23 @@ export function ClubsLayout({
   activeTab: ClubsTab
   children: ReactNode
 }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
 
   return (
     <div className="flex h-full bg-vintiga-white">
-      <AppSidebar collapsed={collapsed} activeNav="Clubs" />
+      <AppSidebar
+        collapsed={collapsed}
+        mobileOpen={mobileOpen}
+        onMobileClose={closeMobile}
+        activeNav="Clubs"
+      />
 
       <div className="flex-1 flex flex-col min-w-0 relative">
         <Navbar
-          device="desktop"
+          device="responsive"
           fixed
           user={{ name: 'Tom Cook', initials: 'TC' }}
-          onMenuToggle={() => setCollapsed((c) => !c)}
+          onMenuToggle={onMenuToggle}
           onUserClick={() => {}}
           onNotificationClick={() => {}}
         />
@@ -66,8 +72,8 @@ export function ClubsLayout({
               </p>
             </div>
 
-            {/* KPI strip */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-vintiga-md">
+            {/* KPI strip — regular md cards in a single row (Figma 5328:26446). */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-vintiga-md">
               {KPIS.map((k) => (
                 <KpiCard key={k.label} label={k.label} value={k.value} icon={k.icon} />
               ))}
