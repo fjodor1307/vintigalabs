@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { ClubEditorLayout } from './ClubEditorLayout'
 import { ClubViewLayout } from './ClubViewLayout'
-import { VIEW_CLUB } from './clubViewSample'
+import { getViewClub } from './clubViewSample'
+import { getCurrentClubSlug } from './clubsCatalog'
 import { useClubState, clubActions } from './clubStore'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { Field } from '@ds/shared/Field'
@@ -68,8 +69,9 @@ export function AddReleaseExistingScreen() {
 function AddReleaseInner({ mode }: { mode: Mode }) {
   const club = useClubState()
   const { catalogue } = useProductState()
-  const parentLabel  = mode === 'editor' ? (club.name || 'New club') : VIEW_CLUB.name
-  const parentHref   = mode === 'editor' ? '#/web/clubs/new/releases'  : '#/web/clubs/view/releases'
+  const slug         = getCurrentClubSlug()
+  const parentLabel  = mode === 'editor' ? (club.name || 'New club') : getViewClub().name
+  const parentHref   = mode === 'editor' ? '#/web/clubs/new/releases'  : `#/web/clubs/view/${slug}/releases`
 
   const [title, setTitle]                       = useState('')
   const [products, setProducts]                 = useState<Product[]>(SAMPLE_PRODUCTS)

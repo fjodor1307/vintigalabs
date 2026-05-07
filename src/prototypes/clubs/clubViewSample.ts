@@ -1,15 +1,25 @@
-// ─── clubViewSample ───────────────────────────────────────────────────────────
-// Sample data for the canonical "View Club" prototype. Lives in its own
-// module so screens importing it stay separate from the layout component
-// (keeps `react-refresh` happy — components-only files only).
+import { CLUBS_CATALOG, getCurrentClubSlug } from './clubsCatalog'
 
-export const VIEW_CLUB = {
-  id: 'blind-enthusiasm',
-  name: 'Blind Enthusiasm',
-  type: 'Curated Club',
+// ─── clubViewSample ───────────────────────────────────────────────────────────
+// Sample stats for the "View Club" prototype. Identity (slug, name, type)
+// comes from `clubsCatalog` based on the active hash, so navigating to a
+// different club shows that club's name throughout the layout. Stats are
+// shared sample data — same numbers across clubs in the prototype.
+
+const SAMPLE_STATS = {
   totalReleases: 28,
   members: { total: 15, active: 10, onHold: 2, new: 2, canceled: 1 },
   emailTemplates: { customized: 0, global: 10 },
   dateCreated: 'Mar 15, 2025',
   flagged: 3,
+}
+
+export function getViewClub() {
+  const info = CLUBS_CATALOG[getCurrentClubSlug()]
+  return {
+    id: info.slug,
+    name: info.name,
+    type: info.type,
+    ...SAMPLE_STATS,
+  }
 }

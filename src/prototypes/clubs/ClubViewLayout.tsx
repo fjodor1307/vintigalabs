@@ -12,7 +12,8 @@ import { PageTemplate } from '@ds/shared/PageTemplate'
 import { Tag } from '@ds/shared/Tag'
 import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import { EllipsisVerticalIcon, CalendarIcon, FlagIcon, InfoIcon } from '@ds/icons/Icons'
-import { VIEW_CLUB } from './clubViewSample'
+import { getViewClub } from './clubViewSample'
+import { getCurrentClubSlug } from './clubsCatalog'
 
 // ─── ClubViewLayout ───────────────────────────────────────────────────────────
 // Shell for the *existing* club detail flow: AppSidebar + Navbar + PageTemplate
@@ -25,47 +26,43 @@ import { VIEW_CLUB } from './clubViewSample'
 
 export type ClubViewTab = 'overview' | 'members' | 'releases' | 'emails'
 
-const ROUTES: Record<ClubViewTab, string> = {
-  overview: '#/web/clubs/view/overview',
-  members:  '#/web/clubs/view/members',
-  releases: '#/web/clubs/view/releases',
-  emails:   '#/web/clubs/view/emails',
+function tabsForSlug(slug: string): { value: ClubViewTab; label: string; href: string }[] {
+  return [
+    { value: 'overview', label: 'Overview', href: `#/web/clubs/view/${slug}/overview` },
+    { value: 'members',  label: 'Members',  href: `#/web/clubs/view/${slug}/members`  },
+    { value: 'releases', label: 'Releases', href: `#/web/clubs/view/${slug}/releases` },
+    { value: 'emails',   label: 'Emails',   href: `#/web/clubs/view/${slug}/emails`   },
+  ]
 }
-
-const TABS: { value: ClubViewTab; label: string; href: string }[] = [
-  { value: 'overview', label: 'Overview', href: ROUTES.overview },
-  { value: 'members',  label: 'Members',  href: ROUTES.members  },
-  { value: 'releases', label: 'Releases', href: ROUTES.releases },
-  { value: 'emails',   label: 'Emails',   href: ROUTES.emails   },
-]
 
 // ─── Right rail — Club summary ────────────────────────────────────────────────
 
 function ClubSummaryRail() {
+  const club = getViewClub()
   return (
     <RailSection title="Club Details">
       <div className="flex flex-col gap-vintiga-md">
         <DetailRow label="Type">
-          <Tag variant="filled" tone="violet" size="sm">{VIEW_CLUB.type}</Tag>
+          <Tag variant="filled" tone="violet" size="sm">{club.type}</Tag>
         </DetailRow>
 
         <DetailRow label="Email Templates">
           <div className="flex flex-col">
-            <span className="typo-body-sm text-vintiga-slate-700">{VIEW_CLUB.emailTemplates.customized} customized</span>
-            <span className="typo-body-sm text-vintiga-slate-500">{VIEW_CLUB.emailTemplates.global} using global</span>
+            <span className="typo-body-sm text-vintiga-slate-700">{club.emailTemplates.customized} customized</span>
+            <span className="typo-body-sm text-vintiga-slate-500">{club.emailTemplates.global} using global</span>
           </div>
         </DetailRow>
 
         <DetailRow label="Members">
           <span className="typo-body-sm text-vintiga-slate-700">
-            {VIEW_CLUB.members.total} Total · {VIEW_CLUB.members.active} Active · {VIEW_CLUB.members.onHold} On-hold · {VIEW_CLUB.members.new} New · {VIEW_CLUB.members.canceled} Canceled
+            {club.members.total} Total · {club.members.active} Active · {club.members.onHold} On-hold · {club.members.new} New · {club.members.canceled} Canceled
           </span>
         </DetailRow>
 
         <DetailRow label="Date Created">
           <span className="typo-body-sm text-vintiga-slate-700 inline-flex items-center gap-1.5">
             <CalendarIcon className="w-4 h-4 text-vintiga-slate-400" />
-            {VIEW_CLUB.dateCreated}
+            {club.dateCreated}
           </span>
         </DetailRow>
 
@@ -75,7 +72,7 @@ function ClubSummaryRail() {
         >
           <span className="typo-body-sm text-vintiga-orange-700 inline-flex items-center gap-1.5">
             <FlagIcon className="w-4 h-4" />
-            {VIEW_CLUB.flagged} Members flagged
+            {club.flagged} Members flagged
           </span>
         </DetailRow>
       </div>
@@ -152,6 +149,8 @@ export function ClubViewLayout({
   children: ReactNode
 }) {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
+  const club = getViewClub()
+  const tabs = tabsForSlug(getCurrentClubSlug())
 
   return (
     <div className="flex h-full bg-vintiga-white">
@@ -176,14 +175,14 @@ export function ClubViewLayout({
             breadcrumbs={[
               { icon: <BreadcrumbHomeIcon />, href: '#/web/clubs' },
               { label: 'Clubs', href: '#/web/clubs' },
-              ...(extraCrumbs ?? [{ label: VIEW_CLUB.name }]),
+              ...(extraCrumbs ?? [{ label: club.name }]),
             ]}
             title={
               titleOverride
                 ? titleOverride
                 : extraCrumbs && extraCrumbs.length > 1
                   ? extraCrumbs[extraCrumbs.length - 1].label
-                  : VIEW_CLUB.name
+                  : club.name
             }
             actions={
               actions ?? (
@@ -214,7 +213,7 @@ export function ClubViewLayout({
                 <SegmentedControl<ClubViewTab>
                   value={activeTab}
                   aria-label="Club view tabs"
-                  options={TABS}
+                  options={tabs}
                 />
               ) : undefined
             }

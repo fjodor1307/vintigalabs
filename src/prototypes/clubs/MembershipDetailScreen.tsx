@@ -25,26 +25,32 @@ import {
 } from '@ds/icons/Icons'
 import { BlindEnthusiasmLogo } from './BlindEnthusiasmLogo'
 import { AgeVerifiedBadge } from './AgeVerifiedBadge'
+import { getMember, type Member } from './memberSamples'
+import { CLUBS_CATALOG, type ClubKey } from './clubsCatalog'
 
 // ─── MembershipDetailScreen ──────────────────────────────────────────────────
-// Drill-down from the Memberships table (Figma 5078:5161). Single canonical
-// example: Membership #1004 — Ms Dorothy Ladner, Blind Enthusiasm club. Real
-// wiring would load by id; the prototype hard-codes the sample so the page
-// reads end-to-end.
+// Drill-down from the Memberships table (Figma 5078:5161). Reads the member id
+// from the location hash (`#/web/clubs/memberships/{id}`) and looks the record
+// up in `memberSamples`. Orders / history are shared mock fixtures — only the
+// member-specific fields (name, photo, club, etc.) vary by id.
 
-const MEMBER = {
-  id: '1004',
-  name: 'Ms Dorothy Ladner',
-  photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=128&h=128&fit=crop&crop=faces',
-  club: 'Blind Enthusiasm',
-  status: 'Active' as 'Active' | 'Cancelled',
-  audienceTags: ['Dog Owner', 'Investor'],
-  email: 'dorothyladner@gmail.com',
-  emailPreferred: true,
-  city: 'Seattle, WA',
-  zip: '98107',
-  lastVisit: 'Mar 15, 2025',
-  clubStatus: 'Active',
+const STATUS_LABEL: Record<Member['status'], string> = {
+  active:    'Active',
+  pending:   'Pending',
+  'on-hold': 'On Hold',
+  cancelled: 'Cancelled',
+}
+
+const STATUS_TAG_TONE: Record<Member['status'], { tone: 'success' | 'orange' | 'default' | 'danger'; variant: 'filled' | 'neutral-light' }> = {
+  active:    { tone: 'success', variant: 'filled' },
+  pending:   { tone: 'orange',  variant: 'filled' },
+  'on-hold': { tone: 'default', variant: 'neutral-light' },
+  cancelled: { tone: 'danger',  variant: 'filled' },
+}
+
+const DELIVERY_LABEL: Record<Member['delivery'], string> = {
+  shipping: 'Shipping',
+  pickup:   'Pickup',
 }
 
 const ORDERS = [
@@ -75,13 +81,20 @@ const HISTORY = [
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
+function getMemberFromHash(): Member {
+  const m = window.location.hash.match(/^#\/web\/clubs\/memberships\/([^/?]+)/)
+  return (m && getMember(m[1])) || (getMember('1004') as Member)
+}
+
 export function MembershipDetailScreen() {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
+  const member = getMemberFromHash()
+  const statusTone = STATUS_TAG_TONE[member.status]
 
   const titleNode = (
     <h1 className="typo-title-screen font-semibold text-vintiga-slate-900 inline-flex items-center gap-vintiga-sm">
-      Membership #{MEMBER.id}
-      <Tag variant="filled" tone="success" size="md">{MEMBER.status}</Tag>
+      Membership #{member.id}
+      <Tag variant={statusTone.variant} tone={statusTone.tone} size="md">{STATUS_LABEL[member.status]}</Tag>
     </h1>
   )
 
@@ -109,7 +122,7 @@ export function MembershipDetailScreen() {
               { icon: <BreadcrumbHomeIcon />, href: '#/web/clubs' },
               { label: 'Clubs',       href: '#/web/clubs' },
               { label: 'Memberships', href: '#/web/clubs/memberships' },
-              { label: `Membership #${MEMBER.id}` },
+              { label: `Membership #${member.id}` },
             ]}
             title={titleNode}
             actions={
@@ -133,10 +146,10 @@ export function MembershipDetailScreen() {
                 />
               </>
             }
-            rail={<ClubOverviewRail />}
+            rail={<ClubOverviewRail member={member} />}
           >
             <div className="flex flex-col gap-vintiga-lg">
-              <CustomerHeaderCard />
+              <CustomerHeaderCard member={member} />
               <ClubOrdersCard />
               <PaymentMethodCard />
               <AddressCard
@@ -158,43 +171,46 @@ export function MembershipDetailScreen() {
 
 // ─── Customer header card ────────────────────────────────────────────────────
 
-function CustomerHeaderCard() {
+function CustomerHeaderCard({ member }: { member: Member }) {
+  const club = CLUBS_CATALOG[member.club]
   return (
     <Card>
       <div className="flex items-start gap-vintiga-md">
         <div className="relative shrink-0">
-          <Avatar name={MEMBER.name} src={MEMBER.photo} size="lg" />
-          <AgeVerifiedBadge memberName={MEMBER.name} />
+          <Avatar name={member.name} src={member.avatarUrl} size="lg" />
+          {member.ageVerified && <AgeVerifiedBadge memberName={member.name} />}
         </div>
 
         <div className="flex-1 min-w-0 flex flex-col gap-vintiga-sm">
-          <h2 className="typo-title-section font-semibold text-vintiga-slate-900">{MEMBER.name}</h2>
+          <h2 className="typo-title-section font-semibold text-vintiga-slate-900">{member.name}</h2>
 
           {/* Club link — IdCard icon prefix (consistent across the app) */}
           <a
-            href="#/web/clubs/view/overview"
+            href={`#/web/clubs/view/${club.slug}/overview`}
             className="inline-flex items-center gap-1.5 typo-body font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 no-underline w-fit"
           >
             <IdCardIcon className="w-5 h-5 shrink-0" />
-            {MEMBER.club}
+            {club.name}
           </a>
 
           {/* Audience tags */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {MEMBER.audienceTags.map((t) => (
-              <Tag key={t} variant="outline" tone="default" size="sm">{t}</Tag>
-            ))}
-          </div>
+          {member.audienceTags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {member.audienceTags.map((t) => (
+                <Tag key={t} variant="outline" tone="default" size="sm">{t}</Tag>
+              ))}
+            </div>
+          )}
 
           {/* Contact + status */}
           <div className="flex flex-col typo-body-sm text-vintiga-slate-700 leading-relaxed pt-vintiga-xs">
             <span>
-              {MEMBER.email}
-              {MEMBER.emailPreferred && <span className="text-vintiga-slate-500"> | Preferred</span>}
+              {member.email}
+              <span className="text-vintiga-slate-500"> | Preferred</span>
             </span>
-            <span>{MEMBER.city}, {MEMBER.zip}</span>
-            <span className="text-vintiga-slate-500">Last Visit: {MEMBER.lastVisit}</span>
-            <span className="text-vintiga-slate-500">Club Status: {MEMBER.clubStatus}</span>
+            <span>{member.city} {member.zip}</span>
+            <span className="text-vintiga-slate-500">Last Visit: {member.lastVisit}</span>
+            <span className="text-vintiga-slate-500">Club Status: {STATUS_LABEL[member.status]}</span>
           </div>
         </div>
 
@@ -367,33 +383,50 @@ function MembershipHistoryCard() {
 
 // ─── Right rail — Club Overview ──────────────────────────────────────────────
 
-function ClubOverviewRail() {
+function ClubLogoTile({ slug, size = 48 }: { slug: ClubKey; size?: number }) {
+  if (slug === 'blind-enthusiasm') {
+    return <BlindEnthusiasmLogo size={size} className="shrink-0 rounded-vintiga-md" />
+  }
+  const initial = CLUBS_CATALOG[slug].name.charAt(0)
+  return (
+    <div
+      className="shrink-0 rounded-vintiga-md bg-vintiga-indigo-600 text-white inline-flex items-center justify-center font-semibold"
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.5) }}
+      aria-hidden="true"
+    >
+      {initial}
+    </div>
+  )
+}
+
+function ClubOverviewRail({ member }: { member: Member }) {
+  const club = CLUBS_CATALOG[member.club]
   return (
     <RailSection title="Club Overview">
       <div className="flex flex-col gap-vintiga-md">
         {/* Club identity — clickable card linking through to the club view */}
         <a
-          href="#/web/clubs/view/overview"
+          href={`#/web/clubs/view/${club.slug}/overview`}
           className="flex items-center gap-vintiga-sm no-underline group"
         >
-          <BlindEnthusiasmLogo size={48} className="shrink-0 rounded-vintiga-md" />
+          <ClubLogoTile slug={member.club} />
           <div className="flex flex-col gap-1 flex-1 min-w-0">
             <span className="typo-body font-semibold text-vintiga-slate-900 inline-flex items-center gap-1 group-hover:text-vintiga-indigo-700 transition-colors">
-              Blind Enthusiasm
+              {club.name}
               <span className="text-vintiga-slate-400">›</span>
             </span>
             <span className="inline-flex">
-              <Tag variant="filled" tone="violet" size="sm">Curated Club</Tag>
+              <Tag variant="filled" tone="violet" size="sm">{club.type}</Tag>
             </span>
           </div>
         </a>
 
-        <RailRow label="Signup Date">February 3, 2026 at 09:41 PM</RailRow>
-        <RailRow label="Activated Date">February 3, 2026 at 09:41 PM</RailRow>
-        <RailRow label="Sales Associate">Geoff Spears</RailRow>
-        <RailRow label="Membership ID">#{MEMBER.id}</RailRow>
-        <RailRow label="Delivery Method">Pickup</RailRow>
-        <RailRow label="Total Orders">6</RailRow>
+        <RailRow label="Signup Date">{member.signupDate}</RailRow>
+        <RailRow label="Activated Date">{member.activatedDate}</RailRow>
+        <RailRow label="Sales Associate">{member.salesAssociate}</RailRow>
+        <RailRow label="Membership ID">#{member.id}</RailRow>
+        <RailRow label="Delivery Method">{DELIVERY_LABEL[member.delivery]}</RailRow>
+        <RailRow label="Total Orders">{member.totalOrders}</RailRow>
       </div>
     </RailSection>
   )

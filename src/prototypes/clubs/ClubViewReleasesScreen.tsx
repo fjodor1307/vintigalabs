@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ClubViewLayout } from './ClubViewLayout'
+import { getCurrentClubSlug } from './clubsCatalog'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { KpiCard } from '@ds/shared/KpiCard'
 import { TextField } from '@ds/shared/TextField'
@@ -96,7 +97,7 @@ export function ClubViewReleasesScreen() {
               size="md"
               leftIcon={<PlusIcon />}
               as="a"
-              href="#/web/clubs/view/releases/add"
+              href={`#/web/clubs/view/${getCurrentClubSlug()}/releases/add`}
             >
               Add Release
             </Button>
