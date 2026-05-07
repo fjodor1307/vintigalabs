@@ -71,7 +71,7 @@ function StatsRow() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
       <StatRow
-        label="Balance"
+        label="Account Balance"
         value={`$${balance.toFixed(2)}`}
         icon={<CreditCardIcon />}
         href="#/web/customers/view/billing/balance"
