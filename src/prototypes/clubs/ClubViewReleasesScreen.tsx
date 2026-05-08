@@ -8,7 +8,9 @@ import { Select } from '@ds/shared/Select'
 import { Tag } from '@ds/shared/Tag'
 import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
+import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@ds/shared/Table'
+import { RELEASES as INITIAL_RELEASES, releaseIdFromName, type Release, type Status } from './releaseSamples'
 import {
   PackageIcon,
   DollarIcon,
@@ -28,30 +30,6 @@ import {
 // with toolbar, sortable table, and pagination. CTA "Add Release" sits in the
 // card header — routes to the existing club's add-release sub-page.
 
-type Status = 'Active' | 'Archived' | 'Planning'
-
-interface Release {
-  name: string
-  draftOrders: number
-  date: string
-  status: Status
-}
-
-const RELEASES: Release[] = [
-  { name: 'January Release',   draftOrders: 2, date: 'Mar 15, 2025', status: 'Active' },
-  { name: 'February Release',  draftOrders: 4, date: 'Mar 13, 2025', status: 'Active' },
-  { name: 'March Release',     draftOrders: 5, date: 'Mar 11, 2025', status: 'Active' },
-  { name: 'April Release',     draftOrders: 6, date: 'Mar 09, 2025', status: 'Active' },
-  { name: 'May Release',       draftOrders: 8, date: 'Mar 07, 2025', status: 'Archived' },
-  { name: 'June Release',      draftOrders: 9, date: 'Mar 05, 2025', status: 'Archived' },
-  { name: 'July Release',      draftOrders: 3, date: 'Mar 03, 2025', status: 'Planning' },
-  { name: 'August Release',    draftOrders: 1, date: 'Mar 01, 2025', status: 'Planning' },
-  { name: 'September Release', draftOrders: 0, date: 'Feb 27, 2025', status: 'Planning' },
-  { name: 'October Release',   draftOrders: 0, date: 'Feb 25, 2025', status: 'Planning' },
-  { name: 'November Release',  draftOrders: 0, date: 'Feb 23, 2025', status: 'Planning' },
-  { name: 'December Release',  draftOrders: 0, date: 'Feb 21, 2025', status: 'Planning' },
-]
-
 const STATUS_TONE: Record<Status, { tone: 'success' | 'default' | 'info'; variant: 'filled' | 'neutral-light' }> = {
   Active:   { tone: 'success', variant: 'filled' },
   Archived: { tone: 'default', variant: 'neutral-light' },
@@ -61,12 +39,37 @@ const STATUS_TONE: Record<Status, { tone: 'success' | 'default' | 'info'; varian
 export function ClubViewReleasesScreen() {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<'all' | Status>('all')
+  const [releases, setReleases] = useState<Release[]>(INITIAL_RELEASES)
+  const slug = getCurrentClubSlug()
 
-  const filtered = RELEASES.filter(
+  const filtered = releases.filter(
     (r) =>
       (status === 'all' || r.status === status) &&
       (search === '' || r.name.toLowerCase().includes(search.toLowerCase()))
   )
+
+  function viewRelease(r: Release) {
+    window.location.hash = `/web/clubs/view/${slug}/releases/${releaseIdFromName(r.name)}`
+  }
+
+  function duplicateRelease(r: Release) {
+    setReleases((prev) => {
+      const idx = prev.findIndex((p) => p.name === r.name)
+      if (idx < 0) return prev
+      const copy: Release = { ...r, name: `${r.name} (Copy)`, status: 'Planning', draftOrders: 0 }
+      const next = [...prev]
+      next.splice(idx + 1, 0, copy)
+      return next
+    })
+  }
+
+  function archiveRelease(r: Release) {
+    setReleases((prev) => prev.map((p) => (p.name === r.name ? { ...p, status: 'Archived' } : p)))
+  }
+
+  function activateRelease(r: Release) {
+    setReleases((prev) => prev.map((p) => (p.name === r.name ? { ...p, status: 'Active' } : p)))
+  }
 
   return (
     <ClubViewLayout activeTab="releases">
@@ -145,7 +148,7 @@ export function ClubViewReleasesScreen() {
               {filtered.map((r) => {
                 const tone = STATUS_TONE[r.status]
                 return (
-                  <TableRow key={r.name}>
+                  <TableRow key={r.name} onClick={() => viewRelease(r)}>
                     <TableCell className="font-medium text-vintiga-slate-900">{r.name}</TableCell>
                     <TableCell>{r.draftOrders}</TableCell>
                     <TableCell>{r.date}</TableCell>
@@ -153,13 +156,27 @@ export function ClubViewReleasesScreen() {
                       <Tag variant={tone.variant} tone={tone.tone} size="sm">{r.status}</Tag>
                     </TableCell>
                     <TableCell className="text-right">
-                      <IconButton
-                        variant="outline"
-                        size="sm"
-                        icon={<EllipsisVerticalIcon />}
-                        aria-label={`${r.name} actions`}
-                        onClick={() => {}}
-                      />
+                      <span onClick={(e) => e.stopPropagation()} className="inline-flex">
+                        <PopoverMenu
+                          align="right"
+                          width="w-44"
+                          trigger={(_open, toggle) => (
+                            <IconButton
+                              variant="outline"
+                              size="sm"
+                              icon={<EllipsisVerticalIcon />}
+                              aria-label={`${r.name} actions`}
+                              onClick={toggle}
+                            />
+                          )}
+                          items={[
+                            { label: 'View',      onClick: () => viewRelease(r) },
+                            ...(r.status === 'Planning' ? [{ label: 'Activate', onClick: () => activateRelease(r) }] : []),
+                            { label: 'Duplicate', onClick: () => duplicateRelease(r) },
+                            { label: 'Archive',   onClick: () => archiveRelease(r), danger: true, disabled: r.status === 'Archived' },
+                          ]}
+                        />
+                      </span>
                     </TableCell>
                   </TableRow>
                 )

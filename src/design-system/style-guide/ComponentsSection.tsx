@@ -93,13 +93,30 @@ function PlaygroundStage({ children, minHeight = 280 }: { children: React.ReactN
   )
 }
 
-function ReferenceCard({ label, children }: { label: string; children: React.ReactNode }) {
+function ReferenceCard({
+  label,
+  children,
+  bare = false,
+}: {
+  label: string
+  children: React.ReactNode
+  /**
+   * Drop the bordered/padded wrapper. Use when the demo component already
+   * provides its own border and surface (e.g. RecordsCard, CustomerCard) so
+   * the example doesn't read as a card-inside-a-card.
+   */
+  bare?: boolean
+}) {
   return (
     <div className="flex flex-col gap-3">
       <p className="typo-caption font-semibold uppercase tracking-wider text-vintiga-slate-500">{label}</p>
-      <div className="border border-vintiga-slate-200 rounded-vintiga-lg p-vintiga-lg bg-vintiga-white">
-        {children}
-      </div>
+      {bare ? (
+        <div>{children}</div>
+      ) : (
+        <div className="border border-vintiga-slate-200 rounded-vintiga-lg p-vintiga-lg bg-vintiga-white">
+          {children}
+        </div>
+      )}
     </div>
   )
 }
@@ -1019,7 +1036,7 @@ function KpiCardsSection() {
       description="Metric summary tile. Slots are: label, value, icon, optional inline status pill, and an optional goal/progress strip. The strip renders whenever goalLabel is set — pass real progress for a filled bar, or pass goalLabel='No goal set' to render the empty state (works whether the value is zero or not). Matches Figma 132:6062."
     >
       <div className="flex flex-col gap-vintiga-lg">
-        <ReferenceCard label="① Plain">
+        <ReferenceCard label="① Plain" bare>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-md w-full">
             <KpiCard
               label="Active customers"
@@ -1039,7 +1056,7 @@ function KpiCardsSection() {
           </div>
         </ReferenceCard>
 
-        <ReferenceCard label="② Goal / progress">
+        <ReferenceCard label="② Goal / progress" bare>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md w-full">
             <KpiCard
               label="Total Revenue"
@@ -1058,7 +1075,7 @@ function KpiCardsSection() {
           </div>
         </ReferenceCard>
 
-        <ReferenceCard label="③ No goal set — value present (no pill)">
+        <ReferenceCard label="③ No goal set — value present (no pill)" bare>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md w-full">
             <KpiCard
               label="AOV"
@@ -1075,7 +1092,7 @@ function KpiCardsSection() {
           </div>
         </ReferenceCard>
 
-        <ReferenceCard label="④ No goal set — empty (with status pill)">
+        <ReferenceCard label="④ No goal set — empty (with status pill)" bare>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md w-full">
             <KpiCard
               label="AOV"
@@ -1094,7 +1111,7 @@ function KpiCardsSection() {
           </div>
         </ReferenceCard>
 
-        <ReferenceCard label="⑤ Compact — size=sm · KPI-small (Figma 5682:137241)">
+        <ReferenceCard label="⑤ Compact — size=sm · KPI-small (Figma 5682:137241)" bare>
           <div className="flex flex-col gap-vintiga-md w-full">
             <p className="typo-caption text-vintiga-slate-500">
               Default — `href` absent. 64-px tall horizontal card: icon · label · value.
@@ -1597,7 +1614,7 @@ function WidgetSection() {
       description="Dashboard widget container — title + description + actions in the header, flexible body slot for charts or content. Composable: drop in <WidgetHeader>, <WidgetBody>, <WidgetFooter> for full control, or use the convenience props on <Widget>."
     >
       <div className="flex flex-col gap-vintiga-lg">
-        <ReferenceCard label="Default — title + description + actions">
+        <ReferenceCard label="Default — title + description + actions" bare>
           <Widget
             title="Sales overview"
             description="Revenue across all channels for the last 30 days."
@@ -1612,7 +1629,7 @@ function WidgetSection() {
           </Widget>
         </ReferenceCard>
 
-        <ReferenceCard label="Multi-row body">
+        <ReferenceCard label="Multi-row body" bare>
           <Widget
             title="Channel breakdown"
             description="Visits, conversions, and revenue by source."
@@ -1626,13 +1643,13 @@ function WidgetSection() {
           </Widget>
         </ReferenceCard>
 
-        <ReferenceCard label="Title only">
+        <ReferenceCard label="Title only" bare>
           <Widget title="Recent activity">
             <ChartPlaceholder height={180} />
           </Widget>
         </ReferenceCard>
 
-        <ReferenceCard label="Composable — with footer">
+        <ReferenceCard label="Composable — with footer" bare>
           <Widget>
             <WidgetHeader
               title="Top products"
@@ -1649,7 +1666,7 @@ function WidgetSection() {
           </Widget>
         </ReferenceCard>
 
-        <ReferenceCard label="Two-column dashboard layout">
+        <ReferenceCard label="Two-column dashboard layout" bare>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-vintiga-md">
             <Widget
               title="Revenue"
@@ -1815,7 +1832,7 @@ function ListCardSection() {
       description="44 px bordered list-item — used wherever a vertical list of selectable rows is needed (Collections, Channels, Workspaces, Saved views). Three states: default, hover, selected. Trailing slot defaults to a kebab menu but accepts any node."
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-lg">
-        <ReferenceCard label="States">
+        <ReferenceCard label="States" bare>
           <div className="flex flex-col gap-vintiga-sm w-[289px]">
             <ListCard label="Default" />
             <ListCard label="Hover (try it)" />
@@ -1824,7 +1841,7 @@ function ListCardSection() {
           </div>
         </ReferenceCard>
 
-        <ReferenceCard label="Selectable list">
+        <ReferenceCard label="Selectable list" bare>
           <div className="flex flex-col gap-vintiga-sm w-[289px]" role="listbox" aria-label="Collections">
             {items.map((it) => (
               <ListCard
@@ -1838,7 +1855,7 @@ function ListCardSection() {
           </div>
         </ReferenceCard>
 
-        <ReferenceCard label="With leading icon">
+        <ReferenceCard label="With leading icon" bare>
           <div className="flex flex-col gap-vintiga-sm w-[289px]">
             <ListCard label="Folder" icon={<FolderIcon />} />
             <ListCard label="Inbox"  icon={<InboxIcon />} selected />
@@ -1846,7 +1863,7 @@ function ListCardSection() {
           </div>
         </ReferenceCard>
 
-        <ReferenceCard label="No trailing action">
+        <ReferenceCard label="No trailing action" bare>
           <div className="flex flex-col gap-vintiga-sm w-[289px]">
             <ListCard label="Read-only row" hideAction />
             <ListCard label="Read-only row" hideAction selected />
@@ -1883,7 +1900,7 @@ function MediaSection() {
           />
         </ReferenceCard>
 
-        <ReferenceCard label="Empty state">
+        <ReferenceCard label="Empty state" bare>
           <Media
             items={[]}
             onUpload={() => {}}
@@ -1903,7 +1920,7 @@ function ClubCardSection() {
       description="Bordered media-rich list row with a 96 px image, title, tag cluster, meta line, and a trailing kebab. Each row owns its border + radius and lights up on hover (slate-50 bg, slate-400 border). Built from Figma 5636:24752 — used for the Clubs surface but generic enough for any catalogue list with imagery (Campaigns, Curated Collections). Stack rows in a plain `flex-col gap-vintiga-md` container."
     >
       <div className="flex flex-col gap-vintiga-lg">
-        <ReferenceCard label="Default + hover (try it)">
+        <ReferenceCard label="Default + hover (try it)" bare>
           <div className="flex flex-col gap-vintiga-md">
             <ClubCard
               image={
@@ -1967,7 +1984,7 @@ function CustomerCardSection() {
       description="Bordered lead card for any customer-centric drill-down (membership detail, customer profile, order's customer summary). Avatar on the left, name + subtitle + tags + multi-line details in the middle, button group anchored top-right. All slots are open `ReactNode`s — wrap the avatar in a badge overlay (e.g. `AgeVerifiedBadge`), drop multiple buttons / a PopoverMenu into `actions`, etc."
     >
       <div className="flex flex-col gap-vintiga-lg">
-        <ReferenceCard label="Default — age-verified avatar + button group">
+        <ReferenceCard label="Default — age-verified avatar + button group" bare>
           <CustomerCard
             avatar={
               <div className="relative">
@@ -2014,7 +2031,7 @@ function CustomerCardSection() {
           />
         </ReferenceCard>
 
-        <ReferenceCard label="Minimal — name + details only, no actions">
+        <ReferenceCard label="Minimal — name + details only, no actions" bare>
           <CustomerCard
             avatar={<Avatar name="Tom Cook" size="lg" />}
             name="Tom Cook"
@@ -2039,7 +2056,7 @@ function RecordsCardSection() {
       description="Bordered card with a titled header (title · subtitle · trailing action) and stacked record rows separated by top borders. Use for any 'collection' surface — Payment Methods, saved Addresses, attached files, API keys, etc. Each direct child is treated as a row; the card injects the divider automatically. Pass `empty` for a friendly state when the collection has no rows yet."
     >
       <div className="flex flex-col gap-vintiga-lg">
-        <ReferenceCard label="Payment Methods — header + add + rows">
+        <ReferenceCard label="Payment Methods — header + add + rows" bare>
           <RecordsCard
             title="Payment Methods"
             subtitle="Manage your payment information"
@@ -2072,7 +2089,7 @@ function RecordsCardSection() {
           </RecordsCard>
         </ReferenceCard>
 
-        <ReferenceCard label="Empty state">
+        <ReferenceCard label="Empty state" bare>
           <RecordsCard
             title="Address"
             subtitle="Manage customer address information"
@@ -2154,7 +2171,7 @@ function SelectionCardSection() {
             Used in onboarding pickers (e.g. wine-club tier, business type).
             Figma <code className="font-mono bg-vintiga-slate-100 px-1 rounded">5079:33569</code>.
           </p>
-          <ReferenceCard label="Default · hover">
+          <ReferenceCard label="Default · hover" bare>
             <div className="flex flex-col gap-vintiga-md max-w-[460px]">
               <SelectionCard
                 icon={<GemIcon />}
@@ -2179,7 +2196,7 @@ function SelectionCardSection() {
             Tile-style picker for type / mode selection. Selected state fills the icon container with indigo-600.
             Figma <code className="font-mono bg-vintiga-slate-100 px-1 rounded">3675:37603</code>.
           </p>
-          <ReferenceCard label="Default · hover · selected">
+          <ReferenceCard label="Default · hover · selected" bare>
             <div className="grid grid-cols-3 gap-vintiga-sm">
               <SelectionCard
                 orientation="vertical"
@@ -2216,7 +2233,7 @@ function SelectionCardSection() {
             Same tile as above but every line centred. Used for report-type pickers and short labels.
             Figma <code className="font-mono bg-vintiga-slate-100 px-1 rounded">5000:45656</code>.
           </p>
-          <ReferenceCard label="Centred">
+          <ReferenceCard label="Centred" bare>
             <div className="grid grid-cols-3 gap-vintiga-sm">
               <SelectionCard orientation="vertical" align="center" icon={<ChartIcon />}   title="Sales"      description="Revenue and order trends across channels." onClick={() => {}} />
               <SelectionCard orientation="vertical" align="center" icon={<UsersIcon />}   title="Customers"  description="Lifecycle, lifetime value, and retention."  onClick={() => {}} />
@@ -2233,7 +2250,7 @@ function SelectionCardSection() {
             workspace switchers and account pickers.
             Figma <code className="font-mono bg-vintiga-slate-100 px-1 rounded">2930:20012</code>.
           </p>
-          <ReferenceCard label="Compact + trailing tag">
+          <ReferenceCard label="Compact + trailing tag" bare>
             <div className="flex flex-col gap-vintiga-sm">
               {[
                 { name: 'Vintiga Labs Inc',     rep: 'Rep: Jim Secord' },

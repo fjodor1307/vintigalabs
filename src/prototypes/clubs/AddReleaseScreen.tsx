@@ -4,6 +4,7 @@ import { ClubViewLayout } from './ClubViewLayout'
 import { getViewClub } from './clubViewSample'
 import { getCurrentClubSlug } from './clubsCatalog'
 import { useClubState, clubActions } from './clubStore'
+import { RELEASES, releaseIdFromName, type Release, type Status as ReleaseStatus } from './releaseSamples'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
@@ -58,6 +59,22 @@ interface Product {
 
 type Mode = 'editor' | 'view'
 
+const STATUS_TONE: Record<ReleaseStatus, { tone: 'success' | 'default' | 'info'; variant: 'filled' | 'neutral-light' }> = {
+  Active:   { tone: 'success', variant: 'filled' },
+  Archived: { tone: 'default', variant: 'neutral-light' },
+  Planning: { tone: 'info',    variant: 'neutral-light' },
+}
+
+// When the URL is `#/web/clubs/view/{slug}/releases/{releaseSlug}` (and the
+// trailing segment is not `add`), resolve the corresponding fixture release
+// so the editor can pre-fill itself for "view existing" mode.
+function getExistingReleaseFromHash(): Release | undefined {
+  const m = window.location.hash.match(/^#\/web\/clubs\/view\/[^/]+\/releases\/([^/?]+)/)
+  if (!m || m[1] === 'add') return undefined
+  const id = decodeURIComponent(m[1])
+  return RELEASES.find((r) => releaseIdFromName(r.name) === id)
+}
+
 export function AddReleaseScreen() {
   return <AddReleaseInner mode="editor" />
 }
@@ -70,10 +87,12 @@ function AddReleaseInner({ mode }: { mode: Mode }) {
   const club = useClubState()
   const { catalogue } = useProductState()
   const slug         = getCurrentClubSlug()
+  const existing     = mode === 'view' ? getExistingReleaseFromHash() : undefined
   const parentLabel  = mode === 'editor' ? (club.name || 'New club') : getViewClub().name
   const parentHref   = mode === 'editor' ? '#/web/clubs/new/releases'  : `#/web/clubs/view/${slug}/releases`
 
-  const [title, setTitle]                       = useState('')
+  const [title, setTitle]                       = useState(existing?.name ?? '')
+  const [status, setStatus]                     = useState<ReleaseStatus>(existing?.status ?? 'Planning')
   const [products, setProducts]                 = useState<Product[]>(SAMPLE_PRODUCTS)
   const [minQty, setMinQty]                     = useState('1')
   const [maxQty, setMaxQty]                     = useState('')
@@ -135,12 +154,25 @@ function AddReleaseInner({ mode }: { mode: Mode }) {
     window.location.hash = parentHref
   }
 
+  const headerTitleText = existing ? existing.name : 'Add Club Release'
+  const headerStatusTone = STATUS_TONE[status]
   const headerTitle = (
     <span className="inline-flex items-center gap-vintiga-md">
-      <span>Add Club Release</span>
-      <Tag variant="neutral-light" tone="default" size="md">Planning</Tag>
+      <span>{headerTitleText}</span>
+      <Tag variant={headerStatusTone.variant} tone={headerStatusTone.tone} size="md">{status}</Tag>
     </span>
   )
+
+  // Status workflow — Planning → Active → Archived. The release detail page
+  // surfaces the next legal transition as a primary action so operators can
+  // walk a release through its lifecycle. (Per Apr 15 design sync: status can
+  // also flip automatically when the auto-process date is reached, but the
+  // manual override is what drives the prototype demo.)
+  const nextTransition = (() => {
+    if (status === 'Planning') return { label: 'Activate Release', next: 'Active' as ReleaseStatus }
+    if (status === 'Active')   return { label: 'Archive Release',  next: 'Archived' as ReleaseStatus, danger: true }
+    return null
+  })()
 
   const body = (
     <div className="flex gap-vintiga-lg">
@@ -322,10 +354,24 @@ function AddReleaseInner({ mode }: { mode: Mode }) {
 
   const sharedProps = {
     extraCrumbs: [
-      { label: parentLabel, href: parentHref.replace('/releases', '/overview') },
-      { label: 'Add Club Release' },
+      { label: parentLabel,    href: parentHref.replace('/releases', '/overview') },
+      { label: 'Releases',     href: parentHref },
+      { label: existing ? existing.name : 'Add Club Release' },
     ],
-    actions: <Button onClick={save}>Save</Button>,
+    actions: (
+      <>
+        {existing && nextTransition && (
+          <Button
+            variant="outline"
+            intent={nextTransition.danger ? 'destructive' : 'primary'}
+            onClick={() => setStatus(nextTransition.next)}
+          >
+            {nextTransition.label}
+          </Button>
+        )}
+        <Button onClick={save}>Save</Button>
+      </>
+    ),
     titleOverride: headerTitle,
   }
 

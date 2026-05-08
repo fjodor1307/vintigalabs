@@ -16,6 +16,7 @@ import { ClubViewEmailsScreen } from './ClubViewEmailsScreen'
 import { ClubViewLevelsScreen } from './ClubViewLevelsScreen'
 import { CLUBS_CATALOG, CLUB_KEYS } from './clubsCatalog'
 import { MEMBERS } from './memberSamples'
+import { RELEASES, releaseIdFromName } from './releaseSamples'
 
 const baseRoutes: Record<string, ComponentType> = {
   // Page-level
@@ -49,6 +50,11 @@ for (const slug of CLUB_KEYS) {
   if (kind === 'curated' || kind === 'traditional') {
     baseRoutes[`#/web/clubs/view/${slug}/releases`]     = ClubViewReleasesScreen
     baseRoutes[`#/web/clubs/view/${slug}/releases/add`] = AddReleaseExistingScreen
+    // Per-release detail — same screen as "Add release" but it reads the
+    // release id from the hash and pre-fills the form (view existing).
+    for (const r of RELEASES) {
+      baseRoutes[`#/web/clubs/view/${slug}/releases/${releaseIdFromName(r.name)}`] = AddReleaseExistingScreen
+    }
   }
   if (kind === 'account-credit') {
     baseRoutes[`#/web/clubs/view/${slug}/levels`] = ClubViewLevelsScreen
