@@ -92,6 +92,7 @@ function AddReleaseInner({ mode }: { mode: Mode }) {
   const parentHref   = mode === 'editor' ? '#/web/clubs/new/releases'  : `#/web/clubs/view/${slug}/releases`
 
   const [title, setTitle]                       = useState(existing?.name ?? '')
+  const [status, setStatus]                     = useState<ReleaseStatus>(existing?.status ?? 'Planning')
   const [products, setProducts]                 = useState<Product[]>(SAMPLE_PRODUCTS)
   const [minQty, setMinQty]                     = useState('1')
   const [maxQty, setMaxQty]                     = useState('')
@@ -154,13 +155,24 @@ function AddReleaseInner({ mode }: { mode: Mode }) {
   }
 
   const headerTitleText = existing ? existing.name : 'Add Club Release'
-  const headerStatusTone = STATUS_TONE[existing?.status ?? 'Planning']
+  const headerStatusTone = STATUS_TONE[status]
   const headerTitle = (
     <span className="inline-flex items-center gap-vintiga-md">
       <span>{headerTitleText}</span>
-      <Tag variant={headerStatusTone.variant} tone={headerStatusTone.tone} size="md">{existing?.status ?? 'Planning'}</Tag>
+      <Tag variant={headerStatusTone.variant} tone={headerStatusTone.tone} size="md">{status}</Tag>
     </span>
   )
+
+  // Status workflow — Planning → Active → Archived. The release detail page
+  // surfaces the next legal transition as a primary action so operators can
+  // walk a release through its lifecycle. (Per Apr 15 design sync: status can
+  // also flip automatically when the auto-process date is reached, but the
+  // manual override is what drives the prototype demo.)
+  const nextTransition = (() => {
+    if (status === 'Planning') return { label: 'Activate Release', next: 'Active' as ReleaseStatus }
+    if (status === 'Active')   return { label: 'Archive Release',  next: 'Archived' as ReleaseStatus, danger: true }
+    return null
+  })()
 
   const body = (
     <div className="flex gap-vintiga-lg">
@@ -346,7 +358,20 @@ function AddReleaseInner({ mode }: { mode: Mode }) {
       { label: 'Releases',     href: parentHref },
       { label: existing ? existing.name : 'Add Club Release' },
     ],
-    actions: <Button onClick={save}>Save</Button>,
+    actions: (
+      <>
+        {existing && nextTransition && (
+          <Button
+            variant="outline"
+            intent={nextTransition.danger ? 'destructive' : 'primary'}
+            onClick={() => setStatus(nextTransition.next)}
+          >
+            {nextTransition.label}
+          </Button>
+        )}
+        <Button onClick={save}>Save</Button>
+      </>
+    ),
     titleOverride: headerTitle,
   }
 
