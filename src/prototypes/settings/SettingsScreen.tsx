@@ -43,7 +43,6 @@ export function SettingsScreen() {
 
   return (
     <SettingsLayout
-      breadcrumbs={[{ label: 'Settings' }]}
       title={
         <div className="flex flex-col gap-1">
           <span className="typo-title-screen font-semibold text-vintiga-slate-900">Settings</span>
