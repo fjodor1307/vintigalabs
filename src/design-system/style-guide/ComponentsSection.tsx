@@ -93,13 +93,30 @@ function PlaygroundStage({ children, minHeight = 280 }: { children: React.ReactN
   )
 }
 
-function ReferenceCard({ label, children }: { label: string; children: React.ReactNode }) {
+function ReferenceCard({
+  label,
+  children,
+  bare = false,
+}: {
+  label: string
+  children: React.ReactNode
+  /**
+   * Drop the bordered/padded wrapper. Use when the demo component already
+   * provides its own border and surface (e.g. RecordsCard, CustomerCard) so
+   * the example doesn't read as a card-inside-a-card.
+   */
+  bare?: boolean
+}) {
   return (
     <div className="flex flex-col gap-3">
       <p className="typo-caption font-semibold uppercase tracking-wider text-vintiga-slate-500">{label}</p>
-      <div className="border border-vintiga-slate-200 rounded-vintiga-lg p-vintiga-lg bg-vintiga-white">
-        {children}
-      </div>
+      {bare ? (
+        <div>{children}</div>
+      ) : (
+        <div className="border border-vintiga-slate-200 rounded-vintiga-lg p-vintiga-lg bg-vintiga-white">
+          {children}
+        </div>
+      )}
     </div>
   )
 }
@@ -1883,7 +1900,7 @@ function MediaSection() {
           />
         </ReferenceCard>
 
-        <ReferenceCard label="Empty state">
+        <ReferenceCard label="Empty state" bare>
           <Media
             items={[]}
             onUpload={() => {}}
@@ -1967,7 +1984,7 @@ function CustomerCardSection() {
       description="Bordered lead card for any customer-centric drill-down (membership detail, customer profile, order's customer summary). Avatar on the left, name + subtitle + tags + multi-line details in the middle, button group anchored top-right. All slots are open `ReactNode`s — wrap the avatar in a badge overlay (e.g. `AgeVerifiedBadge`), drop multiple buttons / a PopoverMenu into `actions`, etc."
     >
       <div className="flex flex-col gap-vintiga-lg">
-        <ReferenceCard label="Default — age-verified avatar + button group">
+        <ReferenceCard label="Default — age-verified avatar + button group" bare>
           <CustomerCard
             avatar={
               <div className="relative">
@@ -2014,7 +2031,7 @@ function CustomerCardSection() {
           />
         </ReferenceCard>
 
-        <ReferenceCard label="Minimal — name + details only, no actions">
+        <ReferenceCard label="Minimal — name + details only, no actions" bare>
           <CustomerCard
             avatar={<Avatar name="Tom Cook" size="lg" />}
             name="Tom Cook"
@@ -2039,7 +2056,7 @@ function RecordsCardSection() {
       description="Bordered card with a titled header (title · subtitle · trailing action) and stacked record rows separated by top borders. Use for any 'collection' surface — Payment Methods, saved Addresses, attached files, API keys, etc. Each direct child is treated as a row; the card injects the divider automatically. Pass `empty` for a friendly state when the collection has no rows yet."
     >
       <div className="flex flex-col gap-vintiga-lg">
-        <ReferenceCard label="Payment Methods — header + add + rows">
+        <ReferenceCard label="Payment Methods — header + add + rows" bare>
           <RecordsCard
             title="Payment Methods"
             subtitle="Manage your payment information"
@@ -2072,7 +2089,7 @@ function RecordsCardSection() {
           </RecordsCard>
         </ReferenceCard>
 
-        <ReferenceCard label="Empty state">
+        <ReferenceCard label="Empty state" bare>
           <RecordsCard
             title="Address"
             subtitle="Manage customer address information"
