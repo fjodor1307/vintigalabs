@@ -47,8 +47,8 @@ function LocationsCard({
   showActions?: boolean
 }) {
   return (
-    <section className="border border-vintiga-slate-200 rounded-vintiga-xl bg-vintiga-white overflow-hidden">
-      <div className="flex items-start justify-between gap-vintiga-md p-vintiga-lg pb-vintiga-md">
+    <section className="border border-vintiga-slate-200 rounded-vintiga-xl bg-vintiga-white p-vintiga-lg flex flex-col gap-vintiga-md">
+      <div className="flex items-start justify-between gap-vintiga-md">
         <div className="flex flex-col gap-1 min-w-0">
           <h3 className="typo-title-section font-semibold text-vintiga-slate-900">
             {LOCATION_KIND_LABEL[kind]}
@@ -60,44 +60,46 @@ function LocationsCard({
         <Button onClick={() => {}}>Add</Button>
       </div>
 
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableHeader>Name</TableHeader>
-            <TableHeader>Address</TableHeader>
-            <TableHeader>Phone</TableHeader>
-            {showActions && <TableHeader className="w-32">Actions</TableHeader>}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((l) => {
-            const goEdit = () => { window.location.hash = `/web/settings/locations/${l.id}` }
-            return (
-              <TableRow key={l.id} onClick={showActions ? goEdit : undefined}>
-                <TableCell className="font-medium text-vintiga-slate-900">{l.name}</TableCell>
-                <TableCell className="text-vintiga-slate-700">
-                  {[l.city, l.state, l.zip, l.country].filter(Boolean).join(', ')}
-                </TableCell>
-                <TableCell className="text-vintiga-slate-700">{l.phone}</TableCell>
-                {showActions && (
-                  <TableCell>
-                    <span onClick={(e) => e.stopPropagation()} className="inline-flex">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        leftIcon={<PencilIcon />}
-                        onClick={goEdit}
-                      >
-                        Edit
-                      </Button>
-                    </span>
+      <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableHeader>Name</TableHeader>
+              <TableHeader>Address</TableHeader>
+              <TableHeader>Phone</TableHeader>
+              {showActions && <TableHeader className="w-32">Actions</TableHeader>}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.map((l) => {
+              const goEdit = () => { window.location.hash = `/web/settings/locations/${l.id}` }
+              return (
+                <TableRow key={l.id} onClick={showActions ? goEdit : undefined}>
+                  <TableCell className="font-medium text-vintiga-slate-900">{l.name}</TableCell>
+                  <TableCell className="text-vintiga-slate-700">
+                    {[l.city, l.state, l.zip, l.country].filter(Boolean).join(', ')}
                   </TableCell>
-                )}
-              </TableRow>
-            )
-          })}
-        </TableBody>
-      </Table>
+                  <TableCell className="text-vintiga-slate-700">{l.phone}</TableCell>
+                  {showActions && (
+                    <TableCell>
+                      <span onClick={(e) => e.stopPropagation()} className="inline-flex">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          leftIcon={<PencilIcon />}
+                          onClick={goEdit}
+                        >
+                          Edit
+                        </Button>
+                      </span>
+                    </TableCell>
+                  )}
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
+      </div>
     </section>
   )
 }
