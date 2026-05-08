@@ -72,18 +72,17 @@ export function LocationEditScreen() {
   }
 
   function handleSave() {
-    window.location.hash = '/web/settings#locations'
+    window.location.hash = '/web/settings'
   }
 
   function handleCancel() {
-    window.location.hash = '/web/settings#locations'
+    window.location.hash = '/web/settings'
   }
 
   return (
     <SettingsLayout
       breadcrumbs={[
-        { label: 'Settings',  href: '#/web/settings' },
-        { label: 'Locations', href: '#/web/settings#locations' },
+        { label: 'Locations', href: '#/web/settings' },
         { label: seed.name },
       ]}
       title={
