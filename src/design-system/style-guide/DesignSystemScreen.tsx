@@ -150,6 +150,8 @@ const NAV: NavGroup[] = [
           { id: 'ds-list-card', label: 'List Card' },
           { id: 'ds-club-card', label: 'Club Card' },
           { id: 'ds-customer-card', label: 'Customer Card' },
+          { id: 'ds-records-card', label: 'Records Card' },
+          { id: 'ds-card-brand-logo', label: 'Card Brand Logo' },
           { id: 'ds-selection-card', label: 'Selection Card' },
           { id: 'ds-widget',   label: 'Widget' },
           { id: 'ds-kpi-card', label: 'KPI Card' },

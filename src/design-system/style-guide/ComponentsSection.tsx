@@ -45,6 +45,8 @@ import { ListCard } from '@ds/shared/ListCard'
 import { ClubCard } from '@ds/shared/ClubCard'
 import { CustomerCard } from '@ds/shared/CustomerCard'
 import { AgeVerifiedBadge } from '@ds/shared/AgeVerifiedBadge'
+import { RecordsCard, RecordsCardEmpty } from '@ds/shared/RecordsCard'
+import { CardBrandLogo } from '@ds/shared/CardBrandLogo'
 import { Media } from '@ds/shared/Media'
 import { EllipsisVerticalIcon } from '@ds/icons/Icons'
 import { SelectionCard } from '@ds/shared/SelectionCard'
@@ -1986,6 +1988,81 @@ function CustomerCardSection() {
   )
 }
 
+function RecordsCardSection() {
+  return (
+    <SubSection
+      id="ds-records-card"
+      title="Records Card"
+      description="Bordered card with a titled header (title · subtitle · trailing action) and stacked record rows separated by top borders. Use for any 'collection' surface — Payment Methods, saved Addresses, attached files, API keys, etc. Each direct child is treated as a row; the card injects the divider automatically. Pass `empty` for a friendly state when the collection has no rows yet."
+    >
+      <div className="flex flex-col gap-vintiga-lg">
+        <ReferenceCard label="Payment Methods — header + add + rows">
+          <RecordsCard
+            title="Payment Methods"
+            subtitle="Manage your payment information"
+            action={
+              <Button variant="outline" size="md" leftIcon={<PlusIcon />} onClick={() => {}}>
+                Add
+              </Button>
+            }
+            empty={<RecordsCardEmpty title="No payment methods" hint="Add a card to enable one-click checkout." />}
+          >
+            <div className="px-vintiga-lg py-vintiga-md flex items-center gap-vintiga-md">
+              <CardBrandLogo brand="mastercard" />
+              <div className="flex flex-col">
+                <span className="typo-caption text-vintiga-slate-500">Expires 07/27</span>
+                <span className="typo-body-sm font-semibold text-vintiga-slate-900">Mastercard **** 0092</span>
+              </div>
+              <div className="flex-1" />
+              <Tag variant="neutral-dark" size="md">Default Card</Tag>
+              <IconButton variant="outline" size="sm" icon={<EllipsisVerticalIcon />} aria-label="Card actions" onClick={() => {}} />
+            </div>
+            <div className="px-vintiga-lg py-vintiga-md flex items-center gap-vintiga-md">
+              <CardBrandLogo brand="visa" />
+              <div className="flex flex-col">
+                <span className="typo-caption text-vintiga-slate-500">Expires 03/26</span>
+                <span className="typo-body-sm font-semibold text-vintiga-slate-900">Visa **** 1119</span>
+              </div>
+              <div className="flex-1" />
+              <IconButton variant="outline" size="sm" icon={<EllipsisVerticalIcon />} aria-label="Card actions" onClick={() => {}} />
+            </div>
+          </RecordsCard>
+        </ReferenceCard>
+
+        <ReferenceCard label="Empty state">
+          <RecordsCard
+            title="Address"
+            subtitle="Manage customer address information"
+            action={
+              <Button variant="outline" size="md" leftIcon={<PlusIcon />} onClick={() => {}}>
+                Add
+              </Button>
+            }
+            empty={<RecordsCardEmpty title="No addresses" hint="Add a shipping or billing address." />}
+          />
+        </ReferenceCard>
+      </div>
+    </SubSection>
+  )
+}
+
+function CardBrandLogoSection() {
+  return (
+    <SubSection
+      id="ds-card-brand-logo"
+      title="Card Brand Logo"
+      description="56×36 card-shaped tile rendering a payment-card brand logo. Use next to masked card numbers in payment-method rows. Mastercard ships as proper overlapping circles; Visa / Amex / Discover fall back to a neutral chip until artwork is supplied."
+    >
+      <div className="flex items-center gap-vintiga-md">
+        <CardBrandLogo brand="mastercard" />
+        <CardBrandLogo brand="visa" />
+        <CardBrandLogo brand="amex" />
+        <CardBrandLogo brand="discover" />
+      </div>
+    </SubSection>
+  )
+}
+
 const SELECTION_CARD_CONTROLS: ControlSchema = {
   orientation: { type: 'select',  options: ['horizontal', 'vertical'],   default: 'horizontal' },
   align:       { type: 'select',  options: ['start', 'center'],          default: 'start' },
@@ -2310,6 +2387,8 @@ export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-list-card':      ListCardSection,
   'ds-club-card':      ClubCardSection,
   'ds-customer-card':  CustomerCardSection,
+  'ds-records-card':   RecordsCardSection,
+  'ds-card-brand-logo': CardBrandLogoSection,
   'ds-media':          MediaSection,
   'ds-selection-card': SelectionCardSection,
   'ds-breadcrumb':     BreadcrumbSection,

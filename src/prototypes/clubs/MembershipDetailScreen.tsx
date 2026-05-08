@@ -10,6 +10,7 @@ import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import { Tag } from '@ds/shared/Tag'
 import { Avatar } from '@ds/shared/Avatar'
 import { CustomerCard } from '@ds/shared/CustomerCard'
+import { CardBrandLogo } from '@ds/shared/CardBrandLogo'
 import { RailSection } from '@ds/shared/RightRail'
 import {
   Table,
@@ -293,7 +294,7 @@ function PaymentMethodCard() {
     <Card>
       <h3 className="typo-title-section font-semibold text-vintiga-slate-900 mb-vintiga-md">Payment Method</h3>
       <div className="border-t border-vintiga-slate-200 pt-vintiga-md flex items-center gap-vintiga-md">
-        <MastercardLogo />
+        <CardBrandLogo brand="mastercard" />
         <div className="flex flex-col">
           <span className="typo-caption text-vintiga-slate-500">Expires 07/27</span>
           <span className="typo-body-sm font-semibold text-vintiga-slate-900">Mastercard **** 0092</span>
@@ -309,24 +310,6 @@ function PaymentMethodCard() {
         />
       </div>
     </Card>
-  )
-}
-
-function MastercardLogo() {
-  // Two interlocking circles — red, yellow, with orange in the intersection
-  // (clipped from the right circle) — wrapped in a card-shaped surface.
-  return (
-    <svg width="56" height="36" viewBox="0 0 56 36" aria-label="Mastercard" role="img">
-      <rect x="0.5" y="0.5" width="55" height="35" rx="5" fill="white" stroke="#E5E7EB" />
-      <defs>
-        <clipPath id="mc-left-circle">
-          <circle cx="24" cy="18" r="9" />
-        </clipPath>
-      </defs>
-      <circle cx="24" cy="18" r="9" fill="#EB001B" />
-      <circle cx="32" cy="18" r="9" fill="#F79E1B" />
-      <circle cx="32" cy="18" r="9" fill="#FF5F00" clipPath="url(#mc-left-circle)" />
-    </svg>
   )
 }
 
