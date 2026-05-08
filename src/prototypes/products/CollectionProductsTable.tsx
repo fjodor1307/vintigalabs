@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Thumbnail } from '@ds/shared/Thumbnail'
-import { SelectAllCheckbox } from './SelectAllCheckbox'
+import { SelectAllCheckbox } from '@ds/shared/SelectAllCheckbox'
 import { Tag } from '@ds/shared/Tag'
 import { TextField } from '@ds/shared/TextField'
 import { Checkbox } from '@ds/shared/Checkbox'
