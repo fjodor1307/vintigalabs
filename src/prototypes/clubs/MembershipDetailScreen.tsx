@@ -9,6 +9,7 @@ import { IconButton } from '@ds/shared/IconButton'
 import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import { Tag } from '@ds/shared/Tag'
 import { Avatar } from '@ds/shared/Avatar'
+import { CustomerCard } from '@ds/shared/CustomerCard'
 import { RailSection } from '@ds/shared/RightRail'
 import {
   Table,
@@ -23,8 +24,8 @@ import {
   EllipsisIcon,
   IdCardIcon,
 } from '@ds/icons/Icons'
+import { AgeVerifiedBadge } from '@ds/shared/AgeVerifiedBadge'
 import { BlindEnthusiasmLogo } from './BlindEnthusiasmLogo'
-import { AgeVerifiedBadge } from './AgeVerifiedBadge'
 import { getMember, type Member } from './memberSamples'
 import { CLUBS_CATALOG, type ClubKey } from './clubsCatalog'
 
@@ -174,49 +175,66 @@ export function MembershipDetailScreen() {
 function CustomerHeaderCard({ member }: { member: Member }) {
   const club = CLUBS_CATALOG[member.club]
   return (
-    <Card>
-      <div className="flex items-start gap-vintiga-md">
-        <div className="relative shrink-0">
+    <CustomerCard
+      avatar={
+        <div className="relative">
           <Avatar name={member.name} src={member.avatarUrl} size="lg" />
-          {member.ageVerified && <AgeVerifiedBadge memberName={member.name} />}
+          {member.ageVerified && <AgeVerifiedBadge customerName={member.name} />}
         </div>
-
-        <div className="flex-1 min-w-0 flex flex-col gap-vintiga-sm">
-          <h2 className="typo-title-section font-semibold text-vintiga-slate-900">{member.name}</h2>
-
-          {/* Club link — IdCard icon prefix (consistent across the app) */}
-          <a
-            href={`#/web/clubs/view/${club.slug}/overview`}
-            className="inline-flex items-center gap-1.5 typo-body font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 no-underline w-fit"
-          >
-            <IdCardIcon className="w-5 h-5 shrink-0" />
-            {club.name}
-          </a>
-
-          {/* Audience tags */}
-          {member.audienceTags.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              {member.audienceTags.map((t) => (
-                <Tag key={t} variant="outline" tone="default" size="sm">{t}</Tag>
-              ))}
-            </div>
-          )}
-
-          {/* Contact + status */}
-          <div className="flex flex-col typo-body-sm text-vintiga-slate-700 leading-relaxed pt-vintiga-xs">
-            <span>
-              {member.email}
-              <span className="text-vintiga-slate-500"> | Preferred</span>
-            </span>
-            <span>{member.city} {member.zip}</span>
-            <span className="text-vintiga-slate-500">Last Visit: {member.lastVisit}</span>
-            <span className="text-vintiga-slate-500">Club Status: {STATUS_LABEL[member.status]}</span>
+      }
+      name={member.name}
+      subtitle={
+        <a
+          href={`#/web/clubs/view/${club.slug}/overview`}
+          className="inline-flex items-center gap-1.5 typo-body font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 no-underline w-fit"
+        >
+          <IdCardIcon className="w-5 h-5 shrink-0" />
+          {club.name}
+        </a>
+      }
+      tags={
+        member.audienceTags.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {member.audienceTags.map((t) => (
+              <Tag key={t} variant="outline" tone="default" size="sm">{t}</Tag>
+            ))}
           </div>
-        </div>
-
-        <Button variant="outline" onClick={() => {}} className="shrink-0">Customer Details</Button>
-      </div>
-    </Card>
+        )
+      }
+      details={
+        <>
+          <span>
+            {member.email}
+            <span className="text-vintiga-slate-500"> | Preferred</span>
+          </span>
+          <span>{member.city} {member.zip}</span>
+          <span className="text-vintiga-slate-500">Last Visit: {member.lastVisit}</span>
+          <span className="text-vintiga-slate-500">Club Status: {STATUS_LABEL[member.status]}</span>
+        </>
+      }
+      actions={
+        <>
+          <Button variant="outline" onClick={() => {}}>Customer Details</Button>
+          <PopoverMenu
+            align="right"
+            width="w-44"
+            trigger={(_open, toggle) => (
+              <IconButton
+                variant="outline"
+                size="md"
+                icon={<EllipsisVerticalIcon />}
+                onClick={toggle}
+                aria-label="Customer actions"
+              />
+            )}
+            items={[
+              { label: 'Edit customer',  onClick: () => {} },
+              { label: 'View orders',    onClick: () => {} },
+            ]}
+          />
+        </>
+      }
+    />
   )
 }
 

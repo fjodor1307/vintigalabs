@@ -43,9 +43,9 @@ import { AiSuggestButton } from '@ds/shared/AiSuggestButton'
 import { NoImageArt } from '@ds/shared/NoImageArt'
 import { ListCard } from '@ds/shared/ListCard'
 import { ClubCard } from '@ds/shared/ClubCard'
+import { CustomerCard } from '@ds/shared/CustomerCard'
+import { AgeVerifiedBadge } from '@ds/shared/AgeVerifiedBadge'
 import { Media } from '@ds/shared/Media'
-import { PageTemplate } from '@ds/shared/PageTemplate'
-import { RailSection } from '@ds/shared/RightRail'
 import { EllipsisVerticalIcon } from '@ds/icons/Icons'
 import { SelectionCard } from '@ds/shared/SelectionCard'
 import { Widget, WidgetHeader, WidgetBody, WidgetFooter } from '@ds/shared/Widget'
@@ -1850,178 +1850,6 @@ function MediaSection() {
   )
 }
 
-function ProductsTemplateSection() {
-  return (
-    <SubSection
-      id="ds-template-products"
-      title="Detail page"
-      description={'The standard editor / detail page layout — Breadcrumb · Title + actions · optional Tabs · stacked body sections · optional 360-px right rail. Built on the shared `PageTemplate` primitive (Figma 5640:28214 — "Page Layout"). Padding 32 px on every side of the main column with 32-px gaps between header rows. Use this for product editors, order details, customer profiles, and any other detail surface — never roll your own grid layout.'}
-    >
-      <div className="flex flex-col gap-vintiga-lg">
-        <ReferenceCard label="Full layout — breadcrumb · title + actions · tabs · body · sidebar">
-          <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
-            <PageTemplate
-              breadcrumbs={[
-                { icon: <BreadcrumbHomeIcon />, href: '#' },
-                { label: 'Section', href: '#' },
-                { label: 'Page' },
-              ]}
-              title="Title"
-              actions={
-                <>
-                  <Button>Save</Button>
-                  <IconButton variant="outline" icon={<EllipsisVerticalIcon />} aria-label="More actions" />
-                </>
-              }
-              tabs={
-                <SegmentedControl<string>
-                  value="one"
-                  options={[
-                    { value: 'one',   label: 'Label' },
-                    { value: 'two',   label: 'Label' },
-                    { value: 'three', label: 'Label' },
-                    { value: 'four',  label: 'Label' },
-                    { value: 'five',  label: 'Label' },
-                  ]}
-                />
-              }
-              rail={
-                <RailSection title="Title">
-                  <div className="h-[88px]" />
-                </RailSection>
-              }
-            >
-              <SectionCard title="Label">
-                <Field label="Label" required>
-                  <TextField placeholder="Enter Label" />
-                </Field>
-              </SectionCard>
-            </PageTemplate>
-          </div>
-        </ReferenceCard>
-
-        <ReferenceCard label="Without tabs or rail — single-column form">
-          <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
-            <PageTemplate
-              breadcrumbs={[
-                { icon: <BreadcrumbHomeIcon />, href: '#' },
-                { label: 'Settings' },
-              ]}
-              title="Account settings"
-              actions={<Button>Save changes</Button>}
-            >
-              <SectionCard title="Profile">
-                <Field label="Display name" required>
-                  <TextField placeholder="Enter your display name" />
-                </Field>
-                <Field label="Email" required>
-                  <TextField placeholder="you@example.com" />
-                </Field>
-              </SectionCard>
-              <SectionCard title="Preferences">
-                <Field label="Time zone">
-                  <TextField placeholder="UTC" />
-                </Field>
-              </SectionCard>
-            </PageTemplate>
-          </div>
-        </ReferenceCard>
-
-        <ReferenceCard label="Stacked sections with rail — order / record detail">
-          <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
-            <PageTemplate
-              breadcrumbs={[
-                { icon: <BreadcrumbHomeIcon />, href: '#' },
-                { label: 'Orders', href: '#' },
-                { label: 'Order #100016' },
-              ]}
-              title="Order #100016"
-              actions={<Button>Create Refund</Button>}
-              rail={
-                <RailSection title="Order Info">
-                  <p className="typo-body-sm text-vintiga-slate-700">
-                    Sales Attribute: <span className="font-semibold text-vintiga-slate-900">POS</span>
-                  </p>
-                  <p className="typo-body-sm text-vintiga-slate-700">
-                    Sales Associate: <span className="font-semibold text-vintiga-slate-900">Geoff Spears</span>
-                  </p>
-                  <p className="typo-body-sm text-vintiga-slate-700">
-                    Sales Channel: <span className="font-semibold text-vintiga-slate-900">POS</span>
-                  </p>
-                </RailSection>
-              }
-            >
-              <SectionCard title="Order Items">
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableHeader>QTY</TableHeader>
-                      <TableHeader>Product</TableHeader>
-                      <TableHeader className="text-right">Price</TableHeader>
-                      <TableHeader className="text-right">Ext</TableHeader>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>1</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-vintiga-sm">
-                          <div className="w-10 h-10 rounded-vintiga-sm bg-vintiga-surface-element flex items-center justify-center shrink-0">
-                            <NoImageArt className="w-5 h-5 text-vintiga-slate-400" />
-                          </div>
-                          <div>
-                            <p className="typo-body-sm font-semibold text-vintiga-slate-900">Cola</p>
-                            <p className="typo-caption text-vintiga-slate-500">drink-cola · each</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">$3.00</TableCell>
-                      <TableCell className="text-right">$3.00</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </SectionCard>
-
-              <SectionCard
-                title="Order Summary"
-                action={<Tag tone="success">Fulfilled</Tag>}
-              >
-                <div className="flex flex-col gap-vintiga-xs">
-                  <div className="flex justify-between typo-body-sm text-vintiga-slate-700">
-                    <span>Subtotal</span><span>$3.00</span>
-                  </div>
-                  <div className="flex justify-between typo-body-sm text-vintiga-slate-700">
-                    <span>Shipping</span><span>$0.00</span>
-                  </div>
-                  <div className="flex justify-between typo-body-sm text-vintiga-slate-700">
-                    <span>Tax (8.8%)</span><span>$0.26</span>
-                  </div>
-                  <div className="flex justify-between border-t border-vintiga-slate-200 pt-vintiga-sm mt-vintiga-xs typo-body font-semibold text-vintiga-slate-900">
-                    <span>Total (1 item)</span><span>$3.26</span>
-                  </div>
-                </div>
-              </SectionCard>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-lg">
-                <SectionCard title="Fulfillment" icon={<PackageIcon />}>
-                  <p className="typo-body-sm font-semibold text-vintiga-slate-900">Status: Fulfilled</p>
-                  <p className="typo-body-sm text-vintiga-slate-500">Order fulfilled.</p>
-                </SectionCard>
-                <SectionCard title="Payment" icon={<DollarIcon />}>
-                  <div className="flex items-center justify-between">
-                    <p className="typo-body-sm font-semibold text-vintiga-slate-900">N/A</p>
-                    <p className="typo-body-sm text-vintiga-slate-700">$3.26</p>
-                  </div>
-                </SectionCard>
-              </div>
-            </PageTemplate>
-          </div>
-        </ReferenceCard>
-      </div>
-    </SubSection>
-  )
-}
-
 function ClubCardSection() {
   return (
     <SubSection
@@ -2080,6 +1908,78 @@ function ClubCardSection() {
               onClick={() => {}}
             />
           </div>
+        </ReferenceCard>
+      </div>
+    </SubSection>
+  )
+}
+
+function CustomerCardSection() {
+  return (
+    <SubSection
+      id="ds-customer-card"
+      title="Customer Card"
+      description="Bordered lead card for any customer-centric drill-down (membership detail, customer profile, order's customer summary). Avatar on the left, name + subtitle + tags + multi-line details in the middle, button group anchored top-right. All slots are open `ReactNode`s — wrap the avatar in a badge overlay (e.g. `AgeVerifiedBadge`), drop multiple buttons / a PopoverMenu into `actions`, etc."
+    >
+      <div className="flex flex-col gap-vintiga-lg">
+        <ReferenceCard label="Default — age-verified avatar + button group">
+          <CustomerCard
+            avatar={
+              <div className="relative">
+                <Avatar name="Jane Davis" size="lg" />
+                <AgeVerifiedBadge customerName="Jane Davis" />
+              </div>
+            }
+            name="Jane Davis"
+            subtitle={
+              <a
+                href="#"
+                className="inline-flex items-center gap-1.5 typo-body font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 no-underline w-fit"
+              >
+                <IdCardIcon className="w-5 h-5 shrink-0" />
+                Blind Enthusiasm
+              </a>
+            }
+            tags={
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Tag variant="outline" tone="default" size="sm">VIP</Tag>
+                <Tag variant="outline" tone="default" size="sm">Reserve Tier</Tag>
+              </div>
+            }
+            details={
+              <>
+                <span>janedavis@gmail.com <span className="text-vintiga-slate-500">| Preferred</span></span>
+                <span>Bellingham 98229</span>
+                <span className="text-vintiga-slate-500">Last Visit: Mar 15, 2025</span>
+                <span className="text-vintiga-slate-500">Club Status: Active</span>
+              </>
+            }
+            actions={
+              <>
+                <Button variant="outline" onClick={() => {}}>Customer Details</Button>
+                <IconButton
+                  variant="outline"
+                  size="md"
+                  icon={<EllipsisVerticalIcon />}
+                  aria-label="Customer actions"
+                  onClick={() => {}}
+                />
+              </>
+            }
+          />
+        </ReferenceCard>
+
+        <ReferenceCard label="Minimal — name + details only, no actions">
+          <CustomerCard
+            avatar={<Avatar name="Tom Cook" size="lg" />}
+            name="Tom Cook"
+            details={
+              <>
+                <span>tom@example.com</span>
+                <span className="text-vintiga-slate-500">Last Visit: Apr 02, 2025</span>
+              </>
+            }
+          />
         </ReferenceCard>
       </div>
     </SubSection>
@@ -2409,8 +2309,8 @@ export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-widget':         WidgetSection,
   'ds-list-card':      ListCardSection,
   'ds-club-card':      ClubCardSection,
+  'ds-customer-card':  CustomerCardSection,
   'ds-media':          MediaSection,
-  'ds-template-products': ProductsTemplateSection,
   'ds-selection-card': SelectionCardSection,
   'ds-breadcrumb':     BreadcrumbSection,
   'ds-section-card':   SectionCardSection,
