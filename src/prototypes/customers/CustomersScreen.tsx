@@ -8,6 +8,7 @@ import { TextField } from '@ds/shared/TextField'
 import { Select } from '@ds/shared/Select'
 import { Avatar } from '@ds/shared/Avatar'
 import { Checkbox } from '@ds/shared/Checkbox'
+import { SelectAllCheckbox } from '@ds/shared/SelectAllCheckbox'
 import { KpiCard } from '@ds/shared/KpiCard'
 import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import {
@@ -263,19 +264,23 @@ export function CustomersScreen() {
   // Page size and counts — the visible page count uses the seeded "320" total
   // so pagination feels real even though only 10 fixture rows exist.
   const totalPages = Math.max(1, Math.ceil(CUSTOMER_LIST_TOTAL / pageSize))
-  const allOnPageSelected = filtered.length > 0 && filtered.every((c) => selected.has(c.id))
-  const someOnPageSelected = filtered.some((c) => selected.has(c.id))
 
-  function toggleAll() {
+  function selectPage() {
     setSelected((prev) => {
       const next = new Set(prev)
-      if (allOnPageSelected) {
-        for (const c of filtered) next.delete(c.id)
-      } else {
-        for (const c of filtered) next.add(c.id)
-      }
+      for (const c of filtered) next.add(c.id)
       return next
     })
+  }
+
+  function selectAll() {
+    // The fixture only ships 10 rows but the toolbar advertises 320 — selecting
+    // "all" marks every available id. Future-pages would be virtual.
+    setSelected(new Set(CUSTOMER_LIST.map((c) => c.id)))
+  }
+
+  function clearSelection() {
+    setSelected(new Set())
   }
 
   function toggleRow(id: string, checked: boolean) {
@@ -375,12 +380,13 @@ export function CustomersScreen() {
                   <TableRow>
                     <TableHeader>
                       <div className="flex items-center gap-vintiga-sm">
-                        <Checkbox
-                          checked={allOnPageSelected}
-                          indeterminate={!allOnPageSelected && someOnPageSelected}
-                          onChange={toggleAll}
-                          size="sm"
-                          aria-label="Select all rows on this page"
+                        <SelectAllCheckbox
+                          selectedCount={selected.size}
+                          totalOnPage={filtered.length}
+                          totalAll={CUSTOMER_LIST_TOTAL}
+                          onSelectPage={selectPage}
+                          onSelectAll={selectAll}
+                          onClear={clearSelection}
                         />
                         <span>Customers ({CUSTOMER_LIST_TOTAL})</span>
                         <ArrowUpDownIcon className="w-4 h-4 text-vintiga-slate-400 ml-auto" />

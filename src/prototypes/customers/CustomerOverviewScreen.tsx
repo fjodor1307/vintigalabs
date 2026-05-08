@@ -156,6 +156,10 @@ function CustomerInsights() {
   )
 }
 
+function orderHref(orderId: string): string {
+  return `#/web/customers/view/orders/${orderId.replace(/^#/, '')}`
+}
+
 function RecentOrders() {
   return (
     <section className="flex flex-col gap-vintiga-md">
@@ -176,8 +180,9 @@ function RecentOrders() {
         <TableBody>
           {CUSTOMER.recentOrders.map((o) => {
             const meta = ORDER_STATUS_TONE[o.status]
+            const goDetail = () => { window.location.hash = orderHref(o.id).slice(1) }
             return (
-              <TableRow key={o.id}>
+              <TableRow key={o.id} onClick={goDetail}>
                 <TableCell className="font-medium">{o.id}</TableCell>
                 <TableCell className="text-vintiga-slate-500">{o.date}</TableCell>
                 <TableCell>
@@ -185,13 +190,26 @@ function RecentOrders() {
                 </TableCell>
                 <TableCell className="text-right font-medium">{o.total}</TableCell>
                 <TableCell className="text-right">
-                  <IconButton
-                    variant="outline"
-                    size="sm"
-                    icon={<EllipsisVerticalIcon />}
-                    onClick={() => {}}
-                    aria-label={`More options for ${o.id}`}
-                  />
+                  <span onClick={(e) => e.stopPropagation()} className="inline-flex">
+                    <PopoverMenu
+                      align="right"
+                      width="w-44"
+                      trigger={(_open, toggle) => (
+                        <IconButton
+                          variant="outline"
+                          size="sm"
+                          icon={<EllipsisVerticalIcon />}
+                          onClick={toggle}
+                          aria-label={`More options for ${o.id}`}
+                        />
+                      )}
+                      items={[
+                        { label: 'View order',     onClick: goDetail },
+                        { label: 'Print receipt', onClick: () => {} },
+                        { label: 'Refund',        onClick: () => {} },
+                      ]}
+                    />
+                  </span>
                 </TableCell>
               </TableRow>
             )

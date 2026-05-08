@@ -47,6 +47,7 @@ import { CustomerCard } from '@ds/shared/CustomerCard'
 import { AgeVerifiedBadge } from '@ds/shared/AgeVerifiedBadge'
 import { RecordsCard, RecordsCardEmpty } from '@ds/shared/RecordsCard'
 import { CardBrandLogo } from '@ds/shared/CardBrandLogo'
+import { SelectAllCheckbox } from '@ds/shared/SelectAllCheckbox'
 import { Media } from '@ds/shared/Media'
 import { EllipsisVerticalIcon } from '@ds/icons/Icons'
 import { SelectionCard } from '@ds/shared/SelectionCard'
@@ -329,6 +330,48 @@ function CheckboxSection() {
             <Checkbox checked={i} onChange={setI} label="Active" />
             <Checkbox label="Archived" />
             <Checkbox label="Draft" />
+          </div>
+        </ReferenceCard>
+      </div>
+    </SubSection>
+  )
+}
+
+function SelectAllCheckboxSection() {
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const totalOnPage = 10
+  const totalAll = 320
+  const ids = Array.from({ length: totalOnPage }, (_, i) => `row-${i}`)
+  return (
+    <SubSection
+      id="ds-select-all-checkbox"
+      title="Select-All Checkbox"
+      description="Header-row checkbox with a dropdown indicator that opens a menu offering 'Select all on page', 'Select all', and 'Clear selection' (when something's selected). Use in any paginated table that supports bulk actions — products, customers, orders, etc. The checkbox itself toggles between 'select page' and 'clear' depending on current state, while the dropdown gives access to the broader actions."
+    >
+      <div className="flex flex-col gap-vintiga-lg">
+        <ReferenceCard label="Try it — header cell with select-all + clear">
+          <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden bg-vintiga-white">
+            <div className="bg-vintiga-slate-50 border-b border-vintiga-slate-200 px-vintiga-md py-vintiga-sm flex items-center gap-vintiga-sm">
+              <SelectAllCheckbox
+                selectedCount={selected.size}
+                totalOnPage={totalOnPage}
+                totalAll={totalAll}
+                onSelectPage={() => setSelected(new Set(ids))}
+                onSelectAll={() => setSelected(new Set(ids))}
+                onClear={() => setSelected(new Set())}
+              />
+              <span className="typo-body-sm font-semibold text-vintiga-slate-700">
+                Rows ({totalAll})
+              </span>
+              <span className="ml-auto typo-caption text-vintiga-slate-500">
+                {selected.size} selected
+              </span>
+            </div>
+            <div className="px-vintiga-md py-vintiga-md typo-body-sm text-vintiga-slate-500">
+              {selected.size === 0
+                ? 'No rows selected — click the checkbox or its dropdown to begin.'
+                : `${selected.size} of ${totalOnPage} rows selected on this page.`}
+            </div>
           </div>
         </ReferenceCard>
       </div>
@@ -2357,6 +2400,7 @@ export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-select':           SelectSection,
   'ds-rich-text-editor': RichTextEditorSection,
   'ds-checkbox':       CheckboxSection,
+  'ds-select-all-checkbox': SelectAllCheckboxSection,
   'ds-radio':          RadioGroupSection,
   'ds-switch':         SwitchSection,
   'ds-alert-soft':     AlertSoftSection,
