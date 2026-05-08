@@ -6,6 +6,8 @@ import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
 import { KpiCard } from '@ds/shared/KpiCard'
 import { PopoverMenu } from '@ds/shared/PopoverMenu'
+import { CustomerCard } from '@ds/shared/CustomerCard'
+import { AgeVerifiedBadge } from '@ds/shared/AgeVerifiedBadge'
 import {
   Table,
   TableHead,
@@ -15,7 +17,6 @@ import {
   TableCell,
 } from '@ds/shared/Table'
 import {
-  ShieldCheckIcon,
   IdCardIcon,
   EllipsisVerticalIcon,
   ChevronLeftIcon,
@@ -59,71 +60,63 @@ function HeaderCard() {
 
   return (
     <>
-      <section className="border border-vintiga-slate-200 rounded-vintiga-xl bg-vintiga-white p-vintiga-lg flex items-start gap-vintiga-lg">
-        {/* Avatar with verified badge */}
-        <div className="relative shrink-0">
-          <Avatar name={displayName} src={CUSTOMER.avatarUrl} size="xl" />
-          {CUSTOMER.verified && (
-            <span
-              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-vintiga-indigo-500 border-2 border-vintiga-white flex items-center justify-center text-vintiga-white [&>svg]:w-3.5 [&>svg]:h-3.5"
-              aria-label="Verified"
-            >
-              <ShieldCheckIcon />
-            </span>
-          )}
-        </div>
-
-        {/* Identity + meta */}
-        <div className="flex-1 min-w-0 flex flex-col gap-vintiga-sm">
-          <div className="flex flex-col gap-1">
-            <h2 className="typo-title-section font-semibold text-vintiga-slate-900">{displayName}</h2>
-            <span className="inline-flex items-center gap-1.5 typo-body-sm text-vintiga-indigo-600 font-medium">
-              <IdCardIcon className="w-4 h-4" />
-              {CUSTOMER.club}
-            </span>
+      <CustomerCard
+        avatar={
+          <div className="relative">
+            <Avatar name={displayName} src={CUSTOMER.avatarUrl} size="xl" />
+            {CUSTOMER.verified && <AgeVerifiedBadge customerName={displayName} />}
           </div>
-
+        }
+        name={displayName}
+        subtitle={
+          <span className="inline-flex items-center gap-1.5 typo-body-sm text-vintiga-indigo-600 font-medium">
+            <IdCardIcon className="w-4 h-4" />
+            {CUSTOMER.club}
+          </span>
+        }
+        tags={
           <div className="flex flex-wrap gap-vintiga-xs">
             {CUSTOMER.tags.map((t) => (
               <Tag key={t} variant="outline" size="md">{t}</Tag>
             ))}
           </div>
-
-          <dl className="flex flex-col gap-1 typo-body-sm text-vintiga-slate-700">
-            <div>
+        }
+        details={
+          <>
+            <span>
               {profile.email}
               {profile.emailPreferred && (
                 <span className="text-vintiga-slate-400"> | Preferred</span>
               )}
-            </div>
-            {location && <div>{location}</div>}
-            <div>Last Visit: {CUSTOMER.lastVisit}</div>
-            <div>Club Status: {CUSTOMER.clubStatus}</div>
-          </dl>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-vintiga-sm shrink-0">
-          <Button leftIcon={<PencilIcon />} onClick={() => setUpdateOpen(true)}>Update</Button>
-          <PopoverMenu
-            align="right"
-            width="w-44"
-            trigger={(_open, toggle) => (
-              <IconButton
-                variant="outline"
-                size="md"
-                icon={<EllipsisVerticalIcon />}
-                onClick={toggle}
-                aria-label="More actions"
-              />
-            )}
-            items={[
-              { label: 'View History', onClick: () => {} },
-              { label: 'Delete', onClick: () => setDeleteOpen(true), danger: true },
-            ]}
-          />
-        </div>
-      </section>
+            </span>
+            {location && <span>{location}</span>}
+            <span>Last Visit: {CUSTOMER.lastVisit}</span>
+            <span>Club Status: {CUSTOMER.clubStatus}</span>
+          </>
+        }
+        actions={
+          <>
+            <Button leftIcon={<PencilIcon />} onClick={() => setUpdateOpen(true)}>Update</Button>
+            <PopoverMenu
+              align="right"
+              width="w-44"
+              trigger={(_open, toggle) => (
+                <IconButton
+                  variant="outline"
+                  size="md"
+                  icon={<EllipsisVerticalIcon />}
+                  onClick={toggle}
+                  aria-label="More actions"
+                />
+              )}
+              items={[
+                { label: 'View History', onClick: () => {} },
+                { label: 'Delete', onClick: () => setDeleteOpen(true), danger: true },
+              ]}
+            />
+          </>
+        }
+      />
 
       <UpdateCustomerModal open={updateOpen} onClose={() => setUpdateOpen(false)} />
       <DeleteCustomerModal open={deleteOpen} onClose={() => setDeleteOpen(false)} />

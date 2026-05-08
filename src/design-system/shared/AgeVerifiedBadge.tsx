@@ -1,12 +1,23 @@
 import { Tooltip } from '@base-ui/react/tooltip'
 import { ShieldCheckIcon } from '@ds/icons/Icons'
 
-// ─── AgeVerifiedBadge ────────────────────────────────────────────────────────
-// Avatar overlay shown when a member has completed age verification.
+// ─── AgeVerifiedBadge ─────────────────────────────────────────────────────────
+// Avatar overlay shown when a customer has completed age verification.
 // Positioned absolutely against the bottom-right of an avatar wrapped in a
 // `relative` parent. Hover/focus opens a tooltip via base-ui.
+//
+// Usage:
+//   <div className="relative">
+//     <Avatar name={member.name} src={member.avatarUrl} size="lg" />
+//     <AgeVerifiedBadge customerName={member.name} />
+//   </div>
 
-export function AgeVerifiedBadge({ memberName }: { memberName: string }) {
+export interface AgeVerifiedBadgeProps {
+  /** Used to label the badge for screen readers, e.g. "Jane Davis is age verified". */
+  customerName: string
+}
+
+export function AgeVerifiedBadge({ customerName }: AgeVerifiedBadgeProps) {
   return (
     <Tooltip.Provider>
       <Tooltip.Root>
@@ -14,7 +25,7 @@ export function AgeVerifiedBadge({ memberName }: { memberName: string }) {
           render={
             <button
               type="button"
-              aria-label={`${memberName} is age verified`}
+              aria-label={`${customerName} is age verified`}
               onClick={(e) => { e.stopPropagation(); e.preventDefault() }}
               className="absolute -bottom-1 -right-1 inline-flex items-center justify-center w-7 h-7 rounded-full bg-vintiga-white border border-vintiga-border text-vintiga-slate-600 cursor-help transition-colors hover:text-vintiga-slate-900 p-0"
             >
