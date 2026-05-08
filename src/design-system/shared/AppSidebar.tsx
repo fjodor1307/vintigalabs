@@ -65,7 +65,7 @@ const NAV_BOTTOM_GROUP: NavItemDef[] = [
 
 const NAV_FOOTER: NavItemDef[] = [
   { icon: <UserIcon />,     label: 'POS Profiles' },
-  { icon: <SettingsIcon />, label: 'Settings' },
+  { icon: <SettingsIcon />, label: 'Settings', href: '#/web/settings' },
 ]
 
 export interface AppSidebarProps {
