@@ -9,6 +9,7 @@ import { Checkbox } from '@ds/shared/Checkbox'
 import { Textarea } from '@ds/shared/Textarea'
 import { Media } from '@ds/shared/Media'
 import { TaxCodePicker } from './TaxCodePicker'
+import { getCurrentClubSlug } from './clubsCatalog'
 import {
   PackageIcon,
   CheckCircleIcon,
@@ -48,13 +49,20 @@ export function ClubViewOverviewScreen() {
             Total Releases pinned to the bottom-right as the least-important
             metric (curated club always has releases). Removed Total Members
             per the meeting — operators can sum Active + On-hold + New. */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-          <KpiCard size="sm" label="Active Members"   value="10" icon={<CheckCircleIcon />} />
-          <KpiCard size="sm" label="On-hold Members"  value="2"  icon={<HandIcon />} />
-          <KpiCard size="sm" label="New Members"      value="2"  icon={<UserIcon />} />
-          <KpiCard size="sm" label="Canceled Members" value="1"  icon={<UserXIcon />} />
-          <KpiCard size="sm" label="Total Releases"   value="28" icon={<PackageIcon />} />
-        </div>
+        {(() => {
+          const slug = getCurrentClubSlug()
+          const membersHref  = (status: string) => `#/web/clubs/view/${slug}/members?status=${encodeURIComponent(status)}`
+          const releasesHref = `#/web/clubs/view/${slug}/releases`
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+              <KpiCard size="sm" label="Active Members"   value="10" icon={<CheckCircleIcon />} href={membersHref('Active')}    />
+              <KpiCard size="sm" label="On-hold Members"  value="2"  icon={<HandIcon />}        href={membersHref('On Hold')}   />
+              <KpiCard size="sm" label="New Members"      value="2"  icon={<UserIcon />}        href={membersHref('Pending')}   />
+              <KpiCard size="sm" label="Canceled Members" value="1"  icon={<UserXIcon />}       href={membersHref('Cancelled')} />
+              <KpiCard size="sm" label="Total Releases"   value="28" icon={<PackageIcon />}     href={releasesHref}             />
+            </div>
+          )
+        })()}
 
         {/* Basic Info */}
         <SectionCard
