@@ -67,6 +67,10 @@ export function ClubViewReleasesScreen() {
     setReleases((prev) => prev.map((p) => (p.name === r.name ? { ...p, status: 'Archived' } : p)))
   }
 
+  function activateRelease(r: Release) {
+    setReleases((prev) => prev.map((p) => (p.name === r.name ? { ...p, status: 'Active' } : p)))
+  }
+
   return (
     <ClubViewLayout activeTab="releases">
       <div className="flex flex-col gap-vintiga-lg">
@@ -167,6 +171,7 @@ export function ClubViewReleasesScreen() {
                           )}
                           items={[
                             { label: 'View',      onClick: () => viewRelease(r) },
+                            ...(r.status === 'Planning' ? [{ label: 'Activate', onClick: () => activateRelease(r) }] : []),
                             { label: 'Duplicate', onClick: () => duplicateRelease(r) },
                             { label: 'Archive',   onClick: () => archiveRelease(r), danger: true, disabled: r.status === 'Archived' },
                           ]}
