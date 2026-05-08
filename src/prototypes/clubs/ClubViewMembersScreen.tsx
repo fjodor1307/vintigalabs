@@ -55,10 +55,20 @@ const STATUS_TONE: Record<Status, { tone: 'success' | 'orange' | 'default' | 'da
   Cancelled: { tone: 'danger',  variant: 'filled' },
 }
 
+// Initial status filter — picked up from `?status=Active` (etc.) on the
+// hash so the Overview's KPI cards can deep-link into a pre-filtered list.
+function initialStatusFromHash(): 'all' | Status {
+  const q = window.location.hash.split('?')[1]
+  if (!q) return 'all'
+  const v = new URLSearchParams(q).get('status')
+  if (v === 'Active' || v === 'Pending' || v === 'On Hold' || v === 'Cancelled') return v
+  return 'all'
+}
+
 export function ClubViewMembersScreen() {
   const [search, setSearch]       = useState('')
   const [delivery, setDelivery]   = useState<'all' | 'Delivery' | 'Pickup'>('all')
-  const [statusFilter, setStatus] = useState<'all' | Status>('all')
+  const [statusFilter, setStatus] = useState<'all' | Status>(initialStatusFromHash)
 
   const filtered = MEMBERS.filter((m) =>
     (delivery === 'all' || m.delivery === delivery) &&
