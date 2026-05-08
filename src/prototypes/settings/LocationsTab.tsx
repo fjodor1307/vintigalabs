@@ -60,46 +60,44 @@ function LocationsCard({
         <Button onClick={() => {}}>Add</Button>
       </div>
 
-      <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableHeader>Name</TableHeader>
-              <TableHeader>Address</TableHeader>
-              <TableHeader>Phone</TableHeader>
-              {showActions && <TableHeader className="w-32">Actions</TableHeader>}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((l) => {
-              const goEdit = () => { window.location.hash = `/web/settings/locations/${l.id}` }
-              return (
-                <TableRow key={l.id} onClick={showActions ? goEdit : undefined}>
-                  <TableCell className="font-medium text-vintiga-slate-900">{l.name}</TableCell>
-                  <TableCell className="text-vintiga-slate-700">
-                    {[l.city, l.state, l.zip, l.country].filter(Boolean).join(', ')}
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableHeader>Name</TableHeader>
+            <TableHeader>Address</TableHeader>
+            <TableHeader>Phone</TableHeader>
+            {showActions && <TableHeader className="w-32">Actions</TableHeader>}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map((l) => {
+            const goEdit = () => { window.location.hash = `/web/settings/locations/${l.id}` }
+            return (
+              <TableRow key={l.id} onClick={showActions ? goEdit : undefined}>
+                <TableCell className="font-medium text-vintiga-slate-900">{l.name}</TableCell>
+                <TableCell className="text-vintiga-slate-700">
+                  {[l.city, l.state, l.zip, l.country].filter(Boolean).join(', ')}
+                </TableCell>
+                <TableCell className="text-vintiga-slate-700">{l.phone}</TableCell>
+                {showActions && (
+                  <TableCell>
+                    <span onClick={(e) => e.stopPropagation()} className="inline-flex">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        leftIcon={<PencilIcon />}
+                        onClick={goEdit}
+                      >
+                        Edit
+                      </Button>
+                    </span>
                   </TableCell>
-                  <TableCell className="text-vintiga-slate-700">{l.phone}</TableCell>
-                  {showActions && (
-                    <TableCell>
-                      <span onClick={(e) => e.stopPropagation()} className="inline-flex">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          leftIcon={<PencilIcon />}
-                          onClick={goEdit}
-                        >
-                          Edit
-                        </Button>
-                      </span>
-                    </TableCell>
-                  )}
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
-      </div>
+                )}
+              </TableRow>
+            )
+          })}
+        </TableBody>
+      </Table>
     </section>
   )
 }
