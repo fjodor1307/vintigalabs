@@ -42,6 +42,8 @@ import { Field } from '@ds/shared/Field'
 import { AiSuggestButton } from '@ds/shared/AiSuggestButton'
 import { NoImageArt } from '@ds/shared/NoImageArt'
 import { ListCard } from '@ds/shared/ListCard'
+import { PageTemplate } from '@ds/shared/PageTemplate'
+import { RailSection } from '@ds/shared/RightRail'
 import { ClubCard } from '@ds/shared/ClubCard'
 import { CustomerCard } from '@ds/shared/CustomerCard'
 import { AgeVerifiedBadge } from '@ds/shared/AgeVerifiedBadge'
@@ -2408,6 +2410,157 @@ function AiSuggestButtonSection() {
   )
 }
 
+function PageTemplateSection() {
+  return (
+    <SubSection
+      id="ds-page-template"
+      title="Page Template"
+      description="Standard detail / editor page layout built on the shared `PageTemplate` primitive — Breadcrumb · Title + actions · optional Tabs · stacked body sections · optional 360-px right rail. Use it for product editors, order details, customer profiles, club views, settings sub-pages — any detail surface. Never roll your own page grid."
+    >
+      <div className="flex flex-col gap-vintiga-lg">
+        <ReferenceCard label="Full layout — breadcrumb · title + actions · tabs · body · rail" bare>
+          <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
+            <PageTemplate
+              breadcrumbs={[
+                { icon: <BreadcrumbHomeIcon />, href: '#' },
+                { label: 'Section', href: '#' },
+                { label: 'Page' },
+              ]}
+              title="Title"
+              actions={
+                <>
+                  <Button>Save</Button>
+                  <IconButton variant="outline" icon={<EllipsisVerticalIcon />} aria-label="More actions" />
+                </>
+              }
+              tabs={
+                <SegmentedControl<string>
+                  value="one"
+                  options={[
+                    { value: 'one',   label: 'Overview' },
+                    { value: 'two',   label: 'Members' },
+                    { value: 'three', label: 'Releases' },
+                    { value: 'four',  label: 'Emails' },
+                  ]}
+                />
+              }
+              rail={
+                <RailSection title="Rail Title">
+                  <p className="typo-body-sm text-vintiga-slate-700">
+                    Sales Channel: <span className="font-semibold text-vintiga-slate-900">Web</span>
+                  </p>
+                  <p className="typo-body-sm text-vintiga-slate-700">
+                    Sales Associate: <span className="font-semibold text-vintiga-slate-900">Geoff Spears</span>
+                  </p>
+                </RailSection>
+              }
+            >
+              <SectionCard title="Section">
+                <Field label="Label" required>
+                  <TextField placeholder="Enter value" />
+                </Field>
+              </SectionCard>
+            </PageTemplate>
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="Stacked sections with rail — record detail (no tabs)" bare>
+          <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
+            <PageTemplate
+              breadcrumbs={[
+                { icon: <BreadcrumbHomeIcon />, href: '#' },
+                { label: 'Orders', href: '#' },
+                { label: 'Order #100016' },
+              ]}
+              title="Order #100016"
+              actions={<Button>Create Refund</Button>}
+              rail={
+                <RailSection title="Order Info">
+                  <p className="typo-body-sm text-vintiga-slate-700">
+                    Sales Attribute: <span className="font-semibold text-vintiga-slate-900">POS</span>
+                  </p>
+                  <p className="typo-body-sm text-vintiga-slate-700">
+                    Sales Channel: <span className="font-semibold text-vintiga-slate-900">POS</span>
+                  </p>
+                </RailSection>
+              }
+            >
+              <SectionCard title="Order Items" icon={<PackageIcon />}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>QTY</TableHeader>
+                      <TableHeader>Product</TableHeader>
+                      <TableHeader className="text-right">Price</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>1</TableCell>
+                      <TableCell className="font-medium text-vintiga-slate-900">2021 Chardonnay</TableCell>
+                      <TableCell className="text-right">$45.00</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>2</TableCell>
+                      <TableCell className="font-medium text-vintiga-slate-900">2020 Reserve Cab</TableCell>
+                      <TableCell className="text-right">$130.00</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </SectionCard>
+
+              <SectionCard
+                title="Order Summary"
+                icon={<DollarIcon />}
+                action={<Tag tone="success">Fulfilled</Tag>}
+              >
+                <div className="flex flex-col gap-vintiga-xs">
+                  <div className="flex justify-between typo-body-sm text-vintiga-slate-700">
+                    <span>Subtotal</span><span>$175.00</span>
+                  </div>
+                  <div className="flex justify-between typo-body-sm text-vintiga-slate-700">
+                    <span>Shipping</span><span>$0.00</span>
+                  </div>
+                  <div className="flex justify-between border-t border-vintiga-slate-200 pt-vintiga-sm mt-vintiga-xs typo-body font-semibold text-vintiga-slate-900">
+                    <span>Total</span><span>$175.00</span>
+                  </div>
+                </div>
+              </SectionCard>
+            </PageTemplate>
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="Single-column form — no tabs, no rail" bare>
+          <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
+            <PageTemplate
+              breadcrumbs={[
+                { icon: <BreadcrumbHomeIcon />, href: '#' },
+                { label: 'Settings' },
+              ]}
+              title="Account settings"
+              actions={<Button>Save changes</Button>}
+            >
+              <SectionCard title="Profile">
+                <Field label="Display name" required>
+                  <TextField placeholder="Enter your display name" />
+                </Field>
+                <Field label="Email" required>
+                  <TextField placeholder="you@example.com" />
+                </Field>
+              </SectionCard>
+              <SectionCard title="Preferences">
+                <Field label="Time zone">
+                  <TextField placeholder="UTC" />
+                </Field>
+              </SectionCard>
+            </PageTemplate>
+          </div>
+        </ReferenceCard>
+      </div>
+    </SubSection>
+  )
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-buttons':        ButtonsSection,
@@ -2449,6 +2602,7 @@ export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-club-card':      ClubCardSection,
   'ds-customer-card':  CustomerCardSection,
   'ds-records-card':   RecordsCardSection,
+  'ds-page-template':  PageTemplateSection,
   'ds-card-brand-logo': CardBrandLogoSection,
   'ds-media':          MediaSection,
   'ds-selection-card': SelectionCardSection,
