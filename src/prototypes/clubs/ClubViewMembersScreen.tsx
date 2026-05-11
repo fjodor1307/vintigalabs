@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ClubViewLayout } from './ClubViewLayout'
-import { SectionCard } from '@ds/shared/SectionCard'
+import { RecordsCard } from '@ds/shared/RecordsCard'
 import { TextField } from '@ds/shared/TextField'
 import { Select } from '@ds/shared/Select'
 import { Tag } from '@ds/shared/Tag'
@@ -78,15 +78,10 @@ export function ClubViewMembersScreen() {
 
   return (
     <ClubViewLayout activeTab="members">
-      <SectionCard
-        title={
-          <div className="flex flex-col gap-1">
-            <span>Members ({MEMBERS.length})</span>
-            <span className="typo-body-sm font-normal text-vintiga-slate-500">
-              View, filter, and manage every member of this club.
-            </span>
-          </div>
-        }
+      <RecordsCard
+        title={`Members (${MEMBERS.length})`}
+        subtitle="View, filter, and manage every member of this club."
+        divider={false}
       >
         {/* Toolbar */}
         <div className="flex items-center justify-between gap-vintiga-md flex-wrap">
@@ -198,7 +193,7 @@ export function ClubViewMembersScreen() {
             <IconButton variant="outline" size="sm" icon={<ChevronRightIcon />} aria-label="Next page" onClick={() => {}} />
           </div>
         </div>
-      </SectionCard>
+      </RecordsCard>
     </ClubViewLayout>
   )
 }

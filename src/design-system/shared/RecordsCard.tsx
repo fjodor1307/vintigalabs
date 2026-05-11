@@ -31,6 +31,15 @@ export interface RecordsCardProps {
   action?: ReactNode
   /** Rendered inside its own bordered cell when no children are supplied. */
   empty?: ReactNode
+  /**
+   * Default `true` — every direct child of `children` gets an auto top-border
+   * so the card reads as a list of stacked records (Payment Methods,
+   * Addresses, etc.). Set to `false` for surfaces where children bring their
+   * own structure (a Table, a toolbar + Table, etc.); the body then gets
+   * normal `px-vintiga-lg pb-vintiga-lg` padding with a `gap-vintiga-md`
+   * column flow.
+   */
+  divider?: boolean
   children?: ReactNode
   className?: string
 }
@@ -40,6 +49,7 @@ export function RecordsCard({
   subtitle,
   action,
   empty,
+  divider = true,
   children,
   className = '',
 }: RecordsCardProps) {
@@ -63,9 +73,15 @@ export function RecordsCard({
       </div>
 
       {hasRows ? (
-        <div className="[&>*]:border-t [&>*]:border-vintiga-slate-200">
-          {children}
-        </div>
+        divider ? (
+          <div className="[&>*]:border-t [&>*]:border-vintiga-slate-200">
+            {children}
+          </div>
+        ) : (
+          <div className="px-vintiga-lg pb-vintiga-lg flex flex-col gap-vintiga-md">
+            {children}
+          </div>
+        )
       ) : empty ? (
         <div className="border-t border-vintiga-slate-200 px-vintiga-lg py-vintiga-xl">
           {empty}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ClubViewLayout } from './ClubViewLayout'
 import { getCurrentClubSlug } from './clubsCatalog'
-import { SectionCard } from '@ds/shared/SectionCard'
+import { RecordsCard } from '@ds/shared/RecordsCard'
 import { KpiCard } from '@ds/shared/KpiCard'
 import { TextField } from '@ds/shared/TextField'
 import { Select } from '@ds/shared/Select'
@@ -85,15 +85,9 @@ export function ClubViewReleasesScreen() {
         </div>
 
         {/* Releases card */}
-        <SectionCard
-          title={
-            <div className="flex flex-col gap-1">
-              <span>Club Releases</span>
-              <span className="typo-body-sm font-normal text-vintiga-slate-500">
-                View and manage all your club releases.
-              </span>
-            </div>
-          }
+        <RecordsCard
+          title="Club Releases"
+          subtitle="View and manage all your club releases."
           action={
             <Button
               variant="outline"
@@ -105,6 +99,7 @@ export function ClubViewReleasesScreen() {
               Add Release
             </Button>
           }
+          divider={false}
         >
           {/* Toolbar */}
           <div className="flex items-center justify-between gap-vintiga-md flex-wrap">
@@ -196,7 +191,7 @@ export function ClubViewReleasesScreen() {
               <IconButton variant="outline" size="sm" icon={<ChevronRightIcon />} aria-label="Next page" onClick={() => {}} />
             </div>
           </div>
-        </SectionCard>
+        </RecordsCard>
       </div>
     </ClubViewLayout>
   )
