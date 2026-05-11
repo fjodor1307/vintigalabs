@@ -54,7 +54,7 @@ function StatRow({
   return (
     <a
       href={href}
-      className="border border-vintiga-slate-200 rounded-vintiga-xl bg-vintiga-white p-vintiga-md flex items-center gap-vintiga-md transition-colors hover:border-vintiga-indigo-300 hover:bg-vintiga-indigo-50/30 no-underline group"
+      className="border border-vintiga-slate-200 rounded-vintiga-xl bg-vintiga-white flex items-center gap-vintiga-md transition-colors hover:border-vintiga-indigo-300 hover:bg-vintiga-indigo-50/30 no-underline group"
     >
       <div className="w-8 h-8 rounded-full bg-vintiga-indigo-50 flex items-center justify-center text-vintiga-indigo-500 shrink-0 [&>svg]:w-5 [&>svg]:h-5">
         {icon}
@@ -99,7 +99,7 @@ const BRAND_LABEL: Record<CardBrand, string> = {
 
 function PaymentMethodRow({ method }: { method: PaymentMethod }) {
   return (
-    <div className="p-vintiga-md flex items-center gap-vintiga-md">
+    <div className="flex items-center gap-vintiga-md">
       <CardBrandLogo brand={method.brand} />
       <div className="flex flex-col">
         <span className="typo-caption text-vintiga-slate-500">
@@ -163,7 +163,7 @@ function PaymentMethodsCard() {
 
 function AddressRow({ address }: { address: Address }) {
   return (
-    <div className="p-vintiga-md flex items-start gap-vintiga-md">
+    <div className="flex items-start gap-vintiga-md">
       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-vintiga-md min-w-0">
         <div className="flex flex-col gap-1 min-w-0">
           <span className="typo-body-sm font-semibold text-vintiga-slate-900">{address.label}</span>

@@ -80,7 +80,10 @@ export function RecordsCard({
 
       {hasRows ? (
         divider ? (
-          <div className="[&>*]:border-t [&>*]:border-vintiga-slate-200">
+          // Every direct child becomes a row — RecordsCard pads it to
+          // `p-vintiga-md` and draws the divider on top. Consumers only own
+          // the row's *content*; layout (flex, gap, alignment) sits inside.
+          <div className="[&>*]:border-t [&>*]:border-vintiga-slate-200 [&>*]:p-vintiga-md">
             {children}
           </div>
         ) : (
