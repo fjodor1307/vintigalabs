@@ -2,7 +2,7 @@
 
 Clickable prototype workspace for Vintiga. Branded, mobile-first, code-before-Figma.
 
-This repo started as a template forked from the Metro Bank prototype workspace. The tooling, scaffolding scripts, and Claude workflows are reused as-is; everything brand-specific (colours, fonts, content) has been stripped back to placeholders for the Vintiga team to fill in.
+This repo started as a template. The tooling, scaffolding scripts, and Claude workflows are reused as-is; everything brand-specific (colours, fonts, content) has been stripped back to placeholders for the Vintiga team to fill in.
 
 ---
 

@@ -76,7 +76,7 @@ const BUTTON_SIZES: ButtonSize[] = ['xs', 'sm', 'md', 'lg', 'xl']
 const BUTTON_VARIANTS: ButtonVariant[] = ['solid', 'outline']
 const ICON_VARIANTS: IconButtonVariant[] = ['solid', 'outline']
 
-// Dotted canvas — Metro pattern
+// Dotted canvas stage background
 const STAGE_STYLE: React.CSSProperties = {
   minHeight: 280,
   backgroundImage: 'radial-gradient(circle, #e2e8f0 1px, transparent 1px)',
