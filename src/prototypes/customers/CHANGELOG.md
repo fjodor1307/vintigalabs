@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-05-11 — Fedja + Claude: Billing stat rows use DS KpiCard
+
+- `CustomerBillingScreen.tsx` — replaced the inline `StatRow` component (Account Balance + Loyalty Points) with `KpiCard size="sm"` from `@ds/shared/KpiCard`. Same visual, no local reimplementation.
+
+Why: the DS already had the exact compact KPI tile we'd duplicated inline. Removing the local copy keeps the pattern owned by the design system.
+
+---
+
 ## 2026-05-07 — Fedja + Claude: Customers index rebuilt to match Figma (2040:15777)
 
 The Customers list page was a stub — table only, no header, no KPIs, no toolbar. Rebuilt to match the canonical `Customers` Figma frame.

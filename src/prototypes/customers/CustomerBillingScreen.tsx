@@ -5,12 +5,12 @@ import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import { Tag } from '@ds/shared/Tag'
 import { RecordsCard, RecordsCardEmpty } from '@ds/shared/RecordsCard'
 import { CardBrandLogo } from '@ds/shared/CardBrandLogo'
+import { KpiCard } from '@ds/shared/KpiCard'
 import {
   CreditCardIcon,
   GemIcon,
   PlusIcon,
   EllipsisVerticalIcon,
-  ChevronRightIcon,
 } from '@ds/icons/Icons'
 import {
   useAccountBalance,
@@ -38,33 +38,7 @@ import {
 //
 // Notes + Tags rail comes from the layout — unchanged.
 
-// ─── Stat row (compact balance / points card) ────────────────────────────────
-
-function StatRow({
-  label,
-  value,
-  icon,
-  href,
-}: {
-  label: string
-  value: string
-  icon: React.ReactNode
-  href: string
-}) {
-  return (
-    <a
-      href={href}
-      className="border border-vintiga-slate-200 rounded-vintiga-xl bg-vintiga-white flex items-center gap-vintiga-md transition-colors hover:border-vintiga-indigo-300 hover:bg-vintiga-indigo-50/30 no-underline group"
-    >
-      <div className="w-8 h-8 rounded-full bg-vintiga-indigo-50 flex items-center justify-center text-vintiga-indigo-500 shrink-0 [&>svg]:w-5 [&>svg]:h-5">
-        {icon}
-      </div>
-      <span className="flex-1 typo-body-sm font-medium text-vintiga-slate-900">{label}</span>
-      <span className="typo-body font-semibold text-vintiga-slate-900">{value}</span>
-      <ChevronRightIcon className="w-4 h-4 text-vintiga-slate-400 group-hover:text-vintiga-indigo-500 transition-colors" />
-    </a>
-  )
-}
+// ─── Stats row (Account Balance + Loyalty Points) ────────────────────────────
 
 function StatsRow() {
   const balance = useAccountBalance()
@@ -72,13 +46,15 @@ function StatsRow() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-      <StatRow
+      <KpiCard
+        size="sm"
         label="Account Balance"
         value={`$${balance.toFixed(2)}`}
         icon={<CreditCardIcon />}
         href="#/web/customers/view/billing/balance"
       />
-      <StatRow
+      <KpiCard
+        size="sm"
         label="Loyalty Points"
         value={points.toLocaleString()}
         icon={<GemIcon />}
