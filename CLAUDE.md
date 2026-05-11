@@ -36,7 +36,7 @@ This repo started as a template. Before the first real prototype ships, somebody
 - **`_context/research/`** — empty. Add dated research findings as they come in.
 - **`_context/competitive/`** — empty. Add competitor teardowns as they come in.
 - **`src/design-system/tokens.css`** — currently a neutral greyscale placeholder. Replace primary / accent / fonts with Vintiga brand values.
-- **`.claude/skills/vintiga-tov/SKILL.md`** — tone-of-voice skill stub. Expand once brand voice is defined.
+- **`.claude/skills/vintiga-tov/SKILL.md`** — tone-of-voice rules (seeded from vintigalabs.com on 2026-05-11). Refresh when brand voice evolves.
 
 ## Project context — two layers
 
