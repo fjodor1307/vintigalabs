@@ -8,6 +8,27 @@ export type TemplateCategory = 'marketing' | 'utility' | 'authentication' | 'ser
 export type MessageStatus    = 'sent' | 'delivered' | 'read'
 export type MessageKind      = 'inbound' | 'outbound'
 
+/**
+ * Marketing consent mirrors WhatsApp's opt-in / opt-out model. Customers must
+ * explicitly opt in before they can receive `marketing` category templates,
+ * and replying `STOP` (or equivalent) opts them out. `pending` covers brand-
+ * new contacts where we don't yet have a recorded preference — utility /
+ * service / authentication templates are still allowed.
+ */
+export type MarketingConsent = 'opted-in' | 'opted-out' | 'pending'
+
+/**
+ * Templates can carry up to 3 buttons. Two real flavours:
+ *   - `quick-reply` — a labelled tap that the customer can hit to send a
+ *     short reply back without typing. We simulate this in the prototype by
+ *     appending an inbound message with the button's label.
+ *   - `cta` — a call-to-action that opens a URL or dials a phone number
+ *     when the customer taps it. We just render the label + destination.
+ */
+export type TemplateButton =
+  | { kind: 'quick-reply'; label: string }
+  | { kind: 'cta'; label: string; action: 'url' | 'phone'; target: string }
+
 export interface ChatMessage {
   id: string
   kind: MessageKind
@@ -18,6 +39,8 @@ export interface ChatMessage {
   status?: MessageStatus
   /** Outbound only — flagged when the message came from a template (not free-form). */
   fromTemplate?: string
+  /** Outbound only — buttons carried over from the template. */
+  buttons?: TemplateButton[]
 }
 
 export interface ChatCustomer {
@@ -29,6 +52,8 @@ export interface ChatCustomer {
   city: string
   lifetimeSpend: number
   ordersCount: number
+  /** Marketing opt-in state. Gates `marketing` category templates. */
+  marketingConsent: MarketingConsent
 }
 
 export interface ChatConversation {
@@ -55,6 +80,8 @@ export interface MessageTemplate {
   body: string
   /** Labels for each variable so the agent knows what to fill in. */
   variables: string[]
+  /** Up to 3 buttons attached to the template (quick-reply or CTA). */
+  buttons?: TemplateButton[]
 }
 
 // ─── Customers ───────────────────────────────────────────────────────────────
@@ -68,6 +95,7 @@ const JANE: ChatCustomer = {
   city: 'Bellingham, WA',
   lifetimeSpend: 1240.5,
   ordersCount: 8,
+  marketingConsent: 'opted-in',
 }
 
 const MARCUS: ChatCustomer = {
@@ -79,6 +107,7 @@ const MARCUS: ChatCustomer = {
   city: 'Portland, OR',
   lifetimeSpend: 3820.0,
   ordersCount: 22,
+  marketingConsent: 'opted-in',
 }
 
 const SOFIA: ChatCustomer = {
@@ -90,6 +119,7 @@ const SOFIA: ChatCustomer = {
   city: 'Seattle, WA',
   lifetimeSpend: 612.75,
   ordersCount: 4,
+  marketingConsent: 'opted-out',
 }
 
 const ETHAN: ChatCustomer = {
@@ -101,6 +131,7 @@ const ETHAN: ChatCustomer = {
   city: 'Vancouver, BC',
   lifetimeSpend: 89.0,
   ordersCount: 1,
+  marketingConsent: 'pending',
 }
 
 // ─── Conversations ───────────────────────────────────────────────────────────
@@ -154,7 +185,10 @@ export const CONVERSATIONS: ChatConversation[] = [
     windowRemainingMin: -120,
     messages: [
       { id: 'm-4-1', kind: 'inbound',  body: "Is the Founders Pack still available for new members?",                          atOffsetMin: 60 * 28 },
-      { id: 'm-4-2', kind: 'outbound', body: "Hi Ethan! Yes — $129 for the intro 3-bottle set. Want me to send the join link?", atOffsetMin: 60 * 27, status: 'delivered', fromTemplate: 'founders_pack_intro' },
+      { id: 'm-4-2', kind: 'outbound', body: "Hi Ethan! Yes — $129 for the intro 3-bottle set. Want me to send the join link?", atOffsetMin: 60 * 27, status: 'delivered', fromTemplate: 'founders_pack_intro', buttons: [
+        { kind: 'cta',         label: 'Join now',     action: 'url', target: 'https://vintiga.example/join' },
+        { kind: 'quick-reply', label: 'Tell me more' },
+      ] },
       { id: 'm-4-3', kind: 'inbound',  body: "Yes please",                                                                     atOffsetMin: 60 * 26 },
     ],
   },
@@ -170,6 +204,9 @@ export const TEMPLATES: MessageTemplate[] = [
     language: 'en_US',
     body: "Hi {{1}}! Your order {{2}} just shipped. Tracking: {{3}}. Expected delivery in 2–3 business days.",
     variables: ['Customer first name', 'Order number', 'Tracking number'],
+    buttons: [
+      { kind: 'cta', label: 'Track package', action: 'url', target: 'https://vintiga.example/track' },
+    ],
   },
   {
     id: 'abandoned_cart',
@@ -178,6 +215,10 @@ export const TEMPLATES: MessageTemplate[] = [
     language: 'en_US',
     body: "Hi {{1}}, you left {{2}} in your cart. We saved it for you — finish your order at {{3}} and use code WELCOME10 for 10% off.",
     variables: ['Customer first name', 'Product name', 'Checkout link'],
+    buttons: [
+      { kind: 'cta',         label: 'Complete order', action: 'url', target: 'https://vintiga.example/cart' },
+      { kind: 'quick-reply', label: 'Not interested' },
+    ],
   },
   {
     id: 'back_in_stock',
@@ -186,6 +227,10 @@ export const TEMPLATES: MessageTemplate[] = [
     language: 'en_US',
     body: "Good news {{1}} — {{2}} is back in stock. We have {{3}} left. Reply YES and we'll set one aside.",
     variables: ['Customer first name', 'Product name', 'Units in stock'],
+    buttons: [
+      { kind: 'quick-reply', label: 'Reserve one' },
+      { kind: 'quick-reply', label: 'No thanks' },
+    ],
   },
   {
     id: 'founders_pack_intro',
@@ -194,6 +239,10 @@ export const TEMPLATES: MessageTemplate[] = [
     language: 'en_US',
     body: "Hi {{1}}! Welcome to Vintiga. The Founders Pack is {{2}} — three hand-picked bottles plus member pricing on future orders. Join here: {{3}}",
     variables: ['Customer first name', 'Pack price', 'Join link'],
+    buttons: [
+      { kind: 'cta',         label: 'Join now',     action: 'url', target: 'https://vintiga.example/join' },
+      { kind: 'quick-reply', label: 'Tell me more' },
+    ],
   },
   {
     id: 'reservation_confirm',
@@ -202,6 +251,10 @@ export const TEMPLATES: MessageTemplate[] = [
     language: 'en_US',
     body: "Hi {{1}}, you're confirmed for {{2}} on {{3}} at {{4}}. Reply STOP to cancel.",
     variables: ['Customer first name', 'Event name', 'Date', 'Time'],
+    buttons: [
+      { kind: 'quick-reply', label: 'Add to calendar' },
+      { kind: 'quick-reply', label: 'Cancel' },
+    ],
   },
   {
     id: 'service_followup',
@@ -210,5 +263,17 @@ export const TEMPLATES: MessageTemplate[] = [
     language: 'en_US',
     body: "Hi {{1}}, just checking in on your recent question about {{2}}. Anything else I can help with?",
     variables: ['Customer first name', 'Topic'],
+  },
+  {
+    id: 'optin_request',
+    name: 'Marketing opt-in request',
+    category: 'utility',
+    language: 'en_US',
+    body: "Hi {{1}}! Would you like to hear about new releases and member-only offers? Reply YES to opt in — you can opt out any time by replying STOP.",
+    variables: ['Customer first name'],
+    buttons: [
+      { kind: 'quick-reply', label: 'Yes, opt me in' },
+      { kind: 'quick-reply', label: 'No thanks' },
+    ],
   },
 ]

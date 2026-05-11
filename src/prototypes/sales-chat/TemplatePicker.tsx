@@ -3,8 +3,14 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@ds/shared/Modal'
 import { Button } from '@ds/shared/Button'
 import { TextField } from '@ds/shared/TextField'
 import { Tag, type TagTone } from '@ds/shared/Tag'
-import { SearchIcon } from '@ds/icons/Icons'
-import { TEMPLATES, type MessageTemplate, type TemplateCategory } from './chatSamples'
+import { SearchIcon, LockIcon } from '@ds/icons/Icons'
+import {
+  TEMPLATES,
+  type MessageTemplate,
+  type MarketingConsent,
+  type TemplateButton,
+  type TemplateCategory,
+} from './chatSamples'
 
 // ─── TemplatePicker ──────────────────────────────────────────────────────────
 // Two-step modal:
@@ -29,10 +35,12 @@ const CATEGORY_LABEL: Record<TemplateCategory, string> = {
 interface TemplatePickerProps {
   open: boolean
   onClose: () => void
-  onSend: (body: string, templateId: string) => void
+  /** Customer's current marketing consent — gates the `marketing` category. */
+  consent: MarketingConsent
+  onSend: (body: string, templateId: string, buttons?: TemplateButton[]) => void
 }
 
-export function TemplatePicker({ open, onClose, onSend }: TemplatePickerProps) {
+export function TemplatePicker({ open, onClose, consent, onSend }: TemplatePickerProps) {
   const [picked, setPicked] = useState<MessageTemplate | null>(null)
   const [values, setValues] = useState<string[]>([])
   const [query,  setQuery]  = useState('')
@@ -91,6 +99,16 @@ export function TemplatePicker({ open, onClose, onSend }: TemplatePickerProps) {
               placeholder="Search templates"
               leftIcon={<SearchIcon />}
             />
+            {consent !== 'opted-in' && (
+              <div className="flex items-start gap-vintiga-sm border border-vintiga-orange-200 bg-vintiga-orange-50/40 rounded-vintiga-md px-vintiga-md py-vintiga-sm">
+                <LockIcon className="w-4 h-4 text-vintiga-orange-600 mt-0.5 shrink-0" />
+                <p className="typo-caption text-vintiga-slate-700">
+                  {consent === 'opted-out'
+                    ? 'Customer has opted out of marketing. Marketing templates are blocked until they opt back in.'
+                    : 'Customer hasn’t opted in to marketing yet. Send the "Marketing opt-in request" template first.'}
+                </p>
+              </div>
+            )}
           </ModalBody>
 
           <div className="px-vintiga-lg pb-vintiga-lg pt-vintiga-md max-h-[420px] overflow-y-auto flex flex-col gap-vintiga-sm">
@@ -99,25 +117,51 @@ export function TemplatePicker({ open, onClose, onSend }: TemplatePickerProps) {
                 No templates match "{query}".
               </p>
             ) : (
-              filtered.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => selectTemplate(t)}
-                  className="text-left border border-vintiga-slate-200 rounded-vintiga-xl bg-vintiga-white p-vintiga-md flex flex-col gap-vintiga-xs transition-colors hover:border-vintiga-indigo-300 hover:bg-vintiga-indigo-50/30 cursor-pointer"
-                >
-                  <div className="flex items-center gap-vintiga-sm">
-                    <span className="typo-body-sm font-semibold text-vintiga-slate-900 flex-1">
-                      {t.name}
-                    </span>
-                    <Tag variant="filled" tone={CATEGORY_TONE[t.category]} size="sm">
-                      {CATEGORY_LABEL[t.category]}
-                    </Tag>
-                    <span className="typo-caption text-vintiga-slate-400">{t.language}</span>
-                  </div>
-                  <p className="typo-body-sm text-vintiga-slate-600">{t.body}</p>
-                </button>
-              ))
+              filtered.map((t) => {
+                const blocked = t.category === 'marketing' && consent !== 'opted-in'
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    disabled={blocked}
+                    onClick={() => !blocked && selectTemplate(t)}
+                    className={[
+                      'text-left border rounded-vintiga-xl p-vintiga-md flex flex-col gap-vintiga-xs transition-colors',
+                      blocked
+                        ? 'bg-vintiga-slate-50 border-vintiga-slate-200 opacity-60 cursor-not-allowed'
+                        : 'bg-vintiga-white border-vintiga-slate-200 hover:border-vintiga-indigo-300 hover:bg-vintiga-indigo-50/30 cursor-pointer',
+                    ].join(' ')}
+                  >
+                    <div className="flex items-center gap-vintiga-sm">
+                      <span className="typo-body-sm font-semibold text-vintiga-slate-900 flex-1">
+                        {t.name}
+                      </span>
+                      <Tag variant="filled" tone={CATEGORY_TONE[t.category]} size="sm">
+                        {CATEGORY_LABEL[t.category]}
+                      </Tag>
+                      <span className="typo-caption text-vintiga-slate-400">{t.language}</span>
+                    </div>
+                    <p className="typo-body-sm text-vintiga-slate-600">{t.body}</p>
+                    {t.buttons && t.buttons.length > 0 && (
+                      <div className="flex flex-wrap gap-vintiga-xs pt-vintiga-xs">
+                        {t.buttons.map((b, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1 typo-caption text-vintiga-slate-600 border border-vintiga-slate-200 rounded-full px-2 py-0.5"
+                          >
+                            {b.kind === 'cta' ? '↗' : '↩'} {b.label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {blocked && (
+                      <span className="typo-caption text-vintiga-orange-600 font-medium pt-vintiga-xs">
+                        Blocked — needs marketing opt-in
+                      </span>
+                    )}
+                  </button>
+                )
+              })
             )}
           </div>
         </>
@@ -153,8 +197,20 @@ export function TemplatePicker({ open, onClose, onSend }: TemplatePickerProps) {
               <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wide">
                 Preview
               </span>
-              <div className="border border-vintiga-slate-200 rounded-vintiga-md bg-vintiga-slate-50 p-vintiga-md typo-body-sm text-vintiga-slate-700 whitespace-pre-wrap">
-                {rendered}
+              <div className="border border-vintiga-slate-200 rounded-vintiga-md bg-vintiga-slate-50 p-vintiga-md flex flex-col gap-vintiga-sm">
+                <p className="typo-body-sm text-vintiga-slate-700 whitespace-pre-wrap">{rendered}</p>
+                {picked.buttons && picked.buttons.length > 0 && (
+                  <div className="flex flex-wrap gap-vintiga-xs pt-vintiga-xs border-t border-vintiga-slate-200">
+                    {picked.buttons.map((b, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 typo-caption font-semibold text-vintiga-indigo-600 border border-vintiga-indigo-200 bg-vintiga-white rounded-full px-2.5 py-1"
+                      >
+                        {b.kind === 'cta' ? '↗' : '↩'} {b.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </ModalBody>
@@ -168,7 +224,7 @@ export function TemplatePicker({ open, onClose, onSend }: TemplatePickerProps) {
               size="md"
               disabled={!allFilled}
               onClick={() => {
-                onSend(rendered, picked.id)
+                onSend(rendered, picked.id, picked.buttons)
                 handleClose()
               }}
             >

@@ -26,6 +26,8 @@ import {
   CONVERSATIONS,
   type ChatConversation,
   type ChatMessage,
+  type MarketingConsent,
+  type TemplateButton,
 } from './chatSamples'
 import { TemplatePicker } from './TemplatePicker'
 
@@ -54,6 +56,28 @@ function fmtTime(offsetMin: number): string {
   if (h < 24) return `${h}h ago`
   const d = Math.floor(h / 24)
   return `${d}d ago`
+}
+
+// ─── Consent badge ───────────────────────────────────────────────────────────
+// Tiny chip we drop into the rail / thread header to surface the customer's
+// marketing opt-in state. Tone tracks the WhatsApp-side rule: opted-in is
+// fine, opted-out is a hard block, pending means we just haven't recorded a
+// preference yet — utility templates still work.
+
+const CONSENT_LABEL: Record<MarketingConsent, string> = {
+  'opted-in':  'Marketing opt-in',
+  'opted-out': 'Opted out',
+  'pending':   'No marketing opt-in',
+}
+
+function ConsentBadge({ consent }: { consent: MarketingConsent }) {
+  const tone =
+    consent === 'opted-in' ? 'success' : consent === 'opted-out' ? 'danger' : 'warning'
+  return (
+    <Tag variant="filled" tone={tone} size="sm">
+      {CONSENT_LABEL[consent]}
+    </Tag>
+  )
 }
 
 // ─── Conversation list (left pane) ───────────────────────────────────────────
@@ -121,7 +145,14 @@ function ConvListItem({
 
 // ─── Message bubble ──────────────────────────────────────────────────────────
 
-function MessageBubble({ msg }: { msg: ChatMessage }) {
+function MessageBubble({
+  msg,
+  onQuickReply,
+}: {
+  msg: ChatMessage
+  /** Called when the agent (acting as the customer) taps a quick-reply button. */
+  onQuickReply?: (label: string) => void
+}) {
   const isOut = msg.kind === 'outbound'
   return (
     <div className={`flex ${isOut ? 'justify-end' : 'justify-start'}`}>
@@ -136,6 +167,36 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
         >
           {msg.body}
         </div>
+        {/* Template buttons — only outbound messages carry them. CTA buttons
+            render as anchors (the customer would actually open the URL on
+            their phone); quick-reply buttons are clickable in the prototype
+            so we can simulate the customer tapping one. */}
+        {isOut && msg.buttons && msg.buttons.length > 0 && (
+          <div className="flex flex-wrap gap-vintiga-xs justify-end">
+            {msg.buttons.map((b, i) =>
+              b.kind === 'cta' ? (
+                <a
+                  key={i}
+                  href={b.action === 'phone' ? `tel:${b.target}` : b.target}
+                  target={b.action === 'url' ? '_blank' : undefined}
+                  rel={b.action === 'url' ? 'noreferrer' : undefined}
+                  className="inline-flex items-center gap-1 typo-caption font-semibold text-vintiga-indigo-600 border border-vintiga-indigo-200 bg-vintiga-white rounded-full px-3 py-1 no-underline hover:bg-vintiga-indigo-50 transition-colors"
+                >
+                  ↗ {b.label}
+                </a>
+              ) : (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => onQuickReply?.(b.label)}
+                  className="inline-flex items-center gap-1 typo-caption font-semibold text-vintiga-indigo-600 border border-vintiga-indigo-200 bg-vintiga-white rounded-full px-3 py-1 hover:bg-vintiga-indigo-50 transition-colors cursor-pointer"
+                >
+                  ↩ {b.label}
+                </button>
+              ),
+            )}
+          </div>
+        )}
         <div className="flex items-center gap-vintiga-xs px-1">
           {msg.fromTemplate && (
             <span className="inline-flex items-center gap-0.5 typo-caption text-vintiga-slate-400">
@@ -237,9 +298,12 @@ function CustomerRail({ conv }: { conv: ChatConversation }) {
           <span className="typo-title-section font-semibold text-vintiga-slate-900">{c.name}</span>
           <span className="typo-body-sm text-vintiga-slate-500">{c.city}</span>
         </div>
-        <Tag variant="filled" tone={c.segment === 'VIP' ? 'warning' : c.segment === 'Member' ? 'info' : 'default'} size="sm">
-          {c.segment}
-        </Tag>
+        <div className="flex flex-wrap gap-vintiga-xs justify-center">
+          <Tag variant="filled" tone={c.segment === 'VIP' ? 'warning' : c.segment === 'Member' ? 'info' : 'default'} size="sm">
+            {c.segment}
+          </Tag>
+          <ConsentBadge consent={c.marketingConsent} />
+        </div>
       </div>
 
       <div className="px-vintiga-lg py-vintiga-md flex flex-col gap-vintiga-md border-b border-vintiga-slate-200">
@@ -352,7 +416,7 @@ export function SalesChatScreen() {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight })
   }, [selectedId, selected?.messages.length])
 
-  function appendMessage(body: string, fromTemplate?: string) {
+  function appendMessage(body: string, fromTemplate?: string, buttons?: TemplateButton[]) {
     if (!selected) return
     const next: ChatMessage = {
       id:           `m-${selected.id}-${Date.now()}`,
@@ -361,10 +425,50 @@ export function SalesChatScreen() {
       atOffsetMin:  0,
       status:       'sent',
       fromTemplate,
+      buttons,
     }
     setConvs((prev) =>
       prev.map((c) =>
         c.id === selected.id ? { ...c, messages: [...c.messages, next], lastActivityMin: 0 } : c,
+      ),
+    )
+  }
+
+  /**
+   * Simulate the customer tapping a quick-reply button on a template we sent.
+   * Appends an inbound message with the button's label, resets the 24h window
+   * (since the customer just messaged us), and — if the label looks like a
+   * marketing-consent answer — updates the consent state on the customer.
+   */
+  function simulateQuickReply(label: string) {
+    if (!selected) return
+    const reply: ChatMessage = {
+      id:          `m-${selected.id}-${Date.now()}-qr`,
+      kind:        'inbound',
+      body:        label,
+      atOffsetMin: 0,
+    }
+    const lower = label.toLowerCase()
+    const consentNext: MarketingConsent | undefined =
+      lower.includes('opt me in') || lower === 'yes'
+        ? 'opted-in'
+        : lower.includes('no thanks') || lower === 'stop'
+        ? 'opted-out'
+        : undefined
+
+    setConvs((prev) =>
+      prev.map((c) =>
+        c.id === selected.id
+          ? {
+              ...c,
+              messages: [...c.messages, reply],
+              lastActivityMin: 0,
+              windowRemainingMin: 24 * 60,
+              customer: consentNext
+                ? { ...c.customer, marketingConsent: consentNext }
+                : c.customer,
+            }
+          : c,
       ),
     )
   }
@@ -436,6 +540,7 @@ export function SalesChatScreen() {
                         WhatsApp · {selected.customer.phone}
                       </p>
                     </div>
+                    <ConsentBadge consent={selected.customer.marketingConsent} />
                     <Tag
                       variant="filled"
                       tone={expired ? 'warning' : 'success'}
@@ -453,7 +558,7 @@ export function SalesChatScreen() {
                       .sort((a, b) => b.atOffsetMin - a.atOffsetMin)
                       // Sorting puts oldest first (largest offset = furthest in the past).
                       .map((m) => (
-                        <MessageBubble key={m.id} msg={m} />
+                        <MessageBubble key={m.id} msg={m} onQuickReply={simulateQuickReply} />
                       ))}
                   </div>
 
@@ -475,7 +580,8 @@ export function SalesChatScreen() {
       <TemplatePicker
         open={picking}
         onClose={() => setPicking(false)}
-        onSend={(body, templateId) => appendMessage(body, templateId)}
+        consent={selected?.customer.marketingConsent ?? 'pending'}
+        onSend={(body, templateId, buttons) => appendMessage(body, templateId, buttons)}
       />
     </div>
   )
