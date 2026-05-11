@@ -143,6 +143,11 @@ export {
   Ticket         as TicketIcon,
   Flag           as FlagIcon,
   ArrowUpDown    as ArrowUpDownIcon,
+  CheckCheck     as CheckCheckIcon,
+  Paperclip      as PaperclipIcon,
+  Smile          as SmileIcon,
+  Mic            as MicIcon,
+  Layers         as LayersIcon,
 } from 'lucide-react'
 
 import type { SVGProps } from 'react'

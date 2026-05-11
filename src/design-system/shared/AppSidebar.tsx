@@ -46,7 +46,7 @@ interface NavItemDef {
 
 const NAV_TOP: NavItemDef[] = [
   { icon: <HomeIcon />,     label: 'Dashboard' },
-  { icon: <MessageIcon />,  label: 'Sales Chat' },
+  { icon: <MessageIcon />,  label: 'Sales Chat', href: '#/web/sales-chat' },
   { icon: <SendIcon />,     label: 'Campaigns' },
   { icon: <TagIcon />,      label: 'Promotions' },
   { icon: <GlobeIcon />,    label: 'Website', external: true },
