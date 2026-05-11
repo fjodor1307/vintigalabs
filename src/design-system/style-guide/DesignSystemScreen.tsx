@@ -171,6 +171,13 @@ const NAV: NavGroup[] = [
           { id: 'ds-screen-footer', label: 'Screen Footer' },
         ],
       },
+      {
+        label: 'Templates',
+        icon: BoxIcon,
+        items: [
+          { id: 'ds-page-template', label: 'Page Template' },
+        ],
+      },
     ],
   },
 ]

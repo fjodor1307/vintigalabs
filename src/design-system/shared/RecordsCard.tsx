@@ -27,10 +27,21 @@ import { Children, type ReactNode } from 'react'
 export interface RecordsCardProps {
   title: ReactNode
   subtitle?: ReactNode
+  /** Optional leading icon next to the title (16–20 px). */
+  icon?: ReactNode
   /** Trailing slot in the header — typical: an outline "Add" button. */
   action?: ReactNode
   /** Rendered inside its own bordered cell when no children are supplied. */
   empty?: ReactNode
+  /**
+   * Default `true` — every direct child of `children` gets an auto top-border
+   * so the card reads as a list of stacked records (Payment Methods,
+   * Addresses, etc.). Set to `false` for surfaces where children bring their
+   * own structure (a Table, a toolbar + Table, etc.); the body then gets
+   * normal `px-vintiga-lg pb-vintiga-lg` padding with a `gap-vintiga-md`
+   * column flow.
+   */
+  divider?: boolean
   children?: ReactNode
   className?: string
 }
@@ -38,8 +49,10 @@ export interface RecordsCardProps {
 export function RecordsCard({
   title,
   subtitle,
+  icon,
   action,
   empty,
+  divider = true,
   children,
   className = '',
 }: RecordsCardProps) {
@@ -52,9 +65,12 @@ export function RecordsCard({
         className,
       ].join(' ')}
     >
-      <div className="flex items-start justify-between gap-vintiga-md p-vintiga-lg pb-vintiga-md">
+      <div className="flex items-start justify-between gap-vintiga-md p-vintiga-md">
         <div className="flex flex-col gap-1 min-w-0">
-          <h3 className="typo-title-section font-semibold text-vintiga-slate-900">{title}</h3>
+          <h3 className="typo-title-section font-semibold text-vintiga-slate-900 inline-flex items-center gap-vintiga-sm">
+            {icon && <span className="text-vintiga-slate-500 [&>svg]:w-5 [&>svg]:h-5">{icon}</span>}
+            {title}
+          </h3>
           {subtitle && (
             <p className="typo-body-sm text-vintiga-slate-500">{subtitle}</p>
           )}
@@ -63,11 +79,20 @@ export function RecordsCard({
       </div>
 
       {hasRows ? (
-        <div className="[&>*]:border-t [&>*]:border-vintiga-slate-200">
-          {children}
-        </div>
+        divider ? (
+          // Every direct child becomes a row — RecordsCard pads it to
+          // `p-vintiga-md` and draws the divider on top. Consumers only own
+          // the row's *content*; layout (flex, gap, alignment) sits inside.
+          <div className="[&>*]:border-t [&>*]:border-vintiga-slate-200 [&>*]:p-vintiga-md">
+            {children}
+          </div>
+        ) : (
+          <div className="border-t border-vintiga-slate-200 p-vintiga-md flex flex-col gap-vintiga-md">
+            {children}
+          </div>
+        )
       ) : empty ? (
-        <div className="border-t border-vintiga-slate-200 px-vintiga-lg py-vintiga-xl">
+        <div className="border-t border-vintiga-slate-200 p-vintiga-md">
           {empty}
         </div>
       ) : null}

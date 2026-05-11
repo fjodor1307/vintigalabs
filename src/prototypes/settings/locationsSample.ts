@@ -9,13 +9,13 @@
 export type DayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
 
 export const DAY_LABELS: Record<DayKey, string> = {
-  mon: 'Monday',
-  tue: 'Tuesday',
-  wed: 'Wednesday',
-  thu: 'Thursday',
-  fri: 'Friday',
-  sat: 'Saturday',
-  sun: 'Sunday',
+  mon: 'MON',
+  tue: 'TUE',
+  wed: 'WED',
+  thu: 'THU',
+  fri: 'FRI',
+  sat: 'SAT',
+  sun: 'SUN',
 }
 
 export const DAY_KEYS: DayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']

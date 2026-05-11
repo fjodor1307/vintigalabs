@@ -1,4 +1,5 @@
 import { Button } from '@ds/shared/Button'
+import { RecordsCard } from '@ds/shared/RecordsCard'
 import {
   Table,
   TableHead,
@@ -47,19 +48,12 @@ function LocationsCard({
   showActions?: boolean
 }) {
   return (
-    <section className="border border-vintiga-slate-200 rounded-vintiga-xl bg-vintiga-white p-vintiga-lg flex flex-col gap-vintiga-md">
-      <div className="flex items-start justify-between gap-vintiga-md">
-        <div className="flex flex-col gap-1 min-w-0">
-          <h3 className="typo-title-section font-semibold text-vintiga-slate-900">
-            {LOCATION_KIND_LABEL[kind]}
-          </h3>
-          <p className="typo-body-sm text-vintiga-slate-500">
-            {LOCATION_KIND_DESCRIPTION[kind]}
-          </p>
-        </div>
-        <Button onClick={() => {}}>Add</Button>
-      </div>
-
+    <RecordsCard
+      title={LOCATION_KIND_LABEL[kind]}
+      subtitle={LOCATION_KIND_DESCRIPTION[kind]}
+      action={<Button onClick={() => {}}>Add</Button>}
+      divider={false}
+    >
       <Table>
         <TableHead>
           <TableRow>
@@ -98,6 +92,6 @@ function LocationsCard({
           })}
         </TableBody>
       </Table>
-    </section>
+    </RecordsCard>
   )
 }

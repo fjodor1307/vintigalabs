@@ -42,6 +42,8 @@ import { Field } from '@ds/shared/Field'
 import { AiSuggestButton } from '@ds/shared/AiSuggestButton'
 import { NoImageArt } from '@ds/shared/NoImageArt'
 import { ListCard } from '@ds/shared/ListCard'
+import { PageTemplate } from '@ds/shared/PageTemplate'
+import { RailSection } from '@ds/shared/RightRail'
 import { ClubCard } from '@ds/shared/ClubCard'
 import { CustomerCard } from '@ds/shared/CustomerCard'
 import { AgeVerifiedBadge } from '@ds/shared/AgeVerifiedBadge'
@@ -2067,7 +2069,7 @@ function RecordsCardSection() {
             }
             empty={<RecordsCardEmpty title="No payment methods" hint="Add a card to enable one-click checkout." />}
           >
-            <div className="px-vintiga-lg py-vintiga-md flex items-center gap-vintiga-md">
+            <div className="flex items-center gap-vintiga-md">
               <CardBrandLogo brand="mastercard" />
               <div className="flex flex-col">
                 <span className="typo-caption text-vintiga-slate-500">Expires 07/27</span>
@@ -2077,7 +2079,7 @@ function RecordsCardSection() {
               <Tag variant="neutral-dark" size="md">Default Card</Tag>
               <IconButton variant="outline" size="sm" icon={<EllipsisVerticalIcon />} aria-label="Card actions" onClick={() => {}} />
             </div>
-            <div className="px-vintiga-lg py-vintiga-md flex items-center gap-vintiga-md">
+            <div className="flex items-center gap-vintiga-md">
               <CardBrandLogo brand="visa" />
               <div className="flex flex-col">
                 <span className="typo-caption text-vintiga-slate-500">Expires 03/26</span>
@@ -2408,6 +2410,65 @@ function AiSuggestButtonSection() {
   )
 }
 
+function PageTemplateSection() {
+  return (
+    <SubSection
+      id="ds-page-template"
+      title="Page Template"
+      description="Standard detail / editor page layout built on the shared `PageTemplate` primitive — Breadcrumb · Title + actions · optional Tabs · stacked body sections · optional 360-px right rail. Use it for product editors, order details, customer profiles, club views, settings sub-pages — any detail surface. Never roll your own page grid."
+    >
+      <div className="flex flex-col gap-vintiga-lg">
+        <ReferenceCard label="Full layout — breadcrumb · title + actions · tabs · body · rail" bare>
+          <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
+            <PageTemplate
+              breadcrumbs={[
+                { icon: <BreadcrumbHomeIcon />, href: '#' },
+                { label: 'Section', href: '#' },
+                { label: 'Page' },
+              ]}
+              title="Title"
+              actions={
+                <>
+                  <Button>Save</Button>
+                  <IconButton variant="outline" icon={<EllipsisVerticalIcon />} aria-label="More actions" />
+                </>
+              }
+              tabs={
+                <SegmentedControl<string>
+                  value="one"
+                  options={[
+                    { value: 'one',   label: 'Overview' },
+                    { value: 'two',   label: 'Members' },
+                    { value: 'three', label: 'Releases' },
+                    { value: 'four',  label: 'Emails' },
+                  ]}
+                />
+              }
+              rail={
+                <RailSection title="Rail Title">
+                  <p className="typo-body-sm text-vintiga-slate-700">
+                    Sales Channel: <span className="font-semibold text-vintiga-slate-900">Web</span>
+                  </p>
+                  <p className="typo-body-sm text-vintiga-slate-700">
+                    Sales Associate: <span className="font-semibold text-vintiga-slate-900">Geoff Spears</span>
+                  </p>
+                </RailSection>
+              }
+            >
+              <SectionCard title="Section">
+                <Field label="Label" required>
+                  <TextField placeholder="Enter value" />
+                </Field>
+              </SectionCard>
+            </PageTemplate>
+          </div>
+        </ReferenceCard>
+
+      </div>
+    </SubSection>
+  )
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-buttons':        ButtonsSection,
@@ -2449,6 +2510,7 @@ export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-club-card':      ClubCardSection,
   'ds-customer-card':  CustomerCardSection,
   'ds-records-card':   RecordsCardSection,
+  'ds-page-template':  PageTemplateSection,
   'ds-card-brand-logo': CardBrandLogoSection,
   'ds-media':          MediaSection,
   'ds-selection-card': SelectionCardSection,
