@@ -89,7 +89,7 @@ export function RecordsCard({
           </div>
         )
       ) : empty ? (
-        <div className="border-t border-vintiga-slate-200 px-vintiga-lg py-vintiga-xl">
+        <div className="border-t border-vintiga-slate-200 p-vintiga-md">
           {empty}
         </div>
       ) : null}
