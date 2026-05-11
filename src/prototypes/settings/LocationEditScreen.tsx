@@ -194,20 +194,24 @@ export function LocationEditScreen() {
                   <TableRow key={day}>
                     <TableCell className="font-medium text-vintiga-slate-900">{DAY_LABELS[day]}</TableCell>
                     <TableCell>
-                      <TextField
-                        value={h.open}
-                        onChange={(e) => patchDay(day, { open: e.target.value })}
-                        placeholder="09:00"
-                        disabled={h.closed}
-                      />
+                      <div className="w-24">
+                        <TextField
+                          value={h.open}
+                          onChange={(e) => patchDay(day, { open: e.target.value })}
+                          placeholder="09:00"
+                          disabled={h.closed}
+                        />
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <TextField
-                        value={h.close}
-                        onChange={(e) => patchDay(day, { close: e.target.value })}
-                        placeholder="17:00"
-                        disabled={h.closed}
-                      />
+                      <div className="w-24">
+                        <TextField
+                          value={h.close}
+                          onChange={(e) => patchDay(day, { close: e.target.value })}
+                          placeholder="17:00"
+                          disabled={h.closed}
+                        />
+                      </div>
                     </TableCell>
                     <TableCell>
                       <TextField
