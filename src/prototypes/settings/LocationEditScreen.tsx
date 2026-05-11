@@ -177,14 +177,18 @@ export function LocationEditScreen() {
         </SectionCard>
 
         <SectionCard title="Business Hours" icon={<ClockIcon />}>
-          <Table>
+          {/* Dense form-table — every cell holds an input, so override the
+              DS Table's default px-vintiga-lg cell padding with the tighter
+              px-vintiga-sm to keep the row inside the card on narrower
+              viewports (no horizontal scroll). */}
+          <Table className="table-fixed [&_th]:!px-vintiga-sm [&_td]:!px-vintiga-sm [&_td]:!py-vintiga-sm">
             <TableHead>
               <TableRow>
-                <TableHeader className="w-32">Day</TableHeader>
-                <TableHeader className="w-28">Open</TableHeader>
-                <TableHeader className="w-28">Close</TableHeader>
+                <TableHeader className="w-24">Day</TableHeader>
+                <TableHeader className="w-24">Open</TableHeader>
+                <TableHeader className="w-24">Close</TableHeader>
                 <TableHeader>Description</TableHeader>
-                <TableHeader className="w-20 text-right">Closed</TableHeader>
+                <TableHeader className="w-16 text-right">Closed</TableHeader>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -194,7 +198,7 @@ export function LocationEditScreen() {
                   <TableRow key={day}>
                     <TableCell className="font-medium text-vintiga-slate-900">{DAY_LABELS[day]}</TableCell>
                     <TableCell>
-                      <div className="w-24">
+                      <div className="w-20">
                         <TextField
                           value={h.open}
                           onChange={(e) => patchDay(day, { open: e.target.value })}
@@ -204,7 +208,7 @@ export function LocationEditScreen() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="w-24">
+                      <div className="w-20">
                         <TextField
                           value={h.close}
                           onChange={(e) => patchDay(day, { close: e.target.value })}
