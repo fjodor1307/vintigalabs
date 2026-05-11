@@ -27,6 +27,8 @@ import { Children, type ReactNode } from 'react'
 export interface RecordsCardProps {
   title: ReactNode
   subtitle?: ReactNode
+  /** Optional leading icon next to the title (16–20 px). */
+  icon?: ReactNode
   /** Trailing slot in the header — typical: an outline "Add" button. */
   action?: ReactNode
   /** Rendered inside its own bordered cell when no children are supplied. */
@@ -47,6 +49,7 @@ export interface RecordsCardProps {
 export function RecordsCard({
   title,
   subtitle,
+  icon,
   action,
   empty,
   divider = true,
@@ -64,7 +67,10 @@ export function RecordsCard({
     >
       <div className="flex items-start justify-between gap-vintiga-md p-vintiga-lg pb-vintiga-md">
         <div className="flex flex-col gap-1 min-w-0">
-          <h3 className="typo-title-section font-semibold text-vintiga-slate-900">{title}</h3>
+          <h3 className="typo-title-section font-semibold text-vintiga-slate-900 inline-flex items-center gap-vintiga-sm">
+            {icon && <span className="text-vintiga-slate-500 [&>svg]:w-5 [&>svg]:h-5">{icon}</span>}
+            {title}
+          </h3>
           {subtitle && (
             <p className="typo-body-sm text-vintiga-slate-500">{subtitle}</p>
           )}
@@ -78,7 +84,7 @@ export function RecordsCard({
             {children}
           </div>
         ) : (
-          <div className="px-vintiga-lg pb-vintiga-lg flex flex-col gap-vintiga-md">
+          <div className="border-t border-vintiga-slate-200 px-vintiga-lg py-vintiga-lg flex flex-col gap-vintiga-md">
             {children}
           </div>
         )

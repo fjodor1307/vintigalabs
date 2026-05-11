@@ -7,7 +7,7 @@ import { Select } from '@ds/shared/Select'
 import { Switch } from '@ds/shared/Switch'
 import { Checkbox } from '@ds/shared/Checkbox'
 import { Button } from '@ds/shared/Button'
-import { SectionCard } from '@ds/shared/SectionCard'
+import { RecordsCard } from '@ds/shared/RecordsCard'
 import {
   Table,
   TableHead,
@@ -91,7 +91,7 @@ export function LocationEditScreen() {
         </>
       }
       rail={
-        <SectionCard title="Pickup" icon={<PackageIcon />}>
+        <RecordsCard title="Pickup" icon={<PackageIcon />} divider={false}>
           <Checkbox
             checked={pickupEnabled}
             onChange={setPickupEnabled}
@@ -109,11 +109,11 @@ export function LocationEditScreen() {
               className="min-h-[120px]"
             />
           </Field>
-        </SectionCard>
+        </RecordsCard>
       }
     >
       <div className="flex flex-col gap-vintiga-lg">
-        <SectionCard title="Identity" icon={<MapPinIcon />}>
+        <RecordsCard title="Identity" icon={<MapPinIcon />} divider={false}>
           <Field label="Name" required>
             <TextField value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
@@ -174,9 +174,9 @@ export function LocationEditScreen() {
               Leave blank to automatically generate coordinates when saving.
             </p>
           </div>
-        </SectionCard>
+        </RecordsCard>
 
-        <SectionCard title="Business Hours" icon={<ClockIcon />}>
+        <RecordsCard title="Business Hours" icon={<ClockIcon />} divider={false}>
           {/* Dense form-table — every cell holds an input, so override the
               DS Table's default px-vintiga-lg cell padding with the tighter
               px-vintiga-sm to keep the row inside the card on narrower
@@ -240,7 +240,7 @@ export function LocationEditScreen() {
           <p className="typo-caption text-vintiga-slate-500 mt-vintiga-xs">
             Times shown to customers on the website checkout pickup picker.
           </p>
-        </SectionCard>
+        </RecordsCard>
       </div>
     </SettingsLayout>
   )

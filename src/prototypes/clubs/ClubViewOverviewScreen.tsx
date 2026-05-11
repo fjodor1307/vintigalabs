@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ClubViewLayout } from './ClubViewLayout'
-import { SectionCard } from '@ds/shared/SectionCard'
+import { RecordsCard } from '@ds/shared/RecordsCard'
 import { KpiCard } from '@ds/shared/KpiCard'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
@@ -64,16 +64,11 @@ export function ClubViewOverviewScreen() {
           )
         })()}
 
-        {/* Basic Info */}
-        <SectionCard
-          title={
-            <div className="flex flex-col gap-1">
-              <span>Basic Info</span>
-              <span className="typo-body-sm font-normal text-vintiga-slate-500">
-                Set the main information and public-facing details for this club.
-              </span>
-            </div>
-          }
+        {/* Overview (Figma 5079:33614) */}
+        <RecordsCard
+          title="Overview"
+          subtitle="Set the main information and public-facing details for this club."
+          divider={false}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
             <Field label="Title" required>
@@ -158,21 +153,14 @@ export function ClubViewOverviewScreen() {
               onRemove={(id) => setImages((prev) => prev.filter((i) => i.id !== id))}
             />
           </Field>
-        </SectionCard>
+        </RecordsCard>
 
-        {/* Terms & Conditions — matches Figma 5304:7762 */}
-        <SectionCard
-          title={
-            <div className="flex flex-col gap-1">
-              <span>Terms &amp; Conditions</span>
-              <span className="typo-body-sm font-normal text-vintiga-slate-500">
-                Set the rules and commitments members agree to upon signup.
-              </span>
-            </div>
-          }
+        {/* Terms & Conditions (Figma 5079:33614) */}
+        <RecordsCard
+          title="Terms & Conditions"
+          subtitle="Set the rules and commitments members agree to upon signup."
+          divider={false}
         >
-          <div className="-mx-vintiga-lg border-t border-vintiga-slate-200" />
-
           <Checkbox
             checked={requireTerms}
             onChange={setRequireTerms}
@@ -192,10 +180,10 @@ export function ClubViewOverviewScreen() {
               className="min-h-[160px]"
             />
           </Field>
-        </SectionCard>
+        </RecordsCard>
 
-        {/* SEO */}
-        <SectionCard title="SEO">
+        {/* SEO (Figma 5079:33614) */}
+        <RecordsCard title="SEO" divider={false}>
           <Field label="Meta Tag Title">
             <TextField value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} placeholder="Page title shown in search results" />
           </Field>
@@ -210,7 +198,7 @@ export function ClubViewOverviewScreen() {
           <Field label="Slug">
             <TextField value={slug} onChange={(e) => setSlug(e.target.value)} />
           </Field>
-        </SectionCard>
+        </RecordsCard>
       </div>
     </ClubViewLayout>
   )
