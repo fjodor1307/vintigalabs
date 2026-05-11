@@ -84,7 +84,7 @@ export function RecordsCard({
             {children}
           </div>
         ) : (
-          <div className="border-t border-vintiga-slate-200 px-vintiga-lg py-vintiga-lg flex flex-col gap-vintiga-md">
+          <div className="border-t border-vintiga-slate-200 p-vintiga-md flex flex-col gap-vintiga-md">
             {children}
           </div>
         )
