@@ -99,7 +99,7 @@ const BRAND_LABEL: Record<CardBrand, string> = {
 
 function PaymentMethodRow({ method }: { method: PaymentMethod }) {
   return (
-    <div className="px-vintiga-lg py-vintiga-md flex items-center gap-vintiga-md">
+    <div className="p-vintiga-md flex items-center gap-vintiga-md">
       <CardBrandLogo brand={method.brand} />
       <div className="flex flex-col">
         <span className="typo-caption text-vintiga-slate-500">
@@ -163,7 +163,7 @@ function PaymentMethodsCard() {
 
 function AddressRow({ address }: { address: Address }) {
   return (
-    <div className="px-vintiga-lg py-vintiga-md flex items-start gap-vintiga-md">
+    <div className="p-vintiga-md flex items-start gap-vintiga-md">
       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-vintiga-md min-w-0">
         <div className="flex flex-col gap-1 min-w-0">
           <span className="typo-body-sm font-semibold text-vintiga-slate-900">{address.label}</span>
