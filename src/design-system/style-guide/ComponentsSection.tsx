@@ -2069,7 +2069,7 @@ function RecordsCardSection() {
             }
             empty={<RecordsCardEmpty title="No payment methods" hint="Add a card to enable one-click checkout." />}
           >
-            <div className="px-vintiga-lg py-vintiga-md flex items-center gap-vintiga-md">
+            <div className="flex items-center gap-vintiga-md">
               <CardBrandLogo brand="mastercard" />
               <div className="flex flex-col">
                 <span className="typo-caption text-vintiga-slate-500">Expires 07/27</span>
@@ -2079,7 +2079,7 @@ function RecordsCardSection() {
               <Tag variant="neutral-dark" size="md">Default Card</Tag>
               <IconButton variant="outline" size="sm" icon={<EllipsisVerticalIcon />} aria-label="Card actions" onClick={() => {}} />
             </div>
-            <div className="px-vintiga-lg py-vintiga-md flex items-center gap-vintiga-md">
+            <div className="flex items-center gap-vintiga-md">
               <CardBrandLogo brand="visa" />
               <div className="flex flex-col">
                 <span className="typo-caption text-vintiga-slate-500">Expires 03/26</span>
