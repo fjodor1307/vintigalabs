@@ -5,9 +5,9 @@ import { TextField } from '@ds/shared/TextField'
 import { Textarea } from '@ds/shared/Textarea'
 import { Select } from '@ds/shared/Select'
 import { Switch } from '@ds/shared/Switch'
+import { Checkbox } from '@ds/shared/Checkbox'
 import { Button } from '@ds/shared/Button'
 import { SectionCard } from '@ds/shared/SectionCard'
-import { Tag } from '@ds/shared/Tag'
 import {
   MapPinIcon,
   ClockIcon,
@@ -23,20 +23,15 @@ import {
 } from './locationsSample'
 
 // ─── LocationEditScreen ──────────────────────────────────────────────────────
-// Dedicated edit page for a single location. Reads the location id from the
-// hash and pre-fills three sections:
-//
-//   1. Identity — Name, Address, Address Line 2, Country, State/City/Zip,
-//      Phone, Lat/Lng with "Get from address" auto-geocode CTA. Matches the
-//      field set in Figma 1812:4936.
-//   2. Business Hours — Mon–Sun rows, open/close, per-day notes, Closed
-//      switch. (LIN-517.)
-//   3. Pickup — toggle the location's pickup-availability and edit the
-//      free-text instructions the website renders to checkout. (LIN-517.)
-//
-// Originally drafted as a modal; promoted to a full sub-page because the
-// long form scrolled awkwardly in the modal and obscured the LIN-517
-// additions.
+// Dedicated edit page for a single location (Figma 5736:41353). Two-column
+// layout: Identity + Business Hours stacked in the main column, Pickup
+// anchored to the right rail. Identity matches the Figma field set —
+// Name, Address, Address Line 2, then a 4-up Country / State / City / Zip,
+// Phone, and Lat/Lng with the "Get from address" auto-geocode CTA. Business
+// Hours is now a flat 5-column table per day (Day · Open · Close ·
+// Description · Closed) instead of stacked per-day note rows. Pickup is a
+// compact rail card with a checkbox toggle and the website-rendered
+// instructions textarea.
 
 const COUNTRIES = ['United States', 'Canada', 'Mexico', 'United Kingdom']
 
@@ -71,13 +66,8 @@ export function LocationEditScreen() {
     setHours((prev) => ({ ...prev, [day]: { ...prev[day], ...patch } }))
   }
 
-  function handleSave() {
-    window.location.hash = '/web/settings'
-  }
-
-  function handleCancel() {
-    window.location.hash = '/web/settings'
-  }
+  function handleSave()   { window.location.hash = '/web/settings' }
+  function handleCancel() { window.location.hash = '/web/settings' }
 
   return (
     <SettingsLayout
@@ -85,23 +75,33 @@ export function LocationEditScreen() {
         { label: 'Locations', href: '#/web/settings' },
         { label: seed.name },
       ]}
-      title={
-        <span className="inline-flex items-center gap-vintiga-sm">
-          <span>{name || seed.name}</span>
-          <Tag
-            variant="filled"
-            tone={seed.kind === 'physical' ? 'info' : 'default'}
-            size="md"
-          >
-            {seed.kind === 'physical' ? 'Physical' : 'Inventory'}
-          </Tag>
-        </span>
-      }
+      title={name || seed.name}
       actions={
         <>
           <Button variant="outline" onClick={handleCancel}>Cancel</Button>
           <Button onClick={handleSave}>Save</Button>
         </>
+      }
+      rail={
+        <SectionCard title="Pickup" icon={<PackageIcon />}>
+          <Checkbox
+            checked={pickupEnabled}
+            onChange={setPickupEnabled}
+            label="Allow pickup at this location"
+          />
+          <Field
+            label="Pickup instructions"
+            helper="Shown to customers who choose pickup at checkout. Include parking, door, and ID details."
+          >
+            <Textarea
+              value={pickupInstructions}
+              onChange={(e) => setPickupInstructions(e.target.value)}
+              placeholder="e.g. Park in the rear lot, use the side door marked Pickup, bring photo ID."
+              disabled={!pickupEnabled}
+              className="min-h-[120px]"
+            />
+          </Field>
+        </SectionCard>
       }
     >
       <div className="flex flex-col gap-vintiga-lg">
@@ -118,15 +118,14 @@ export function LocationEditScreen() {
             <TextField value={addressLine2} onChange={(e) => setAddressLine2(e.target.value)} />
           </Field>
 
-          <Field label="Country">
-            <Select
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              options={COUNTRIES}
-            />
-          </Field>
-
-          <div className="grid grid-cols-3 gap-vintiga-md">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-vintiga-md">
+            <Field label="Country">
+              <Select
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                options={COUNTRIES}
+              />
+            </Field>
             <Field label="State">
               <TextField value={state} onChange={(e) => setState(e.target.value)} />
             </Field>
@@ -153,6 +152,9 @@ export function LocationEditScreen() {
               <Button
                 variant="outline"
                 onClick={() => {
+                  // Placeholder geocode — in production this calls the geocoding
+                  // service. Here we stamp plausible values so the button has
+                  // observable behaviour.
                   if (!latitude)  setLatitude('47.7544')
                   if (!longitude) setLongitude('-122.1635')
                 }}
@@ -166,20 +168,13 @@ export function LocationEditScreen() {
           </div>
         </SectionCard>
 
-        <SectionCard
-          title="Business Hours"
-          icon={<ClockIcon />}
-          action={
-            <span className="typo-caption text-vintiga-slate-500">
-              Times shown to customers on the website checkout pickup picker.
-            </span>
-          }
-        >
+        <SectionCard title="Business Hours" icon={<ClockIcon />}>
           <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
-            <div className="grid grid-cols-[140px_1fr_1fr_56px] items-center gap-vintiga-md px-vintiga-md py-vintiga-sm bg-vintiga-slate-50 border-b border-vintiga-slate-200 typo-caption font-semibold text-vintiga-slate-700 uppercase tracking-wider">
+            <div className="grid grid-cols-[120px_100px_100px_1fr_64px] items-center gap-vintiga-sm px-vintiga-md py-vintiga-sm bg-vintiga-slate-50 border-b border-vintiga-slate-200 typo-caption font-semibold text-vintiga-slate-700 uppercase tracking-wider">
               <span>Day</span>
               <span>Open</span>
               <span>Close</span>
+              <span>Description</span>
               <span className="text-right">Closed</span>
             </div>
             {DAY_KEYS.map((day, idx) => {
@@ -188,67 +183,43 @@ export function LocationEditScreen() {
                 <div
                   key={day}
                   className={[
-                    'flex flex-col gap-vintiga-sm px-vintiga-md py-vintiga-sm',
+                    'grid grid-cols-[120px_100px_100px_1fr_64px] items-center gap-vintiga-sm px-vintiga-md py-vintiga-sm',
                     idx > 0 ? 'border-t border-vintiga-slate-200' : '',
                   ].join(' ')}
                 >
-                  <div className="grid grid-cols-[140px_1fr_1fr_56px] items-center gap-vintiga-md">
-                    <span className="typo-body-sm font-semibold text-vintiga-slate-900">{DAY_LABELS[day]}</span>
-                    <TextField
-                      value={h.open}
-                      onChange={(e) => patchDay(day, { open: e.target.value })}
-                      placeholder="09:00"
-                      disabled={h.closed}
-                    />
-                    <TextField
-                      value={h.close}
-                      onChange={(e) => patchDay(day, { close: e.target.value })}
-                      placeholder="17:00"
-                      disabled={h.closed}
-                    />
-                    <div className="flex justify-end">
-                      <Switch
-                        checked={h.closed}
-                        onChange={(closed) => patchDay(day, { closed })}
-                        aria-label={`${DAY_LABELS[day]} closed all day`}
-                      />
-                    </div>
-                  </div>
+                  <span className="typo-body-sm font-semibold text-vintiga-slate-900">{DAY_LABELS[day]}</span>
+                  <TextField
+                    value={h.open}
+                    onChange={(e) => patchDay(day, { open: e.target.value })}
+                    placeholder="09:00"
+                    disabled={h.closed}
+                  />
+                  <TextField
+                    value={h.close}
+                    onChange={(e) => patchDay(day, { close: e.target.value })}
+                    placeholder="17:00"
+                    disabled={h.closed}
+                  />
                   <TextField
                     value={h.notes ?? ''}
                     onChange={(e) => patchDay(day, { notes: e.target.value })}
-                    placeholder="Notes (e.g. closed 12–2 for lunch)"
+                    placeholder="Notes"
                     disabled={h.closed}
                   />
+                  <div className="flex justify-end">
+                    <Switch
+                      checked={h.closed}
+                      onChange={(closed) => patchDay(day, { closed })}
+                      aria-label={`${DAY_LABELS[day]} closed all day`}
+                    />
+                  </div>
                 </div>
               )
             })}
           </div>
-        </SectionCard>
-
-        <SectionCard
-          title="Pickup"
-          icon={<PackageIcon />}
-          action={
-            <Switch
-              checked={pickupEnabled}
-              onChange={setPickupEnabled}
-              label="Allow pickup at this location"
-            />
-          }
-        >
-          <Field
-            label="Pickup instructions"
-            helper="Shown to customers who choose pickup at checkout. Include parking, door, and ID details."
-          >
-            <Textarea
-              value={pickupInstructions}
-              onChange={(e) => setPickupInstructions(e.target.value)}
-              placeholder="e.g. Park in the rear lot, use the side door marked Pickup, bring photo ID."
-              disabled={!pickupEnabled}
-              className="min-h-[120px]"
-            />
-          </Field>
+          <p className="typo-caption text-vintiga-slate-500 mt-vintiga-xs">
+            Times shown to customers on the website checkout pickup picker.
+          </p>
         </SectionCard>
       </div>
     </SettingsLayout>

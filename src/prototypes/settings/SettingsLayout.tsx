@@ -15,12 +15,15 @@ export function SettingsLayout({
   breadcrumbs,
   title,
   actions,
+  rail,
   children,
 }: {
   /** Omit to hide the breadcrumb row entirely (used on the Settings index). */
   breadcrumbs?: { icon?: ReactNode; label?: ReactNode; href?: string }[]
   title: ReactNode
   actions?: ReactNode
+  /** Optional right rail — when set, main column shrinks to 2/3 width. */
+  rail?: ReactNode
   children: ReactNode
 }) {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
@@ -50,6 +53,7 @@ export function SettingsLayout({
             breadcrumbs={fullCrumbs}
             title={title}
             actions={actions}
+            rail={rail}
           >
             {children}
           </PageTemplate>
