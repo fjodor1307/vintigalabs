@@ -9,6 +9,14 @@ import { Checkbox } from '@ds/shared/Checkbox'
 import { Button } from '@ds/shared/Button'
 import { SectionCard } from '@ds/shared/SectionCard'
 import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@ds/shared/Table'
+import {
   MapPinIcon,
   ClockIcon,
   PackageIcon,
@@ -169,54 +177,58 @@ export function LocationEditScreen() {
         </SectionCard>
 
         <SectionCard title="Business Hours" icon={<ClockIcon />}>
-          <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
-            <div className="grid grid-cols-[120px_100px_100px_1fr_64px] items-center gap-vintiga-sm px-vintiga-md py-vintiga-sm bg-vintiga-slate-50 border-b border-vintiga-slate-200 typo-caption font-semibold text-vintiga-slate-700 uppercase tracking-wider">
-              <span>Day</span>
-              <span>Open</span>
-              <span>Close</span>
-              <span>Description</span>
-              <span className="text-right">Closed</span>
-            </div>
-            {DAY_KEYS.map((day, idx) => {
-              const h = hours[day]
-              return (
-                <div
-                  key={day}
-                  className={[
-                    'grid grid-cols-[120px_100px_100px_1fr_64px] items-center gap-vintiga-sm px-vintiga-md py-vintiga-sm',
-                    idx > 0 ? 'border-t border-vintiga-slate-200' : '',
-                  ].join(' ')}
-                >
-                  <span className="typo-body-sm font-semibold text-vintiga-slate-900">{DAY_LABELS[day]}</span>
-                  <TextField
-                    value={h.open}
-                    onChange={(e) => patchDay(day, { open: e.target.value })}
-                    placeholder="09:00"
-                    disabled={h.closed}
-                  />
-                  <TextField
-                    value={h.close}
-                    onChange={(e) => patchDay(day, { close: e.target.value })}
-                    placeholder="17:00"
-                    disabled={h.closed}
-                  />
-                  <TextField
-                    value={h.notes ?? ''}
-                    onChange={(e) => patchDay(day, { notes: e.target.value })}
-                    placeholder="Notes"
-                    disabled={h.closed}
-                  />
-                  <div className="flex justify-end">
-                    <Switch
-                      checked={h.closed}
-                      onChange={(closed) => patchDay(day, { closed })}
-                      aria-label={`${DAY_LABELS[day]} closed all day`}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader className="w-32">Day</TableHeader>
+                <TableHeader className="w-28">Open</TableHeader>
+                <TableHeader className="w-28">Close</TableHeader>
+                <TableHeader>Description</TableHeader>
+                <TableHeader className="w-20 text-right">Closed</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {DAY_KEYS.map((day) => {
+                const h = hours[day]
+                return (
+                  <TableRow key={day}>
+                    <TableCell className="font-medium text-vintiga-slate-900">{DAY_LABELS[day]}</TableCell>
+                    <TableCell>
+                      <TextField
+                        value={h.open}
+                        onChange={(e) => patchDay(day, { open: e.target.value })}
+                        placeholder="09:00"
+                        disabled={h.closed}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        value={h.close}
+                        onChange={(e) => patchDay(day, { close: e.target.value })}
+                        placeholder="17:00"
+                        disabled={h.closed}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        value={h.notes ?? ''}
+                        onChange={(e) => patchDay(day, { notes: e.target.value })}
+                        placeholder="Notes"
+                        disabled={h.closed}
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Switch
+                        checked={h.closed}
+                        onChange={(closed) => patchDay(day, { closed })}
+                        aria-label={`${DAY_LABELS[day]} closed all day`}
+                      />
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
           <p className="typo-caption text-vintiga-slate-500 mt-vintiga-xs">
             Times shown to customers on the website checkout pickup picker.
           </p>
