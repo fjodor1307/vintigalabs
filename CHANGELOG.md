@@ -160,9 +160,9 @@ Updates: style guide entry refreshed at `Components → Data Display → Club Ca
 
 New `clubs` prototype at `#/web/clubs` (3 routes — Clubs / Memberships / Club Emails). Built from Figma node 5079:44185.
 
-## 2026-04-23 — Template initialised from Metro prototype workspace
+## 2026-04-23 — Template initialised
 
-Starting point for Vintiga's prototype repo. Forked structure from the Metro Bank workspace, then stripped all brand-specific content so the new team starts with a blank canvas.
+Starting point for Vintiga's prototype repo. Stripped all brand-specific content from the template so the new team starts with a blank canvas.
 
 **Kept:**
 - React 19 + Vite + TypeScript + Tailwind 4 + Base UI scaffold
@@ -174,16 +174,16 @@ Starting point for Vintiga's prototype repo. Forked structure from the Metro Ban
 - Style guide at `#/web/style-guide`
 
 **Stripped:**
-- All Metro-specific prototypes (`src/prototypes/{onboarding,subscription,...}`)
-- Metro context (`_context/programme.md`, `personas/sophie-carter.md`, `brand/essentials.md`, `research/`, `competitive/`)
-- Metro brand assets — FT Polar font, bank logos, milestone photos, illustration pack
-- Metro-specific components — MetroCard, AccountCard, AccountInfo, PersonCard, PasswordChecklist, MilestoneImage, CustomerHeader
+- All prior-tenant prototypes (`src/prototypes/{onboarding,subscription,...}`)
+- Prior-tenant context (`_context/programme.md`, `personas/sophie-carter.md`, `brand/essentials.md`, `research/`, `competitive/`)
+- Prior-tenant brand assets — bespoke font, logos, photography, illustration pack
+- Prior-tenant components — AccountCard, AccountInfo, PersonCard, PasswordChecklist, MilestoneImage, CustomerHeader, and the legacy card component
 - Dependencies only used by deleted components — `banks-logo`, `country-flag-icons`, `react-pay-icons`, `wrangler`
 
 **Genericised:**
 - `src/design-system/tokens.css` — palette reduced to neutral greyscale placeholders. Replace primary/accent colours and fonts with Vintiga brand values when defined.
 - `DESIGN-RULES.md` — same rules, brand-specific hex values replaced with placeholders.
-- All `metro-*` class/token names renamed to `vintiga-*`.
+- All legacy `*-` class/token names renamed to `vintiga-*`.
 
 **TODO for the Vintiga team:**
 - Fill in `_context/programme.md`, `_context/personas/`, `_context/brand/essentials.md`
