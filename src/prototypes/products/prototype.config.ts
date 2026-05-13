@@ -3,6 +3,7 @@ import { ProductsListScreen } from './ProductsListScreen'
 import { CollectionsScreen } from './CollectionsScreen'
 import { AddCollectionScreen } from './AddCollectionScreen'
 import { GeneralScreen } from './GeneralScreen'
+import { TimeSlotsScreen } from './TimeSlotsScreen'
 import { PosScreen } from './PosScreen'
 import { WebsiteScreen } from './WebsiteScreen'
 import { AdvancedScreen } from './AdvancedScreen'
@@ -27,6 +28,7 @@ export const config: PrototypeConfig = {
     '#/web/products/collections/new': AddCollectionScreen,
     // Product editor (5 tabs)
     '#/web/products/general':         GeneralScreen,
+    '#/web/products/timeslots':       TimeSlotsScreen,
     '#/web/products/pos':             PosScreen,
     '#/web/products/website':         WebsiteScreen,
     '#/web/products/advanced':        AdvancedScreen,

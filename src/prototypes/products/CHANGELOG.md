@@ -6,6 +6,33 @@
 
 ---
 
+## 2026-05-14 — fedja + Claude: Reservation Time Slots tab + Experience editor polish
+
+Continued the experience editor cleanup. Compared the General tab against the
+production app and an older Figma design, then folded the missing pieces in.
+
+**Store (`productStore.ts`):**
+- Adds `Weekday`, `TimeSlot`, and `timeSlotsByDay: Record<Weekday, TimeSlot[]>`
+  with three actions (`addTimeSlot` / `updateTimeSlot` / `removeTimeSlot`).
+- Monday is seeded with 10:00 AM + 2:00 PM Online so the editor renders a
+  meaningful default; other weekdays open empty.
+
+**Tabs (`ProductLayout.tsx`):**
+- New experience-only **Time Slots** tab between General and POS.
+- **Modifiers** tab now hides for experiences — the spec defines bookable
+  options via Variants, not modifiers (same treatment Advanced got last round).
+
+**New screen (`TimeSlotsScreen.tsx`):** weekday cards (Mon → Sun) each with an
+`Add Time` button; rows take time text, AM/PM, an Online checkbox, and a
+delete affordance.
+
+**General tab (`GeneralScreen.tsx`):**
+- Variants section renames to **Options** for experiences (matches production
+  + the older design); columns expanded to `Title · SKU · Price · COGS · Tax
+  Type`. Wine products still see "Variants & Pricing".
+- **Email/Customer Instructions** now uses `RichTextEditor` instead of a plain
+  textarea — label stays "Customer Instructions" per the latest spec.
+
 ## 2026-05-13 — fedja + Claude: Experience fields on the first page
 
 Client feedback: the experience editor "looks the same as a wine product with

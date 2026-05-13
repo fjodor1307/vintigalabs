@@ -16,7 +16,7 @@ import { BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
 import { SectionCard as DSSectionCard } from '@ds/shared/SectionCard'
 import { Field as DSField } from '@ds/shared/Field'
 
-type TabKey = 'general' | 'pos' | 'website' | 'advanced' | 'modifiers'
+type TabKey = 'general' | 'timeslots' | 'pos' | 'website' | 'advanced' | 'modifiers'
 
 function ProductActions() {
   return (
@@ -46,11 +46,14 @@ function ProductActions() {
 function Tabs({ active, isExperience }: { active: TabKey; isExperience: boolean }) {
   const options = [
     { value: 'general'   as TabKey, label: 'General',   href: '#/web/products/general' },
+    // Time Slots is experience-only — wines don't have a weekly bookable schedule.
+    ...(isExperience ? [{ value: 'timeslots' as TabKey, label: 'Time Slots', href: '#/web/products/timeslots' }] : []),
     { value: 'pos'       as TabKey, label: 'POS',       href: '#/web/products/pos' },
     { value: 'website'   as TabKey, label: 'Website',   href: '#/web/products/website' },
     // Experiences have no Advanced-only fields — everything lives on General.
     ...(isExperience ? [] : [{ value: 'advanced' as TabKey, label: 'Advanced', href: '#/web/products/advanced' }]),
-    { value: 'modifiers' as TabKey, label: 'Modifiers', href: '#/web/products/modifiers' },
+    // Experiences don't have modifiers — spec defines options via Variants only.
+    ...(isExperience ? [] : [{ value: 'modifiers' as TabKey, label: 'Modifiers', href: '#/web/products/modifiers' }]),
   ]
   return (
     <SegmentedControl<TabKey>

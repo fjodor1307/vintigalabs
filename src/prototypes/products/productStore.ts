@@ -64,6 +64,18 @@ export type ExperienceType = 'Tasting' | 'Tour' | 'Other'
 export type SeatingType = 'Communal' | 'Table'
 export type ChargeType = 'On Booking' | '48 hours advance' | 'On Checkin' | 'No Charge'
 
+export type Weekday = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday'
+export const WEEKDAYS: Weekday[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+export interface TimeSlot {
+  id: string
+  /** "9:00" — free-form so the user can type half-hour offsets ("9:30"). */
+  time: string
+  period: 'AM' | 'PM'
+  /** Whether this slot is bookable online. Off = phone-only. */
+  online: boolean
+}
+
 export interface ProductState {
   name: string
   productType: string
@@ -115,6 +127,8 @@ export interface ProductState {
   allowCancelOnline: boolean
   /** Free-form instructions emailed to the customer on purchase. */
   customerInstructions: string
+  /** Weekly bookable time slots, keyed by weekday. */
+  timeSlotsByDay: Record<Weekday, TimeSlot[]>
   // Modifiers
   modifierGroups: ModifierGroup[]
   // Catalogue (sibling list of products + collections, used by ProductsListScreen + CollectionsScreen)
@@ -207,6 +221,18 @@ const initial: ProductState = {
   chargeType: 'On Booking',
   allowCancelOnline: true,
   customerInstructions: '',
+  timeSlotsByDay: {
+    Monday: [
+      { id: 'ts-mon-1', time: '10:00', period: 'AM', online: true },
+      { id: 'ts-mon-2', time: '2:00', period: 'PM', online: true },
+    ],
+    Tuesday: [],
+    Wednesday: [],
+    Thursday: [],
+    Friday: [],
+    Saturday: [],
+    Sunday: [],
+  },
   modifierGroups: [],
   catalogue: [
     { id: 'p1',  name: '2016 Reserve Cabernet Sauvignon', sku: 'SKU-1234-1234', price: '27.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Red Wine'],   channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1697115355150-46dd3a5df633?w=320&h=320&fit=crop&q=80' },
@@ -355,6 +381,36 @@ export const productActions = {
   },
   setTaste(key: keyof ProductState['taste'], value: number) {
     state = { ...state, taste: { ...state.taste, [key]: value } }
+    emit()
+  },
+
+  // Reservation time slots — keyed by weekday
+  addTimeSlot(day: Weekday) {
+    const slot: TimeSlot = { id: uid('ts'), time: '', period: 'AM', online: true }
+    state = {
+      ...state,
+      timeSlotsByDay: { ...state.timeSlotsByDay, [day]: [...state.timeSlotsByDay[day], slot] },
+    }
+    emit()
+  },
+  updateTimeSlot(day: Weekday, id: string, patch: Partial<TimeSlot>) {
+    state = {
+      ...state,
+      timeSlotsByDay: {
+        ...state.timeSlotsByDay,
+        [day]: state.timeSlotsByDay[day].map((s) => (s.id === id ? { ...s, ...patch } : s)),
+      },
+    }
+    emit()
+  },
+  removeTimeSlot(day: Weekday, id: string) {
+    state = {
+      ...state,
+      timeSlotsByDay: {
+        ...state.timeSlotsByDay,
+        [day]: state.timeSlotsByDay[day].filter((s) => s.id !== id),
+      },
+    }
     emit()
   },
 
