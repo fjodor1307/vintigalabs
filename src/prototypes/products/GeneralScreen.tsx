@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { ProductLayout, SectionCard, Field, TextInput, Select } from './ProductLayout'
+import { ProductLayout, SectionCard, Field, TextInput, TextArea, Select } from './ProductLayout'
 import { MediaSection } from './MediaSection'
 import { AiSuggestButton } from './AiSuggestButton'
 import { Switch } from '@ds/shared/Switch'
 import { RichTextEditor } from '@ds/shared/RichTextEditor'
-import { useProductState, productActions, type Variant } from './productStore'
+import { useProductState, productActions, type Variant, type ProductState } from './productStore'
 import { VariantModal } from './VariantModal'
 import { useRowDrag } from './useRowDrag'
 import { EmptyState } from '@ds/components/EmptyState'
@@ -13,6 +13,7 @@ import {
   TrashIcon,
   GripVerticalIcon,
   PackagePlusIcon,
+  PartyPopperIcon,
 } from '@ds/icons/Icons'
 
 // ─── Per-field "Suggest with AI" trigger ──────────────────────────────────────
@@ -146,6 +147,7 @@ function VariantsTable({ onEdit, onAdd }: { onEdit: (v: Variant) => void; onAdd:
 
 export function GeneralScreen() {
   const product = useProductState()
+  const isExperience = product.productType === 'Experience'
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Variant | null>(null)
   const [generating, setGenerating] = useState(false)
@@ -223,6 +225,127 @@ export function GeneralScreen() {
       </SectionCard>
 
       <MediaSection />
+
+      {isExperience && (
+        <SectionCard title="Experience Details" icon={<PartyPopperIcon className="w-4 h-4" />}>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Start Date" required helper="Date this experience becomes available.">
+              <TextInput
+                type="date"
+                value={product.startDate}
+                onChange={(e) => productActions.setAdvanced({ startDate: e.target.value })}
+              />
+            </Field>
+            <Field label="End Date" helper="Leave empty for open-ended experiences.">
+              <TextInput
+                type="date"
+                value={product.endDate}
+                onChange={(e) => productActions.setAdvanced({ endDate: e.target.value })}
+              />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Experience Type" required>
+              <Select
+                value={product.experienceType}
+                onChange={(v) => productActions.setAdvanced({ experienceType: v as ProductState['experienceType'] })}
+                options={['Tasting', 'Tour', 'Other']}
+              />
+            </Field>
+            <Field label="Seating Type" required>
+              <Select
+                value={product.seatingType}
+                onChange={(v) => productActions.setAdvanced({ seatingType: v as ProductState['seatingType'] })}
+                options={['Communal', 'Table']}
+              />
+            </Field>
+          </div>
+
+          <Field label="Location" helper="Free text — where this experience takes place. Overrides Default Location when set.">
+            <TextInput
+              placeholder="e.g. Reserve Cellar, lower level"
+              value={product.location}
+              onChange={(e) => productActions.setAdvanced({ location: e.target.value })}
+            />
+          </Field>
+
+          <Field label="Default Location">
+            <Select
+              value={product.defaultLocation || ''}
+              onChange={(v) => productActions.setAdvanced({ defaultLocation: v })}
+              options={['Tasting Room', 'Cellar', 'Vineyard', 'Estate Garden', 'Barrel Room']}
+            />
+          </Field>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Duration" required helper="Total length of the experience, in minutes.">
+              <div className="relative">
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="e.g. 60"
+                  value={product.durationMinutes}
+                  onChange={(e) => productActions.setAdvanced({ durationMinutes: e.target.value })}
+                  className="h-10 w-full pl-3 pr-14 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+                />
+                <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">min</span>
+              </div>
+            </Field>
+            <Field label="Lead Time" required helper="Minimum hours between booking and the experience.">
+              <div className="relative">
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="e.g. 24"
+                  value={product.leadTimeHours}
+                  onChange={(e) => productActions.setAdvanced({ leadTimeHours: e.target.value })}
+                  className="h-10 w-full pl-3 pr-14 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+                />
+                <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">hrs</span>
+              </div>
+            </Field>
+          </div>
+
+          <Field label="Charge Type" required helper="When the customer's card is charged.">
+            <Select
+              value={product.chargeType}
+              onChange={(v) => productActions.setAdvanced({ chargeType: v as ProductState['chargeType'] })}
+              options={['On Booking', '48 hours advance', 'On Checkin', 'No Charge']}
+            />
+          </Field>
+
+          <div className="flex items-start justify-between gap-vintiga-md pt-vintiga-sm">
+            <div className="flex flex-col">
+              <span className="typo-body-sm font-medium text-vintiga-slate-900">Requires Host</span>
+              <span className="typo-caption text-vintiga-slate-500">A staff member must be assigned for the experience to run.</span>
+            </div>
+            <Switch
+              checked={product.requiresHost}
+              onChange={(next) => productActions.setAdvanced({ requiresHost: next })}
+            />
+          </div>
+
+          <div className="flex items-start justify-between gap-vintiga-md">
+            <div className="flex flex-col">
+              <span className="typo-body-sm font-medium text-vintiga-slate-900">Allow customers to cancel online</span>
+              <span className="typo-caption text-vintiga-slate-500">If off, customers must call to cancel a booking.</span>
+            </div>
+            <Switch
+              checked={product.allowCancelOnline}
+              onChange={(next) => productActions.setAdvanced({ allowCancelOnline: next })}
+            />
+          </div>
+
+          <Field label="Customer Instructions" helper="Emailed to the customer when they book this experience.">
+            <TextArea
+              placeholder="e.g. Please arrive 10 minutes early. Parking is on the east lot."
+              value={product.customerInstructions}
+              onChange={(e) => productActions.setAdvanced({ customerInstructions: e.target.value })}
+            />
+          </Field>
+        </SectionCard>
+      )}
 
       <SectionCard
         title="Variants & Pricing"

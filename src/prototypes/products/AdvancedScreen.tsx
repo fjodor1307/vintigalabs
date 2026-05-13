@@ -1,7 +1,6 @@
-import { ProductLayout, SectionCard, Field, Select, TextInput, TextArea } from './ProductLayout'
-import { Switch } from '@ds/shared/Switch'
+import { ProductLayout, SectionCard, Field, Select, TextArea } from './ProductLayout'
 import { useProductState, productActions } from './productStore'
-import { GlobeIcon, WarningIcon, PartyPopperIcon } from '@ds/icons/Icons'
+import { GlobeIcon, WarningIcon } from '@ds/icons/Icons'
 import type { ProductState } from './productStore'
 
 function WineGlassIcon({ className }: { className?: string }) {
@@ -116,75 +115,9 @@ export function AdvancedScreen() {
         </div>
       </SectionCard>
 
-      {/* ── Experience Properties (Experience only) ── */}
-      {isExperience && (
-        <SectionCard title="Experience Properties" icon={<PartyPopperIcon className="w-4 h-4" />}>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Experience Type" required>
-              <Select
-                value={product.experienceType}
-                onChange={(v) => productActions.setAdvanced({ experienceType: v as ProductState['experienceType'] })}
-                options={['Tasting', 'Tour', 'Other']}
-              />
-            </Field>
-            <Field label="Default Location">
-              <Select
-                value={product.defaultLocation || (product.location || '')}
-                onChange={(v) => productActions.setAdvanced({ defaultLocation: v })}
-                options={['Tasting Room', 'Cellar', 'Vineyard', 'Estate Garden', 'Barrel Room']}
-              />
-            </Field>
-          </div>
-
-          <Field label="Location" helper="Free text — where this experience takes place. Overrides Default Location when set.">
-            <TextInput
-              placeholder="e.g. Reserve Cellar, lower level"
-              value={product.location}
-              onChange={(e) => productActions.setAdvanced({ location: e.target.value })}
-            />
-          </Field>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Duration" helper="Total length of the experience, in minutes.">
-              <div className="relative">
-                <input
-                  type="number"
-                  min={0}
-                  placeholder="e.g. 60"
-                  value={product.durationMinutes}
-                  onChange={(e) => productActions.setAdvanced({ durationMinutes: e.target.value })}
-                  className="h-10 w-full pl-3 pr-14 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
-                />
-                <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">min</span>
-              </div>
-            </Field>
-            <Field label="Lead Time" helper="Minimum hours between booking and the experience.">
-              <div className="relative">
-                <input
-                  type="number"
-                  min={0}
-                  placeholder="e.g. 24"
-                  value={product.leadTimeHours}
-                  onChange={(e) => productActions.setAdvanced({ leadTimeHours: e.target.value })}
-                  className="h-10 w-full pl-3 pr-14 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
-                />
-                <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">hrs</span>
-              </div>
-            </Field>
-          </div>
-
-          <div className="flex items-start justify-between gap-vintiga-md pt-vintiga-sm">
-            <div className="flex flex-col">
-              <span className="typo-body-sm font-medium text-vintiga-slate-900">Requires Host</span>
-              <span className="typo-caption text-vintiga-slate-500">A staff member must be assigned for the experience to run.</span>
-            </div>
-            <Switch
-              checked={product.requiresHost}
-              onChange={(next) => productActions.setAdvanced({ requiresHost: next })}
-            />
-          </div>
-        </SectionCard>
-      )}
+      {/* Experience-specific details live on the General tab (the "first page") —
+          see `GeneralScreen` → Experience Details. Advanced keeps only the
+          cross-type fields plus the wine sub-cards below. */}
 
       {/* ── Wine Properties — hidden for Experiences ── */}
       {!isExperience && (
