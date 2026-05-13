@@ -43,18 +43,20 @@ function ProductActions() {
   )
 }
 
-function Tabs({ active }: { active: TabKey }) {
+function Tabs({ active, isExperience }: { active: TabKey; isExperience: boolean }) {
+  const options = [
+    { value: 'general'   as TabKey, label: 'General',   href: '#/web/products/general' },
+    { value: 'pos'       as TabKey, label: 'POS',       href: '#/web/products/pos' },
+    { value: 'website'   as TabKey, label: 'Website',   href: '#/web/products/website' },
+    // Experiences have no Advanced-only fields — everything lives on General.
+    ...(isExperience ? [] : [{ value: 'advanced' as TabKey, label: 'Advanced', href: '#/web/products/advanced' }]),
+    { value: 'modifiers' as TabKey, label: 'Modifiers', href: '#/web/products/modifiers' },
+  ]
   return (
     <SegmentedControl<TabKey>
       value={active}
       aria-label="Product editor tabs"
-      options={[
-        { value: 'general',   label: 'General',   href: '#/web/products/general' },
-        { value: 'pos',       label: 'POS',       href: '#/web/products/pos' },
-        { value: 'website',   label: 'Website',   href: '#/web/products/website' },
-        { value: 'advanced',  label: 'Advanced',  href: '#/web/products/advanced' },
-        { value: 'modifiers', label: 'Modifiers', href: '#/web/products/modifiers' },
-      ]}
+      options={options}
     />
   )
 }
@@ -128,7 +130,7 @@ export function ProductLayout({
             ]}
             title={product.name || 'New product'}
             actions={<ProductActions />}
-            tabs={<Tabs active={activeTab} />}
+            tabs={<Tabs active={activeTab} isExperience={product.productType === 'Experience'} />}
             rail={<RightPanel />}
           >
             {children}

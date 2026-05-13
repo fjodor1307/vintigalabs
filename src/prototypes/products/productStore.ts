@@ -61,6 +61,8 @@ export interface Collection {
 }
 
 export type ExperienceType = 'Tasting' | 'Tour' | 'Other'
+export type SeatingType = 'Communal' | 'Table'
+export type ChargeType = 'On Booking' | '48 hours advance' | 'On Checkin' | 'No Charge'
 
 export interface ProductState {
   name: string
@@ -98,11 +100,21 @@ export interface ProductState {
   taste: { body: number; sweetness: number; acidity: number; tannin: number; fruitiness: number }
   // Experience-specific
   experienceType: ExperienceType
+  seatingType: SeatingType
   location: string
   defaultLocation: string
   durationMinutes: string
   leadTimeHours: string
   requiresHost: boolean
+  /** ISO date (yyyy-mm-dd) — the date this experience first becomes available. */
+  startDate: string
+  /** ISO date (yyyy-mm-dd). Empty string means "no end date" (open-ended). */
+  endDate: string
+  chargeType: ChargeType
+  /** Whether customers can cancel the booking themselves on the website. */
+  allowCancelOnline: boolean
+  /** Free-form instructions emailed to the customer on purchase. */
+  customerInstructions: string
   // Modifiers
   modifierGroups: ModifierGroup[]
   // Catalogue (sibling list of products + collections, used by ProductsListScreen + CollectionsScreen)
@@ -184,11 +196,17 @@ const initial: ProductState = {
   appellation: 'Napa Valley',
   taste: { body: 1, sweetness: 3, acidity: 4, tannin: 2, fruitiness: 4 },
   experienceType: 'Tasting',
+  seatingType: 'Table',
   location: '',
   defaultLocation: '',
   durationMinutes: '',
   leadTimeHours: '',
   requiresHost: false,
+  startDate: '',
+  endDate: '',
+  chargeType: 'On Booking',
+  allowCancelOnline: true,
+  customerInstructions: '',
   modifierGroups: [],
   catalogue: [
     { id: 'p1',  name: '2016 Reserve Cabernet Sauvignon', sku: 'SKU-1234-1234', price: '27.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Red Wine'],   channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1697115355150-46dd3a5df633?w=320&h=320&fit=crop&q=80' },

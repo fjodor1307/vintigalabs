@@ -6,6 +6,27 @@
 
 ---
 
+## 2026-05-13 — fedja + Claude: Experience fields on the first page
+
+Client feedback: the experience editor "looks the same as a wine product with
+tasting profile etc." and the required experience fields needed to live on the
+first (General) page rather than buried under Advanced.
+
+**Store (`productStore.ts`):** adds `startDate`, `endDate`, `seatingType`
+(Communal / Table), `chargeType` (On Booking / 48 hours advance / On Checkin /
+No Charge), `allowCancelOnline` (default `true`), and `customerInstructions`.
+
+**General tab:** new **Experience Details** card, shown only when
+`productType === 'Experience'`, between Media and Variants & Pricing. Surfaces
+the full spec on the first page: Start Date + End Date, Experience Type +
+Seating Type, Location + Default Location, Duration + Lead Time, Charge Type,
+Requires Host, Allow customers to cancel online, Customer Instructions.
+
+**Advanced tab:** the Experience Properties card was removed (it lived here
+previously) so the experience-specific fields now have a single home on
+General. Wine Properties + Taste Profile continue to hide for experiences as
+before.
+
 ## 2026-05-05 — fedja + Claude: Experience product editor + cross-type field cleanup
 
 Branches the existing five-tab editor on `productType === 'Experience'` so
