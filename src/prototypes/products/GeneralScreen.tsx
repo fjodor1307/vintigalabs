@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ProductLayout, SectionCard, Field, TextInput, TextArea, Select } from './ProductLayout'
+import { ProductLayout, SectionCard, Field, TextInput, Select } from './ProductLayout'
 import { MediaSection } from './MediaSection'
 import { AiSuggestButton } from './AiSuggestButton'
 import { Switch } from '@ds/shared/Switch'
@@ -71,7 +71,7 @@ function generateWineCopy(name: string): string {
   return `<p>${intro}</p><p>${palate}</p><p>${closer}</p>`
 }
 
-function VariantsTable({ onEdit, onAdd }: { onEdit: (v: Variant) => void; onAdd: () => void }) {
+function VariantsTable({ onEdit, onAdd, isExperience }: { onEdit: (v: Variant) => void; onAdd: () => void; isExperience: boolean }) {
   const { variants } = useProductState()
   const drag = useRowDrag({ onReorder: productActions.reorderVariant })
 
@@ -80,8 +80,8 @@ function VariantsTable({ onEdit, onAdd }: { onEdit: (v: Variant) => void; onAdd:
       <div className="border border-dashed border-vintiga-slate-200 rounded-vintiga-lg bg-vintiga-white">
         <EmptyState
           icon={<PackagePlusIcon className="w-5 h-5" />}
-          title="No variants yet"
-          description="Add a bottle, glass, or case to start selling."
+          title={isExperience ? 'No options yet' : 'No variants yet'}
+          description={isExperience ? 'Add a package or party size to start selling.' : 'Add a bottle, glass, or case to start selling.'}
           action={
             <button
               type="button"
@@ -89,7 +89,7 @@ function VariantsTable({ onEdit, onAdd }: { onEdit: (v: Variant) => void; onAdd:
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
             >
               <PlusIcon className="w-3.5 h-3.5" />
-              Add Variant
+              {isExperience ? 'Add Option' : 'Add Variant'}
             </button>
           }
         />
@@ -99,11 +99,13 @@ function VariantsTable({ onEdit, onAdd }: { onEdit: (v: Variant) => void; onAdd:
 
   return (
     <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
-      <div className="grid grid-cols-[40px_1fr_1fr_120px_40px] items-center gap-4 px-4 py-3 bg-vintiga-slate-50 border-b border-vintiga-slate-200">
+      <div className="grid grid-cols-[40px_1.4fr_1fr_100px_100px_110px_40px] items-center gap-4 px-4 py-3 bg-vintiga-slate-50 border-b border-vintiga-slate-200">
         <span />
         <span className="typo-body-sm font-semibold text-vintiga-slate-700">Title</span>
         <span className="typo-body-sm font-semibold text-vintiga-slate-700">SKU</span>
         <span className="typo-body-sm font-semibold text-vintiga-slate-700">Price</span>
+        <span className="typo-body-sm font-semibold text-vintiga-slate-700">COGS</span>
+        <span className="typo-body-sm font-semibold text-vintiga-slate-700">Tax Type</span>
         <span />
       </div>
       {variants.map((v, i) => (
@@ -111,7 +113,7 @@ function VariantsTable({ onEdit, onAdd }: { onEdit: (v: Variant) => void; onAdd:
           key={v.id}
           {...drag.rowProps(i)}
           className={[
-            'grid grid-cols-[40px_1fr_1fr_120px_40px] items-center gap-4 px-4 py-3',
+            'grid grid-cols-[40px_1.4fr_1fr_100px_100px_110px_40px] items-center gap-4 px-4 py-3',
             'border-b border-vintiga-slate-200 last:border-b-0',
             'hover:bg-vintiga-slate-50 transition-colors cursor-pointer',
             drag.overIndex === i ? 'bg-vintiga-indigo-50 ring-2 ring-inset ring-vintiga-indigo-500' : '',
@@ -131,6 +133,10 @@ function VariantsTable({ onEdit, onAdd }: { onEdit: (v: Variant) => void; onAdd:
           <span className="typo-body-sm text-vintiga-slate-900">
             {v.price ? <>${v.price}</> : <span className="text-vintiga-slate-400">—</span>}
           </span>
+          <span className="typo-body-sm text-vintiga-slate-700">
+            {v.costOfGood ? <>${v.costOfGood}</> : <span className="text-vintiga-slate-400">$0.00</span>}
+          </span>
+          <span className="typo-body-sm text-vintiga-slate-700">{v.taxType || <span className="text-vintiga-slate-400">—</span>}</span>
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); productActions.removeVariant(v.id) }}
@@ -338,17 +344,13 @@ export function GeneralScreen() {
           </div>
 
           <Field label="Customer Instructions" helper="Emailed to the customer when they book this experience.">
-            <TextArea
-              placeholder="e.g. Please arrive 10 minutes early. Parking is on the east lot."
-              value={product.customerInstructions}
-              onChange={(e) => productActions.setAdvanced({ customerInstructions: e.target.value })}
-            />
+            <RichTextEditor minHeightClass="min-h-[160px]" placeholder="e.g. Please arrive 10 minutes early. Parking is on the east lot." />
           </Field>
         </SectionCard>
       )}
 
       <SectionCard
-        title="Variants & Pricing"
+        title={isExperience ? 'Options' : 'Variants & Pricing'}
         action={
           <button
             type="button"
@@ -356,14 +358,16 @@ export function GeneralScreen() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
           >
             <PlusIcon className="w-3.5 h-3.5" />
-            Add Variant
+            {isExperience ? 'Add Option' : 'Add Variant'}
           </button>
         }
       >
         <p className="typo-body-sm text-vintiga-slate-500">
-          Add variants for each option (size, color, etc.). Each variant is counted as one unit.
+          {isExperience
+            ? 'Add an option for each package or party size (e.g. For 2, For 4). Each option is sold as one bookable unit.'
+            : 'Add variants for each option (size, color, etc.). Each variant is counted as one unit.'}
         </p>
-        <VariantsTable onEdit={openEdit} onAdd={openAdd} />
+        <VariantsTable onEdit={openEdit} onAdd={openAdd} isExperience={isExperience} />
       </SectionCard>
 
       <VariantModal open={modalOpen} onClose={close} initial={editing} />
