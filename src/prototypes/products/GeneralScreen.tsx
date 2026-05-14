@@ -80,7 +80,7 @@ function VariantsTable({ onEdit, onAdd, isExperience }: { onEdit: (v: Variant) =
       <div className="border border-dashed border-vintiga-slate-200 rounded-vintiga-lg bg-vintiga-white">
         <EmptyState
           icon={<PackagePlusIcon className="w-5 h-5" />}
-          title={isExperience ? 'No options yet' : 'No variants yet'}
+          title="No variants yet"
           description={isExperience ? 'Add a package or party size to start selling.' : 'Add a bottle, glass, or case to start selling.'}
           action={
             <button
@@ -89,7 +89,7 @@ function VariantsTable({ onEdit, onAdd, isExperience }: { onEdit: (v: Variant) =
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
             >
               <PlusIcon className="w-3.5 h-3.5" />
-              {isExperience ? 'Add Option' : 'Add Variant'}
+              Add Variant
             </button>
           }
         />
@@ -226,8 +226,29 @@ export function GeneralScreen() {
           label="Content"
           action={<AiSuggestButton onClick={generateContent} generating={generating} iconOnly />}
         >
-          <RichTextEditor editorRef={editorRef} minHeightClass="min-h-[200px]" />
+          <RichTextEditor editorRef={editorRef} />
         </Field>
+      </SectionCard>
+
+      <SectionCard
+        title="Variants & Pricing"
+        action={
+          <button
+            type="button"
+            onClick={openAdd}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
+          >
+            <PlusIcon className="w-3.5 h-3.5" />
+            Add Variant
+          </button>
+        }
+      >
+        <p className="typo-body-sm text-vintiga-slate-500">
+          {isExperience
+            ? 'Add a variant for each package or party size (e.g. For 2, For 4). Each variant is sold as one bookable unit.'
+            : 'Add variants for each option (size, color, etc.). Each variant is counted as one unit.'}
+        </p>
+        <VariantsTable onEdit={openEdit} onAdd={openAdd} isExperience={isExperience} />
       </SectionCard>
 
       <MediaSection />
@@ -268,20 +289,75 @@ export function GeneralScreen() {
             </Field>
           </div>
 
-          <Field label="Location" helper="Free text — where this experience takes place. Overrides Default Location when set.">
+          {product.seatingType === 'Communal' ? (
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Min guests per time slot" helper="Smallest party size that can book this slot.">
+                <TextInput
+                  type="number"
+                  min={0}
+                  placeholder="e.g. 1"
+                  value={product.minGuestsPerSlot}
+                  onChange={(e) => productActions.setAdvanced({ minGuestsPerSlot: e.target.value })}
+                />
+              </Field>
+              <Field label="Max guests per time slot" helper="Total shared capacity at one slot.">
+                <TextInput
+                  type="number"
+                  min={0}
+                  placeholder="e.g. 8"
+                  value={product.maxGuestsPerSlot}
+                  onChange={(e) => productActions.setAdvanced({ maxGuestsPerSlot: e.target.value })}
+                />
+              </Field>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Min guests per group" helper="Smallest party size you'll accept at one table.">
+                  <TextInput
+                    type="number"
+                    min={0}
+                    placeholder="e.g. 2"
+                    value={product.minGuestsPerGroup}
+                    onChange={(e) => productActions.setAdvanced({ minGuestsPerGroup: e.target.value })}
+                  />
+                </Field>
+                <Field label="Max guests per group" helper="Largest party size at one table.">
+                  <TextInput
+                    type="number"
+                    min={0}
+                    placeholder="e.g. 8"
+                    value={product.maxGuestsPerGroup}
+                    onChange={(e) => productActions.setAdvanced({ maxGuestsPerGroup: e.target.value })}
+                  />
+                </Field>
+              </div>
+              <Field label="Max groups per time slot" helper="How many tabletops can run at the same time.">
+                <TextInput
+                  type="number"
+                  min={0}
+                  placeholder="e.g. 4"
+                  value={product.maxGroupsPerSlot}
+                  onChange={(e) => productActions.setAdvanced({ maxGroupsPerSlot: e.target.value })}
+                />
+              </Field>
+            </>
+          )}
+
+          <Field label="Location" helper="Pick from your locations or enter a custom one.">
             <TextInput
               placeholder="e.g. Reserve Cellar, lower level"
               value={product.location}
               onChange={(e) => productActions.setAdvanced({ location: e.target.value })}
+              list="experience-location-presets"
             />
-          </Field>
-
-          <Field label="Default Location">
-            <Select
-              value={product.defaultLocation || ''}
-              onChange={(v) => productActions.setAdvanced({ defaultLocation: v })}
-              options={['Tasting Room', 'Cellar', 'Vineyard', 'Estate Garden', 'Barrel Room']}
-            />
+            <datalist id="experience-location-presets">
+              <option value="Tasting Room" />
+              <option value="Cellar" />
+              <option value="Vineyard" />
+              <option value="Estate Garden" />
+              <option value="Barrel Room" />
+            </datalist>
           </Field>
 
           <div className="grid grid-cols-2 gap-4">
@@ -344,31 +420,10 @@ export function GeneralScreen() {
           </div>
 
           <Field label="Customer Instructions" helper="Emailed to the customer when they book this experience.">
-            <RichTextEditor minHeightClass="min-h-[160px]" placeholder="e.g. Please arrive 10 minutes early. Parking is on the east lot." />
+            <RichTextEditor placeholder="e.g. Please arrive 10 minutes early. Parking is on the east lot." />
           </Field>
         </SectionCard>
       )}
-
-      <SectionCard
-        title={isExperience ? 'Options' : 'Variants & Pricing'}
-        action={
-          <button
-            type="button"
-            onClick={openAdd}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
-          >
-            <PlusIcon className="w-3.5 h-3.5" />
-            {isExperience ? 'Add Option' : 'Add Variant'}
-          </button>
-        }
-      >
-        <p className="typo-body-sm text-vintiga-slate-500">
-          {isExperience
-            ? 'Add an option for each package or party size (e.g. For 2, For 4). Each option is sold as one bookable unit.'
-            : 'Add variants for each option (size, color, etc.). Each variant is counted as one unit.'}
-        </p>
-        <VariantsTable onEdit={openEdit} onAdd={openAdd} isExperience={isExperience} />
-      </SectionCard>
 
       <VariantModal open={modalOpen} onClose={close} initial={editing} />
     </ProductLayout>
