@@ -76,6 +76,19 @@ export interface TimeSlot {
   online: boolean
 }
 
+export interface Blackout {
+  id: string
+  /** ISO date (yyyy-mm-dd). */
+  startDate: string
+  /** ISO date (yyyy-mm-dd). Empty = same as startDate (single-day blackout). */
+  endDate: string
+  /** "9:00" — empty means "all day". */
+  startTime: string
+  startPeriod: 'AM' | 'PM'
+  endTime: string
+  endPeriod: 'AM' | 'PM'
+}
+
 export interface ProductState {
   name: string
   productType: string
@@ -114,9 +127,15 @@ export interface ProductState {
   experienceType: ExperienceType
   seatingType: SeatingType
   location: string
-  defaultLocation: string
   durationMinutes: string
   leadTimeHours: string
+  // Capacity — interpretation depends on seatingType.
+  // Communal: per-time-slot headcount. Table: per-group size + tabletops per slot.
+  minGuestsPerSlot: string
+  maxGuestsPerSlot: string
+  minGuestsPerGroup: string
+  maxGuestsPerGroup: string
+  maxGroupsPerSlot: string
   requiresHost: boolean
   /** ISO date (yyyy-mm-dd) — the date this experience first becomes available. */
   startDate: string
@@ -129,6 +148,9 @@ export interface ProductState {
   customerInstructions: string
   /** Weekly bookable time slots, keyed by weekday. */
   timeSlotsByDay: Record<Weekday, TimeSlot[]>
+  /** ISO date (yyyy-mm-dd). Empty = recurs indefinitely. */
+  scheduleRepeatsUntil: string
+  blackouts: Blackout[]
   // Modifiers
   modifierGroups: ModifierGroup[]
   // Catalogue (sibling list of products + collections, used by ProductsListScreen + CollectionsScreen)
@@ -212,9 +234,13 @@ const initial: ProductState = {
   experienceType: 'Tasting',
   seatingType: 'Table',
   location: '',
-  defaultLocation: '',
   durationMinutes: '',
   leadTimeHours: '',
+  minGuestsPerSlot: '',
+  maxGuestsPerSlot: '',
+  minGuestsPerGroup: '',
+  maxGuestsPerGroup: '',
+  maxGroupsPerSlot: '',
   requiresHost: false,
   startDate: '',
   endDate: '',
@@ -233,6 +259,8 @@ const initial: ProductState = {
     Saturday: [],
     Sunday: [],
   },
+  scheduleRepeatsUntil: '',
+  blackouts: [],
   modifierGroups: [],
   catalogue: [
     { id: 'p1',  name: '2016 Reserve Cabernet Sauvignon', sku: 'SKU-1234-1234', price: '27.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Red Wine'],   channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1697115355150-46dd3a5df633?w=320&h=320&fit=crop&q=80' },
@@ -411,6 +439,36 @@ export const productActions = {
         [day]: state.timeSlotsByDay[day].filter((s) => s.id !== id),
       },
     }
+    emit()
+  },
+
+  // Recurrence + blackouts
+  setScheduleRepeatsUntil(value: string) {
+    state = { ...state, scheduleRepeatsUntil: value }
+    emit()
+  },
+  addBlackout() {
+    const b: Blackout = {
+      id: uid('bl'),
+      startDate: '',
+      endDate: '',
+      startTime: '',
+      startPeriod: 'AM',
+      endTime: '',
+      endPeriod: 'PM',
+    }
+    state = { ...state, blackouts: [...state.blackouts, b] }
+    emit()
+  },
+  updateBlackout(id: string, patch: Partial<Blackout>) {
+    state = {
+      ...state,
+      blackouts: state.blackouts.map((b) => (b.id === id ? { ...b, ...patch } : b)),
+    }
+    emit()
+  },
+  removeBlackout(id: string) {
+    state = { ...state, blackouts: state.blackouts.filter((b) => b.id !== id) }
     emit()
   },
 

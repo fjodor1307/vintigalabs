@@ -1,7 +1,7 @@
 /**
  * Icons — all from lucide-react.
  * Re-exported with the project's naming conventions so every import site stays the same.
- * VintigaLogoIcon is the only exception — it's the brand mark, not a UI icon.
+ * The brand mark lives in `@ds/shared/VintigaLogo` — import it from there, not this file.
  */
 
 export {
@@ -149,15 +149,3 @@ export {
   Mic            as MicIcon,
   Layers         as LayersIcon,
 } from 'lucide-react'
-
-import type { SVGProps } from 'react'
-
-// ── Brand mark — not a UI icon, keep as custom SVG ───────────────────────────
-export function VintigaLogoIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg width="44" height="44" viewBox="0 0 44 44" fill="none" {...props}>
-      <path fillRule="evenodd" clipRule="evenodd" d="M7.71144 5.5L4.125 38.4994H12.4436L16.0287 5.5H7.71144Z" fill="currentColor"/>
-      <path fillRule="evenodd" clipRule="evenodd" d="M28.515 5.50065L22.5378 18.3321L18.0518 8.40082L16.3368 25.0406L22.5378 38.5L29.1086 24.9337H29.1984L31.1153 38.5H39.875L35.3609 5.50065H28.515Z" fill="currentColor"/>
-    </svg>
-  )
-}
