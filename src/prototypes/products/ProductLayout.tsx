@@ -44,16 +44,19 @@ function ProductActions() {
 }
 
 function Tabs({ active, isExperience }: { active: TabKey; isExperience: boolean }) {
+  // Preserve ?id=… so deep-linking + refresh keep loading the right catalogue row.
+  const query = typeof window !== 'undefined' ? window.location.hash.split('?')[1] : ''
+  const suffix = query ? `?${query}` : ''
   const options = [
-    { value: 'general'   as TabKey, label: 'General',   href: '#/web/products/general' },
+    { value: 'general'   as TabKey, label: 'General',   href: `#/web/products/general${suffix}` },
     // Time Slots is experience-only — wines don't have a weekly bookable schedule.
-    ...(isExperience ? [{ value: 'timeslots' as TabKey, label: 'Time Slots', href: '#/web/products/timeslots' }] : []),
-    { value: 'pos'       as TabKey, label: 'POS',       href: '#/web/products/pos' },
-    { value: 'website'   as TabKey, label: 'Website',   href: '#/web/products/website' },
+    ...(isExperience ? [{ value: 'timeslots' as TabKey, label: 'Time Slots', href: `#/web/products/timeslots${suffix}` }] : []),
+    { value: 'pos'       as TabKey, label: 'POS',       href: `#/web/products/pos${suffix}` },
+    { value: 'website'   as TabKey, label: 'Website',   href: `#/web/products/website${suffix}` },
     // Experiences have no Advanced-only fields — everything lives on General.
-    ...(isExperience ? [] : [{ value: 'advanced' as TabKey, label: 'Advanced', href: '#/web/products/advanced' }]),
+    ...(isExperience ? [] : [{ value: 'advanced' as TabKey, label: 'Advanced', href: `#/web/products/advanced${suffix}` }]),
     // Experiences don't have modifiers — spec defines options via Variants only.
-    ...(isExperience ? [] : [{ value: 'modifiers' as TabKey, label: 'Modifiers', href: '#/web/products/modifiers' }]),
+    ...(isExperience ? [] : [{ value: 'modifiers' as TabKey, label: 'Modifiers', href: `#/web/products/modifiers${suffix}` }]),
   ]
   return (
     <SegmentedControl<TabKey>
