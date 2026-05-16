@@ -201,11 +201,8 @@ function ReservationTimeSlotsCard() {
               onChange={(v) => update(slot.id, { period: v as 'AM' | 'PM' })}
               options={PERIOD_OPTIONS}
             />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center">
               <Switch checked={slot.online} onChange={(next) => update(slot.id, { online: next })} />
-              <span className={['typo-body-sm font-medium', slot.online ? 'text-vintiga-slate-900' : 'text-vintiga-slate-400'].join(' ')}>
-                {slot.online ? 'On' : 'Off'}
-              </span>
             </div>
             {WEEKDAYS.map((d) => (
               <DayToggle
