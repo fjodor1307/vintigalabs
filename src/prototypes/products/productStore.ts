@@ -47,6 +47,8 @@ export interface CatalogueProduct {
   sku: string
   price: string
   type: string
+  /** Local-only override on top of Commerce7's Wine type. Only meaningful when type === 'Wine'. */
+  productTypeOverride?: ProductTypeOverride
   availability: 'Public' | 'Private' | 'Draft'
   collections: string[]
   imageUrl?: string
@@ -63,6 +65,51 @@ export interface Collection {
 export type ExperienceType = 'Tasting' | 'Tour' | 'Other'
 export type SeatingType = 'Communal' | 'Table'
 export type ChargeType = 'On Booking' | '48 hours advance' | 'On Checkin' | 'No Charge'
+
+// ── Beer / Spirits override taxonomies ───────────────────────────────────────
+// Commerce7 doesn't model Beer or Spirits — stores set them up as Wine.
+// Vintiga lets you override the type locally and capture beverage-specific
+// attributes that don't sync back to Commerce7.
+
+export type ProductTypeOverride = 'None' | 'Beer' | 'Spirits'
+
+export type BeerFamily = 'Ale' | 'Lager' | 'Hybrid' | 'Mixed Fermentation' | 'Other'
+export const BEER_STYLES_BY_FAMILY: Record<BeerFamily, string[]> = {
+  'Ale': ['IPA', 'Pale Ale', 'Porter', 'Stout', 'Brown Ale', 'Saison', 'Belgian Ale'],
+  'Lager': ['Pilsner', 'Helles', 'Märzen', 'Bock', 'Dunkel'],
+  'Hybrid': ['Kölsch', 'California Common'],
+  'Mixed Fermentation': ['Sour', 'Lambic', 'Wild Ale'],
+  'Other': ['Dry Cider', 'Pear Cider', 'Hard Seltzer', 'Non-Alcoholic'],
+}
+export const BEER_TAGS = ['Hazy', 'Crisp', 'Fruity', 'Juicy', 'Malty', 'Barrel-Aged', 'Seasonal', 'Imperial', 'Nitro', 'Coffee', 'Rosé', 'Botanical'] as const
+
+export type SpiritsFamily = 'Whiskey' | 'Agave Spirits' | 'Rum' | 'Gin' | 'Vodka' | 'Brandy' | 'Liqueur' | 'Ready-to-Drink' | 'Other'
+export const SPIRITS_STYLES_BY_FAMILY: Record<SpiritsFamily, string[]> = {
+  'Whiskey': ['Bourbon', 'Rye Whiskey', 'Scotch Whisky', 'Irish Whiskey', 'Canadian Whisky', 'Japanese Whisky', 'Tennessee Whiskey', 'Single Malt Whisky', 'Blended Whisky'],
+  'Agave Spirits': ['Tequila', 'Mezcal'],
+  'Rum': ['White Rum', 'Dark Rum', 'Spiced Rum', 'Aged Rum'],
+  'Gin': ['London Dry Gin', 'Contemporary Gin', 'Old Tom Gin'],
+  'Vodka': ['Vodka', 'Flavored Vodka'],
+  'Brandy': ['Cognac', 'Armagnac', 'Fruit Brandy'],
+  'Liqueur': ['Coffee Liqueur', 'Cream Liqueur', 'Herbal Liqueur', 'Orange Liqueur'],
+  'Ready-to-Drink': ['Cocktail', 'Canned Cocktail'],
+  'Other': ['Moonshine', 'Absinthe', 'Non-Alcoholic Spirits'],
+}
+export const SPIRITS_TAGS = ['Smoky', 'Sweet', 'Spiced', 'Herbal', 'Citrus', 'Vanilla', 'Coffee', 'Caramel', 'Barrel-Aged', 'Small Batch', 'Single Barrel', 'Cask Strength', 'Ready-to-Drink', 'Nitro', 'Organic', 'Limited Release', 'Seasonal'] as const
+
+/** Reverse lookup: style → family. Auto-assigned on Style change. */
+export function beerFamilyForStyle(style: string): BeerFamily | '' {
+  for (const family of Object.keys(BEER_STYLES_BY_FAMILY) as BeerFamily[]) {
+    if (BEER_STYLES_BY_FAMILY[family].includes(style)) return family
+  }
+  return ''
+}
+export function spiritsFamilyForStyle(style: string): SpiritsFamily | '' {
+  for (const family of Object.keys(SPIRITS_STYLES_BY_FAMILY) as SpiritsFamily[]) {
+    if (SPIRITS_STYLES_BY_FAMILY[family].includes(style)) return family
+  }
+  return ''
+}
 
 export type Weekday = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday'
 export const WEEKDAYS: Weekday[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -151,6 +198,14 @@ export interface ProductState {
   /** ISO date (yyyy-mm-dd). Empty = recurs indefinitely. */
   scheduleRepeatsUntil: string
   blackouts: Blackout[]
+  // Beer / Spirits override (only meaningful when productType === 'Wine')
+  productTypeOverride: ProductTypeOverride
+  beerStyle: string
+  beerFamily: string
+  beerTags: string[]
+  spiritsStyle: string
+  spiritsFamily: string
+  spiritsTags: string[]
   // Modifiers
   modifierGroups: ModifierGroup[]
   // Catalogue (sibling list of products + collections, used by ProductsListScreen + CollectionsScreen)
@@ -261,6 +316,13 @@ const initial: ProductState = {
   },
   scheduleRepeatsUntil: '',
   blackouts: [],
+  productTypeOverride: 'None',
+  beerStyle: '',
+  beerFamily: '',
+  beerTags: [],
+  spiritsStyle: '',
+  spiritsFamily: '',
+  spiritsTags: [],
   modifierGroups: [],
   catalogue: [
     { id: 'p1',  name: '2016 Reserve Cabernet Sauvignon', sku: 'SKU-1234-1234', price: '27.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'Red Wine'],   channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1697115355150-46dd3a5df633?w=320&h=320&fit=crop&q=80' },
@@ -277,6 +339,15 @@ const initial: ProductState = {
     { id: 'p11', name: '2021 Sauvignon Blanc',             sku: 'SKU-1234-1237', price: '22.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'White Wine'], channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1588982766898-4a826e5ef631?w=320&h=320&fit=crop&q=80' },
     { id: 'p12', name: '2019 Brut Sparkling',              sku: 'SKU-1234-1238', price: '38.00', type: 'Wine', availability: 'Public', collections: ['Wine'],               channels: ['Website'],        imageUrl: 'https://images.unsplash.com/photo-1614208406223-5b78888e8b4b?w=320&h=320&fit=crop&q=80' },
     { id: 'p13', name: '2022 Late Harvest Riesling',       sku: 'SKU-1234-1239', price: '28.00', type: 'Wine', availability: 'Public', collections: ['Wine', 'White Wine'], channels: ['POS'],            imageUrl: 'https://images.unsplash.com/photo-1605701061257-37892a5cc0ab?w=320&h=320&fit=crop&q=80' },
+    // ── Beer / Spirits overrides ──────────────────────────────────────────────
+    // Commerce7 sees these as Wine; Vintiga reclassifies them locally so they
+    // filter, render, and report as Beer / Spirits without touching the source.
+    { id: 'b1', name: 'Estate Hazy IPA',                     sku: 'BEER-2001',    price: '6.00',  type: 'Wine', productTypeOverride: 'Beer',    availability: 'Public', collections: ['Beer'],     channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=320&h=320&fit=crop&q=80' },
+    { id: 'b2', name: 'Coastal Pilsner',                     sku: 'BEER-2002',    price: '5.00',  type: 'Wine', productTypeOverride: 'Beer',    availability: 'Public', collections: ['Beer'],     channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?w=320&h=320&fit=crop&q=80' },
+    { id: 'b3', name: 'Barrel-Aged Imperial Stout',          sku: 'BEER-2003',    price: '12.00', type: 'Wine', productTypeOverride: 'Beer',    availability: 'Public', collections: ['Beer'],     channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1577020111824-89c2a0d28f70?w=320&h=320&fit=crop&q=80' },
+    { id: 's1', name: 'Small Batch Bourbon',                 sku: 'SPIRIT-3001',  price: '54.00', type: 'Wine', productTypeOverride: 'Spirits', availability: 'Public', collections: ['Spirits'],  channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1582819509237-d6b50f7c4e8d?w=320&h=320&fit=crop&q=80' },
+    { id: 's2', name: 'Reposado Tequila',                    sku: 'SPIRIT-3002',  price: '48.00', type: 'Wine', productTypeOverride: 'Spirits', availability: 'Public', collections: ['Spirits'],  channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1609951651556-5334e2706168?w=320&h=320&fit=crop&q=80' },
+    { id: 's3', name: 'Botanical London Dry Gin',            sku: 'SPIRIT-3003',  price: '36.00', type: 'Wine', productTypeOverride: 'Spirits', availability: 'Public', collections: ['Spirits'],  channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1614313913007-2b4ae8ce32d6?w=320&h=320&fit=crop&q=80' },
     // ── Experiences ───────────────────────────────────────────────────────────
     // Bookable experiences live in the products catalogue under the
     // Experiences tab. IDs are e-prefixed.
@@ -409,6 +480,44 @@ export const productActions = {
   },
   setTaste(key: keyof ProductState['taste'], value: number) {
     state = { ...state, taste: { ...state.taste, [key]: value } }
+    emit()
+  },
+
+  // Beer / Spirits override
+  setProductTypeOverride(value: ProductTypeOverride) {
+    // Reset the off-type fields so stale data doesn't leak between overrides.
+    const next: Partial<ProductState> =
+      value === 'Beer'    ? { spiritsStyle: '', spiritsFamily: '', spiritsTags: [] } :
+      value === 'Spirits' ? { beerStyle: '',    beerFamily: '',    beerTags: [] } :
+                            { beerStyle: '', beerFamily: '', beerTags: [], spiritsStyle: '', spiritsFamily: '', spiritsTags: [] }
+    state = { ...state, productTypeOverride: value, ...next }
+    // Sync the catalogue row so list filters reflect the override immediately.
+    if (state.editingId) {
+      state = {
+        ...state,
+        catalogue: state.catalogue.map((p) =>
+          p.id === state.editingId ? { ...p, productTypeOverride: value === 'None' ? undefined : value } : p,
+        ),
+      }
+    }
+    emit()
+  },
+  setBeerStyle(style: string) {
+    state = { ...state, beerStyle: style, beerFamily: beerFamilyForStyle(style) }
+    emit()
+  },
+  toggleBeerTag(tag: string) {
+    const has = state.beerTags.includes(tag)
+    state = { ...state, beerTags: has ? state.beerTags.filter((t) => t !== tag) : [...state.beerTags, tag] }
+    emit()
+  },
+  setSpiritsStyle(style: string) {
+    state = { ...state, spiritsStyle: style, spiritsFamily: spiritsFamilyForStyle(style) }
+    emit()
+  },
+  toggleSpiritsTag(tag: string) {
+    const has = state.spiritsTags.includes(tag)
+    state = { ...state, spiritsTags: has ? state.spiritsTags.filter((t) => t !== tag) : [...state.spiritsTags, tag] }
     emit()
   },
 
@@ -583,6 +692,7 @@ export const productActions = {
       editingId: productId,
       name: p.name,
       productType: p.type,
+      productTypeOverride: p.productTypeOverride ?? 'None',
       // Department mirrors product type — keeps the Advanced tab on the right
       // type-specific properties card (Wine vs Experience).
       department: p.type,
