@@ -17,6 +17,7 @@
 | Clubs | 2026-05-07 | [src/prototypes/clubs/CHANGELOG.md](src/prototypes/clubs/CHANGELOG.md) |
 | Customers | 2026-05-11 | [src/prototypes/customers/CHANGELOG.md](src/prototypes/customers/CHANGELOG.md) |
 | Experience Timeslots | — | [src/prototypes/experience-timeslots/CHANGELOG.md](src/prototypes/experience-timeslots/CHANGELOG.md) |
+| Experience Timeslots Matrix | — | [src/prototypes/experience-timeslots-matrix/CHANGELOG.md](src/prototypes/experience-timeslots-matrix/CHANGELOG.md) |
 | Onboarding | 2026-04-27 | [src/prototypes/onboarding/CHANGELOG.md](src/prototypes/onboarding/CHANGELOG.md) |
 | Products | 2026-05-14 | [src/prototypes/products/CHANGELOG.md](src/prototypes/products/CHANGELOG.md) |
 | Sales Chat | 2026-05-11 | [src/prototypes/sales-chat/CHANGELOG.md](src/prototypes/sales-chat/CHANGELOG.md) |
@@ -204,3 +205,7 @@ Created `src/prototypes/clubs/` via `npm run new-prototype`.
 ## 2026-05-16 — Scaffolded `experience-timeslots` prototype
 
 Created `src/prototypes/experience-timeslots/` via `npm run new-prototype`.
+
+## 2026-05-16 — Scaffolded `experience-timeslots-matrix` prototype
+
+Created `src/prototypes/experience-timeslots-matrix/` via `npm run new-prototype`.
