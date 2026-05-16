@@ -1,13 +1,9 @@
 import { useState } from 'react'
-import { AppSidebar } from '@ds/shared/AppSidebar'
-import { Navbar } from '@ds/shared/Navbar'
-import { useResponsiveSidebar } from '@ds/shared/useResponsiveSidebar'
-import { PageTemplate } from '@ds/shared/PageTemplate'
+import { ExperienceShell } from '../_shared/ExperienceShell'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { Button } from '@ds/shared/Button'
 import { Checkbox } from '@ds/shared/Checkbox'
 import { Radio } from '@ds/shared/Radio'
-import { BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
 import { PlusIcon, TrashIcon } from '@ds/icons/Icons'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -331,43 +327,22 @@ function DateOverridesCard() {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export function EditorScreen() {
-  const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
-
   return (
-    <div className="flex h-full bg-vintiga-white">
-      <AppSidebar
-        collapsed={collapsed}
-        mobileOpen={mobileOpen}
-        onMobileClose={closeMobile}
-        activeNav="Products"
-      />
-      <div className="flex-1 flex flex-col min-w-0 relative">
-        <Navbar
-          device="responsive"
-          fixed
-          user={{ name: 'Tom Cook', initials: 'TC' }}
-          onMenuToggle={onMenuToggle}
-          onUserClick={() => {}}
-          onNotificationClick={() => {}}
-        />
-        <div className="flex-1 overflow-y-auto pt-16">
-          <PageTemplate
-            breadcrumbs={[
-              { icon: <BreadcrumbHomeIcon />, href: '#/web/products/list' },
-              { label: 'Products', href: '#/web/products/list' },
-              { label: 'Reserve Cellar Tasting' },
-            ]}
-            title="Reserve Cellar Tasting"
-            actions={<Button onClick={() => {}}>Save</Button>}
-          >
-            <p className="typo-body-sm text-vintiga-slate-500 -mt-2">
-              Set when guests can book this experience. Operators see only what they need: the weekly hours, and any date exceptions.
-            </p>
-            <WeeklyScheduleCard />
-            <DateOverridesCard />
-          </PageTemplate>
-        </div>
-      </div>
-    </div>
+    <ExperienceShell
+      title="Reserve Cellar Tasting"
+      activeTab="timeslots"
+      tabHrefs={{
+        general:   '#/web/experience-timeslots/editor',
+        timeslots: '#/web/experience-timeslots/editor',
+        pos:       '#/web/experience-timeslots/editor',
+        website:   '#/web/experience-timeslots/editor',
+      }}
+    >
+      <p className="typo-body-sm text-vintiga-slate-500 -mt-2">
+        Set when guests can book this experience. Operators see only what they need: the weekly hours, and any date exceptions.
+      </p>
+      <WeeklyScheduleCard />
+      <DateOverridesCard />
+    </ExperienceShell>
   )
 }
