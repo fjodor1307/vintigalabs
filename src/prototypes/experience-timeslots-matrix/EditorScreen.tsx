@@ -398,7 +398,7 @@ function BlackoutDatesCard() {
 
         {/* List */}
         <div className="flex flex-col min-w-0">
-          <div className="grid grid-cols-[1fr_80px_110px_24px] items-center gap-3 px-2 pb-2 border-b border-vintiga-slate-200">
+          <div className="grid grid-cols-[1fr_96px_110px_24px] items-center gap-3 px-2 pb-2 border-b border-vintiga-slate-200">
             <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Reason</span>
             <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Type</span>
             <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Date</span>
@@ -407,14 +407,14 @@ function BlackoutDatesCard() {
           {blackouts.length === 0 ? (
             <p className="typo-body-sm text-vintiga-slate-400 px-2 py-3">No blackouts yet.</p>
           ) : blackouts.map((b) => (
-            <div key={b.id} className="grid grid-cols-[1fr_80px_110px_24px] items-center gap-3 px-2 py-1.5 border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50/40 transition-colors">
+            <div key={b.id} className="grid grid-cols-[1fr_96px_110px_24px] items-center gap-3 px-2 py-1.5 border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50/40 transition-colors">
               <div className="flex flex-col min-w-0">
                 <span className="typo-body-sm font-medium text-vintiga-slate-900 truncate">{b.reason}</span>
                 <span className="typo-caption text-vintiga-slate-500">
                   {b.end && b.end !== b.start ? `${humanRange(b.start, b.end)} days` : '1 day'}
                 </span>
               </div>
-              <Tag variant="filled" tone={toneFor(b.type)} size="sm">{TYPE_LABEL[b.type]}</Tag>
+              <Tag variant="filled" tone={toneFor(b.type)}>{TYPE_LABEL[b.type]}</Tag>
               <span className="typo-body-sm text-vintiga-slate-700 truncate">{formatDateShort(b.start, b.end)}</span>
               <button
                 type="button"
