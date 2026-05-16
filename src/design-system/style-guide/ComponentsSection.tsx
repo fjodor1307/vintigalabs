@@ -964,19 +964,34 @@ function AvatarsSection() {
 }
 
 const TAG_CONTROLS: ControlSchema = {
-  variant:  { type: 'select', options: ['filled', 'outline', 'neutral-dark', 'neutral-light'], default: 'filled' },
-  tone:     { type: 'select', options: ['default', 'success', 'warning', 'danger', 'info', 'orange', 'yellow', 'teal', 'blue', 'violet'], default: 'success' },
-  size:     { type: 'select', options: ['sm', 'md'], default: 'md' },
-  children: { type: 'text',   default: 'Wine Club' },
+  variant:      { type: 'select',  options: ['filled', 'outline', 'neutral-dark', 'neutral-light'], default: 'filled' },
+  // Tone only affects the `filled` variant — disable for the others.
+  tone:         { type: 'select',  options: ['default', 'success', 'warning', 'danger', 'info', 'orange', 'yellow', 'teal', 'blue', 'violet'], default: 'success', disabled: (v) => v.variant !== 'filled' },
+  size:         { type: 'select',  options: ['sm', 'md'], default: 'md' },
+  leftIcon:     { type: 'boolean', default: false },
+  removable:    { type: 'boolean', default: false },
+  interactive:  { type: 'boolean', default: false },
+  // `pressed` is only meaningful in interactive mode.
+  pressed:      { type: 'boolean', default: false, disabled: (v) => !v.interactive },
+  children:     { type: 'text',    default: 'Wine Club' },
 }
 
 function TagsSection() {
   const v = usePlayground(TAG_CONTROLS)
+  const interactive = v.interactive as boolean
   return (
-    <SubSection id="ds-tags" title="Tags" description="Labels for status, category, or metadata. Filled variant carries tone — semantic (success / warning / danger / info / default) plus extras (orange / yellow / teal / blue / violet) used by the order-status palette.">
+    <SubSection id="ds-tags" title="Tags" description="Labels for status, category, or metadata. Filled variant carries tone — semantic (success / warning / danger / info / default) plus extras (orange / yellow / teal / blue / violet) used by the order-status palette. Pass onToggle to make a tag interactive (hover + selected states).">
       <div className="flex flex-col gap-vintiga-lg">
         <PlaygroundStage>
-          <Tag variant={v.variant as TagVariant} tone={v.tone as TagTone} size={v.size as 'sm' | 'md'}>
+          <Tag
+            variant={v.variant as TagVariant}
+            tone={v.tone as TagTone}
+            size={v.size as 'sm' | 'md'}
+            leftIcon={v.leftIcon ? <InfoIcon className="w-3.5 h-3.5" /> : undefined}
+            onRemove={v.removable ? () => {} : undefined}
+            onToggle={interactive ? () => {} : undefined}
+            pressed={interactive ? (v.pressed as boolean) : undefined}
+          >
             {v.children as string}
           </Tag>
         </PlaygroundStage>
@@ -1025,8 +1040,55 @@ function TagsSection() {
             <Tag variant="neutral-light">Repeat</Tag>
           </div>
         </ReferenceCard>
+
+        <ReferenceCard label="With left icon">
+          <div className="flex flex-wrap gap-2">
+            <Tag variant="outline" leftIcon={<InfoIcon className="w-3.5 h-3.5" />}>label</Tag>
+            <Tag variant="neutral-dark" leftIcon={<InfoIcon className="w-3.5 h-3.5" />}>label</Tag>
+            <Tag tone="info" leftIcon={<InfoIcon className="w-3.5 h-3.5" />}>Awaiting Shipping</Tag>
+            <Tag tone="warning" leftIcon={<InfoIcon className="w-3.5 h-3.5" />}>Awaiting Payment</Tag>
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="Removable (onRemove)">
+          <div className="flex flex-wrap gap-2">
+            <Tag variant="outline" onRemove={() => {}}>label</Tag>
+            <Tag variant="neutral-dark" onRemove={() => {}}>Wine Club</Tag>
+            <Tag tone="info" onRemove={() => {}}>Filter chip</Tag>
+            <Tag variant="outline" leftIcon={<InfoIcon className="w-3.5 h-3.5" />} onRemove={() => {}}>label</Tag>
+          </div>
+        </ReferenceCard>
+
+        <ReferenceCard label="Interactive (toggle) — Figma 5807:26864">
+          <p className="typo-caption text-vintiga-slate-500">
+            Pass <code className="typo-caption font-mono text-vintiga-slate-700">onToggle</code> to make a tag interactive. Renders as a button with hover and aria-pressed states. Static tags never carry these states.
+          </p>
+          <InteractiveTagShowcase />
+        </ReferenceCard>
       </div>
     </SubSection>
+  )
+}
+
+function InteractiveTagShowcase() {
+  const [selected, setSelected] = useState<Set<string>>(new Set(['Hazy']))
+  const sample = ['Hazy', 'Crisp', 'Fruity', 'Juicy', 'Malty', 'Barrel-Aged']
+  return (
+    <div className="flex flex-wrap gap-2 pt-3">
+      {sample.map((label) => (
+        <Tag
+          key={label}
+          pressed={selected.has(label)}
+          onToggle={() => {
+            const next = new Set(selected)
+            next.has(label) ? next.delete(label) : next.add(label)
+            setSelected(next)
+          }}
+        >
+          {label}
+        </Tag>
+      ))}
+    </div>
   )
 }
 

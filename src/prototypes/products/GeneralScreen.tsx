@@ -4,7 +4,7 @@ import { MediaSection } from './MediaSection'
 import { AiSuggestButton } from './AiSuggestButton'
 import { Switch } from '@ds/shared/Switch'
 import { RichTextEditor } from '@ds/shared/RichTextEditor'
-import { useProductState, productActions, type Variant, type ProductState } from './productStore'
+import { useProductState, productActions, type Variant, type ProductState, type ProductTypeOverride } from './productStore'
 import { VariantModal } from './VariantModal'
 import { useRowDrag } from './useRowDrag'
 import { EmptyState } from '@ds/components/EmptyState'
@@ -221,6 +221,19 @@ export function GeneralScreen() {
             />
           </div>
         </div>
+
+        {product.productType === 'Wine' && (
+          <Field
+            label="Product Type Override"
+            helper="Commerce7 sees this as Wine. Set an override to reclassify it locally as Beer or Spirits."
+          >
+            <Select
+              value={product.productTypeOverride}
+              onChange={(v) => productActions.setProductTypeOverride(v as ProductTypeOverride)}
+              options={['None', 'Beer', 'Spirits']}
+            />
+          </Field>
+        )}
 
         <Field
           label="Content"
