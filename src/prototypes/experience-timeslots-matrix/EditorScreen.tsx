@@ -93,8 +93,8 @@ function SmallSelect({ value, onChange, options, ariaLabel }: { value: string; o
       aria-label={ariaLabel}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="h-9 w-full px-2 pr-7 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors cursor-pointer appearance-none bg-no-repeat bg-[length:14px] bg-[right_8px_center]"
-      style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")" }}
+      className="h-8 w-full px-2 pr-6 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors cursor-pointer appearance-none bg-no-repeat bg-[length:12px] bg-[right_6px_center]"
+      style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")" }}
     >
       {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
     </select>
@@ -109,13 +109,13 @@ function DayToggle({ active, onClick, ariaLabel }: { active: boolean; onClick: (
       aria-pressed={active}
       aria-label={ariaLabel}
       className={[
-        'w-8 h-8 inline-flex items-center justify-center rounded-vintiga-md transition-colors cursor-pointer',
+        'w-7 h-7 inline-flex items-center justify-center rounded-vintiga-md transition-colors cursor-pointer',
         active
           ? 'bg-vintiga-indigo-500 text-vintiga-white border border-transparent hover:bg-vintiga-indigo-600'
           : 'bg-vintiga-white text-vintiga-slate-300 border border-vintiga-slate-200 hover:bg-vintiga-slate-50',
       ].join(' ')}
     >
-      {active ? <CheckIcon className="w-4 h-4" /> : <span aria-hidden="true">—</span>}
+      {active ? <CheckIcon className="w-3.5 h-3.5" /> : <span aria-hidden="true" className="typo-caption">—</span>}
     </button>
   )
 }
@@ -168,71 +168,76 @@ function ReservationTimeSlotsCard() {
         </div>
       </div>
 
-      {/* Header row */}
-      <div className="grid grid-cols-[110px_80px_120px_repeat(7,40px)_40px] items-center gap-3 px-3 pb-2 border-b border-vintiga-slate-200">
-        <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Start time</span>
-        <span />
-        <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Online</span>
-        {WEEKDAYS.map((d) => (
-          <div key={d} className="flex flex-col items-center">
-            <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase">{d}</span>
-            <span className="typo-caption text-vintiga-slate-400 tabular-nums">{counts[d]}</span>
-          </div>
-        ))}
-        <span />
-      </div>
-
-      {/* Slot rows */}
-      <div className="flex flex-col">
-        {slots.map((slot) => (
-          <div
-            key={slot.id}
-            className="grid grid-cols-[110px_80px_120px_repeat(7,40px)_40px] items-center gap-3 px-3 py-2 border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50/40 transition-colors"
-          >
-            <SmallSelect
-              ariaLabel="Start time"
-              value={slot.startTime}
-              onChange={(v) => update(slot.id, { startTime: v })}
-              options={START_TIME_OPTIONS}
-            />
-            <SmallSelect
-              ariaLabel="AM or PM"
-              value={slot.period}
-              onChange={(v) => update(slot.id, { period: v as 'AM' | 'PM' })}
-              options={PERIOD_OPTIONS}
-            />
-            <div className="flex items-center">
-              <Switch checked={slot.online} onChange={(next) => update(slot.id, { online: next })} />
-            </div>
+      {/* Grid — horizontally scrollable on narrow viewports */}
+      <div className="-mx-vintiga-md overflow-x-auto">
+        <div className="min-w-[640px] px-vintiga-md">
+          {/* Header row */}
+          <div className="grid grid-cols-[96px_68px_56px_repeat(7,32px)_32px] items-end gap-2 px-2 pb-2 border-b border-vintiga-slate-200">
+            <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Start time</span>
+            <span />
+            <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Online</span>
             {WEEKDAYS.map((d) => (
-              <DayToggle
-                key={d}
-                active={slot.days.has(d)}
-                onClick={() => toggleDay(slot.id, d)}
-                ariaLabel={`Toggle ${d} for ${slot.startTime} ${slot.period}`}
-              />
+              <div key={d} className="flex flex-col items-center leading-tight">
+                <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase">{d}</span>
+                <span className="typo-caption text-vintiga-slate-400 tabular-nums">{counts[d]}</span>
+              </div>
             ))}
-            <button
-              type="button"
-              onClick={() => remove(slot.id)}
-              aria-label="Remove time slot"
-              className="w-8 h-8 inline-flex items-center justify-center rounded-vintiga-md text-vintiga-slate-400 hover:text-vintiga-red-600 hover:bg-vintiga-slate-50 transition-colors cursor-pointer bg-transparent border border-transparent"
-            >
-              <TrashIcon className="w-4 h-4" />
-            </button>
+            <span />
           </div>
-        ))}
-      </div>
 
-      {/* Add row */}
-      <button
-        type="button"
-        onClick={add}
-        className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-vintiga-md border border-dashed border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 hover:border-vintiga-slate-300 transition-colors cursor-pointer"
-      >
-        <PlusIcon className="w-3.5 h-3.5" />
-        Add time slot
-      </button>
+          {/* Slot rows */}
+          <div className="flex flex-col">
+            {slots.map((slot) => (
+              <div
+                key={slot.id}
+                className="grid grid-cols-[96px_68px_56px_repeat(7,32px)_32px] items-center gap-2 px-2 py-1.5 border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50/40 transition-colors"
+              >
+                <SmallSelect
+                  ariaLabel="Start time"
+                  value={slot.startTime}
+                  onChange={(v) => update(slot.id, { startTime: v })}
+                  options={START_TIME_OPTIONS}
+                />
+                <SmallSelect
+                  ariaLabel="AM or PM"
+                  value={slot.period}
+                  onChange={(v) => update(slot.id, { period: v as 'AM' | 'PM' })}
+                  options={PERIOD_OPTIONS}
+                />
+                <div className="flex items-center">
+                  <Switch checked={slot.online} onChange={(next) => update(slot.id, { online: next })} />
+                </div>
+                {WEEKDAYS.map((d) => (
+                  <DayToggle
+                    key={d}
+                    active={slot.days.has(d)}
+                    onClick={() => toggleDay(slot.id, d)}
+                    ariaLabel={`Toggle ${d} for ${slot.startTime} ${slot.period}`}
+                  />
+                ))}
+                <button
+                  type="button"
+                  onClick={() => remove(slot.id)}
+                  aria-label="Remove time slot"
+                  className="w-7 h-7 inline-flex items-center justify-center rounded-vintiga-md text-vintiga-slate-400 hover:text-vintiga-red-600 hover:bg-vintiga-slate-50 transition-colors cursor-pointer bg-transparent border border-transparent"
+                >
+                  <TrashIcon className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Add row */}
+          <button
+            type="button"
+            onClick={add}
+            className="w-full mt-2 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-vintiga-md border border-dashed border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 hover:border-vintiga-slate-300 transition-colors cursor-pointer"
+          >
+            <PlusIcon className="w-3.5 h-3.5" />
+            Add time slot
+          </button>
+        </div>
+      </div>
 
     </SectionCard>
   )
@@ -292,14 +297,14 @@ function MonthGrid({
   for (let d = 1; d <= daysInMonth; d++) cells.push(d)
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
       <div className="text-center typo-body-sm font-semibold text-vintiga-slate-900">{monthName}</div>
-      <div className="grid grid-cols-7 gap-1 typo-caption text-vintiga-slate-400 text-center">
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <span key={`${d}-${i}`}>{d}</span>)}
+      <div className="grid grid-cols-7 gap-0.5 typo-caption text-vintiga-slate-400 text-center">
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <span key={`${d}-${i}`} className="py-1">{d}</span>)}
       </div>
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0.5">
         {cells.map((d, i) => {
-          if (d === null) return <span key={`pad-${i}`} className="w-8 h-8" />
+          if (d === null) return <span key={`pad-${i}`} className="w-7 h-7" />
           const iso = isoOf(year, monthZeroBased, d)
           const closed = closedDates.has(iso)
           return (
@@ -309,7 +314,7 @@ function MonthGrid({
               onClick={() => onToggle(iso)}
               aria-pressed={closed}
               className={[
-                'w-8 h-8 inline-flex items-center justify-center rounded-vintiga-md typo-caption tabular-nums transition-colors cursor-pointer',
+                'w-7 h-7 inline-flex items-center justify-center rounded-vintiga-md typo-caption tabular-nums transition-colors cursor-pointer',
                 closed
                   ? 'bg-vintiga-indigo-500 text-vintiga-white border border-transparent hover:bg-vintiga-indigo-600'
                   : 'bg-vintiga-white text-vintiga-slate-700 border border-transparent hover:bg-vintiga-slate-100',
@@ -365,9 +370,6 @@ function BlackoutDatesCard() {
 
   const removeBlackout = (id: string) => setBlackouts((prev) => prev.filter((b) => b.id !== id))
 
-  const nextYear = pivot.month === 11 ? pivot.year + 1 : pivot.year
-  const nextMonth = (pivot.month + 1) % 12
-
   return (
     <SectionCard
       title="Blackout Dates"
@@ -379,48 +381,45 @@ function BlackoutDatesCard() {
       }
     >
       <p className="typo-body-sm text-vintiga-slate-500">{blackouts.length} entries · closed even when the weekly schedule allows</p>
-      <div className="grid grid-cols-[1fr_1fr] gap-vintiga-xl">
+      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-vintiga-lg">
         {/* Calendar */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 min-w-0">
+          <div className="flex items-center justify-between gap-2">
             <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Click a day to toggle</span>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 type="button"
                 onClick={() => setPivot(({ year, month }) => month === 0 ? { year: year - 1, month: 11 } : { year, month: month - 1 })}
                 aria-label="Previous month"
-                className="w-8 h-8 inline-flex items-center justify-center rounded-vintiga-md text-vintiga-slate-600 hover:bg-vintiga-slate-50 transition-colors cursor-pointer bg-transparent border border-vintiga-slate-200"
+                className="w-7 h-7 inline-flex items-center justify-center rounded-vintiga-md text-vintiga-slate-600 hover:bg-vintiga-slate-50 transition-colors cursor-pointer bg-transparent border border-vintiga-slate-200"
               >
-                <ChevronLeftIcon className="w-4 h-4" />
+                <ChevronLeftIcon className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
                 onClick={() => setPivot(({ year, month }) => month === 11 ? { year: year + 1, month: 0 } : { year, month: month + 1 })}
                 aria-label="Next month"
-                className="w-8 h-8 inline-flex items-center justify-center rounded-vintiga-md text-vintiga-slate-600 hover:bg-vintiga-slate-50 transition-colors cursor-pointer bg-transparent border border-vintiga-slate-200"
+                className="w-7 h-7 inline-flex items-center justify-center rounded-vintiga-md text-vintiga-slate-600 hover:bg-vintiga-slate-50 transition-colors cursor-pointer bg-transparent border border-vintiga-slate-200"
               >
-                <ChevronRightIcon className="w-4 h-4" />
+                <ChevronRightIcon className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-vintiga-lg">
-            <MonthGrid year={pivot.year} monthZeroBased={pivot.month} closedDates={closedDates} onToggle={toggleDate} />
-            <MonthGrid year={nextYear} monthZeroBased={nextMonth} closedDates={closedDates} onToggle={toggleDate} />
-          </div>
+          <MonthGrid year={pivot.year} monthZeroBased={pivot.month} closedDates={closedDates} onToggle={toggleDate} />
         </div>
 
         {/* List */}
-        <div className="flex flex-col">
-          <div className="grid grid-cols-[1.4fr_80px_120px_24px] items-center gap-3 px-3 pb-2 border-b border-vintiga-slate-200">
+        <div className="flex flex-col min-w-0">
+          <div className="grid grid-cols-[1fr_80px_110px_24px] items-center gap-3 px-2 pb-2 border-b border-vintiga-slate-200">
             <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Reason</span>
             <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Type</span>
             <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Date</span>
             <span />
           </div>
           {blackouts.length === 0 ? (
-            <p className="typo-body-sm text-vintiga-slate-400 px-3 py-3">No blackouts yet.</p>
+            <p className="typo-body-sm text-vintiga-slate-400 px-2 py-3">No blackouts yet.</p>
           ) : blackouts.map((b) => (
-            <div key={b.id} className="grid grid-cols-[1.4fr_80px_120px_24px] items-center gap-3 px-3 py-2 border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50/40 transition-colors">
+            <div key={b.id} className="grid grid-cols-[1fr_80px_110px_24px] items-center gap-3 px-2 py-1.5 border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50/40 transition-colors">
               <div className="flex items-center gap-2 min-w-0">
                 <span className={`w-2 h-2 rounded-full shrink-0 ${TYPE_COLOR[b.type]}`} aria-hidden="true" />
                 <div className="flex flex-col min-w-0">
@@ -431,7 +430,7 @@ function BlackoutDatesCard() {
                 </div>
               </div>
               <Tag variant="filled" tone={toneFor(b.type)} size="sm">{TYPE_LABEL[b.type]}</Tag>
-              <span className="typo-body-sm text-vintiga-slate-700">{formatDateShort(b.start, b.end)}</span>
+              <span className="typo-body-sm text-vintiga-slate-700 truncate">{formatDateShort(b.start, b.end)}</span>
               <button
                 type="button"
                 onClick={() => removeBlackout(b.id)}
@@ -442,7 +441,7 @@ function BlackoutDatesCard() {
               </button>
             </div>
           ))}
-          <div className="flex items-center justify-between px-3 pt-3">
+          <div className="flex items-center justify-between px-2 pt-3">
             <span className="typo-caption text-vintiga-slate-500">{totalClosedDays} closed days total</span>
             <button type="button" className="typo-caption font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 transition-colors cursor-pointer bg-transparent border-none">
               Export to .ics
