@@ -6,7 +6,8 @@ import { Switch } from '@ds/shared/Switch'
 import { Tag } from '@ds/shared/Tag'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@ds/shared/Modal'
 import { Radio } from '@ds/shared/Radio'
-import { PlusIcon, TrashIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon } from '@ds/icons/Icons'
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@ds/shared/Table'
+import { PlusIcon, TrashIcon, CheckIcon } from '@ds/icons/Icons'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -266,101 +267,17 @@ function QuickApplyChips({ onApply }: { onApply: (scope: 'weekdays' | 'weekends'
 
 // ─── Blackout Dates card ──────────────────────────────────────────────────────
 
-function pad(n: number): string { return n < 10 ? `0${n}` : `${n}` }
-function isoOf(year: number, monthZeroBased: number, day: number): string {
-  return `${year}-${pad(monthZeroBased + 1)}-${pad(day)}`
-}
-
-function MonthGrid({
-  year,
-  monthZeroBased,
-  closedDates,
-  onToggle,
-}: {
-  year: number
-  monthZeroBased: number
-  closedDates: Set<string>
-  onToggle: (iso: string) => void
-}) {
-  const monthName = new Date(year, monthZeroBased, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' })
-  const firstDow = new Date(year, monthZeroBased, 1).getDay() // 0=Sun
-  const daysInMonth = new Date(year, monthZeroBased + 1, 0).getDate()
-  const cells: (number | null)[] = []
-  for (let i = 0; i < firstDow; i++) cells.push(null)
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="text-center typo-body-sm font-semibold text-vintiga-slate-900">{monthName}</div>
-      <div className="grid grid-cols-7 gap-0.5 typo-caption text-vintiga-slate-400 text-center">
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <span key={`${d}-${i}`} className="py-1">{d}</span>)}
-      </div>
-      <div className="grid grid-cols-7 gap-0.5">
-        {cells.map((d, i) => {
-          if (d === null) return <span key={`pad-${i}`} className="w-7 h-7" />
-          const iso = isoOf(year, monthZeroBased, d)
-          const closed = closedDates.has(iso)
-          return (
-            <button
-              key={iso}
-              type="button"
-              onClick={() => onToggle(iso)}
-              aria-pressed={closed}
-              className={[
-                'w-7 h-7 inline-flex items-center justify-center rounded-vintiga-md typo-caption tabular-nums transition-colors cursor-pointer',
-                closed
-                  ? 'bg-vintiga-indigo-500 text-vintiga-white border border-transparent hover:bg-vintiga-indigo-600'
-                  : 'bg-vintiga-white text-vintiga-slate-700 border border-transparent hover:bg-vintiga-slate-100',
-              ].join(' ')}
-            >
-              {d}
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
 function BlackoutDatesCard() {
   const [blackouts, setBlackouts] = useState<Blackout[]>(initialBlackouts)
   const [modalOpen, setModalOpen] = useState(false)
-  // The calendar pivots on a single-month view.
-  const [pivot, setPivot] = useState(() => {
-    const today = new Date(2026, 4, 1) // May 2026 to match the screenshot
-    return { year: today.getFullYear(), month: today.getMonth() }
-  })
 
-  // Closed days = the union of all single-day blackouts + each multi-day range expanded.
-  const closedDates = useMemo(() => {
-    const s = new Set<string>()
-    blackouts.forEach((b) => {
-      if (!b.start) return
-      const start = new Date(b.start + 'T00:00:00')
-      const end = b.end ? new Date(b.end + 'T00:00:00') : start
-      for (let t = start.getTime(); t <= end.getTime(); t += 86_400_000) {
-        const d = new Date(t)
-        s.add(isoOf(d.getFullYear(), d.getMonth(), d.getDate()))
-      }
-    })
-    return s
+  const totalClosedDays = useMemo(() => {
+    return blackouts.reduce((sum, b) => {
+      if (!b.start) return sum
+      if (!b.end || b.end === b.start) return sum + 1
+      return sum + humanRange(b.start, b.end)
+    }, 0)
   }, [blackouts])
-
-  const totalClosedDays = closedDates.size
-
-  // Toggle a single ISO date: if already covered by a blackout, remove the blackout(s) covering it.
-  // If not covered, add a single-day 'custom' blackout for that date.
-  const toggleDate = (iso: string) => {
-    setBlackouts((prev) => {
-      const covering = prev.filter((b) => {
-        const start = b.start
-        const end = b.end || b.start
-        return start && iso >= start && iso <= end
-      })
-      if (covering.length > 0) return prev.filter((b) => !covering.includes(b))
-      return [...prev, { id: uid('b'), reason: 'Custom date', type: 'custom', start: iso, end: '' }]
-    })
-  }
 
   const removeBlackout = (id: string) => setBlackouts((prev) => prev.filter((b) => b.id !== id))
 
@@ -372,70 +289,55 @@ function BlackoutDatesCard() {
       }
     >
       <p className="typo-body-sm text-vintiga-slate-500">{blackouts.length} entries · closed even when the weekly schedule allows</p>
-      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-vintiga-lg">
-        {/* Calendar */}
-        <div className="flex flex-col gap-3 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Click a day to toggle</span>
-            <div className="flex items-center gap-1 shrink-0">
-              <button
-                type="button"
-                onClick={() => setPivot(({ year, month }) => month === 0 ? { year: year - 1, month: 11 } : { year, month: month - 1 })}
-                aria-label="Previous month"
-                className="w-7 h-7 inline-flex items-center justify-center rounded-vintiga-md text-vintiga-slate-600 hover:bg-vintiga-slate-50 transition-colors cursor-pointer bg-transparent border border-vintiga-slate-200"
-              >
-                <ChevronLeftIcon className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setPivot(({ year, month }) => month === 11 ? { year: year + 1, month: 0 } : { year, month: month + 1 })}
-                aria-label="Next month"
-                className="w-7 h-7 inline-flex items-center justify-center rounded-vintiga-md text-vintiga-slate-600 hover:bg-vintiga-slate-50 transition-colors cursor-pointer bg-transparent border border-vintiga-slate-200"
-              >
-                <ChevronRightIcon className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-          <MonthGrid year={pivot.year} monthZeroBased={pivot.month} closedDates={closedDates} onToggle={toggleDate} />
-        </div>
 
-        {/* List */}
-        <div className="flex flex-col min-w-0">
-          <div className="grid grid-cols-[1fr_96px_110px_24px] items-center gap-3 px-2 pb-2 border-b border-vintiga-slate-200">
-            <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Reason</span>
-            <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Type</span>
-            <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Date</span>
-            <span />
-          </div>
-          {blackouts.length === 0 ? (
-            <p className="typo-body-sm text-vintiga-slate-400 px-2 py-3">No blackouts yet.</p>
-          ) : blackouts.map((b) => (
-            <div key={b.id} className="grid grid-cols-[1fr_96px_110px_24px] items-center gap-3 px-2 py-1.5 border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50/40 transition-colors">
-              <div className="flex flex-col min-w-0">
-                <span className="typo-body-sm font-medium text-vintiga-slate-900 truncate">{b.reason}</span>
-                <span className="typo-caption text-vintiga-slate-500">
-                  {b.end && b.end !== b.start ? `${humanRange(b.start, b.end)} days` : '1 day'}
-                </span>
-              </div>
-              <div className="justify-self-start"><Tag variant="filled" tone={toneFor(b.type)}>{TYPE_LABEL[b.type]}</Tag></div>
-              <span className="typo-body-sm text-vintiga-slate-700 truncate">{formatDateShort(b.start, b.end)}</span>
-              <button
-                type="button"
-                onClick={() => removeBlackout(b.id)}
-                aria-label="Remove blackout"
-                className="w-6 h-6 inline-flex items-center justify-center rounded-full text-vintiga-slate-400 hover:text-vintiga-red-600 hover:bg-vintiga-slate-100 transition-colors cursor-pointer bg-transparent border-none"
-              >
-                <span aria-hidden="true">✕</span>
-              </button>
-            </div>
-          ))}
-          <div className="flex items-center justify-between px-2 pt-3">
-            <span className="typo-caption text-vintiga-slate-500">{totalClosedDays} closed days total</span>
-            <button type="button" className="typo-caption font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 transition-colors cursor-pointer bg-transparent border-none">
-              Export to .ics
-            </button>
-          </div>
-        </div>
+      {blackouts.length === 0 ? (
+        <p className="typo-body-sm text-vintiga-slate-400 py-vintiga-md">No blackouts yet. Click "Add dates" to block out a holiday or event.</p>
+      ) : (
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableHeader>Reason</TableHeader>
+              <TableHeader>Type</TableHeader>
+              <TableHeader>Date</TableHeader>
+              <TableHeader className="w-12" />
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {blackouts.map((b) => (
+              <TableRow key={b.id}>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-vintiga-slate-900">{b.reason}</span>
+                    <span className="typo-caption text-vintiga-slate-500">
+                      {b.end && b.end !== b.start ? `${humanRange(b.start, b.end)} days` : '1 day'}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Tag variant="filled" tone={toneFor(b.type)}>{TYPE_LABEL[b.type]}</Tag>
+                </TableCell>
+                <TableCell className="text-vintiga-slate-700">{formatDateShort(b.start, b.end)}</TableCell>
+                <TableCell className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => removeBlackout(b.id)}
+                    aria-label="Remove blackout"
+                    className="w-7 h-7 inline-flex items-center justify-center rounded-vintiga-md text-vintiga-slate-400 hover:text-vintiga-red-600 hover:bg-vintiga-slate-100 transition-colors cursor-pointer bg-transparent border border-transparent"
+                  >
+                    <TrashIcon className="w-3.5 h-3.5" />
+                  </button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+
+      <div className="flex items-center justify-between pt-1">
+        <span className="typo-caption text-vintiga-slate-500">{totalClosedDays} closed days total</span>
+        <button type="button" className="typo-caption font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 transition-colors cursor-pointer bg-transparent border-none">
+          Export to .ics
+        </button>
       </div>
 
       <AddBlackoutModal
