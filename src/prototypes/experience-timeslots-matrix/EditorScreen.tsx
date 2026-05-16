@@ -43,12 +43,6 @@ const START_TIME_OPTIONS = [
 ]
 const PERIOD_OPTIONS = ['AM', 'PM']
 
-const TYPE_COLOR: Record<BlackoutType, string> = {
-  holiday: 'bg-vintiga-indigo-500',
-  event:   'bg-vintiga-amber-500',
-  ops:     'bg-vintiga-teal-500',
-  custom:  'bg-vintiga-slate-500',
-}
 const TYPE_LABEL: Record<BlackoutType, string> = {
   holiday: 'Holiday',
   event:   'Event',
@@ -170,9 +164,9 @@ function ReservationTimeSlotsCard() {
 
       {/* Grid — horizontally scrollable on narrow viewports */}
       <div className="-mx-vintiga-md overflow-x-auto">
-        <div className="min-w-[640px] px-vintiga-md">
+        <div className="min-w-[680px] px-vintiga-md">
           {/* Header row */}
-          <div className="grid grid-cols-[96px_68px_56px_repeat(7,32px)_32px] items-end gap-2 px-2 pb-2 border-b border-vintiga-slate-200">
+          <div className="grid grid-cols-[100px_72px_64px_repeat(7,36px)_32px] items-end gap-3 px-2 pb-3 border-b border-vintiga-slate-200">
             <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Start time</span>
             <span />
             <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Online</span>
@@ -190,7 +184,7 @@ function ReservationTimeSlotsCard() {
             {slots.map((slot) => (
               <div
                 key={slot.id}
-                className="grid grid-cols-[96px_68px_56px_repeat(7,32px)_32px] items-center gap-2 px-2 py-1.5 border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50/40 transition-colors"
+                className="grid grid-cols-[100px_72px_64px_repeat(7,36px)_32px] items-center gap-3 px-2 py-2 border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50/40 transition-colors"
               >
                 <SmallSelect
                   ariaLabel="Start time"
@@ -228,14 +222,11 @@ function ReservationTimeSlotsCard() {
           </div>
 
           {/* Add row */}
-          <button
-            type="button"
-            onClick={add}
-            className="w-full mt-2 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-vintiga-md border border-dashed border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 hover:border-vintiga-slate-300 transition-colors cursor-pointer"
-          >
-            <PlusIcon className="w-3.5 h-3.5" />
-            Add time slot
-          </button>
+          <div className="mt-3">
+            <Button variant="outline" size="sm" onClick={add} leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>
+              Add time slot
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -374,10 +365,7 @@ function BlackoutDatesCard() {
     <SectionCard
       title="Blackout Dates"
       action={
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>Import holidays</Button>
-          <Button size="sm" leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>Add dates</Button>
-        </div>
+        <Button size="sm" leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>Add dates</Button>
       }
     >
       <p className="typo-body-sm text-vintiga-slate-500">{blackouts.length} entries · closed even when the weekly schedule allows</p>
@@ -420,14 +408,11 @@ function BlackoutDatesCard() {
             <p className="typo-body-sm text-vintiga-slate-400 px-2 py-3">No blackouts yet.</p>
           ) : blackouts.map((b) => (
             <div key={b.id} className="grid grid-cols-[1fr_80px_110px_24px] items-center gap-3 px-2 py-1.5 border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50/40 transition-colors">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className={`w-2 h-2 rounded-full shrink-0 ${TYPE_COLOR[b.type]}`} aria-hidden="true" />
-                <div className="flex flex-col min-w-0">
-                  <span className="typo-body-sm font-medium text-vintiga-slate-900 truncate">{b.reason}</span>
-                  <span className="typo-caption text-vintiga-slate-500">
-                    {b.end && b.end !== b.start ? `${humanRange(b.start, b.end)} days` : '1 day'}
-                  </span>
-                </div>
+              <div className="flex flex-col min-w-0">
+                <span className="typo-body-sm font-medium text-vintiga-slate-900 truncate">{b.reason}</span>
+                <span className="typo-caption text-vintiga-slate-500">
+                  {b.end && b.end !== b.start ? `${humanRange(b.start, b.end)} days` : '1 day'}
+                </span>
               </div>
               <Tag variant="filled" tone={toneFor(b.type)} size="sm">{TYPE_LABEL[b.type]}</Tag>
               <span className="typo-body-sm text-vintiga-slate-700 truncate">{formatDateShort(b.start, b.end)}</span>
