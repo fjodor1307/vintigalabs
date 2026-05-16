@@ -15,10 +15,9 @@ const WEEKEND_SET = new Set<WeekdayKey>(['SAT', 'SUN'])
 
 interface TimeSlot {
   id: string
-  /** "5:00 PM" */
+  /** "5:00" — 12-hour clock, paired with `period`. */
   startTime: string
-  /** "60m" */
-  duration: string
+  period: 'AM' | 'PM'
   online: boolean
   /** Which weekdays this slot runs on. */
   days: Set<WeekdayKey>
@@ -37,13 +36,12 @@ interface Blackout {
   end: string
 }
 
-const DURATION_OPTIONS = ['30m', '45m', '60m', '75m', '90m', '120m']
 const START_TIME_OPTIONS = [
-  '8:00 AM', '8:30 AM', '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
-  '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
-  '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM',
-  '8:00 PM', '8:30 PM', '9:00 PM', '9:30 PM', '10:00 PM',
+  '12:00', '12:30',
+  '1:00', '1:30', '2:00', '2:30', '3:00', '3:30', '4:00', '4:30', '5:00', '5:30',
+  '6:00', '6:30', '7:00', '7:30', '8:00', '8:30', '9:00', '9:30', '10:00', '10:30', '11:00', '11:30',
 ]
+const PERIOD_OPTIONS = ['AM', 'PM']
 
 const TYPE_COLOR: Record<BlackoutType, string> = {
   holiday: 'bg-vintiga-indigo-500',
@@ -66,13 +64,13 @@ function uid(prefix = 'id'): string {
 
 function initialSlots(): TimeSlot[] {
   return [
-    { id: uid('s'), startTime: '5:00 PM',  duration: '60m', online: true, days: new Set(['SAT']) },
-    { id: uid('s'), startTime: '6:00 PM',  duration: '60m', online: true, days: new Set(['FRI']) },
-    { id: uid('s'), startTime: '7:00 PM',  duration: '60m', online: true, days: new Set(['THU', 'SAT']) },
-    { id: uid('s'), startTime: '8:00 PM',  duration: '60m', online: true, days: new Set(['FRI']) },
-    { id: uid('s'), startTime: '9:00 PM',  duration: '60m', online: true, days: new Set(['MON', 'SAT']) },
-    { id: uid('s'), startTime: '10:00 PM', duration: '60m', online: false, days: new Set(['MON', 'FRI']) },
-    { id: uid('s'), startTime: '7:00 PM',  duration: '60m', online: true, days: new Set(['MON']) },
+    { id: uid('s'), startTime: '5:00',  period: 'PM', online: true,  days: new Set(['SAT']) },
+    { id: uid('s'), startTime: '6:00',  period: 'PM', online: true,  days: new Set(['FRI']) },
+    { id: uid('s'), startTime: '7:00',  period: 'PM', online: true,  days: new Set(['THU', 'SAT']) },
+    { id: uid('s'), startTime: '8:00',  period: 'PM', online: true,  days: new Set(['FRI']) },
+    { id: uid('s'), startTime: '9:00',  period: 'PM', online: true,  days: new Set(['MON', 'SAT']) },
+    { id: uid('s'), startTime: '10:00', period: 'PM', online: false, days: new Set(['MON', 'FRI']) },
+    { id: uid('s'), startTime: '7:00',  period: 'PM', online: true,  days: new Set(['MON']) },
   ]
 }
 
@@ -141,7 +139,7 @@ function ReservationTimeSlotsCard() {
   const update = (id: string, patch: Partial<TimeSlot>) =>
     setSlots((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)))
   const remove = (id: string) => setSlots((prev) => prev.filter((s) => s.id !== id))
-  const add = () => setSlots((prev) => [...prev, { id: uid('s'), startTime: '5:00 PM', duration: '60m', online: true, days: new Set() }])
+  const add = () => setSlots((prev) => [...prev, { id: uid('s'), startTime: '5:00', period: 'PM', online: true, days: new Set() }])
 
   const toggleDay = (id: string, day: WeekdayKey) => {
     const slot = slots.find((s) => s.id === id)
@@ -171,9 +169,9 @@ function ReservationTimeSlotsCard() {
       </div>
 
       {/* Header row */}
-      <div className="grid grid-cols-[1.4fr_1fr_120px_repeat(7,40px)_40px] items-center gap-3 px-3 pb-2 border-b border-vintiga-slate-200">
+      <div className="grid grid-cols-[110px_80px_120px_repeat(7,40px)_40px] items-center gap-3 px-3 pb-2 border-b border-vintiga-slate-200">
         <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Start time</span>
-        <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Duration</span>
+        <span />
         <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Online</span>
         {WEEKDAYS.map((d) => (
           <div key={d} className="flex flex-col items-center">
@@ -189,7 +187,7 @@ function ReservationTimeSlotsCard() {
         {slots.map((slot) => (
           <div
             key={slot.id}
-            className="grid grid-cols-[1.4fr_1fr_120px_repeat(7,40px)_40px] items-center gap-3 px-3 py-2 border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50/40 transition-colors"
+            className="grid grid-cols-[110px_80px_120px_repeat(7,40px)_40px] items-center gap-3 px-3 py-2 border-b border-vintiga-slate-100 last:border-b-0 hover:bg-vintiga-slate-50/40 transition-colors"
           >
             <SmallSelect
               ariaLabel="Start time"
@@ -198,10 +196,10 @@ function ReservationTimeSlotsCard() {
               options={START_TIME_OPTIONS}
             />
             <SmallSelect
-              ariaLabel="Duration"
-              value={slot.duration}
-              onChange={(v) => update(slot.id, { duration: v })}
-              options={DURATION_OPTIONS}
+              ariaLabel="AM or PM"
+              value={slot.period}
+              onChange={(v) => update(slot.id, { period: v as 'AM' | 'PM' })}
+              options={PERIOD_OPTIONS}
             />
             <div className="flex items-center gap-2">
               <Switch checked={slot.online} onChange={(next) => update(slot.id, { online: next })} />
@@ -214,7 +212,7 @@ function ReservationTimeSlotsCard() {
                 key={d}
                 active={slot.days.has(d)}
                 onClick={() => toggleDay(slot.id, d)}
-                ariaLabel={`Toggle ${d} for ${slot.startTime}`}
+                ariaLabel={`Toggle ${d} for ${slot.startTime} ${slot.period}`}
               />
             ))}
             <button
