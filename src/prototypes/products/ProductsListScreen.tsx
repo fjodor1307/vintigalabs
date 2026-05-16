@@ -141,7 +141,11 @@ function ProductThumb({ name, imageUrl }: { name: string; imageUrl?: string }) {
 
 // ─── Map a product type string → SegmentedControl filter key ──────────────
 
-function categoryKeyFor(p: { type: string }): ProductFilter {
+function categoryKeyFor(p: { type: string; productTypeOverride?: 'None' | 'Beer' | 'Spirits' }): ProductFilter {
+  // Beer / Spirits overrides reclassify Commerce7 Wine products locally —
+  // honour the override before falling back to the Commerce7 type.
+  if (p.productTypeOverride === 'Beer')    return 'beer'
+  if (p.productTypeOverride === 'Spirits') return 'spirits'
   switch (p.type.toLowerCase()) {
     case 'wine':       return 'wines'
     case 'beer':       return 'beer'
@@ -350,7 +354,7 @@ export function ProductsListScreen() {
                 </div>
               </div>
               <span className="typo-body-sm text-vintiga-slate-900">${p.price}</span>
-              <span className="typo-body-sm text-vintiga-slate-700">{p.type}</span>
+              <span className="typo-body-sm text-vintiga-slate-700">{p.productTypeOverride && p.productTypeOverride !== 'None' ? p.productTypeOverride : p.type}</span>
               <span className="typo-body-sm text-vintiga-slate-700">{p.availability}</span>
               <div className="flex flex-wrap gap-1 items-center">
                 {p.collections.slice(0, 2).map((c) => (

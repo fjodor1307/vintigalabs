@@ -4,12 +4,14 @@ import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRe
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
+type DisabledPredicate = (values: Record<string, boolean | string | number>) => boolean
+
 export type ControlDef =
-  | { type: 'boolean'; default: boolean }
-  | { type: 'select'; options: string[]; default: string }
-  | { type: 'number'; min: number; max: number; step?: number; default: number }
-  | { type: 'text'; default: string }
-  | { type: 'color'; default: string }
+  | { type: 'boolean'; default: boolean; disabled?: DisabledPredicate }
+  | { type: 'select';  options: string[]; default: string; disabled?: DisabledPredicate }
+  | { type: 'number';  min: number; max: number; step?: number; default: number; disabled?: DisabledPredicate }
+  | { type: 'text';    default: string; disabled?: DisabledPredicate }
+  | { type: 'color';   default: string; disabled?: DisabledPredicate }
 
 export type ControlSchema = Record<string, ControlDef>
 
@@ -226,13 +228,16 @@ export function ControlsPanel({
         {Object.entries(schema).map(([key, def]) => {
           const value = values[key] ?? def.default
           const isRadio = def.type === 'select'
+          const isDisabled = def.disabled ? def.disabled(values) : false
 
           return (
             <div
               key={key}
+              aria-disabled={isDisabled || undefined}
               className={[
                 'border-b border-[#f1f5f9]',
                 isRadio ? 'px-4 py-3' : 'px-4 py-3 grid grid-cols-[110px_1fr] gap-4 items-center',
+                isDisabled ? 'opacity-50 pointer-events-none' : '',
               ].join(' ')}
             >
               {isRadio ? (

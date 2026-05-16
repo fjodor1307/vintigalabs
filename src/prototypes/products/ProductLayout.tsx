@@ -16,7 +16,7 @@ import { BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
 import { SectionCard as DSSectionCard } from '@ds/shared/SectionCard'
 import { Field as DSField } from '@ds/shared/Field'
 
-type TabKey = 'general' | 'timeslots' | 'pos' | 'website' | 'advanced' | 'modifiers'
+type TabKey = 'general' | 'timeslots' | 'beer' | 'spirits' | 'pos' | 'website' | 'advanced' | 'modifiers'
 
 function ProductActions() {
   return (
@@ -43,7 +43,7 @@ function ProductActions() {
   )
 }
 
-function Tabs({ active, isExperience }: { active: TabKey; isExperience: boolean }) {
+function Tabs({ active, isExperience, override }: { active: TabKey; isExperience: boolean; override: 'None' | 'Beer' | 'Spirits' }) {
   // Preserve ?id=… so deep-linking + refresh keep loading the right catalogue row.
   const query = typeof window !== 'undefined' ? window.location.hash.split('?')[1] : ''
   const suffix = query ? `?${query}` : ''
@@ -51,10 +51,14 @@ function Tabs({ active, isExperience }: { active: TabKey; isExperience: boolean 
     { value: 'general'   as TabKey, label: 'General',   href: `#/web/products/general${suffix}` },
     // Time Slots is experience-only — wines don't have a weekly bookable schedule.
     ...(isExperience ? [{ value: 'timeslots' as TabKey, label: 'Time Slots', href: `#/web/products/timeslots${suffix}` }] : []),
+    // Beer / Spirits tabs appear when the product is overridden from Wine.
+    ...(override === 'Beer'    ? [{ value: 'beer'    as TabKey, label: 'Beer',    href: `#/web/products/beer${suffix}` }]    : []),
+    ...(override === 'Spirits' ? [{ value: 'spirits' as TabKey, label: 'Spirits', href: `#/web/products/spirits${suffix}` }] : []),
     { value: 'pos'       as TabKey, label: 'POS',       href: `#/web/products/pos${suffix}` },
     { value: 'website'   as TabKey, label: 'Website',   href: `#/web/products/website${suffix}` },
-    // Experiences have no Advanced-only fields — everything lives on General.
-    ...(isExperience ? [] : [{ value: 'advanced' as TabKey, label: 'Advanced', href: `#/web/products/advanced${suffix}` }]),
+    // Advanced is wine-specific (varietal, vintage, region, taste). Hide for
+    // experiences and any Wine that's been overridden to Beer or Spirits.
+    ...(isExperience || override !== 'None' ? [] : [{ value: 'advanced' as TabKey, label: 'Advanced', href: `#/web/products/advanced${suffix}` }]),
     // Experiences don't have modifiers — spec defines options via Variants only.
     ...(isExperience ? [] : [{ value: 'modifiers' as TabKey, label: 'Modifiers', href: `#/web/products/modifiers${suffix}` }]),
   ]
@@ -136,7 +140,7 @@ export function ProductLayout({
             ]}
             title={product.name || 'New product'}
             actions={<ProductActions />}
-            tabs={<Tabs active={activeTab} isExperience={product.productType === 'Experience'} />}
+            tabs={<Tabs active={activeTab} isExperience={product.productType === 'Experience'} override={product.productTypeOverride} />}
             rail={<RightPanel />}
           >
             {children}

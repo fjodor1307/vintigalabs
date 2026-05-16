@@ -4,6 +4,8 @@ import { CollectionsScreen } from './CollectionsScreen'
 import { AddCollectionScreen } from './AddCollectionScreen'
 import { GeneralScreen } from './GeneralScreen'
 import { TimeSlotsScreen } from './TimeSlotsScreen'
+import { BeerScreen } from './BeerScreen'
+import { SpiritsScreen } from './SpiritsScreen'
 import { PosScreen } from './PosScreen'
 import { WebsiteScreen } from './WebsiteScreen'
 import { AdvancedScreen } from './AdvancedScreen'
@@ -29,6 +31,8 @@ export const config: PrototypeConfig = {
     // Product editor (5 tabs)
     '#/web/products/general':         GeneralScreen,
     '#/web/products/timeslots':       TimeSlotsScreen,
+    '#/web/products/beer':            BeerScreen,
+    '#/web/products/spirits':         SpiritsScreen,
     '#/web/products/pos':             PosScreen,
     '#/web/products/website':         WebsiteScreen,
     '#/web/products/advanced':        AdvancedScreen,

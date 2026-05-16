@@ -41,6 +41,13 @@ export interface TagProps {
   leftIcon?: ReactNode
   rightIcon?: ReactNode
   onRemove?: () => void
+  /**
+   * Pass `onToggle` to make the tag interactive (renders as `<button>`,
+   * carries `aria-pressed`, and swaps between outline + neutral-dark visuals).
+   * Hover styles only activate in this mode — static usages stay unaffected.
+   */
+  onToggle?: () => void
+  pressed?: boolean
   className?: string
 }
 
@@ -73,6 +80,11 @@ const VARIANT: Record<TagVariant, string> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+// Interactive (toggle) state visuals — hover only applies here, never on static tags.
+// Mirrors Figma 5807:26864 (outline + slate-50 hover + slate-800 selected).
+const TOGGLE_DEFAULT  = 'bg-vintiga-white text-vintiga-slate-900 border border-vintiga-slate-200 hover:bg-vintiga-slate-50 hover:border-vintiga-slate-300'
+const TOGGLE_SELECTED = 'bg-vintiga-slate-800 text-vintiga-white border border-transparent hover:bg-vintiga-slate-900'
+
 export function Tag({
   children,
   variant = 'filled',
@@ -81,19 +93,24 @@ export function Tag({
   leftIcon,
   rightIcon,
   onRemove,
+  onToggle,
+  pressed = false,
   className = '',
 }: TagProps) {
-  const variantCls = variant === 'filled' ? FILLED_TONE[tone] : VARIANT[variant]
+  const interactive = typeof onToggle === 'function'
+  const variantCls = interactive
+    ? (pressed ? TOGGLE_SELECTED : TOGGLE_DEFAULT) + ' transition-colors cursor-pointer'
+    : variant === 'filled' ? FILLED_TONE[tone] : VARIANT[variant]
 
-  return (
-    <span
-      className={[
-        'inline-flex items-center gap-1 rounded-full font-medium whitespace-nowrap',
-        SIZE[size],
-        variantCls,
-        className,
-      ].join(' ')}
-    >
+  const baseCls = [
+    'inline-flex items-center gap-1 rounded-full font-medium whitespace-nowrap',
+    SIZE[size],
+    variantCls,
+    className,
+  ].join(' ')
+
+  const content = (
+    <>
       {leftIcon && <span className="shrink-0 inline-flex items-center">{leftIcon}</span>}
       {children}
       {rightIcon && <span className="shrink-0 inline-flex items-center">{rightIcon}</span>}
@@ -109,6 +126,16 @@ export function Tag({
           </svg>
         </button>
       )}
-    </span>
+    </>
   )
+
+  if (interactive) {
+    return (
+      <button type="button" onClick={onToggle} aria-pressed={pressed} className={baseCls}>
+        {content}
+      </button>
+    )
+  }
+
+  return <span className={baseCls}>{content}</span>
 }
