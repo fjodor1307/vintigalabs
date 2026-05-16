@@ -4,6 +4,8 @@ import { SectionCard } from '@ds/shared/SectionCard'
 import { Button } from '@ds/shared/Button'
 import { Switch } from '@ds/shared/Switch'
 import { Tag } from '@ds/shared/Tag'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@ds/shared/Modal'
+import { Radio } from '@ds/shared/Radio'
 import { PlusIcon, TrashIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon } from '@ds/icons/Icons'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -322,7 +324,8 @@ function MonthGrid({
 
 function BlackoutDatesCard() {
   const [blackouts, setBlackouts] = useState<Blackout[]>(initialBlackouts)
-  // The calendar pivots on a "current month + next month" view.
+  const [modalOpen, setModalOpen] = useState(false)
+  // The calendar pivots on a single-month view.
   const [pivot, setPivot] = useState(() => {
     const today = new Date(2026, 4, 1) // May 2026 to match the screenshot
     return { year: today.getFullYear(), month: today.getMonth() }
@@ -365,7 +368,7 @@ function BlackoutDatesCard() {
     <SectionCard
       title="Blackout Dates"
       action={
-        <Button size="sm" leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>Add dates</Button>
+        <Button size="sm" onClick={() => setModalOpen(true)} leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>Add dates</Button>
       }
     >
       <p className="typo-body-sm text-vintiga-slate-500">{blackouts.length} entries · closed even when the weekly schedule allows</p>
@@ -414,7 +417,7 @@ function BlackoutDatesCard() {
                   {b.end && b.end !== b.start ? `${humanRange(b.start, b.end)} days` : '1 day'}
                 </span>
               </div>
-              <Tag variant="filled" tone={toneFor(b.type)}>{TYPE_LABEL[b.type]}</Tag>
+              <div className="justify-self-start"><Tag variant="filled" tone={toneFor(b.type)}>{TYPE_LABEL[b.type]}</Tag></div>
               <span className="typo-body-sm text-vintiga-slate-700 truncate">{formatDateShort(b.start, b.end)}</span>
               <button
                 type="button"
@@ -434,7 +437,95 @@ function BlackoutDatesCard() {
           </div>
         </div>
       </div>
+
+      <AddBlackoutModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={(b) => {
+          setBlackouts((prev) => [...prev, b])
+          setModalOpen(false)
+        }}
+      />
     </SectionCard>
+  )
+}
+
+// ─── Add Blackout modal ───────────────────────────────────────────────────────
+
+function AddBlackoutModal({ open, onClose, onSave }: { open: boolean; onClose: () => void; onSave: (b: Blackout) => void }) {
+  const [reason, setReason] = useState('')
+  const [type, setType] = useState<BlackoutType>('custom')
+  const [start, setStart] = useState(new Date().toISOString().slice(0, 10))
+  const [end, setEnd] = useState('')
+
+  const reset = () => {
+    setReason('')
+    setType('custom')
+    setStart(new Date().toISOString().slice(0, 10))
+    setEnd('')
+  }
+
+  const handleClose = () => { reset(); onClose() }
+  const handleSave = () => {
+    onSave({ id: uid('b'), reason: reason || TYPE_LABEL[type], type, start, end: end && end !== start ? end : '' })
+    reset()
+  }
+
+  const canSave = start.length > 0
+
+  return (
+    <Modal open={open} onClose={handleClose} size="md">
+      <ModalHeader title="Add blackout date" description="Block out a specific date or range — overrides the weekly schedule." onClose={handleClose} />
+      <ModalBody>
+        <div className="flex flex-col gap-vintiga-md">
+          <label className="flex flex-col gap-1.5">
+            <span className="typo-body-sm font-medium text-vintiga-slate-700">Reason</span>
+            <input
+              type="text"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Memorial Day, Private event"
+              className="h-10 px-3 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+            />
+          </label>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="typo-body-sm font-medium text-vintiga-slate-700">Type</span>
+            <div className="grid grid-cols-2 gap-2">
+              {(['holiday', 'event', 'ops', 'custom'] as BlackoutType[]).map((t) => (
+                <Radio key={t} checked={type === t} onChange={() => setType(t)} label={TYPE_LABEL[t]} />
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-vintiga-md">
+            <label className="flex flex-col gap-1.5">
+              <span className="typo-body-sm font-medium text-vintiga-slate-700">Start date</span>
+              <input
+                type="date"
+                value={start}
+                onChange={(e) => setStart(e.target.value)}
+                className="h-10 px-3 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="typo-body-sm font-medium text-vintiga-slate-700">End date <span className="typo-caption text-vintiga-slate-400 font-normal">(optional)</span></span>
+              <input
+                type="date"
+                value={end}
+                onChange={(e) => setEnd(e.target.value)}
+                min={start}
+                className="h-10 px-3 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+              />
+            </label>
+          </div>
+        </div>
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="outline" onClick={handleClose}>Cancel</Button>
+        <Button onClick={handleSave} disabled={!canSave}>Add blackout</Button>
+      </ModalFooter>
+    </Modal>
   )
 }
 
