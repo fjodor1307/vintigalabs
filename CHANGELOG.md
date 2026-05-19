@@ -14,7 +14,7 @@
 
 | Prototype | Last updated | Changelog |
 |-----------|--------------|-----------|
-| Clubs | 2026-05-07 | [src/prototypes/clubs/CHANGELOG.md](src/prototypes/clubs/CHANGELOG.md) |
+| Clubs | 2026-05-19 | [src/prototypes/clubs/CHANGELOG.md](src/prototypes/clubs/CHANGELOG.md) |
 | Customers | 2026-05-11 | [src/prototypes/customers/CHANGELOG.md](src/prototypes/customers/CHANGELOG.md) |
 | Experience Timeslots | — | [src/prototypes/experience-timeslots/CHANGELOG.md](src/prototypes/experience-timeslots/CHANGELOG.md) |
 | Experience Timeslots Matrix | — | [src/prototypes/experience-timeslots-matrix/CHANGELOG.md](src/prototypes/experience-timeslots-matrix/CHANGELOG.md) |
