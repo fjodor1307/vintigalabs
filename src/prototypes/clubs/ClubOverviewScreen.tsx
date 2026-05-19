@@ -8,24 +8,24 @@ import { Checkbox } from '@ds/shared/Checkbox'
 import { Textarea } from '@ds/shared/Textarea'
 import { Tag } from '@ds/shared/Tag'
 import { Media } from '@ds/shared/Media'
-import { TaxCodePicker } from './TaxCodePicker'
-
 // ─── ClubOverviewScreen ───────────────────────────────────────────────────────
 // First (and primary) tab of the club editor. Field set varies by type:
-//   • Curated   → Duration / Membership Fee + SKU / Tax Code (Figma 5079:33614)
-//   • Membership → Duration / Membership Fee
+//   • Curated / Membership → Has Membership Fee checkbox gates Fee + Tax Rate;
+//     Duration is always shown. Membership SKU is required for every type.
 //   • Account Credit → inline default Level row (Name / Dollar / Cadence) —
-//                      additional levels live on the Levels tab (Figma 5079:43825)
+//                      additional levels live on the Levels tab.
 //
 // Terms & Conditions: the textarea only renders once the operator opts in via
 // the "Require members to accept" checkbox (defaults off).
 
+const TAX_RATE_OPTIONS = ['Wine', 'Beer', 'Spirits', 'Food', 'Merchandise']
+
 export function ClubOverviewScreen() {
   const club = useClubState()
-  const showMembershipFields = club.type === 'curated' || club.type === 'membership'
-  const showSkuFields        = club.type === 'curated'
-  const showInlineLevel      = club.type === 'account-credit'
-  const defaultLevel         = showInlineLevel ? club.levels.find((l) => l.isDefault) ?? club.levels[0] : null
+  const showDuration    = club.type === 'curated' || club.type === 'membership'
+  const showFeeToggle   = club.type === 'curated' || club.type === 'membership'
+  const showInlineLevel = club.type === 'account-credit'
+  const defaultLevel    = showInlineLevel ? club.levels.find((l) => l.isDefault) ?? club.levels[0] : null
 
   return (
     <ClubEditorLayout activeTab="overview">
@@ -116,51 +116,57 @@ export function ClubOverviewScreen() {
           />
         </Field>
 
-        {showMembershipFields && (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-              <Field label="Duration of Membership">
-                <Select
-                  value={club.durationOfMembership}
-                  onChange={(e) => clubActions.patch('durationOfMembership', e.target.value as ClubDraft['durationOfMembership'])}
-                  options={['3 Months', '6 Months', '12 Months', 'Indefinite']}
-                />
-              </Field>
-              <Field label="Membership Fee">
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={club.membershipFee}
-                    onChange={(e) => clubActions.patch('membershipFee', Number(e.target.value))}
-                    className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
-                  />
-                  <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">$</span>
-                </div>
-              </Field>
-            </div>
-          </>
-        )}
+        {/* Membership SKU + Duration are required regardless of the fee
+            toggle — they always render at the top of the membership block. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+          <Field label="Membership SKU" required>
+            <TextField
+              placeholder="Enter SKU"
+              value={club.sku}
+              onChange={(e) => clubActions.patch('sku', e.target.value)}
+            />
+          </Field>
+          {showDuration && (
+            <Field label="Duration of Membership">
+              <Select
+                value={club.durationOfMembership}
+                onChange={(e) => clubActions.patch('durationOfMembership', e.target.value as ClubDraft['durationOfMembership'])}
+                options={['3 Months', '6 Months', '12 Months', 'Indefinite']}
+              />
+            </Field>
+          )}
+        </div>
 
-        {showSkuFields && (
-          // SKU + Tax Code — Curated club only (Figma 5079:33614). When a member
-          // signs up the system creates a real order against this SKU so revenue
-          // can be reconciled in accounting. US membership fees are usually
-          // non-taxable so Tax Code stays empty for most setups.
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-            <Field label="SKU">
-              <TextField
-                placeholder="1234-1234"
-                value={club.sku}
-                onChange={(e) => clubActions.patch('sku', e.target.value)}
-              />
-            </Field>
-            <Field label="Tax Code">
-              <TaxCodePicker
-                value={club.taxCode}
-                onChange={(next) => clubActions.patch('taxCode', next)}
-              />
-            </Field>
-          </div>
+        {showFeeToggle && (
+          <>
+            <Checkbox
+              checked={club.hasMembershipFee}
+              onChange={(next) => clubActions.patch('hasMembershipFee', next)}
+              label="Has Membership Fee"
+            />
+            {club.hasMembershipFee && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+                <Field label="Membership Fee" required>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={club.membershipFee}
+                      onChange={(e) => clubActions.patch('membershipFee', Number(e.target.value))}
+                      className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+                    />
+                    <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">$</span>
+                  </div>
+                </Field>
+                <Field label="Membership Fee Tax Rate">
+                  <Select
+                    value={club.taxRate}
+                    onChange={(e) => clubActions.patch('taxRate', e.target.value)}
+                    options={[{ value: '', label: 'Select tax rate' }, ...TAX_RATE_OPTIONS.map((o) => ({ value: o, label: o }))]}
+                  />
+                </Field>
+              </div>
+            )}
+          </>
         )}
 
       </SectionCard>

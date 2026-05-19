@@ -8,7 +8,6 @@ import { Select } from '@ds/shared/Select'
 import { Checkbox } from '@ds/shared/Checkbox'
 import { Textarea } from '@ds/shared/Textarea'
 import { Media } from '@ds/shared/Media'
-import { TaxCodePicker } from './TaxCodePicker'
 import { getCurrentClubSlug } from './clubsCatalog'
 import {
   PackageIcon,
@@ -29,9 +28,10 @@ export function ClubViewOverviewScreen() {
   const [webStatus, setWebStatus]      = useState<'available' | 'not-available'>('available')
   const [description, setDescription]  = useState('')
   const [duration, setDuration]        = useState('12 Months')
+  const [hasFee, setHasFee]            = useState(true)
   const [fee, setFee]                  = useState('0')
   const [sku, setSku]                  = useState('1234-1234')
-  const [taxCode, setTaxCode]          = useState('V-1234')
+  const [taxRate, setTaxRate]          = useState('')
   const [requireTerms, setRequireTerms] = useState(true)
   const [terms, setTerms]              = useState('')
   const [metaTitle, setMetaTitle]      = useState('')
@@ -107,6 +107,13 @@ export function ClubViewOverviewScreen() {
           </Field>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+            <Field label="Membership SKU" required>
+              <TextField
+                value={sku}
+                onChange={(e) => setSku(e.target.value)}
+                placeholder="Enter SKU"
+              />
+            </Field>
             <Field label="Duration of Membership">
               <Select
                 value={duration}
@@ -114,46 +121,54 @@ export function ClubViewOverviewScreen() {
                 options={['3 Months', '6 Months', '12 Months', 'Indefinite']}
               />
             </Field>
-            <Field label="Membership Fee">
-              <TextField
-                type="number"
-                value={fee}
-                onChange={(e) => setFee(e.target.value)}
-                rightIcon={<span className="typo-body-sm text-vintiga-slate-400">$</span>}
-              />
-            </Field>
           </div>
 
-          {/* SKU + Tax Code — Curated club only (Figma 5079:33614). Mirrors the
-              new-club editor: signup creates a real order against this SKU so
-              accounting can reconcile revenue. */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-            <Field label="SKU">
-              <TextField
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                placeholder="1234-1234"
-              />
-            </Field>
-            <Field label="Tax Code">
-              <TaxCodePicker value={taxCode} onChange={setTaxCode} />
-            </Field>
-          </div>
+          <Checkbox
+            checked={hasFee}
+            onChange={setHasFee}
+            label="Has Membership Fee"
+          />
 
-          <Field label="Images">
-            <Media
-              variant="bare"
-              items={images}
-              onUpload={(files) =>
-                setImages((prev) => [
-                  ...prev,
-                  ...files.map((f) => ({ id: `img-${Date.now()}-${f.name}`, url: URL.createObjectURL(f), name: f.name })),
-                ])
-              }
-              onRemove={(id) => setImages((prev) => prev.filter((i) => i.id !== id))}
-            />
-          </Field>
+          {hasFee && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+              <Field label="Membership Fee" required>
+                <TextField
+                  type="number"
+                  value={fee}
+                  onChange={(e) => setFee(e.target.value)}
+                  rightIcon={<span className="typo-body-sm text-vintiga-slate-400">$</span>}
+                />
+              </Field>
+              <Field label="Membership Fee Tax Rate">
+                <Select
+                  value={taxRate}
+                  onChange={(e) => setTaxRate(e.target.value)}
+                  options={[
+                    { value: '',            label: 'Select tax rate' },
+                    { value: 'Wine',        label: 'Wine' },
+                    { value: 'Beer',        label: 'Beer' },
+                    { value: 'Spirits',     label: 'Spirits' },
+                    { value: 'Food',        label: 'Food' },
+                    { value: 'Merchandise', label: 'Merchandise' },
+                  ]}
+                />
+              </Field>
+            </div>
+          )}
+
         </RecordsCard>
+
+        {/* Media — top-level section like the editor (Figma 5079:33614) */}
+        <Media
+          items={images}
+          onUpload={(files) =>
+            setImages((prev) => [
+              ...prev,
+              ...files.map((f) => ({ id: `img-${Date.now()}-${f.name}`, url: URL.createObjectURL(f), name: f.name })),
+            ])
+          }
+          onRemove={(id) => setImages((prev) => prev.filter((i) => i.id !== id))}
+        />
 
         {/* Terms & Conditions (Figma 5079:33614) */}
         <RecordsCard
