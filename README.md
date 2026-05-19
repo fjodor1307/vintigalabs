@@ -6,6 +6,14 @@ This repo started as a template. The tooling, scaffolding scripts, and Claude wo
 
 ---
 
+## What you need
+
+| Tool | Why | Where to get it |
+|---|---|---|
+| **Node 20+** | Build + dev server | [nodejs.org](https://nodejs.org) (or `nvm`, `fnm`, `mise` — whatever you're used to) |
+| **Claude Code** | The whole prototyping workflow is built around it. You talk to Claude in plain English; the skills below do the rest. | [claude.com/claude-code](https://claude.com/claude-code) |
+| **Figma desktop app** | Needed if you want Claude to read frames from Figma (design-to-code). Enable **Dev Mode → MCP** inside Figma after installing. | [figma.com/downloads](https://www.figma.com/downloads/) |
+
 ## Setup (one time)
 
 ```bash
@@ -14,6 +22,40 @@ npm run dev
 ```
 
 Open the URL it prints. Every prototype in `src/prototypes/` is listed on the landing page — search, filter by tag, or click through to a flow.
+
+---
+
+## Tools wired into the prototype
+
+These ship with the repo — no extra install on your part, but worth knowing they exist.
+
+### Agentation — in-page feedback overlay
+
+[Agentation](https://www.agentation.com/) is mounted in dev mode at the bottom-right of every prototype. Click any element on the page, leave a comment, and it captures the component tree + source location so Claude can act on the feedback directly.
+
+Already wired in [src/App.tsx](src/App.tsx) behind `import.meta.env.DEV` — it shows up automatically when you run `npm run dev`, never in the production build. No config needed; if you want it gone temporarily, comment out the `<Agentation />` lines in App.tsx.
+
+---
+
+## Claude Code skills + MCP servers
+
+### Bundled skills (live in this repo)
+
+The `.claude/skills/` folder contains skills that travel with the repo, so any teammate cloning it gets the same prototyping workflow:
+
+- **`vintiga-tov`** — tone-of-voice rules for UI copy. Triggers automatically when Claude writes button labels, microcopy, error messages, etc.
+- **`new-prototype`** — *"start a new prototype for X"* scaffolds a folder with templates, claims ownership, branches, starts the dev server.
+- **`clone-prototype`** — *"I want my own version of Fedja's clubs flow"* duplicates someone else's prototype into a new slug owned by you.
+- **`publish-prototype`** — *"ship it"* runs lint + build, commits, pushes, opens a PR, watches CI, auto-merges when green.
+
+### Recommended user-level Claude skills
+
+Install once on your machine and they apply everywhere — not just this repo:
+
+- **Caveman** — minimal, transparent Claude wrapper. Strips system noise so you can see what Claude is actually doing. Useful when debugging skill behaviour or writing your own. _Ask Fedja for the link if you can't find it._
+- **Figma MCP server** — lets Claude read Figma frames (design context, screenshots, variables). Configure inside Claude Code, then **open the Figma desktop app and enable Dev Mode → MCP** for the file you're working on. Without this, Claude can't see the design — you'll have to paste screenshots.
+
+For Figma MCP setup specifics, see Figma's docs at [help.figma.com](https://help.figma.com/hc/en-us/articles/32132100833559).
 
 ---
 
