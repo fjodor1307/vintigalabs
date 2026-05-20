@@ -74,7 +74,7 @@ export const config: PrototypeConfig = {
   entries: [
     {
       name: 'Clubs',
-      description: 'Club offerings and memberships — KPIs + tabbed list of clubs, a full club editor (Overview / Releases / Levels / Emails) for each club type, plus the View Club detail flow with Overview / Members / Releases / Emails tabs.',
+      description: 'Club offerings and memberships — KPIs + tabbed list of clubs, a full club editor (Overview / Releases / Levels / Emails) for each club type, the View Club detail flow with Overview / Members / Releases / Emails tabs, plus an Add Membership modal to enrol customers.',
       path: '#/web/clubs',
       screens: 13,
     },
