@@ -90,8 +90,9 @@ export function AddMembershipModal({
         onClose={onClose}
       />
       <ModalBody className="max-h-[70vh] overflow-y-auto">
-        {/* Membership */}
-        <Section title="Membership">
+        {/* Membership — section title omitted; the modal header already says
+            "Add Membership". */}
+        <Section>
           <Field label="Customer" required>
             <Select
               value={customer}
@@ -201,13 +202,15 @@ export function AddMembershipModal({
   )
 }
 
-function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+function Section({ title, subtitle, children }: { title?: string; subtitle?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-vintiga-md">
-      <div className="flex flex-col gap-1">
-        <h3 className="typo-title-section font-semibold text-vintiga-slate-900">{title}</h3>
-        {subtitle && <p className="typo-body-sm text-vintiga-slate-500">{subtitle}</p>}
-      </div>
+      {(title || subtitle) && (
+        <div className="flex flex-col gap-1">
+          {title && <h3 className="typo-title-section font-semibold text-vintiga-slate-900">{title}</h3>}
+          {subtitle && <p className="typo-body-sm text-vintiga-slate-500">{subtitle}</p>}
+        </div>
+      )}
       {children}
     </div>
   )
