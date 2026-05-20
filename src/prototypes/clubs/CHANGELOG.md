@@ -16,6 +16,18 @@ New operator flow for enrolling a customer into a club, opened as a **modal** fr
   - **Order Summary** — renders only when the chosen club carries an initial fee (Fee + Tax + Total). Per the requirement: fee clubs create an order at membership creation, fee-free clubs just create the membership. (Order creation is mocked — submit closes the modal.)
 - **`MembershipsScreen`** — `Add` button (PlusIcon) in the filter row opens the modal via local state (no route).
 
+## 2026-05-19 — Fedja + Claude: Membership fee + SKU restructure
+
+Reshuffled the Overview field set per the latest spec.
+
+- **Membership SKU is now required for every club type** — not just Curated. Moved out of the curated-only block, renamed `SKU` → `Membership SKU`, and marked it required.
+- **Has Membership Fee** checkbox added above Duration / Fee. Only the Fee amount and Tax Rate are gated by it; Duration of Membership stays visible for Curated and Membership regardless.
+- **Tax Code** replaced with **Membership Fee Tax Rate** — same dropdown taxonomy Products uses for variant tax types (Wine / Beer / Spirits / Food / Merchandise).
+- Deleted `TaxCodePicker.tsx` (no longer referenced). Renamed the store field `taxCode` → `taxRate` and added `hasMembershipFee` (defaults true for Curated/Membership).
+- Mirrored all of the above on the View tab so the editor and the read-only view stay in sync.
+- Reordered the Overview fields: Membership SKU + Duration of Membership now sit above the Has Membership Fee checkbox and always render; Fee + Tax Rate appear below the checkbox only when it's on.
+- Fixed Media placement on the View tab: it was nested inside the Overview `RecordsCard` as a `Field`, which collapsed it visually. Lifted it to a top-level section like the editor uses.
+
 ## 2026-05-07 — Fedja + Claude: May 7 review pass
 
 Aligned the Clubs prototype with the May 7 alignment meeting + 7 newly shared Figma frames (Curated `5079:33614` / `5079:57000`, Account Credit `5079:43825` / `5079:46371` / `5079:55546`, Membership `5079:44506` / `5079:58010`).

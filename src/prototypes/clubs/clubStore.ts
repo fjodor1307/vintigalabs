@@ -52,14 +52,14 @@ export interface ClubDraft {
 
   // Curated / Membership-specific
   durationOfMembership: '3 Months' | '6 Months' | '12 Months' | 'Indefinite'
+  hasMembershipFee: boolean
   membershipFee: number
+  // Tax rate uses the same dropdown taxonomy as Products (see VariantModal).
+  taxRate: string
 
-  // Curated-specific — purchased-product accounting fields (Figma 5079:33614).
-  // The membership signup creates a real order against this SKU so revenue can
-  // be reconciled. Tax code optional; US membership fees are non-taxable so
-  // the field stays empty for most setups.
+  // Required for every club type — signup creates a real order against this
+  // SKU so accounting can reconcile revenue.
   sku: string
-  taxCode: string
 
   // Membership-specific — surfaced in the rail as a static read-only flag
   // (Figma 5079:44506). Always true for the membership type.
@@ -101,9 +101,10 @@ function emptyDraft(type: ClubKind): ClubDraft {
     availableOnWebsite: true,
     description: '',
     durationOfMembership: '12 Months',
+    hasMembershipFee: type === 'curated' || type === 'membership',
     membershipFee: 0,
+    taxRate: '',
     sku: '',
-    taxCode: '',
     autoRenew: type === 'membership',
     levels:
       type === 'account-credit'
