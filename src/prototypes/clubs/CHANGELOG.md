@@ -6,6 +6,13 @@
 
 ---
 
+## 2026-05-20 — Fedja + Claude: Add Membership page + membership detail polish
+
+Followed the design-sync decisions for the clubs flow.
+
+- **Add Membership is now a full page** (`AddMembershipScreen.tsx`, route `#/web/clubs/memberships/add`), replacing the modal — so after creating you land on the membership in edit mode, and there's room to add on-the-fly customer/address creation later. Join Date accepts any date (backdatable); Tasting-Credit clubs are restricted to today-or-later. The **Order Summary always shows** — fee clubs show the fee, fee-free clubs a $0 order "for tracking". (`AddMembershipModal.tsx` removed.)
+- **Membership detail (`MembershipDetailScreen.tsx`)** — addresses + payment method moved **above** the club orders; address card subtitles dropped; club orders **paginated** (6/page). Added an **Order Review** card (checkbox + instructions, pre-checked for flagged members). Pickup memberships show a Delivery Method card; pending memberships show a "No card on file" empty state. All these surfaces now use the shared **`RecordsCard`** DS component.
+
 ## 2026-05-20 — Fedja + Claude: Add Membership modal
 
 New operator flow for enrolling a customer into a club, opened as a **modal** from a new **Add** button on the Memberships tab.

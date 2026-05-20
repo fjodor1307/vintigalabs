@@ -32,7 +32,7 @@ interface ExperienceShellProps {
 function ExperienceTabs({ active, hrefs }: { active: TabKey; hrefs: Record<TabKey, string> }) {
   const options = [
     { value: 'general'   as TabKey, label: 'General',    href: hrefs.general },
-    { value: 'timeslots' as TabKey, label: 'Time Slots', href: hrefs.timeslots },
+    { value: 'timeslots' as TabKey, label: 'Schedule', href: hrefs.timeslots },
     { value: 'pos'       as TabKey, label: 'POS',        href: hrefs.pos },
     { value: 'website'   as TabKey, label: 'Website',    href: hrefs.website },
   ]

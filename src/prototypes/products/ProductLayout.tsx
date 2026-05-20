@@ -49,8 +49,8 @@ function Tabs({ active, isExperience, override }: { active: TabKey; isExperience
   const suffix = query ? `?${query}` : ''
   const options = [
     { value: 'general'   as TabKey, label: 'General',   href: `#/web/products/general${suffix}` },
-    // Time Slots is experience-only — wines don't have a weekly bookable schedule.
-    ...(isExperience ? [{ value: 'timeslots' as TabKey, label: 'Time Slots', href: `#/web/products/timeslots${suffix}` }] : []),
+    // Schedule is experience-only — wines don't have a weekly bookable schedule.
+    ...(isExperience ? [{ value: 'timeslots' as TabKey, label: 'Schedule', href: `#/web/products/timeslots${suffix}` }] : []),
     // Beer / Spirits tabs appear when the product is overridden from Wine.
     ...(override === 'Beer'    ? [{ value: 'beer'    as TabKey, label: 'Beer',    href: `#/web/products/beer${suffix}` }]    : []),
     ...(override === 'Spirits' ? [{ value: 'spirits' as TabKey, label: 'Spirits', href: `#/web/products/spirits${suffix}` }] : []),

@@ -6,6 +6,21 @@
 
 ---
 
+## 2026-05-20 — Fedja + Claude: Single-variant inline view, beer/spirits attributes + Schedule tab
+
+Design-sync follow-ups for the product editor.
+
+**General (`GeneralScreen.tsx`):**
+- When a product has **exactly one variant**, the pricing/measurement fields render **inline** on the General page (Variant, Price, SKU, UPC, Compare-At, Tax Type, Cost of Good, Alcohol %, Weight, Volume, Physical Product) instead of a table — matching Commerce7. A second variant flips back to the table.
+- **Product Type** is always shown (e.g. "Beer · Commerce7 type: Wine") with a separate **Reclassify as** field for the Wine→Beer/Spirits override.
+- Spirits show an auto-calculated **Proof** (2 × ABV) next to alcohol percentage (inline form + `VariantModal`).
+
+**Schedule tab (was "Time Slots"):**
+- Renamed tab to **Schedule** (`ProductLayout.tsx`).
+- New **Booking settings** card — Duration, **Booking interval** (granularity), Min/Max guests per time slot, Bookable from/until — moved off the General "Experience Details" card (which now points to the Schedule tab).
+- Per-day **Generate slots** fills start times from operating hours at the booking interval; slots stay individually editable / online-toggleable.
+- **Blackout Dates** rebuilt as the modal + table version (Reason · Type tag · date range · closed-days total), ported from the matrix prototype. Store `Blackout` model is now `{ reason, type, start, end }`.
+
 ## 2026-05-14 — fedja + Claude: Reservation Time Slots tab + Experience editor polish
 
 Continued the experience editor cleanup. Compared the General tab against the

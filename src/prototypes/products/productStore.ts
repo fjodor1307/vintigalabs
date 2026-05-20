@@ -123,17 +123,17 @@ export interface TimeSlot {
   online: boolean
 }
 
+export type BlackoutType = 'holiday' | 'event' | 'ops' | 'custom'
+
 export interface Blackout {
   id: string
-  /** ISO date (yyyy-mm-dd). */
-  startDate: string
-  /** ISO date (yyyy-mm-dd). Empty = same as startDate (single-day blackout). */
-  endDate: string
-  /** "9:00" — empty means "all day". */
-  startTime: string
-  startPeriod: 'AM' | 'PM'
-  endTime: string
-  endPeriod: 'AM' | 'PM'
+  /** Display reason. */
+  reason: string
+  type: BlackoutType
+  /** ISO yyyy-mm-dd start. */
+  start: string
+  /** ISO yyyy-mm-dd end. Empty = single day. */
+  end: string
 }
 
 export interface ProductState {
@@ -175,6 +175,8 @@ export interface ProductState {
   seatingType: SeatingType
   location: string
   durationMinutes: string
+  /** How often a start time can be booked, in minutes (the booking granularity). */
+  bookingInterval: number
   leadTimeHours: string
   // Capacity — interpretation depends on seatingType.
   // Communal: per-time-slot headcount. Table: per-group size + tabletops per slot.
@@ -229,6 +231,13 @@ export function slugify(value: string): string {
 function uid(prefix = 'id'): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+/** Spirits proof = 2 × ABV. Returns a trimmed string, empty for blank/invalid input. */
+export function proofFromAbv(abv: string): string {
+  const n = parseFloat(abv)
+  if (!isFinite(n)) return ''
+  return String(+(n * 2).toFixed(1))
 }
 
 export function emptyVariant(title = '', sortOrder = 0): Variant {
@@ -290,6 +299,7 @@ const initial: ProductState = {
   seatingType: 'Table',
   location: '',
   durationMinutes: '',
+  bookingInterval: 30,
   leadTimeHours: '',
   minGuestsPerSlot: '',
   maxGuestsPerSlot: '',
@@ -315,7 +325,12 @@ const initial: ProductState = {
     Sunday: [],
   },
   scheduleRepeatsUntil: '',
-  blackouts: [],
+  blackouts: [
+    { id: 'bl-1', reason: 'Memorial Day',     type: 'holiday', start: '2026-05-26', end: '' },
+    { id: 'bl-2', reason: 'Private event',    type: 'event',   start: '2026-05-27', end: '2026-05-28' },
+    { id: 'bl-3', reason: 'Staff training',   type: 'ops',     start: '2026-06-04', end: '' },
+    { id: 'bl-4', reason: 'Independence Day', type: 'holiday', start: '2026-07-04', end: '' },
+  ],
   productTypeOverride: 'None',
   beerStyle: '',
   beerFamily: '',
@@ -550,30 +565,22 @@ export const productActions = {
     }
     emit()
   },
+  setTimeSlots(day: Weekday, slots: TimeSlot[]) {
+    state = { ...state, timeSlotsByDay: { ...state.timeSlotsByDay, [day]: slots } }
+    emit()
+  },
+  setBookingInterval(minutes: number) {
+    state = { ...state, bookingInterval: minutes }
+    emit()
+  },
 
   // Recurrence + blackouts
   setScheduleRepeatsUntil(value: string) {
     state = { ...state, scheduleRepeatsUntil: value }
     emit()
   },
-  addBlackout() {
-    const b: Blackout = {
-      id: uid('bl'),
-      startDate: '',
-      endDate: '',
-      startTime: '',
-      startPeriod: 'AM',
-      endTime: '',
-      endPeriod: 'PM',
-    }
+  addBlackout(b: Blackout) {
     state = { ...state, blackouts: [...state.blackouts, b] }
-    emit()
-  },
-  updateBlackout(id: string, patch: Partial<Blackout>) {
-    state = {
-      ...state,
-      blackouts: state.blackouts.map((b) => (b.id === id ? { ...b, ...patch } : b)),
-    }
     emit()
   },
   removeBlackout(id: string) {

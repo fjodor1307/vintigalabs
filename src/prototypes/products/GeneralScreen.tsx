@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { ProductLayout, SectionCard, Field, TextInput, Select } from './ProductLayout'
+import { ProductLayout, SectionCard, Field, TextInput, InputWithAdornment, Select } from './ProductLayout'
 import { MediaSection } from './MediaSection'
 import { AiSuggestButton } from './AiSuggestButton'
+import { CheckboxField } from './Modal'
 import { Switch } from '@ds/shared/Switch'
 import { RichTextEditor } from '@ds/shared/RichTextEditor'
-import { useProductState, productActions, type Variant, type ProductState, type ProductTypeOverride } from './productStore'
+import { useProductState, productActions, proofFromAbv, type Variant, type ProductState, type ProductTypeOverride } from './productStore'
 import { VariantModal } from './VariantModal'
 import { useRowDrag } from './useRowDrag'
 import { EmptyState } from '@ds/components/EmptyState'
@@ -14,6 +15,7 @@ import {
   GripVerticalIcon,
   PackagePlusIcon,
   PartyPopperIcon,
+  InfoIcon,
 } from '@ds/icons/Icons'
 
 // ─── Per-field "Suggest with AI" trigger ──────────────────────────────────────
@@ -151,9 +153,97 @@ function VariantsTable({ onEdit, onAdd, isExperience }: { onEdit: (v: Variant) =
   )
 }
 
+// When a product has exactly one variant, Commerce7 (and now Vintiga) shows the
+// pricing/measurement fields inline on the general page instead of burying them
+// in a table — so the alcohol %, weight, and volume stay visible at a glance.
+// Adding a second variant flips it back to the table view.
+function SingleVariantForm({ variant, isSpirits }: { variant: Variant; isSpirits: boolean }) {
+  function patch<K extends keyof Variant>(key: K, value: Variant[K]) {
+    productActions.upsertVariant({ ...variant, [key]: value })
+  }
+  const proof = proofFromAbv(variant.alcoholPercentage)
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex items-start gap-3 rounded-vintiga-md bg-vintiga-indigo-50 px-4 py-3">
+        <InfoIcon className="w-5 h-5 text-vintiga-indigo-500 shrink-0 mt-0.5" />
+        <div className="flex flex-col">
+          <span className="typo-body-sm font-semibold text-vintiga-indigo-700">Info</span>
+          <span className="typo-body-sm text-vintiga-indigo-700">
+            If your product has more than one option such as size or color, multiple variants can be added after the product is created.
+          </span>
+        </div>
+      </div>
+
+      <Field label="Variant (Size / Unit)" required>
+        <TextInput
+          placeholder="e.g. 750ml, Bottle, Medium, Glass"
+          value={variant.title}
+          onChange={(e) => patch('title', e.target.value)}
+        />
+      </Field>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Price" required>
+          <InputWithAdornment adornment="$" placeholder="0.00" value={variant.price} onChange={(e) => patch('price', e.target.value)} />
+        </Field>
+        <Field label="SKU" required>
+          <TextInput placeholder="Enter SKU" value={variant.sku} onChange={(e) => patch('sku', e.target.value)} />
+        </Field>
+      </div>
+
+      <Field label="UPC Code">
+        <TextInput placeholder="Enter UPC code" value={variant.upcCode} onChange={(e) => patch('upcCode', e.target.value)} />
+      </Field>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Compare At Price">
+          <InputWithAdornment adornment="$" placeholder="0.00" value={variant.compareAtPrice} onChange={(e) => patch('compareAtPrice', e.target.value)} />
+        </Field>
+        <Field label="Tax Type" required>
+          <Select value={variant.taxType} onChange={(x) => patch('taxType', x)} options={['Wine', 'Beer', 'Spirits', 'Food', 'Merchandise']} />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Cost Of Good" required>
+          <InputWithAdornment adornment="$" placeholder="0.00" value={variant.costOfGood} onChange={(e) => patch('costOfGood', e.target.value)} />
+        </Field>
+        <Field label="Alcohol Percentage" required>
+          <InputWithAdornment adornment="%" placeholder="0.00" value={variant.alcoholPercentage} onChange={(e) => patch('alcoholPercentage', e.target.value)} />
+        </Field>
+      </div>
+
+      {isSpirits && (
+        <Field label="Proof" helper="Calculated automatically as 2 × alcohol percentage.">
+          <InputWithAdornment adornment="proof" placeholder="0" value={proof} readOnly />
+        </Field>
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Weight" required>
+          <InputWithAdornment adornment="lbs" placeholder="0.00" value={variant.weight} onChange={(e) => patch('weight', e.target.value)} />
+        </Field>
+        <Field label="Volume" required>
+          <InputWithAdornment adornment="ml" placeholder="0.00" value={variant.volume} onChange={(e) => patch('volume', e.target.value)} />
+        </Field>
+      </div>
+
+      <CheckboxField checked={variant.physicalProduct} onChange={(next) => patch('physicalProduct', next)}>
+        Physical Product
+      </CheckboxField>
+    </div>
+  )
+}
+
 export function GeneralScreen() {
   const product = useProductState()
   const isExperience = product.productType === 'Experience'
+  const effectiveType = product.productType === 'Wine' && product.productTypeOverride !== 'None'
+    ? product.productTypeOverride
+    : product.productType
+  // Single non-experience variant → inline form; 0 or 2+ → table / empty state.
+  const showInlineVariant = !isExperience && product.variants.length === 1
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Variant | null>(null)
   const [generating, setGenerating] = useState(false)
@@ -222,10 +312,21 @@ export function GeneralScreen() {
           </div>
         </div>
 
+        <Field label="Product Type">
+          <div className="inline-flex w-fit items-center gap-2 px-3 py-1.5 rounded-vintiga-md bg-vintiga-slate-100 typo-body-sm font-semibold text-vintiga-slate-700">
+            {effectiveType}
+            {product.productType === 'Wine' && (
+              <span className="typo-caption font-normal text-vintiga-slate-500">
+                {product.productTypeOverride !== 'None' ? 'Commerce7 type: Wine' : 'synced from Commerce7'}
+              </span>
+            )}
+          </div>
+        </Field>
+
         {product.productType === 'Wine' && (
           <Field
-            label="Product Type Override"
-            helper="Commerce7 sees this as Wine. Set an override to reclassify it locally as Beer or Spirits."
+            label="Reclassify as"
+            helper="Commerce7 stores this product as Wine. Reclassify it locally as Beer or Spirits to capture beverage-specific attributes — the Commerce7 source is never changed."
           >
             <Select
               value={product.productTypeOverride}
@@ -256,35 +357,24 @@ export function GeneralScreen() {
           </button>
         }
       >
-        <p className="typo-body-sm text-vintiga-slate-500">
-          {isExperience
-            ? 'Add a variant for each package or party size (e.g. For 2, For 4). Each variant is sold as one bookable unit.'
-            : 'Add variants for each option (size, color, etc.). Each variant is counted as one unit.'}
-        </p>
-        <VariantsTable onEdit={openEdit} onAdd={openAdd} isExperience={isExperience} />
+        {!showInlineVariant && (
+          <p className="typo-body-sm text-vintiga-slate-500">
+            {isExperience
+              ? 'Add a variant for each package or party size (e.g. For 2, For 4). Each variant is sold as one bookable unit.'
+              : 'Add variants for each option (size, color, etc.). Each variant is counted as one unit.'}
+          </p>
+        )}
+        {showInlineVariant ? (
+          <SingleVariantForm variant={product.variants[0]} isSpirits={effectiveType === 'Spirits'} />
+        ) : (
+          <VariantsTable onEdit={openEdit} onAdd={openAdd} isExperience={isExperience} />
+        )}
       </SectionCard>
 
       <MediaSection />
 
       {isExperience && (
         <SectionCard title="Experience Details" icon={<PartyPopperIcon className="w-4 h-4" />}>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Start Date" required helper="Date this experience becomes available.">
-              <TextInput
-                type="date"
-                value={product.startDate}
-                onChange={(e) => productActions.setAdvanced({ startDate: e.target.value })}
-              />
-            </Field>
-            <Field label="End Date" helper="Leave empty for open-ended experiences.">
-              <TextInput
-                type="date"
-                value={product.endDate}
-                onChange={(e) => productActions.setAdvanced({ endDate: e.target.value })}
-              />
-            </Field>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <Field label="Experience Type" required>
               <Select
@@ -302,60 +392,9 @@ export function GeneralScreen() {
             </Field>
           </div>
 
-          {product.seatingType === 'Communal' ? (
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Min guests per time slot" helper="Smallest party size that can book this slot.">
-                <TextInput
-                  type="number"
-                  min={0}
-                  placeholder="e.g. 1"
-                  value={product.minGuestsPerSlot}
-                  onChange={(e) => productActions.setAdvanced({ minGuestsPerSlot: e.target.value })}
-                />
-              </Field>
-              <Field label="Max guests per time slot" helper="Total shared capacity at one slot.">
-                <TextInput
-                  type="number"
-                  min={0}
-                  placeholder="e.g. 8"
-                  value={product.maxGuestsPerSlot}
-                  onChange={(e) => productActions.setAdvanced({ maxGuestsPerSlot: e.target.value })}
-                />
-              </Field>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Min guests per group" helper="Smallest party size you'll accept at one table.">
-                  <TextInput
-                    type="number"
-                    min={0}
-                    placeholder="e.g. 2"
-                    value={product.minGuestsPerGroup}
-                    onChange={(e) => productActions.setAdvanced({ minGuestsPerGroup: e.target.value })}
-                  />
-                </Field>
-                <Field label="Max guests per group" helper="Largest party size at one table.">
-                  <TextInput
-                    type="number"
-                    min={0}
-                    placeholder="e.g. 8"
-                    value={product.maxGuestsPerGroup}
-                    onChange={(e) => productActions.setAdvanced({ maxGuestsPerGroup: e.target.value })}
-                  />
-                </Field>
-              </div>
-              <Field label="Max groups per time slot" helper="How many tabletops can run at the same time.">
-                <TextInput
-                  type="number"
-                  min={0}
-                  placeholder="e.g. 4"
-                  value={product.maxGroupsPerSlot}
-                  onChange={(e) => productActions.setAdvanced({ maxGroupsPerSlot: e.target.value })}
-                />
-              </Field>
-            </>
-          )}
+          <p className="typo-caption text-vintiga-slate-500 -mt-1">
+            Duration, booking interval, guest capacity, and booking dates are set on the <span className="font-semibold text-vintiga-slate-600">Schedule</span> tab.
+          </p>
 
           <Field label="Location" helper="Pick from your locations or enter a custom one.">
             <TextInput
@@ -373,34 +412,19 @@ export function GeneralScreen() {
             </datalist>
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Duration" required helper="Total length of the experience, in minutes.">
-              <div className="relative">
-                <input
-                  type="number"
-                  min={0}
-                  placeholder="e.g. 60"
-                  value={product.durationMinutes}
-                  onChange={(e) => productActions.setAdvanced({ durationMinutes: e.target.value })}
-                  className="h-10 w-full pl-3 pr-14 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
-                />
-                <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">min</span>
-              </div>
-            </Field>
-            <Field label="Lead Time" required helper="Minimum hours between booking and the experience.">
-              <div className="relative">
-                <input
-                  type="number"
-                  min={0}
-                  placeholder="e.g. 24"
-                  value={product.leadTimeHours}
-                  onChange={(e) => productActions.setAdvanced({ leadTimeHours: e.target.value })}
-                  className="h-10 w-full pl-3 pr-14 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
-                />
-                <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">hrs</span>
-              </div>
-            </Field>
-          </div>
+          <Field label="Lead Time" required helper="Minimum hours between booking and the experience.">
+            <div className="relative">
+              <input
+                type="number"
+                min={0}
+                placeholder="e.g. 24"
+                value={product.leadTimeHours}
+                onChange={(e) => productActions.setAdvanced({ leadTimeHours: e.target.value })}
+                className="h-10 w-full pl-3 pr-14 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+              />
+              <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">hrs</span>
+            </div>
+          </Field>
 
           <Field label="Charge Type" required helper="When the customer's card is charged.">
             <Select
