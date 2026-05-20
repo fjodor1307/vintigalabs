@@ -3,6 +3,7 @@ import type { PrototypeConfig } from '../_registry'
 import { ClubsScreen } from './ClubsScreen'
 import { MembershipsScreen } from './MembershipsScreen'
 import { MembershipDetailScreen } from './MembershipDetailScreen'
+import { AddMembershipScreen } from './AddMembershipScreen'
 import { ClubEmailsScreen } from './ClubEmailsScreen'
 import { ClubOverviewScreen } from './ClubOverviewScreen'
 import { ClubReleasesScreen } from './ClubReleasesScreen'
@@ -22,6 +23,7 @@ const baseRoutes: Record<string, ComponentType> = {
   // Page-level
   '#/web/clubs':                       ClubsScreen,
   '#/web/clubs/memberships':           MembershipsScreen,
+  '#/web/clubs/memberships/add':       AddMembershipScreen,
   '#/web/clubs/emails':                ClubEmailsScreen,
   // Club editor (new club)
   '#/web/clubs/new/overview':          ClubOverviewScreen,

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Modal, ModalButtonSecondary, ModalButtonPrimary, CheckboxField } from './Modal'
 import { Field, TextInput, InputWithAdornment, Select } from './ProductLayout'
-import { productActions, useProductState, emptyVariant, type Variant } from './productStore'
+import { productActions, useProductState, emptyVariant, proofFromAbv, type Variant } from './productStore'
 
 interface VariantModalProps {
   open: boolean
@@ -12,6 +12,7 @@ interface VariantModalProps {
 export function VariantModal({ open, onClose, initial }: VariantModalProps) {
   const product = useProductState()
   const isExperience = product.productType === 'Experience' || product.department === 'Experience'
+  const isSpirits = product.productTypeOverride === 'Spirits'
 
   const [v, setV] = useState<Variant>(() => {
     const seed = initial ?? emptyVariant('', product.variants.length)
@@ -149,6 +150,12 @@ export function VariantModal({ open, onClose, initial }: VariantModalProps) {
               />
             </Field>
           </div>
+        )}
+
+        {!isExperience && isSpirits && (
+          <Field label="Proof" helper="Calculated automatically as 2 × alcohol percentage.">
+            <InputWithAdornment adornment="proof" placeholder="0" value={proofFromAbv(v.alcoholPercentage)} readOnly />
+          </Field>
         )}
 
         {!isExperience && (

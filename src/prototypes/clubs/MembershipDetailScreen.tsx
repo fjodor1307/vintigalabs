@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { AppSidebar } from '@ds/shared/AppSidebar'
 import { Navbar } from '@ds/shared/Navbar'
 import { useResponsiveSidebar } from '@ds/shared/useResponsiveSidebar'
@@ -11,6 +11,7 @@ import { Tag } from '@ds/shared/Tag'
 import { Avatar } from '@ds/shared/Avatar'
 import { CustomerCard } from '@ds/shared/CustomerCard'
 import { CardBrandLogo } from '@ds/shared/CardBrandLogo'
+import { RecordsCard, RecordsCardEmpty } from '@ds/shared/RecordsCard'
 import { RailSection } from '@ds/shared/RightRail'
 import {
   Table,
@@ -24,7 +25,13 @@ import {
   EllipsisVerticalIcon,
   EllipsisIcon,
   IdCardIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CreditCardIcon,
+  StoreIcon,
 } from '@ds/icons/Icons'
+import { Checkbox } from '@ds/shared/Checkbox'
+import { Textarea } from '@ds/shared/Textarea'
 import { AgeVerifiedBadge } from '@ds/shared/AgeVerifiedBadge'
 import { BlindEnthusiasmLogo } from './BlindEnthusiasmLogo'
 import { getMember, type Member } from './memberSamples'
@@ -62,7 +69,13 @@ const ORDERS = [
   { id: '#ORD-4120', date: 'Mar 13, 2025', total: '$79.00',    status: 'Completed'  as OrderStatus },
   { id: '#ORD-3866', date: 'Mar 11, 2025', total: '$2,200.00', status: 'Completed'  as OrderStatus },
   { id: '#ORD-3743', date: 'Mar 11, 2025', total: '$3,200.00', status: 'Completed'  as OrderStatus },
+  { id: '#ORD-3501', date: 'Dec 14, 2024', total: '$1,120.00', status: 'Completed'  as OrderStatus },
+  { id: '#ORD-3210', date: 'Sep 12, 2024', total: '$980.00',   status: 'Completed'  as OrderStatus },
+  { id: '#ORD-2988', date: 'Jun 13, 2024', total: '$1,540.00', status: 'Completed'  as OrderStatus },
+  { id: '#ORD-2742', date: 'Mar 14, 2024', total: '$760.00',   status: 'Completed'  as OrderStatus },
 ]
+
+const ORDERS_PER_PAGE = 6
 
 type OrderStatus = 'Processing' | 'Pending' | 'Completed'
 const ORDER_STATUS_TONE: Record<OrderStatus, { tone: 'success' | 'orange' | 'default'; variant: 'filled' | 'neutral-light' }> = {
@@ -152,16 +165,13 @@ export function MembershipDetailScreen() {
           >
             <div className="flex flex-col gap-vintiga-lg">
               <CustomerHeaderCard member={member} />
+              {member.delivery === 'pickup'
+                ? <PickupDeliveryCard />
+                : <AddressCard title="Shipping Address" />}
+              <AddressCard title="Billing Address" />
+              <PaymentMethodCard member={member} />
+              <OrderReviewCard member={member} />
               <ClubOrdersCard />
-              <PaymentMethodCard />
-              <AddressCard
-                title="Shipping Address"
-                subtitle="Manage customer address information"
-              />
-              <AddressCard
-                title="Billing Address"
-                subtitle="Manage customer address information"
-              />
               <MembershipHistoryCard />
             </div>
           </PageTemplate>
@@ -242,6 +252,10 @@ function CustomerHeaderCard({ member }: { member: Member }) {
 // ─── Club Orders card ────────────────────────────────────────────────────────
 
 function ClubOrdersCard() {
+  const [page, setPage] = useState(0)
+  const pageCount = Math.ceil(ORDERS.length / ORDERS_PER_PAGE)
+  const start = page * ORDERS_PER_PAGE
+  const rows = ORDERS.slice(start, start + ORDERS_PER_PAGE)
   return (
     <div className="flex flex-col gap-vintiga-md">
       <div className="flex items-center justify-between gap-vintiga-md">
@@ -259,7 +273,7 @@ function ClubOrdersCard() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {ORDERS.map((o) => {
+          {rows.map((o) => {
             const tone = ORDER_STATUS_TONE[o.status]
             return (
               <TableRow key={o.id}>
@@ -283,46 +297,144 @@ function ClubOrdersCard() {
           })}
         </TableBody>
       </Table>
+      {pageCount > 1 && (
+        <div className="flex items-center justify-between gap-vintiga-md">
+          <span className="typo-caption text-vintiga-slate-500">
+            Showing {start + 1}–{Math.min(start + ORDERS_PER_PAGE, ORDERS.length)} of {ORDERS.length} orders
+          </span>
+          <div className="flex items-center gap-vintiga-sm">
+            <IconButton
+              variant="outline"
+              size="sm"
+              icon={<ChevronLeftIcon />}
+              aria-label="Previous page"
+              disabled={page === 0}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+            />
+            <span className="typo-body-sm text-vintiga-slate-700">{page + 1} / {pageCount}</span>
+            <IconButton
+              variant="outline"
+              size="sm"
+              icon={<ChevronRightIcon />}
+              aria-label="Next page"
+              disabled={page >= pageCount - 1}
+              onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 // ─── Payment Method card ─────────────────────────────────────────────────────
 
-function PaymentMethodCard() {
+function PaymentMethodCard({ member }: { member: Member }) {
+  // Pending memberships haven't had a card vaulted yet — show the empty state.
+  const hasCard = member.status !== 'pending'
   return (
-    <Card>
-      <h3 className="typo-title-section font-semibold text-vintiga-slate-900 mb-vintiga-md">Payment Method</h3>
-      <div className="border-t border-vintiga-slate-200 pt-vintiga-md flex items-center gap-vintiga-md">
-        <CardBrandLogo brand="mastercard" />
+    <RecordsCard
+      title="Payment Method"
+      empty={!hasCard ? (
+        <div className="flex flex-col items-center text-center gap-vintiga-sm">
+          <div className="w-10 h-10 rounded-full bg-vintiga-slate-100 inline-flex items-center justify-center text-vintiga-slate-400">
+            <CreditCardIcon className="w-5 h-5" />
+          </div>
+          <RecordsCardEmpty
+            title="No card on file"
+            hint="Add a card to charge membership fees and club releases. The member can also pay in person."
+          />
+          <Button variant="outline" size="sm" onClick={() => {}}>Add Card</Button>
+        </div>
+      ) : undefined}
+    >
+      {hasCard ? (
+        <div className="flex items-center gap-vintiga-md">
+          <CardBrandLogo brand="mastercard" />
+          <div className="flex flex-col">
+            <span className="typo-caption text-vintiga-slate-500">Expires 07/27</span>
+            <span className="typo-body-sm font-semibold text-vintiga-slate-900">Mastercard **** 0092</span>
+          </div>
+          <div className="flex-1" />
+          <Tag variant="neutral-dark" size="md">Default Card</Tag>
+          <IconButton
+            variant="outline"
+            size="sm"
+            icon={<EllipsisVerticalIcon />}
+            aria-label="Card actions"
+            onClick={() => {}}
+          />
+        </div>
+      ) : null}
+    </RecordsCard>
+  )
+}
+
+// Pickup memberships have no shipping address — the customer collects releases
+// at the winery. We surface the delivery method + pickup location instead.
+function PickupDeliveryCard() {
+  return (
+    <RecordsCard title="Delivery Method">
+      <div className="flex items-center gap-vintiga-md">
+        <div className="w-10 h-10 rounded-full bg-vintiga-slate-100 inline-flex items-center justify-center text-vintiga-slate-500 shrink-0">
+          <StoreIcon className="w-5 h-5" />
+        </div>
         <div className="flex flex-col">
-          <span className="typo-caption text-vintiga-slate-500">Expires 07/27</span>
-          <span className="typo-body-sm font-semibold text-vintiga-slate-900">Mastercard **** 0092</span>
+          <span className="typo-body-sm font-semibold text-vintiga-slate-900">Pickup</span>
+          <span className="typo-caption text-vintiga-slate-500">Estate Tasting Room · 1210 Lakeview Street, Napa</span>
         </div>
         <div className="flex-1" />
-        <Tag variant="neutral-dark" size="md">Default Card</Tag>
         <IconButton
           variant="outline"
           size="sm"
           icon={<EllipsisVerticalIcon />}
-          aria-label="Card actions"
+          aria-label="Delivery method actions"
           onClick={() => {}}
         />
       </div>
-    </Card>
+    </RecordsCard>
+  )
+}
+
+// ─── Order Review Required card ──────────────────────────────────────────────
+// VIP / finicky members whose club orders must be held for manual review before
+// they batch-process. The admin types the reason into the instructions field.
+function OrderReviewCard({ member }: { member: Member }) {
+  const [required, setRequired] = useState(member.flagged ?? false)
+  const [instructions, setInstructions] = useState(
+    member.flagged
+      ? 'Call before each release — customer reviews the bottle selection and may swap. Do not auto-batch.'
+      : '',
+  )
+  return (
+    <RecordsCard title="Order Review" divider={false}>
+      <Checkbox
+        checked={required}
+        onChange={setRequired}
+        label="Order review required"
+        description="Hold this member's club orders for manual review instead of auto-processing with the batch."
+      />
+      {required && (
+        <div className="flex flex-col gap-vintiga-xs">
+          <label className="typo-caption font-semibold text-vintiga-slate-600">Order review instructions</label>
+          <Textarea
+            rows={3}
+            placeholder="Explain why this member's orders need review (e.g. always call to confirm the selection)."
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+          />
+        </div>
+      )}
+    </RecordsCard>
   )
 }
 
 // ─── Address card (Shipping or Billing) ──────────────────────────────────────
 
-function AddressCard({ title, subtitle }: { title: string; subtitle: string }) {
+function AddressCard({ title }: { title: string }) {
   return (
-    <Card>
-      <div className="flex flex-col gap-1 mb-vintiga-md">
-        <h3 className="typo-title-section font-semibold text-vintiga-slate-900">{title}</h3>
-        <p className="typo-body-sm text-vintiga-slate-500">{subtitle}</p>
-      </div>
-      <div className="border-t border-vintiga-slate-200 pt-vintiga-md grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+    <RecordsCard title={title}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
         <div>
           <h4 className="typo-body-sm font-semibold text-vintiga-slate-900 mb-1">Address</h4>
           <p className="typo-body-sm text-vintiga-slate-700 leading-relaxed">
@@ -348,7 +460,7 @@ function AddressCard({ title, subtitle }: { title: string; subtitle: string }) {
           />
         </div>
       </div>
-    </Card>
+    </RecordsCard>
   )
 }
 
@@ -439,15 +551,5 @@ function RailRow({ label, children }: { label: string; children: ReactNode }) {
       <span className="typo-body-sm font-semibold text-vintiga-slate-900">{label}</span>
       <span className="typo-body-sm text-vintiga-slate-700">{children}</span>
     </div>
-  )
-}
-
-// ─── Card primitive ──────────────────────────────────────────────────────────
-
-function Card({ children }: { children: ReactNode }) {
-  return (
-    <section className="border border-vintiga-slate-200 rounded-vintiga-xl bg-vintiga-white p-vintiga-lg">
-      {children}
-    </section>
   )
 }
