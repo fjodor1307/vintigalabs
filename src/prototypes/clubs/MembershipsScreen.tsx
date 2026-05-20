@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { ClubsLayout } from './ClubsLayout'
 import { TextField } from '@ds/shared/TextField'
 import { Tag } from '@ds/shared/Tag'
+import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
 import { FilterDropdown } from '@ds/shared/FilterDropdown'
 import { FlaggedFlag } from './FlaggedFlag'
@@ -17,6 +18,7 @@ import {
 } from '@ds/shared/Table'
 import {
   SearchIcon,
+  PlusIcon,
   TruckIcon,
   StoreIcon,
   ChevronLeftIcon,
@@ -130,6 +132,12 @@ export function MembershipsScreen() {
             value={club}
             onChange={(next) => { setClub(next); setPage(0) }}
           />
+          <Button
+            leftIcon={<PlusIcon className="w-4 h-4" />}
+            onClick={() => { window.location.hash = '#/web/clubs/memberships/add' }}
+          >
+            Add
+          </Button>
         </div>
       </div>
 
