@@ -6,16 +6,15 @@
 
 ---
 
-## 2026-05-20 — Fedja + Claude: Add Membership flow
+## 2026-05-20 — Fedja + Claude: Add Membership modal
 
-New operator flow for enrolling a customer into a club, reached from a new **Add** button on the Memberships tab (`#/web/clubs/memberships/add`).
+New operator flow for enrolling a customer into a club, opened as a **modal** from a new **Add** button on the Memberships tab.
 
-- **`AddMembershipScreen.tsx`** — full-page form (AppSidebar + Navbar + PageTemplate shell, matching `MembershipDetailScreen`):
-  - **Membership** card — Customer select, Club select, Join Date.
-  - **Delivery Method** card — Shipping / Pickup selectable cards. Shipping reveals a saved-address picker with an "+ Add new address" option that expands inline Street / City / State / ZIP fields; Pickup reveals a pickup-location select.
-  - **Order Summary** card — renders only when the chosen club carries an initial fee (Fee + Tax + Total). Per the requirement: fee clubs create an order at membership creation, fee-free clubs just create the membership. (Order creation is mocked — submit routes back to the list.)
-- **`MembershipsScreen`** — added the `Add` button (PlusIcon) to the filter row.
-- **`prototype.config.ts`** — registered the route; screen count 13 → 14.
+- **`AddMembershipModal.tsx`** — `Modal` (size `lg`, scrollable body) with three sections:
+  - **Membership** — Customer select, Club select, Join Date.
+  - **Delivery Method** — Shipping / Pickup selectable cards. Shipping reveals a saved-address picker with an "+ Add new address" option that expands inline Street / City / State / ZIP fields; Pickup reveals a pickup-location select.
+  - **Order Summary** — renders only when the chosen club carries an initial fee (Fee + Tax + Total). Per the requirement: fee clubs create an order at membership creation, fee-free clubs just create the membership. (Order creation is mocked — submit closes the modal.)
+- **`MembershipsScreen`** — `Add` button (PlusIcon) in the filter row opens the modal via local state (no route).
 
 ## 2026-05-07 — Fedja + Claude: May 7 review pass
 

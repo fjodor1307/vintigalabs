@@ -5,6 +5,7 @@ import { Tag } from '@ds/shared/Tag'
 import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
 import { FilterDropdown } from '@ds/shared/FilterDropdown'
+import { AddMembershipModal } from './AddMembershipModal'
 import { FlaggedFlag } from './FlaggedFlag'
 import { MEMBERS, type Delivery, type MemberStatus } from './memberSamples'
 import { CLUBS_CATALOG, type ClubKey } from './clubsCatalog'
@@ -86,6 +87,7 @@ export function MembershipsScreen() {
   const [status, setStatus]     = useState<Set<MemberStatus>>(new Set())
   const [club, setClub]         = useState<Set<ClubKey>>(new Set())
   const [page, setPage]         = useState(0)
+  const [addOpen, setAddOpen]   = useState(false)
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -134,7 +136,7 @@ export function MembershipsScreen() {
           />
           <Button
             leftIcon={<PlusIcon className="w-4 h-4" />}
-            onClick={() => { window.location.hash = '#/web/clubs/memberships/add' }}
+            onClick={() => setAddOpen(true)}
           >
             Add
           </Button>
@@ -221,6 +223,8 @@ export function MembershipsScreen() {
           </div>
         </div>
       </div>
+
+      <AddMembershipModal open={addOpen} onClose={() => setAddOpen(false)} />
     </ClubsLayout>
   )
 }

@@ -3,7 +3,6 @@ import type { PrototypeConfig } from '../_registry'
 import { ClubsScreen } from './ClubsScreen'
 import { MembershipsScreen } from './MembershipsScreen'
 import { MembershipDetailScreen } from './MembershipDetailScreen'
-import { AddMembershipScreen } from './AddMembershipScreen'
 import { ClubEmailsScreen } from './ClubEmailsScreen'
 import { ClubOverviewScreen } from './ClubOverviewScreen'
 import { ClubReleasesScreen } from './ClubReleasesScreen'
@@ -23,7 +22,6 @@ const baseRoutes: Record<string, ComponentType> = {
   // Page-level
   '#/web/clubs':                       ClubsScreen,
   '#/web/clubs/memberships':           MembershipsScreen,
-  '#/web/clubs/memberships/add':       AddMembershipScreen,
   '#/web/clubs/emails':                ClubEmailsScreen,
   // Club editor (new club)
   '#/web/clubs/new/overview':          ClubOverviewScreen,
@@ -76,9 +74,9 @@ export const config: PrototypeConfig = {
   entries: [
     {
       name: 'Clubs',
-      description: 'Club offerings and memberships — KPIs + tabbed list of clubs, a full club editor (Overview / Releases / Levels / Emails) for each club type, the View Club detail flow with Overview / Members / Releases / Emails tabs, plus an Add Membership flow to enrol customers.',
+      description: 'Club offerings and memberships — KPIs + tabbed list of clubs, a full club editor (Overview / Releases / Levels / Emails) for each club type, the View Club detail flow with Overview / Members / Releases / Emails tabs, plus an Add Membership modal to enrol customers.',
       path: '#/web/clubs',
-      screens: 14,
+      screens: 13,
     },
   ],
   routes: baseRoutes,
