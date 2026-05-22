@@ -42,7 +42,10 @@
       "Bash(unzip -l /Users/fedjagourban/Downloads/caveman-main.zip)",
       "Bash(unzip -p /Users/fedjagourban/Downloads/caveman-main.zip caveman-main/.cursor/skills/caveman/SKILL.md)",
       "Bash(unzip -p /Users/fedjagourban/Downloads/caveman-main.zip caveman-main/README.md)",
-      "mcp__plugin_figma_figma__get_metadata"
+      "mcp__plugin_figma_figma__get_metadata",
+      "Read(//Users/fedjagourban/Documents/pixmoji/_templates/**)",
+      "Read(//Users/fedjagourban/Documents/pixmoji/**)",
+      "Bash(cat .github/CODEOWNERS)"
     ]
   }
 }
