@@ -1,8 +1,7 @@
-import { useClubState, clubActions, type ContributionCadence } from './clubStore'
+import { useClubState, clubActions } from './clubStore'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
-import { Select } from '@ds/shared/Select'
 import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
 import { Tag } from '@ds/shared/Tag'
@@ -72,7 +71,7 @@ export function LevelsEditor() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-md">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
               <Field label="Level Name" required>
                 <TextField
                   placeholder="e.g., Silver, Gold, Platinum"
@@ -94,13 +93,6 @@ export function LevelsEditor() {
                     $
                   </span>
                 </div>
-              </Field>
-              <Field label="Contribution Cadence" required>
-                <Select
-                  value={level.cadence}
-                  onChange={(e) => clubActions.patchLevel(level.id, { cadence: e.target.value as ContributionCadence })}
-                  options={['Monthly', 'Quarterly', 'Annually']}
-                />
               </Field>
             </div>
           </div>

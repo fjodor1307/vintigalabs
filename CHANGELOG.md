@@ -18,7 +18,7 @@
 | Customers | 2026-05-11 | [src/prototypes/customers/CHANGELOG.md](src/prototypes/customers/CHANGELOG.md) |
 | Experience Timeslots Matrix | — | [src/prototypes/experience-timeslots-matrix/CHANGELOG.md](src/prototypes/experience-timeslots-matrix/CHANGELOG.md) |
 | Onboarding | 2026-04-27 | [src/prototypes/onboarding/CHANGELOG.md](src/prototypes/onboarding/CHANGELOG.md) |
-| Products | 2026-05-14 | [src/prototypes/products/CHANGELOG.md](src/prototypes/products/CHANGELOG.md) |
+| Products | 2026-05-20 | [src/prototypes/products/CHANGELOG.md](src/prototypes/products/CHANGELOG.md) |
 | Sales Chat | 2026-05-11 | [src/prototypes/sales-chat/CHANGELOG.md](src/prototypes/sales-chat/CHANGELOG.md) |
 | Settings | 2026-05-09 | [src/prototypes/settings/CHANGELOG.md](src/prototypes/settings/CHANGELOG.md) |
 

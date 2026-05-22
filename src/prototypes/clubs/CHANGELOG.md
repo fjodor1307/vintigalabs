@@ -6,6 +6,15 @@
 
 ---
 
+## 2026-05-20 — Fedja + Claude: Club editor General tab — match Figma + rich-text Description
+
+Reconciled the club editor Overview against the Figma designs (5079:33614 Curated, 5079:43825 Tasting Credit, 5079:44506 Rewards).
+
+- **Field order now matches the designs.** Curated/Rewards: Title → Status / Available → Membership SKU | Membership Fee Tax Rate → Has Membership Fee → Duration | Membership Fee → Description → Images. Tasting Credit: Title → Status / Available → Membership SKU → Level (Name + Amount) → Description → Images.
+- **Description and Terms & Conditions are now `RichTextEditor`** (HTML content shown on the website), replacing plain textareas — in both `ClubOverviewScreen` (new club) and `ClubViewOverviewScreen` (existing club).
+- **Tasting Credit Contribution Levels = Level Name + Amount only** (per VIN-496); the per-level cadence/SKU/tax fields were removed from `LevelsEditor`. Cadence is no longer shown on the Tasting Credit Overview (not in the design).
+- `ContributionCadence` options are Monthly / Quarterly / Semi-Annual / Annual.
+
 ## 2026-05-20 — Fedja + Claude: Add Membership page + membership detail polish
 
 Followed the design-sync decisions for the clubs flow.

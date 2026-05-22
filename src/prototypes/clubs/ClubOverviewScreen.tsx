@@ -1,11 +1,12 @@
 import { ClubEditorLayout } from './ClubEditorLayout'
-import { useClubState, clubActions, type ClubDraft, type ContributionCadence } from './clubStore'
+import { useClubState, clubActions, type ClubDraft } from './clubStore'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
 import { Select } from '@ds/shared/Select'
 import { Checkbox } from '@ds/shared/Checkbox'
 import { Textarea } from '@ds/shared/Textarea'
+import { RichTextEditor } from '@ds/shared/RichTextEditor'
 import { Tag } from '@ds/shared/Tag'
 import { Media } from '@ds/shared/Media'
 // ─── ClubOverviewScreen ───────────────────────────────────────────────────────
@@ -22,7 +23,6 @@ const TAX_RATE_OPTIONS = ['Wine', 'Beer', 'Spirits', 'Food', 'Merchandise']
 
 export function ClubOverviewScreen() {
   const club = useClubState()
-  const showDuration    = club.type === 'curated' || club.type === 'membership'
   const showFeeToggle   = club.type === 'curated' || club.type === 'membership'
   const showInlineLevel = club.type === 'account-credit'
   const defaultLevel    = showInlineLevel ? club.levels.find((l) => l.isDefault) ?? club.levels[0] : null
@@ -69,83 +69,83 @@ export function ClubOverviewScreen() {
           </Field>
         </div>
 
+        {/* Account Credit (Figma 5079:43825): Membership SKU (full width) +
+            inline default Level (Name + Amount). */}
         {showInlineLevel && defaultLevel && (
-          // Inline default Level (Figma 5079:43825). Bordered card with name,
-          // dollar amount, and cadence — additional levels live on the Levels tab.
-          <div className="border border-vintiga-slate-200 rounded-vintiga-lg p-vintiga-md flex flex-col gap-vintiga-md">
-            <div className="flex items-center gap-vintiga-sm">
-              <h3 className="typo-body-sm font-semibold text-vintiga-slate-900">Level 1</h3>
-              <Tag variant="filled" tone="default" size="sm">Default</Tag>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-md">
-              <Field label="Level Name" required>
-                <TextField
-                  placeholder="e.g., Silver, Gold, Platinum"
-                  value={defaultLevel.name}
-                  onChange={(e) => clubActions.patchLevel(defaultLevel.id, { name: e.target.value })}
-                />
-              </Field>
-              <Field label="Dollar Amount" required>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={defaultLevel.amount}
-                    onChange={(e) => clubActions.patchLevel(defaultLevel.id, { amount: Number(e.target.value) })}
-                    className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
-                  />
-                  <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">$</span>
-                </div>
-              </Field>
-              <Field label="Contribution Cadence" required>
-                <Select
-                  value={defaultLevel.cadence}
-                  onChange={(e) => clubActions.patchLevel(defaultLevel.id, { cadence: e.target.value as ContributionCadence })}
-                  options={['Monthly', 'Quarterly', 'Annually']}
-                />
-              </Field>
-            </div>
-          </div>
-        )}
-
-        <Field label="Description" required>
-          <Textarea
-            placeholder=""
-            value={club.description}
-            onChange={(e) => clubActions.patch('description', e.target.value)}
-            className="min-h-[96px]"
-          />
-        </Field>
-
-        {/* Membership SKU + Duration are required regardless of the fee
-            toggle — they always render at the top of the membership block. */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-          <Field label="Membership SKU" required>
-            <TextField
-              placeholder="Enter SKU"
-              value={club.sku}
-              onChange={(e) => clubActions.patch('sku', e.target.value)}
-            />
-          </Field>
-          {showDuration && (
-            <Field label="Duration of Membership">
-              <Select
-                value={club.durationOfMembership}
-                onChange={(e) => clubActions.patch('durationOfMembership', e.target.value as ClubDraft['durationOfMembership'])}
-                options={['3 Months', '6 Months', '12 Months', 'Indefinite']}
+          <>
+            <Field label="Membership SKU" required>
+              <TextField
+                placeholder="Enter SKU"
+                value={club.sku}
+                onChange={(e) => clubActions.patch('sku', e.target.value)}
               />
             </Field>
-          )}
-        </div>
 
+            <div className="border border-vintiga-slate-200 rounded-vintiga-lg p-vintiga-md flex flex-col gap-vintiga-md">
+              <div className="flex items-center gap-vintiga-sm">
+                <h3 className="typo-body-sm font-semibold text-vintiga-slate-900">Level 1</h3>
+                <Tag variant="filled" tone="default" size="sm">Default</Tag>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+                <Field label="Level Name" required>
+                  <TextField
+                    placeholder="e.g., Silver, Gold, Platinum"
+                    value={defaultLevel.name}
+                    onChange={(e) => clubActions.patchLevel(defaultLevel.id, { name: e.target.value })}
+                  />
+                </Field>
+                <Field label="Dollar Amount" required>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={defaultLevel.amount}
+                      onChange={(e) => clubActions.patchLevel(defaultLevel.id, { amount: Number(e.target.value) })}
+                      className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+                    />
+                    <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">$</span>
+                  </div>
+                </Field>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Curated / Rewards (Figma 5079:33614, 5079:44506): SKU + Tax Rate,
+            then Has Membership Fee → Duration + Fee. */}
         {showFeeToggle && (
           <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+              <Field label="Membership SKU" required>
+                <TextField
+                  placeholder="Enter SKU"
+                  value={club.sku}
+                  onChange={(e) => clubActions.patch('sku', e.target.value)}
+                />
+              </Field>
+              <Field label="Membership Fee Tax Rate">
+                <Select
+                  value={club.taxRate}
+                  onChange={(e) => clubActions.patch('taxRate', e.target.value)}
+                  options={[{ value: '', label: 'Select tax rate' }, ...TAX_RATE_OPTIONS.map((o) => ({ value: o, label: o }))]}
+                />
+              </Field>
+            </div>
+
             <Checkbox
               checked={club.hasMembershipFee}
               onChange={(next) => clubActions.patch('hasMembershipFee', next)}
               label="Has Membership Fee"
             />
+
             {club.hasMembershipFee && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+                <Field label="Duration of Membership">
+                  <Select
+                    value={club.durationOfMembership}
+                    onChange={(e) => clubActions.patch('durationOfMembership', e.target.value as ClubDraft['durationOfMembership'])}
+                    options={['3 Months', '6 Months', '12 Months', 'Indefinite']}
+                  />
+                </Field>
                 <Field label="Membership Fee" required>
                   <div className="relative">
                     <input
@@ -157,17 +157,16 @@ export function ClubOverviewScreen() {
                     <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">$</span>
                   </div>
                 </Field>
-                <Field label="Membership Fee Tax Rate">
-                  <Select
-                    value={club.taxRate}
-                    onChange={(e) => clubActions.patch('taxRate', e.target.value)}
-                    options={[{ value: '', label: 'Select tax rate' }, ...TAX_RATE_OPTIONS.map((o) => ({ value: o, label: o }))]}
-                  />
-                </Field>
               </div>
             )}
           </>
         )}
+
+        {/* Description — HTML content shown on the website. Last field in the
+            Overview card, immediately before Images (per design). */}
+        <Field label="Description" required helper="Displayed on the website — supports rich formatting.">
+          <RichTextEditor placeholder="Describe what's available in this club…" />
+        </Field>
 
       </SectionCard>
 
@@ -194,12 +193,7 @@ export function ClubOverviewScreen() {
         />
         {club.requireAcceptTerms && (
           <Field label="Terms & Conditions" required helper="These terms will be displayed to members during the signup process and they must accept to continue.">
-            <Textarea
-              placeholder="Enter terms and conditions that members must agree to…"
-              value={club.termsBody}
-              onChange={(e) => clubActions.patch('termsBody', e.target.value)}
-              className="min-h-[96px]"
-            />
+            <RichTextEditor placeholder="Enter terms and conditions that members must agree to…" />
           </Field>
         )}
       </SectionCard>

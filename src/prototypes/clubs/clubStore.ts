@@ -17,14 +17,14 @@ export interface ClubImage {
   name: string
 }
 
-export type ContributionCadence = 'Monthly' | 'Quarterly' | 'Annually'
+export type ContributionCadence = 'Monthly' | 'Quarterly' | 'Semi-Annual' | 'Annual'
+
+export const CADENCE_OPTIONS: ContributionCadence[] = ['Monthly', 'Quarterly', 'Semi-Annual', 'Annual']
 
 export interface ClubLevel {
   id: string
   name: string
   amount: number
-  /** Contribution cadence per level (Figma 5079:46371). */
-  cadence: ContributionCadence
   isDefault: boolean
 }
 
@@ -66,6 +66,10 @@ export interface ClubDraft {
   autoRenew: boolean
 
   // Account Credit-specific
+  // Per VIN-496, a contribution level is just Name + Amount. Cadence + tax rate
+  // are club-wide (every level shares them); the cart SKU is the club-level
+  // Membership SKU (`sku`).
+  cadence: ContributionCadence
   levels: ClubLevel[]
 
   // Curated-specific
@@ -106,11 +110,12 @@ function emptyDraft(type: ClubKind): ClubDraft {
     taxRate: '',
     sku: '',
     autoRenew: type === 'membership',
+    cadence: 'Monthly',
     levels:
       type === 'account-credit'
         ? [
-            { id: 'l1', name: '', amount: 0, cadence: 'Monthly', isDefault: true },
-            { id: 'l2', name: '', amount: 0, cadence: 'Monthly', isDefault: false },
+            { id: 'l1', name: '', amount: 0, isDefault: true },
+            { id: 'l2', name: '', amount: 0, isDefault: false },
           ]
         : [],
     releases: [],
@@ -159,7 +164,7 @@ export const clubActions = {
       ...state,
       levels: [
         ...state.levels,
-        { id, name: '', amount: 0, cadence: 'Monthly', isDefault: state.levels.length === 0 },
+        { id, name: '', amount: 0, isDefault: state.levels.length === 0 },
       ],
     }
     emit()
