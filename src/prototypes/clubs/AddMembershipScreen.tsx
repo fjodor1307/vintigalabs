@@ -5,7 +5,6 @@ import { useResponsiveSidebar } from '@ds/shared/useResponsiveSidebar'
 import { PageTemplate } from '@ds/shared/PageTemplate'
 import { BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
 import { SectionCard } from '@ds/shared/SectionCard'
-import { SegmentedControl } from '@ds/shared/SegmentedControl'
 import { RailSection } from '@ds/shared/RightRail'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
@@ -61,15 +60,6 @@ const CLUB_OPTIONS = [
 
 const MEMBERSHIPS_HASH = '#/web/clubs/memberships'
 const todayISO = new Date().toISOString().slice(0, 10)
-
-const TAB_OPTIONS = [
-  { value: 'overview', label: 'Overview', href: '#/web/clubs/memberships/add' },
-  // Releases + Emails sit alongside Overview in the design but only become
-  // meaningful once the membership is saved. Until then they re-target this
-  // page (no navigation) so the tab bar stays visually complete.
-  { value: 'releases', label: 'Releases', href: '#/web/clubs/memberships/add' },
-  { value: 'emails',   label: 'Emails',   href: '#/web/clubs/memberships/add' },
-]
 
 function clubTagTone(kind: ClubKind): 'violet' | 'teal' | 'orange' | 'default' {
   switch (kind) {
@@ -151,13 +141,6 @@ export function AddMembershipScreen() {
                 <Button variant="outline" onClick={close}>Cancel</Button>
                 <Button onClick={createMembership}>Create Membership</Button>
               </>
-            }
-            tabs={
-              <SegmentedControl
-                value="overview"
-                aria-label="Add Membership tabs"
-                options={TAB_OPTIONS}
-              />
             }
             rail={
               <MembershipDetailsRail
