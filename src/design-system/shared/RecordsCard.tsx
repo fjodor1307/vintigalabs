@@ -67,7 +67,7 @@ export function RecordsCard({
     >
       <div className="flex items-start justify-between gap-vintiga-md p-vintiga-md">
         <div className="flex flex-col gap-1 min-w-0">
-          <h3 className="typo-title-section font-semibold text-vintiga-slate-900 inline-flex items-center gap-vintiga-sm">
+          <h3 className="typo-body-lg font-semibold text-vintiga-slate-900 inline-flex items-center gap-vintiga-sm">
             {icon && <span className="text-vintiga-slate-500 [&>svg]:w-5 [&>svg]:h-5">{icon}</span>}
             {title}
           </h3>
