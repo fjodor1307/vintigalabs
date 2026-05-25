@@ -1,18 +1,20 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { AppSidebar } from '@ds/shared/AppSidebar'
 import { Navbar } from '@ds/shared/Navbar'
 import { useResponsiveSidebar } from '@ds/shared/useResponsiveSidebar'
 import { PageTemplate } from '@ds/shared/PageTemplate'
 import { BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
 import { SectionCard } from '@ds/shared/SectionCard'
+import { SegmentedControl } from '@ds/shared/SegmentedControl'
+import { RailSection } from '@ds/shared/RightRail'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
 import { Select } from '@ds/shared/Select'
 import { Radio } from '@ds/shared/Radio'
 import { Button } from '@ds/shared/Button'
-import { InfoIcon } from '@ds/icons/Icons'
-import { TruckIcon, StoreIcon } from '@ds/icons/Icons'
-import { CLUBS_CATALOG, CLUB_KEYS, type ClubKey } from './clubsCatalog'
+import { Tag } from '@ds/shared/Tag'
+import { InfoIcon, CalendarIcon, TruckIcon, StoreIcon } from '@ds/icons/Icons'
+import { CLUBS_CATALOG, CLUB_KEYS, type ClubKey, type ClubKind } from './clubsCatalog'
 
 // ─── AddMembershipScreen ──────────────────────────────────────────────────────
 // Full page (not a modal) launched from the "Add" button on the Memberships tab
@@ -59,6 +61,31 @@ const CLUB_OPTIONS = [
 
 const MEMBERSHIPS_HASH = '#/web/clubs/memberships'
 const todayISO = new Date().toISOString().slice(0, 10)
+
+const TAB_OPTIONS = [
+  { value: 'overview', label: 'Overview', href: '#/web/clubs/memberships/add' },
+  // Releases + Emails sit alongside Overview in the design but only become
+  // meaningful once the membership is saved. Until then they re-target this
+  // page (no navigation) so the tab bar stays visually complete.
+  { value: 'releases', label: 'Releases', href: '#/web/clubs/memberships/add' },
+  { value: 'emails',   label: 'Emails',   href: '#/web/clubs/memberships/add' },
+]
+
+function clubTagTone(kind: ClubKind): 'violet' | 'teal' | 'orange' | 'default' {
+  switch (kind) {
+    case 'curated':        return 'violet'
+    case 'account-credit': return 'teal'
+    case 'membership':     return 'orange'
+    default:               return 'default'
+  }
+}
+
+function formatJoinDate(iso: string): string {
+  if (!iso) return '—'
+  const d = new Date(iso + 'T00:00:00')
+  if (Number.isNaN(d.getTime())) return '—'
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+}
 
 export function AddMembershipScreen() {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
@@ -125,8 +152,22 @@ export function AddMembershipScreen() {
                 <Button onClick={createMembership}>Create Membership</Button>
               </>
             }
+            tabs={
+              <SegmentedControl
+                value="overview"
+                aria-label="Add Membership tabs"
+                options={TAB_OPTIONS}
+              />
+            }
+            rail={
+              <MembershipDetailsRail
+                clubKey={club || null}
+                joinDate={joinDate}
+                delivery={delivery}
+              />
+            }
           >
-            <div className="flex flex-col gap-vintiga-lg max-w-3xl">
+            <div className="flex flex-col gap-vintiga-lg">
               <SectionCard title="Membership">
                 <Field label="Customer" required>
                   <Select
@@ -226,17 +267,20 @@ export function AddMembershipScreen() {
               {/* Order Summary — always shown. Fee-free clubs create a $0 order
                   so the signup is still tracked in sales reporting + the POS. */}
               <SectionCard title="Order Summary">
-                <p className="typo-body-sm text-vintiga-slate-500">
-                  {fee > 0
-                    ? 'This club has an initial membership fee — a paid order is created with the membership.'
-                    : 'No membership fee — a $0 order is still created so the signup is tracked.'}
-                </p>
                 <div className="flex flex-col gap-vintiga-sm">
                   <SummaryRow label="Membership Fee" value={fee > 0 ? `$${fee.toFixed(2)}` : 'No fee'} />
                   <SummaryRow label={`Tax (${taxRate}%)`} value={`$${((fee * taxRate) / 100).toFixed(2)}`} />
                   <div className="border-t border-vintiga-slate-200 pt-vintiga-sm">
                     <SummaryRow label="Total" value={`$${total.toFixed(2)}`} bold />
                   </div>
+                </div>
+                <div className="flex items-start gap-vintiga-sm rounded-vintiga-md bg-vintiga-indigo-50 px-vintiga-md py-vintiga-sm">
+                  <InfoIcon className="w-4 h-4 text-vintiga-indigo-500 shrink-0 mt-0.5" />
+                  <span className="typo-body-sm text-vintiga-indigo-700">
+                    {fee > 0
+                      ? 'This club has an initial membership fee — a paid order is created with the membership.'
+                      : 'No membership fee — a $0 order is still created so the signup is tracked.'}
+                  </span>
                 </div>
               </SectionCard>
             </div>
@@ -265,6 +309,54 @@ function DeliveryOption({ selected, onClick, icon, label }: { selected: boolean;
       <Radio checked={selected} aria-label={label} />
       <span className="text-vintiga-slate-500 [&>svg]:w-5 [&>svg]:h-5">{icon}</span>
       <span className="typo-body-sm font-semibold text-vintiga-slate-900">{label}</span>
+    </div>
+  )
+}
+
+// Right-rail summary that mirrors the live form state: club tag + join date +
+// delivery method. Fields show "—" until the operator picks a value.
+function MembershipDetailsRail({
+  clubKey,
+  joinDate,
+  delivery,
+}: {
+  clubKey: ClubKey | null
+  joinDate: string
+  delivery: 'shipping' | 'pickup'
+}) {
+  const club = clubKey ? CLUBS_CATALOG[clubKey] : null
+  return (
+    <RailSection title="Membership Details">
+      <div className="flex flex-col gap-vintiga-md">
+        <RailRow label="Club">
+          {club ? (
+            <Tag variant="filled" tone={clubTagTone(club.kind)} size="sm">{club.type}</Tag>
+          ) : (
+            <span className="text-vintiga-slate-400">—</span>
+          )}
+        </RailRow>
+        <RailRow label="Join Date">
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarIcon className="w-4 h-4 text-vintiga-slate-400" />
+            {formatJoinDate(joinDate)}
+          </span>
+        </RailRow>
+        <RailRow label="Delivery Method">
+          <span className="inline-flex items-center gap-1.5">
+            {delivery === 'shipping' ? <TruckIcon className="w-4 h-4 text-vintiga-slate-400" /> : <StoreIcon className="w-4 h-4 text-vintiga-slate-400" />}
+            {delivery === 'shipping' ? 'Shipping' : 'Pickup'}
+          </span>
+        </RailRow>
+      </div>
+    </RailSection>
+  )
+}
+
+function RailRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-vintiga-xs">
+      <span className="typo-body-sm font-semibold text-vintiga-slate-900">{label}</span>
+      <span className="typo-body-sm text-vintiga-slate-700">{children}</span>
     </div>
   )
 }
