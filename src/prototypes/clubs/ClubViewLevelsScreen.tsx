@@ -11,10 +11,10 @@ import {
 } from '@ds/icons/Icons'
 
 const SAMPLE_LEVELS = [
-  { name: 'Bronze',   amount: 50,  cadence: 'Monthly'   as const },
-  { name: 'Silver',   amount: 100, cadence: 'Monthly'   as const },
-  { name: 'Gold',     amount: 250, cadence: 'Monthly'   as const },
-  { name: 'Platinum', amount: 500, cadence: 'Quarterly' as const },
+  { name: 'Bronze',   amount: 50 },
+  { name: 'Silver',   amount: 100 },
+  { name: 'Gold',     amount: 250 },
+  { name: 'Platinum', amount: 500 },
 ]
 
 // ─── ClubViewLevelsScreen ───────────────────────────────────────────────────
@@ -34,7 +34,7 @@ export function ClubViewLevelsScreen() {
         clubActions.addLevel()
         // The newly added level is the last one; patch its fields.
         const next = (i === 0 ? 'l1' : `l${i + 1}`)
-        clubActions.patchLevel(next, { name: sample.name, amount: sample.amount, cadence: sample.cadence })
+        clubActions.patchLevel(next, { name: sample.name, amount: sample.amount })
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,8 +1,7 @@
-import { useClubState, clubActions, type ContributionCadence } from './clubStore'
+import { useClubState, clubActions } from './clubStore'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
-import { Select } from '@ds/shared/Select'
 import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
 import { Tag } from '@ds/shared/Tag'
@@ -80,7 +79,7 @@ export function LevelsEditor() {
                   onChange={(e) => clubActions.patchLevel(level.id, { name: e.target.value })}
                 />
               </Field>
-              <Field label="Dollar Amount" required>
+              <Field label="Amount" required>
                 <div className="relative">
                   <input
                     type="number"
@@ -95,11 +94,11 @@ export function LevelsEditor() {
                   </span>
                 </div>
               </Field>
-              <Field label="Contribution Cadence" required>
-                <Select
-                  value={level.cadence}
-                  onChange={(e) => clubActions.patchLevel(level.id, { cadence: e.target.value as ContributionCadence })}
-                  options={['Monthly', 'Quarterly', 'Annually']}
+              <Field label="SKU" required>
+                <TextField
+                  placeholder="Enter SKU"
+                  value={level.sku}
+                  onChange={(e) => clubActions.patchLevel(level.id, { sku: e.target.value })}
                 />
               </Field>
             </div>

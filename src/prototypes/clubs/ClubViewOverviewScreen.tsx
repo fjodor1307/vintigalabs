@@ -7,6 +7,7 @@ import { TextField } from '@ds/shared/TextField'
 import { Select } from '@ds/shared/Select'
 import { Checkbox } from '@ds/shared/Checkbox'
 import { Textarea } from '@ds/shared/Textarea'
+import { RichTextEditor } from '@ds/shared/RichTextEditor'
 import { Media } from '@ds/shared/Media'
 import { getCurrentClubSlug } from './clubsCatalog'
 import {
@@ -26,14 +27,12 @@ export function ClubViewOverviewScreen() {
   const [name, setName]                = useState('Blind Enthusiasm')
   const [status, setStatus]            = useState<'active' | 'inactive'>('inactive')
   const [webStatus, setWebStatus]      = useState<'available' | 'not-available'>('available')
-  const [description, setDescription]  = useState('')
   const [duration, setDuration]        = useState('12 Months')
   const [hasFee, setHasFee]            = useState(true)
   const [fee, setFee]                  = useState('0')
   const [sku, setSku]                  = useState('1234-1234')
   const [taxRate, setTaxRate]          = useState('')
   const [requireTerms, setRequireTerms] = useState(true)
-  const [terms, setTerms]              = useState('')
   const [metaTitle, setMetaTitle]      = useState('')
   const [metaDesc, setMetaDesc]        = useState('')
   const [slug, setSlug]                = useState('blind-enthusiasm')
@@ -97,15 +96,6 @@ export function ClubViewOverviewScreen() {
             />
           </Field>
 
-          <Field label="Description" required>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What makes this club special?"
-              className="min-h-[96px]"
-            />
-          </Field>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
             <Field label="Membership SKU" required>
               <TextField
@@ -114,11 +104,18 @@ export function ClubViewOverviewScreen() {
                 placeholder="Enter SKU"
               />
             </Field>
-            <Field label="Duration of Membership">
+            <Field label="Membership Fee Tax Rate">
               <Select
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                options={['3 Months', '6 Months', '12 Months', 'Indefinite']}
+                value={taxRate}
+                onChange={(e) => setTaxRate(e.target.value)}
+                options={[
+                  { value: '',            label: 'Select tax rate' },
+                  { value: 'Wine',        label: 'Wine' },
+                  { value: 'Beer',        label: 'Beer' },
+                  { value: 'Spirits',     label: 'Spirits' },
+                  { value: 'Food',        label: 'Food' },
+                  { value: 'Merchandise', label: 'Merchandise' },
+                ]}
               />
             </Field>
           </div>
@@ -131,6 +128,13 @@ export function ClubViewOverviewScreen() {
 
           {hasFee && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+              <Field label="Duration of Membership">
+                <Select
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                  options={['3 Months', '6 Months', '12 Months', 'Indefinite']}
+                />
+              </Field>
               <Field label="Membership Fee" required>
                 <TextField
                   type="number"
@@ -139,22 +143,12 @@ export function ClubViewOverviewScreen() {
                   rightIcon={<span className="typo-body-sm text-vintiga-slate-400">$</span>}
                 />
               </Field>
-              <Field label="Membership Fee Tax Rate">
-                <Select
-                  value={taxRate}
-                  onChange={(e) => setTaxRate(e.target.value)}
-                  options={[
-                    { value: '',            label: 'Select tax rate' },
-                    { value: 'Wine',        label: 'Wine' },
-                    { value: 'Beer',        label: 'Beer' },
-                    { value: 'Spirits',     label: 'Spirits' },
-                    { value: 'Food',        label: 'Food' },
-                    { value: 'Merchandise', label: 'Merchandise' },
-                  ]}
-                />
-              </Field>
             </div>
           )}
+
+          <Field label="Description" required helper="Displayed on the website — supports rich formatting.">
+            <RichTextEditor placeholder="What makes this club special?" />
+          </Field>
 
         </RecordsCard>
 
@@ -187,12 +181,9 @@ export function ClubViewOverviewScreen() {
             required={requireTerms}
             helper="These terms will be displayed to members during the signup process and they must accept to continue."
           >
-            <Textarea
-              value={terms}
-              onChange={(e) => setTerms(e.target.value)}
+            <RichTextEditor
               disabled={!requireTerms}
               placeholder="Enter terms and conditions that members must agree to..."
-              className="min-h-[160px]"
             />
           </Field>
         </RecordsCard>
