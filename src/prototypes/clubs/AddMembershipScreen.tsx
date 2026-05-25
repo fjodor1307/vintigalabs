@@ -4,7 +4,7 @@ import { Navbar } from '@ds/shared/Navbar'
 import { useResponsiveSidebar } from '@ds/shared/useResponsiveSidebar'
 import { PageTemplate } from '@ds/shared/PageTemplate'
 import { BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
-import { SectionCard } from '@ds/shared/SectionCard'
+import { RecordsCard } from '@ds/shared/RecordsCard'
 import { RailSection } from '@ds/shared/RightRail'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
@@ -151,7 +151,7 @@ export function AddMembershipScreen() {
             }
           >
             <div className="flex flex-col gap-vintiga-lg">
-              <SectionCard title="Membership">
+              <RecordsCard title="Membership" divider={false}>
                 <Field label="Customer" required>
                   <Select
                     value={customer}
@@ -183,9 +183,9 @@ export function AddMembershipScreen() {
                     />
                   </Field>
                 </div>
-              </SectionCard>
+              </RecordsCard>
 
-              <SectionCard title="Delivery Method">
+              <RecordsCard title="Delivery Method" divider={false}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-vintiga-md">
                   <DeliveryOption
                     selected={delivery === 'shipping'}
@@ -245,11 +245,11 @@ export function AddMembershipScreen() {
                     </div>
                   </div>
                 )}
-              </SectionCard>
+              </RecordsCard>
 
               {/* Order Summary — always shown. Fee-free clubs create a $0 order
                   so the signup is still tracked in sales reporting + the POS. */}
-              <SectionCard title="Order Summary">
+              <RecordsCard title="Order Summary" divider={false}>
                 <div className="flex flex-col gap-vintiga-sm">
                   <SummaryRow label="Membership Fee" value={fee > 0 ? `$${fee.toFixed(2)}` : 'No fee'} />
                   <SummaryRow label={`Tax (${taxRate}%)`} value={`$${((fee * taxRate) / 100).toFixed(2)}`} />
@@ -265,7 +265,7 @@ export function AddMembershipScreen() {
                       : 'No membership fee — a $0 order is still created so the signup is tracked.'}
                   </span>
                 </div>
-              </SectionCard>
+              </RecordsCard>
             </div>
           </PageTemplate>
         </div>
