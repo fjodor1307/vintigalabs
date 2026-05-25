@@ -6,6 +6,29 @@
 
 ---
 
+## 2026-05-25 — Fedja + Claude: Align club editor to VIN-496 spec (Figma 5078:4191)
+
+Reconciled the club editor and clubs list against the latest spec.
+
+**Store (`clubStore.ts`):**
+- Defaults: `status` → **active**, `hasMembershipFee` → **false** for all types, `taxRate` → **Non-Taxable**.
+- New top-level `duration: '' | '1 Month' | '3 Months' | '6 Months' | '12 Months'` for Curated / Rewards (required, no default).
+- New `membershipDurationMonths` (string, default `'12'`) shown under Has-Fee=Yes.
+- `ClubLevel` gains `sku` (per-level SKU for Tasting Credit, treated like a variant for the cart).
+- Tax-rate options now `['Non-Taxable', 'Wine', 'Beer', 'Spirits', 'Food', 'Merchandise']`.
+- SEO auto-fill: `metaTitleAuto` / `slugAuto` flags + `setName`, `setMetaTitle`, `setSlug` actions + `slugify` helper. Title auto-fills Meta Title and Slug until the user takes ownership of those fields.
+
+**`ClubOverviewScreen`:**
+- Curated / Rewards: **SKU + Duration** at the top (both required); Has Membership Fee toggle; when Yes shows **Membership Amount + Membership Duration (months)** then **Tax Rate**.
+- Tasting Credit: **Cadence** (Monthly / Quarterly / Semi-Annual / Annual, default Monthly); inline Level card now **Name + Amount + SKU** (3-col). No club-level Membership SKU and no Tax Rate (always non-taxable, hidden).
+- Title field uses `setName` → auto-fills Meta Title + Slug; Meta Title / Slug fields use the corresponding setters so manual edits stop the auto-fill.
+
+**`LevelsEditor`:** per-level row is now Name + Amount + **SKU** (3 cols).
+
+**`ClubsScreen` list:**
+- Vintiga 3-dot menu: "View" → **"Edit"** (opens General tab).
+- Commerce7-sourced (Vintiga-Connect) rows: 3-dot menu **hidden entirely** (was disabled + tooltip).
+
 ## 2026-05-20 — Fedja + Claude: Club editor General tab — match Figma + rich-text Description
 
 Reconciled the club editor Overview against the Figma designs (5079:33614 Curated, 5079:43825 Tasting Credit, 5079:44506 Rewards).

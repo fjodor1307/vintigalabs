@@ -71,7 +71,7 @@ export function LevelsEditor() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-md">
               <Field label="Level Name" required>
                 <TextField
                   placeholder="e.g., Silver, Gold, Platinum"
@@ -79,7 +79,7 @@ export function LevelsEditor() {
                   onChange={(e) => clubActions.patchLevel(level.id, { name: e.target.value })}
                 />
               </Field>
-              <Field label="Dollar Amount" required>
+              <Field label="Amount" required>
                 <div className="relative">
                   <input
                     type="number"
@@ -93,6 +93,13 @@ export function LevelsEditor() {
                     $
                   </span>
                 </div>
+              </Field>
+              <Field label="SKU" required>
+                <TextField
+                  placeholder="Enter SKU"
+                  value={level.sku}
+                  onChange={(e) => clubActions.patchLevel(level.id, { sku: e.target.value })}
+                />
               </Field>
             </div>
           </div>

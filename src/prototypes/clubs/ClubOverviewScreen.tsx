@@ -1,5 +1,5 @@
 import { ClubEditorLayout } from './ClubEditorLayout'
-import { useClubState, clubActions, type ClubDraft } from './clubStore'
+import { useClubState, clubActions, DURATION_OPTIONS, TAX_RATE_OPTIONS, CADENCE_OPTIONS, type ClubDraft, type ClubDuration, type ContributionCadence } from './clubStore'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
@@ -19,8 +19,6 @@ import { Media } from '@ds/shared/Media'
 // Terms & Conditions: the textarea only renders once the operator opts in via
 // the "Require members to accept" checkbox (defaults off).
 
-const TAX_RATE_OPTIONS = ['Wine', 'Beer', 'Spirits', 'Food', 'Merchandise']
-
 export function ClubOverviewScreen() {
   const club = useClubState()
   const showFeeToggle   = club.type === 'curated' || club.type === 'membership'
@@ -38,11 +36,11 @@ export function ClubOverviewScreen() {
           </span>
         </div>
       }>
-        <Field label="Title" required>
+        <Field label="Title" required helper="Only field required to save — Meta Title and Slug auto-fill from this.">
           <TextField
             placeholder="Enter club name"
             value={club.name}
-            onChange={(e) => clubActions.patch('name', e.target.value)}
+            onChange={(e) => clubActions.setName(e.target.value)}
           />
         </Field>
 
@@ -69,15 +67,16 @@ export function ClubOverviewScreen() {
           </Field>
         </div>
 
-        {/* Account Credit (Figma 5079:43825): Membership SKU (full width) +
-            inline default Level (Name + Amount). */}
+        {/* Tasting Credit (account-credit): Cadence (club-wide) + inline default
+            Level (Name + Amount + SKU). No Membership SKU at club level — SKU
+            lives per level. No Tax Rate (always non-taxable, not displayed). */}
         {showInlineLevel && defaultLevel && (
           <>
-            <Field label="Membership SKU" required>
-              <TextField
-                placeholder="Enter SKU"
-                value={club.sku}
-                onChange={(e) => clubActions.patch('sku', e.target.value)}
+            <Field label="Cadence" required helper="How often members are charged. Applies to every level.">
+              <Select
+                value={club.cadence}
+                onChange={(e) => clubActions.patch('cadence', e.target.value as ContributionCadence)}
+                options={CADENCE_OPTIONS}
               />
             </Field>
 
@@ -86,7 +85,7 @@ export function ClubOverviewScreen() {
                 <h3 className="typo-body-sm font-semibold text-vintiga-slate-900">Level 1</h3>
                 <Tag variant="filled" tone="default" size="sm">Default</Tag>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-md">
                 <Field label="Level Name" required>
                   <TextField
                     placeholder="e.g., Silver, Gold, Platinum"
@@ -94,7 +93,7 @@ export function ClubOverviewScreen() {
                     onChange={(e) => clubActions.patchLevel(defaultLevel.id, { name: e.target.value })}
                   />
                 </Field>
-                <Field label="Dollar Amount" required>
+                <Field label="Amount" required>
                   <div className="relative">
                     <input
                       type="number"
@@ -105,13 +104,21 @@ export function ClubOverviewScreen() {
                     <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">$</span>
                   </div>
                 </Field>
+                <Field label="SKU" required>
+                  <TextField
+                    placeholder="Enter SKU"
+                    value={defaultLevel.sku}
+                    onChange={(e) => clubActions.patchLevel(defaultLevel.id, { sku: e.target.value })}
+                  />
+                </Field>
               </div>
             </div>
           </>
         )}
 
-        {/* Curated / Rewards (Figma 5079:33614, 5079:44506): SKU + Tax Rate,
-            then Has Membership Fee → Duration + Fee. */}
+        {/* Curated / Rewards: SKU + Duration are required at the top.
+            Has Membership Fee defaults Off; when On, Amount + Membership Duration
+            (months) + Tax Rate show. */}
         {showFeeToggle && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
@@ -122,11 +129,11 @@ export function ClubOverviewScreen() {
                   onChange={(e) => clubActions.patch('sku', e.target.value)}
                 />
               </Field>
-              <Field label="Membership Fee Tax Rate">
+              <Field label="Duration" required helper="How long each membership runs.">
                 <Select
-                  value={club.taxRate}
-                  onChange={(e) => clubActions.patch('taxRate', e.target.value)}
-                  options={[{ value: '', label: 'Select tax rate' }, ...TAX_RATE_OPTIONS.map((o) => ({ value: o, label: o }))]}
+                  value={club.duration}
+                  onChange={(e) => clubActions.patch('duration', e.target.value as ClubDuration)}
+                  options={[{ value: '', label: 'Select duration' }, ...DURATION_OPTIONS.map((o) => ({ value: o, label: o }))]}
                 />
               </Field>
             </div>
@@ -138,26 +145,41 @@ export function ClubOverviewScreen() {
             />
 
             {club.hasMembershipFee && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-                <Field label="Duration of Membership">
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+                  <Field label="Membership Amount" required helper="Must be greater than $0.">
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min={0}
+                        value={club.membershipFee}
+                        onChange={(e) => clubActions.patch('membershipFee', Number(e.target.value))}
+                        className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+                      />
+                      <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">$</span>
+                    </div>
+                  </Field>
+                  <Field label="Membership Duration" helper="Number of months (default 12).">
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min={1}
+                        value={club.membershipDurationMonths}
+                        onChange={(e) => clubActions.patch('membershipDurationMonths', e.target.value)}
+                        className="h-10 w-full pl-3 pr-16 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+                      />
+                      <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">months</span>
+                    </div>
+                  </Field>
+                </div>
+                <Field label="Membership Fee Tax Rate" helper="Pulled from the store's tax rates.">
                   <Select
-                    value={club.durationOfMembership}
-                    onChange={(e) => clubActions.patch('durationOfMembership', e.target.value as ClubDraft['durationOfMembership'])}
-                    options={['3 Months', '6 Months', '12 Months', 'Indefinite']}
+                    value={club.taxRate}
+                    onChange={(e) => clubActions.patch('taxRate', e.target.value)}
+                    options={TAX_RATE_OPTIONS.map((o) => ({ value: o, label: o }))}
                   />
                 </Field>
-                <Field label="Membership Fee" required>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      value={club.membershipFee}
-                      onChange={(e) => clubActions.patch('membershipFee', Number(e.target.value))}
-                      className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
-                    />
-                    <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">$</span>
-                  </div>
-                </Field>
-              </div>
+              </>
             )}
           </>
         )}
@@ -200,11 +222,11 @@ export function ClubOverviewScreen() {
 
       {/* Section: SEO */}
       <SectionCard title="SEO">
-        <Field label="Meta Tag Title">
+        <Field label="Meta Tag Title" helper={club.metaTitleAuto ? 'Auto-filled from Title. Edit to take ownership.' : undefined}>
           <TextField
             placeholder="Enter title"
             value={club.metaTitle}
-            onChange={(e) => clubActions.patch('metaTitle', e.target.value)}
+            onChange={(e) => clubActions.setMetaTitle(e.target.value)}
           />
         </Field>
         <Field label="Meta Tag Description" helper={`${Math.max(0, 5 - club.metaDescription.length)} characters remaining`}>
@@ -214,11 +236,11 @@ export function ClubOverviewScreen() {
             onChange={(e) => clubActions.patch('metaDescription', e.target.value)}
           />
         </Field>
-        <Field label="Slug">
+        <Field label="Slug" helper={club.slugAuto ? 'Auto-filled from Title (spaces become hyphens).' : undefined}>
           <TextField
             placeholder="club-name"
             value={club.slug}
-            onChange={(e) => clubActions.patch('slug', e.target.value)}
+            onChange={(e) => clubActions.setSlug(e.target.value)}
           />
         </Field>
       </SectionCard>

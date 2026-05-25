@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { Tooltip } from '@base-ui/react/tooltip'
 import { ClubsLayout } from './ClubsLayout'
 import { AddClubModal } from './AddClubModal'
 import { ClubCard } from '@ds/shared/ClubCard'
@@ -224,7 +223,7 @@ export function ClubsScreen() {
                     </button>
                   )}
                   items={[
-                    { label: 'View',      onClick: () => { window.location.hash = `#/web/clubs/view/${club.id}/overview` } },
+                    { label: 'Edit',      onClick: () => { window.location.hash = `#/web/clubs/view/${club.id}/overview` } },
                     { label: 'Duplicate', onClick: () => {} },
                     { label: 'Archive',   onClick: () => {}, danger: true },
                   ]}
@@ -251,64 +250,27 @@ export function ClubsScreen() {
 // happened. Hover/focus on the action button shows the same tooltip via the
 // usual base-ui auto-open behaviour.
 
+// Commerce7-synced ("Vintiga-Connect") clubs are read-only. Per spec the 3-dot
+// action menu is hidden entirely — the card stays visible so KPIs surface, but
+// nothing on it is interactive.
 function ReadOnlyClubRow({ club }: { club: Club }) {
-  const [tipOpen, setTipOpen] = useState(false)
-  const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => () => {
-    if (dismissTimer.current) clearTimeout(dismissTimer.current)
-  }, [])
-
-  const flashTooltip = () => {
-    setTipOpen(true)
-    if (dismissTimer.current) clearTimeout(dismissTimer.current)
-    dismissTimer.current = setTimeout(() => setTipOpen(false), 2500)
-  }
-
   return (
-    <Tooltip.Provider>
-      <Tooltip.Root open={tipOpen} onOpenChange={setTipOpen}>
-        <ClubCard
-          image={
-            <img
-              src={club.imageUrl}
-              alt=""
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          }
-          title={club.name}
-          tags={club.tags.map((t) => (
-            <Tag tone={t.tone} size="sm">
-              {t.label}
-            </Tag>
-          ))}
-          meta={`${club.active} Active | ${club.onHold} On-hold | ${club.newM} New | ${club.canceled} Canceled`}
-          onClick={flashTooltip}
-          action={
-            <Tooltip.Trigger
-              render={
-                <button
-                  type="button"
-                  aria-disabled="true"
-                  aria-label={`${club.name} actions (read-only)`}
-                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); flashTooltip() }}
-                  className="w-8 h-8 rounded-vintiga-md flex items-center justify-center bg-transparent border-none cursor-not-allowed text-vintiga-slate-300"
-                >
-                  <EllipsisIcon className="w-4 h-4" />
-                </button>
-              }
-            />
-          }
+    <ClubCard
+      image={
+        <img
+          src={club.imageUrl}
+          alt=""
+          className="w-full h-full object-cover"
+          loading="lazy"
         />
-        <Tooltip.Portal>
-          <Tooltip.Positioner sideOffset={6}>
-            <Tooltip.Popup className="max-w-[260px] bg-vintiga-foreground text-vintiga-surface typo-caption font-medium px-2 py-1.5 rounded shadow-lg">
-              This club is synced from Commerce7. To make changes, manage it in Commerce7.
-            </Tooltip.Popup>
-          </Tooltip.Positioner>
-        </Tooltip.Portal>
-      </Tooltip.Root>
-    </Tooltip.Provider>
+      }
+      title={club.name}
+      tags={club.tags.map((t) => (
+        <Tag tone={t.tone} size="sm">
+          {t.label}
+        </Tag>
+      ))}
+      meta={`${club.active} Active | ${club.onHold} On-hold | ${club.newM} New | ${club.canceled} Canceled`}
+    />
   )
 }

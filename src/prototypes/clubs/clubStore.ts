@@ -25,8 +25,17 @@ export interface ClubLevel {
   id: string
   name: string
   amount: number
+  /** Per-level SKU (VIN-496). Each level acts like a variant for the cart. */
+  sku: string
   isDefault: boolean
 }
+
+/** Top-level Duration options for Curated / Rewards clubs (required, no default). */
+export type ClubDuration = '' | '1 Month' | '3 Months' | '6 Months' | '12 Months'
+export const DURATION_OPTIONS: ClubDuration[] = ['1 Month', '3 Months', '6 Months', '12 Months']
+
+/** Store tax-rate list. Vintiga clubs default to Non-Taxable. */
+export const TAX_RATE_OPTIONS = ['Non-Taxable', 'Wine', 'Beer', 'Spirits', 'Food', 'Merchandise']
 
 export interface ClubRelease {
   id: string
@@ -50,15 +59,18 @@ export interface ClubDraft {
   availableOnWebsite: boolean
   description: string
 
-  // Curated / Membership-specific
-  durationOfMembership: '3 Months' | '6 Months' | '12 Months' | 'Indefinite'
+  // Curated / Rewards — top-level Duration (required, no default).
+  duration: ClubDuration
+  // Has-Fee toggle defaults to No; the next three fields show when Yes.
   hasMembershipFee: boolean
+  /** Required when hasMembershipFee, must be > 0. */
   membershipFee: number
-  // Tax rate uses the same dropdown taxonomy as Products (see VariantModal).
+  /** Membership Duration in months (under Has-Fee=Yes). Default 12. */
+  membershipDurationMonths: string
+  /** Membership Fee Tax Rate. Default Non-Taxable. */
   taxRate: string
 
-  // Required for every club type — signup creates a real order against this
-  // SKU so accounting can reconcile revenue.
+  // Curated / Rewards Membership SKU. Tasting Credit uses per-level SKUs only.
   sku: string
 
   // Membership-specific — surfaced in the rail as a static read-only flag
@@ -82,10 +94,14 @@ export interface ClubDraft {
   requireAcceptTerms: boolean
   termsBody: string
 
-  // SEO
+  // SEO — Meta Title and Slug auto-derive from the club Title until the user
+  // edits them manually; the auto flags track ownership so we know when to stop
+  // overwriting.
   metaTitle: string
   metaDescription: string
   slug: string
+  metaTitleAuto: boolean
+  slugAuto: boolean
 
   // Read-only fields shown in the rail
   dateCreated: string
@@ -101,21 +117,22 @@ function emptyDraft(type: ClubKind): ClubDraft {
   return {
     type,
     name: '',
-    status: 'inactive',
+    status: 'active',
     availableOnWebsite: true,
     description: '',
-    durationOfMembership: '12 Months',
-    hasMembershipFee: type === 'curated' || type === 'membership',
+    duration: '',
+    hasMembershipFee: false,
     membershipFee: 0,
-    taxRate: '',
+    membershipDurationMonths: '12',
+    taxRate: 'Non-Taxable',
     sku: '',
     autoRenew: type === 'membership',
     cadence: 'Monthly',
     levels:
       type === 'account-credit'
         ? [
-            { id: 'l1', name: '', amount: 0, isDefault: true },
-            { id: 'l2', name: '', amount: 0, isDefault: false },
+            { id: 'l1', name: '', amount: 0, sku: '', isDefault: true },
+            { id: 'l2', name: '', amount: 0, sku: '', isDefault: false },
           ]
         : [],
     releases: [],
@@ -125,6 +142,8 @@ function emptyDraft(type: ClubKind): ClubDraft {
     metaTitle: '',
     metaDescription: '',
     slug: '',
+    metaTitleAuto: true,
+    slugAuto: true,
     dateCreated: 'Mar 15, 2025',
   }
 }
@@ -148,6 +167,16 @@ export function useClubState(): ClubDraft {
   )
 }
 
+/** URL-safe slug — lowercase, ASCII, spaces → hyphens. */
+export function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+}
+
 export const clubActions = {
   startNew(type: ClubKind) {
     state = emptyDraft(type)
@@ -157,6 +186,27 @@ export const clubActions = {
     state = { ...state, [key]: value }
     emit()
   },
+  /** Set the club Title and auto-fill Meta Title + Slug while the user hasn't
+   *  taken ownership of those fields. */
+  setName(value: string) {
+    state = {
+      ...state,
+      name: value,
+      metaTitle: state.metaTitleAuto ? value : state.metaTitle,
+      slug:      state.slugAuto      ? slugify(value) : state.slug,
+    }
+    emit()
+  },
+  /** Manual edit of Meta Title — stops the auto-fill from Title. */
+  setMetaTitle(value: string) {
+    state = { ...state, metaTitle: value, metaTitleAuto: false }
+    emit()
+  },
+  /** Manual edit of Slug — stops the auto-fill from Title. */
+  setSlug(value: string) {
+    state = { ...state, slug: value, slugAuto: false }
+    emit()
+  },
   // Levels
   addLevel() {
     const id = `l${state.levels.length + 1}`
@@ -164,7 +214,7 @@ export const clubActions = {
       ...state,
       levels: [
         ...state.levels,
-        { id, name: '', amount: 0, isDefault: state.levels.length === 0 },
+        { id, name: '', amount: 0, sku: '', isDefault: state.levels.length === 0 },
       ],
     }
     emit()
