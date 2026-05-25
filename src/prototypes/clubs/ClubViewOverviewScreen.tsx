@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ClubViewLayout } from './ClubViewLayout'
 import { RecordsCard } from '@ds/shared/RecordsCard'
 import { KpiCard } from '@ds/shared/KpiCard'
@@ -8,8 +8,19 @@ import { Select } from '@ds/shared/Select'
 import { Checkbox } from '@ds/shared/Checkbox'
 import { Textarea } from '@ds/shared/Textarea'
 import { RichTextEditor } from '@ds/shared/RichTextEditor'
+import { Tag } from '@ds/shared/Tag'
 import { Media } from '@ds/shared/Media'
-import { getCurrentClubSlug } from './clubsCatalog'
+import { CLUBS_CATALOG, getCurrentClubSlug } from './clubsCatalog'
+import {
+  useClubState,
+  clubActions,
+  DURATION_OPTIONS,
+  TAX_RATE_OPTIONS,
+  CADENCE_OPTIONS,
+  slugify,
+  type ClubDuration,
+  type ContributionCadence,
+} from './clubStore'
 import {
   PackageIcon,
   CheckCircleIcon,
@@ -19,59 +30,89 @@ import {
 } from '@ds/icons/Icons'
 
 // ─── ClubViewOverviewScreen ───────────────────────────────────────────────────
-// Overview tab on the View Club detail page. Six-tile member-stats grid sits
-// above the editable Basic Info / Terms / SEO cards. Mirrors the editor's
-// Overview structure but with read-only KPIs surfaced for an existing club.
+// Overview tab on the View Club detail page. Mirrors the new-club editor field
+// layout (Figma 5078:4191) so the same spec applies to creating and editing.
+// Type-aware: Tasting Credit (account-credit) shows Cadence + a Level card;
+// Curated / Rewards (membership) show SKU + Duration + Has-Fee block.
+
+const SAMPLE_TASTING_LEVELS = [
+  { name: 'Bronze', amount: 50,  sku: 'TC-BRZ' },
+  { name: 'Silver', amount: 100, sku: 'TC-SLV' },
+]
 
 export function ClubViewOverviewScreen() {
-  const [name, setName]                = useState('Blind Enthusiasm')
-  const [status, setStatus]            = useState<'active' | 'inactive'>('inactive')
-  const [webStatus, setWebStatus]      = useState<'available' | 'not-available'>('available')
-  const [duration, setDuration]        = useState('12 Months')
-  const [hasFee, setHasFee]            = useState(true)
-  const [fee, setFee]                  = useState('0')
-  const [sku, setSku]                  = useState('1234-1234')
-  const [taxRate, setTaxRate]          = useState('')
-  const [requireTerms, setRequireTerms] = useState(true)
-  const [metaTitle, setMetaTitle]      = useState('')
-  const [metaDesc, setMetaDesc]        = useState('')
-  const [slug, setSlug]                = useState('blind-enthusiasm')
-  const [images, setImages]            = useState<{ id: string; url: string; name: string }[]>([])
+  const slug = getCurrentClubSlug()
+  const clubInfo = CLUBS_CATALOG[slug]
+  const kind = clubInfo.kind
+  const isAccountCredit = kind === 'account-credit'
+  const showFeeToggle   = kind === 'curated' || kind === 'membership'
+
+  // Local state — seeded from the catalogue. SEO Meta Title + Slug auto-fill
+  // from Title until the operator takes ownership of those fields.
+  const [name, setName]                   = useState(clubInfo.name)
+  const [status, setStatus]               = useState<'active' | 'inactive'>('active')
+  const [webStatus, setWebStatus]         = useState<'available' | 'not-available'>('available')
+  const [sku, setSku]                     = useState('1234-1234')
+  const [duration, setDuration]           = useState<ClubDuration>('12 Months')
+  const [hasFee, setHasFee]               = useState(false)
+  const [fee, setFee]                     = useState('0')
+  const [months, setMonths]               = useState('12')
+  const [taxRate, setTaxRate]             = useState('Non-Taxable')
+  const [requireTerms, setRequireTerms]   = useState(true)
+  const [metaTitle, setMetaTitle]         = useState(clubInfo.name)
+  const [metaTitleAuto, setMetaTitleAuto] = useState(true)
+  const [metaDesc, setMetaDesc]           = useState('')
+  const [slugSeo, setSlugSeo]             = useState(slugify(clubInfo.name))
+  const [slugAuto, setSlugAuto]           = useState(true)
+  const [images, setImages]               = useState<{ id: string; url: string; name: string }[]>([])
+
+  // Tasting Credit shares Cadence + levels with the Levels tab via the store.
+  const { cadence, levels } = useClubState()
+  useEffect(() => {
+    if (!isAccountCredit) return
+    if (levels.length === 0) {
+      SAMPLE_TASTING_LEVELS.forEach((sample, i) => {
+        clubActions.addLevel()
+        const id = i === 0 ? 'l1' : `l${i + 1}`
+        clubActions.patchLevel(id, { name: sample.name, amount: sample.amount, sku: sample.sku })
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAccountCredit])
+  const defaultLevel = isAccountCredit ? (levels.find((l) => l.isDefault) ?? levels[0]) : null
+
+  function onTitleChange(value: string) {
+    setName(value)
+    if (metaTitleAuto) setMetaTitle(value)
+    if (slugAuto) setSlugSeo(slugify(value))
+  }
 
   const metaRemaining = Math.max(0, 160 - metaDesc.length)
+  const membersHref  = (s: string) => `#/web/clubs/view/${slug}/members?status=${encodeURIComponent(s)}`
+  const releasesHref = `#/web/clubs/view/${slug}/releases`
 
   return (
     <ClubViewLayout activeTab="overview">
       <div className="flex flex-col gap-vintiga-lg">
-        {/* KPI grid — compact KPI-small in a 2-col grid (May 7 alignment).
-            Active / On-hold paired on top, New / Canceled paired below, then
-            Total Releases pinned to the bottom-right as the least-important
-            metric (curated club always has releases). Removed Total Members
-            per the meeting — operators can sum Active + On-hold + New. */}
-        {(() => {
-          const slug = getCurrentClubSlug()
-          const membersHref  = (status: string) => `#/web/clubs/view/${slug}/members?status=${encodeURIComponent(status)}`
-          const releasesHref = `#/web/clubs/view/${slug}/releases`
-          return (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-              <KpiCard size="sm" label="Active Members"   value="10" icon={<CheckCircleIcon />} href={membersHref('Active')}    />
-              <KpiCard size="sm" label="On-hold Members"  value="2"  icon={<HandIcon />}        href={membersHref('On Hold')}   />
-              <KpiCard size="sm" label="New Members"      value="2"  icon={<UserIcon />}        href={membersHref('Pending')}   />
-              <KpiCard size="sm" label="Canceled Members" value="1"  icon={<UserXIcon />}       href={membersHref('Cancelled')} />
-              <KpiCard size="sm" label="Total Releases"   value="28" icon={<PackageIcon />}     href={releasesHref}             />
-            </div>
-          )
-        })()}
+        {/* KPI grid — Total Releases is hidden for Tasting Credit (no releases tab). */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+          <KpiCard size="sm" label="Active Members"   value="10" icon={<CheckCircleIcon />} href={membersHref('Active')}    />
+          <KpiCard size="sm" label="On-hold Members"  value="2"  icon={<HandIcon />}        href={membersHref('On Hold')}   />
+          <KpiCard size="sm" label="New Members"      value="2"  icon={<UserIcon />}        href={membersHref('Pending')}   />
+          <KpiCard size="sm" label="Canceled Members" value="1"  icon={<UserXIcon />}       href={membersHref('Cancelled')} />
+          {!isAccountCredit && (
+            <KpiCard size="sm" label="Total Releases" value="28" icon={<PackageIcon />} href={releasesHref} />
+          )}
+        </div>
 
-        {/* Overview (Figma 5079:33614) */}
         <RecordsCard
           title="Overview"
           subtitle="Set the main information and public-facing details for this club."
           divider={false}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-            <Field label="Title" required>
-              <TextField value={name} onChange={(e) => setName(e.target.value)} />
+            <Field label="Title" required helper="Only field required to save — Meta Title and Slug auto-fill from this.">
+              <TextField value={name} onChange={(e) => onTitleChange(e.target.value)} />
             </Field>
             <Field label="Status" required>
               <Select
@@ -96,63 +137,117 @@ export function ClubViewOverviewScreen() {
             />
           </Field>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-            <Field label="Membership SKU" required>
-              <TextField
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                placeholder="Enter SKU"
-              />
-            </Field>
-            <Field label="Membership Fee Tax Rate">
-              <Select
-                value={taxRate}
-                onChange={(e) => setTaxRate(e.target.value)}
-                options={[
-                  { value: '',            label: 'Select tax rate' },
-                  { value: 'Wine',        label: 'Wine' },
-                  { value: 'Beer',        label: 'Beer' },
-                  { value: 'Spirits',     label: 'Spirits' },
-                  { value: 'Food',        label: 'Food' },
-                  { value: 'Merchandise', label: 'Merchandise' },
-                ]}
-              />
-            </Field>
-          </div>
-
-          <Checkbox
-            checked={hasFee}
-            onChange={setHasFee}
-            label="Has Membership Fee"
-          />
-
-          {hasFee && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-              <Field label="Duration of Membership">
+          {/* Tasting Credit: Cadence (club-wide) + inline default Level
+              (Name + Amount + SKU). No SKU at the club level; no Tax Rate. */}
+          {isAccountCredit && defaultLevel && (
+            <>
+              <Field label="Cadence" required helper="How often members are charged. Applies to every level.">
                 <Select
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  options={['3 Months', '6 Months', '12 Months', 'Indefinite']}
+                  value={cadence}
+                  onChange={(e) => clubActions.patch('cadence', e.target.value as ContributionCadence)}
+                  options={CADENCE_OPTIONS}
                 />
               </Field>
-              <Field label="Membership Fee" required>
-                <TextField
-                  type="number"
-                  value={fee}
-                  onChange={(e) => setFee(e.target.value)}
-                  rightIcon={<span className="typo-body-sm text-vintiga-slate-400">$</span>}
-                />
-              </Field>
-            </div>
+
+              <div className="border border-vintiga-slate-200 rounded-vintiga-lg p-vintiga-md flex flex-col gap-vintiga-md">
+                <div className="flex items-center gap-vintiga-sm">
+                  <h3 className="typo-body-sm font-semibold text-vintiga-slate-900">Level 1</h3>
+                  <Tag variant="filled" tone="default" size="sm">Default</Tag>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-md">
+                  <Field label="Level Name" required>
+                    <TextField
+                      placeholder="e.g., Silver, Gold, Platinum"
+                      value={defaultLevel.name}
+                      onChange={(e) => clubActions.patchLevel(defaultLevel.id, { name: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="Amount" required>
+                    <TextField
+                      type="number"
+                      value={String(defaultLevel.amount)}
+                      onChange={(e) => clubActions.patchLevel(defaultLevel.id, { amount: Number(e.target.value) })}
+                      rightIcon={<span className="typo-body-sm text-vintiga-slate-400">$</span>}
+                    />
+                  </Field>
+                  <Field label="SKU" required>
+                    <TextField
+                      placeholder="Enter SKU"
+                      value={defaultLevel.sku}
+                      onChange={(e) => clubActions.patchLevel(defaultLevel.id, { sku: e.target.value })}
+                    />
+                  </Field>
+                </div>
+              </div>
+            </>
           )}
 
+          {/* Curated / Rewards: SKU + Duration top-level. Has Membership Fee
+              toggle (default off); when on, Amount + Membership Duration + Tax Rate. */}
+          {showFeeToggle && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+                <Field label="Membership SKU" required>
+                  <TextField
+                    value={sku}
+                    onChange={(e) => setSku(e.target.value)}
+                    placeholder="Enter SKU"
+                  />
+                </Field>
+                <Field label="Duration" required helper="How long each membership runs.">
+                  <Select
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value as ClubDuration)}
+                    options={[{ value: '', label: 'Select duration' }, ...DURATION_OPTIONS.map((o) => ({ value: o, label: o }))]}
+                  />
+                </Field>
+              </div>
+
+              <Checkbox
+                checked={hasFee}
+                onChange={setHasFee}
+                label="Has Membership Fee"
+              />
+
+              {hasFee && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+                    <Field label="Membership Amount" required helper="Must be greater than $0.">
+                      <TextField
+                        type="number"
+                        value={fee}
+                        onChange={(e) => setFee(e.target.value)}
+                        rightIcon={<span className="typo-body-sm text-vintiga-slate-400">$</span>}
+                      />
+                    </Field>
+                    <Field label="Membership Duration" helper="Number of months (default 12).">
+                      <TextField
+                        type="number"
+                        value={months}
+                        onChange={(e) => setMonths(e.target.value)}
+                        rightIcon={<span className="typo-body-sm text-vintiga-slate-400">months</span>}
+                      />
+                    </Field>
+                  </div>
+                  <Field label="Membership Fee Tax Rate" helper="Pulled from the store's tax rates.">
+                    <Select
+                      value={taxRate}
+                      onChange={(e) => setTaxRate(e.target.value)}
+                      options={TAX_RATE_OPTIONS.map((o) => ({ value: o, label: o }))}
+                    />
+                  </Field>
+                </>
+              )}
+            </>
+          )}
+
+          {/* Description — rich-text HTML shown on the website. Always last. */}
           <Field label="Description" required helper="Displayed on the website — supports rich formatting.">
             <RichTextEditor placeholder="What makes this club special?" />
           </Field>
-
         </RecordsCard>
 
-        {/* Media — top-level section like the editor (Figma 5079:33614) */}
+        {/* Media */}
         <Media
           items={images}
           onUpload={(files) =>
@@ -164,7 +259,7 @@ export function ClubViewOverviewScreen() {
           onRemove={(id) => setImages((prev) => prev.filter((i) => i.id !== id))}
         />
 
-        {/* Terms & Conditions (Figma 5079:33614) */}
+        {/* Terms & Conditions */}
         <RecordsCard
           title="Terms & Conditions"
           subtitle="Set the rules and commitments members agree to upon signup."
@@ -188,10 +283,14 @@ export function ClubViewOverviewScreen() {
           </Field>
         </RecordsCard>
 
-        {/* SEO (Figma 5079:33614) */}
+        {/* SEO */}
         <RecordsCard title="SEO" divider={false}>
-          <Field label="Meta Tag Title">
-            <TextField value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} placeholder="Page title shown in search results" />
+          <Field label="Meta Tag Title" helper={metaTitleAuto ? 'Auto-filled from Title. Edit to take ownership.' : undefined}>
+            <TextField
+              value={metaTitle}
+              onChange={(e) => { setMetaTitle(e.target.value); setMetaTitleAuto(false) }}
+              placeholder="Page title shown in search results"
+            />
           </Field>
           <Field label="Meta Tag Description" helper={`${metaRemaining} characters remaining`}>
             <Textarea
@@ -201,8 +300,11 @@ export function ClubViewOverviewScreen() {
               className="min-h-[96px]"
             />
           </Field>
-          <Field label="Slug">
-            <TextField value={slug} onChange={(e) => setSlug(e.target.value)} />
+          <Field label="Slug" helper={slugAuto ? 'Auto-filled from Title (spaces become hyphens).' : undefined}>
+            <TextField
+              value={slugSeo}
+              onChange={(e) => { setSlugSeo(e.target.value); setSlugAuto(false) }}
+            />
           </Field>
         </RecordsCard>
       </div>
