@@ -6,6 +6,97 @@ This repo started as a template. The tooling, scaffolding scripts, and Claude wo
 
 ---
 
+## Invited as a collaborator? Start here
+
+You got an invite email from GitHub. Accept it first (the link in the email, or the banner that appears when you open the repo), then run through these once on your Mac.
+
+### 1. Install the tools
+
+| Tool | Why | Where |
+|---|---|---|
+| **GitHub CLI** | Clones the repo, opens PRs from the terminal | [cli.github.com](https://cli.github.com) · `brew install gh` |
+| **Node 20+** | Runs the dev server | [nodejs.org](https://nodejs.org) (or `nvm` / `fnm`) |
+| **Claude Code** | The whole prototyping workflow runs through it | [claude.com/claude-code](https://claude.com/claude-code) |
+| **Figma desktop** | Optional — lets Claude read frames you point at | [figma.com/downloads](https://www.figma.com/downloads/) |
+
+### 2. Log in + clone
+
+```bash
+gh auth login                              # GitHub.com → HTTPS → "Login with a web browser"
+cd ~/Documents
+gh repo clone fjodor1307/vintigalabs
+cd vintigalabs
+npm install
+npm run dev
+```
+
+The terminal will print a URL like `http://localhost:5174/` — open it. That's the prototype hub. Every flow in `src/prototypes/` shows up on the landing page.
+
+### 3. Authenticate Claude Code
+
+First time you run `claude`, it asks how you want to authenticate. Pick one:
+
+**Option A — Claude.ai subscription (recommended for day-to-day)**
+- Pro ($20/mo) is enough for light use; **Max ($100/mo)** is what the rest of the team uses for serious prototyping work — much more headroom before you hit usage limits.
+- In the terminal run `claude`, choose **"Log in with Claude.ai"**, finish in the browser.
+
+**Option B — Anthropic API key (pay-as-you-go)**
+- Create a key at [console.anthropic.com → Settings → API keys](https://console.anthropic.com/settings/keys).
+- Export it in your shell:
+  ```bash
+  export ANTHROPIC_API_KEY=sk-ant-...
+  ```
+  Add that line to your `~/.zshrc` (or `~/.bashrc`) to make it stick across terminal sessions.
+
+You only do this once per machine. After that, `claude` just works.
+
+### 4. Open Claude Code in the repo
+
+From inside the `vintigalabs` folder:
+
+```bash
+claude
+```
+
+The bundled skills (`new-prototype`, `clone-prototype`, `publish-prototype`, `vintiga-tov`) load automatically. From here you talk to Claude in plain English:
+
+- *"Create a new prototype for X"* → scaffolds a folder + branch + dev server
+- *"I want my own version of Fedja's clubs flow"* → duplicates an existing one into your own slug
+- *"I'm done, ship this prototype"* → commits, pushes, opens a PR, watches CI, merges when green
+
+You never need to touch `git`, branch names, or PR etiquette directly.
+
+### 5. Connect Figma (optional but recommended)
+
+Lets Claude read frames you paste a Figma URL for — strongly recommended for design-to-code work.
+
+```bash
+claude plugin install figma@claude-plugins-official
+```
+
+Then **inside Claude Code**:
+
+1. Type `/plugin` and press Enter
+2. Right-arrow to the **Installed** tab
+3. Highlight `figma` and press Enter
+4. Press Enter again to open the auth page in your browser
+5. Click **Allow access** in the browser
+6. Back in the terminal, run `/plugin` again — `figma` should now show **connected**
+
+Now any Figma frame URL you paste, Claude can fetch (design context, screenshots, variables).
+
+Figma's full setup guide if you hit snags: [Claude Code and Figma — Set up the MCP server](https://help.figma.com/hc/en-us/articles/39888612464151-Claude-Code-and-Figma-Set-up-the-MCP-server).
+
+### 6. Pending invite check (for the inviter)
+
+If you're inviting someone, you can confirm pending invites from the terminal:
+
+```bash
+gh api /repos/fjodor1307/vintigalabs/invitations
+```
+
+---
+
 ## What you need
 
 | Tool | Why | Where to get it |
