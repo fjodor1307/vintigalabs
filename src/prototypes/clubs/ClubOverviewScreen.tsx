@@ -84,6 +84,12 @@ export function ClubOverviewScreen() {
               <div className="flex items-center gap-vintiga-sm">
                 <h3 className="typo-body-sm font-semibold text-vintiga-slate-900">Level 1</h3>
                 <Tag variant="filled" tone="default" size="sm">Default</Tag>
+                <a
+                  href="#/web/clubs/new/levels"
+                  className="ml-auto inline-flex items-center px-3 h-8 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors no-underline"
+                >
+                  View All
+                </a>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-md">
                 <Field label="Level Name" required>
