@@ -56,7 +56,6 @@ export function ClubViewOverviewScreen() {
   const [duration, setDuration]           = useState<ClubDuration>('12 Months')
   const [hasFee, setHasFee]               = useState(false)
   const [fee, setFee]                     = useState('0')
-  const [months, setMonths]               = useState('12')
   const [taxRate, setTaxRate]             = useState('Non-Taxable')
   const [requireTerms, setRequireTerms]   = useState(true)
   const [metaTitle, setMetaTitle]         = useState(clubInfo.name)
@@ -210,25 +209,15 @@ export function ClubViewOverviewScreen() {
               />
 
               {hasFee && (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-                    <Field label="Membership Amount" required helper="Must be greater than $0.">
-                      <TextField
-                        type="number"
-                        value={fee}
-                        onChange={(e) => setFee(e.target.value)}
-                        rightIcon={<span className="typo-body-sm text-vintiga-slate-400">$</span>}
-                      />
-                    </Field>
-                    <Field label="Membership Duration" helper="Number of months (default 12).">
-                      <TextField
-                        type="number"
-                        value={months}
-                        onChange={(e) => setMonths(e.target.value)}
-                        rightIcon={<span className="typo-body-sm text-vintiga-slate-400">months</span>}
-                      />
-                    </Field>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+                  <Field label="Membership Amount" required helper="Must be greater than $0.">
+                    <TextField
+                      type="number"
+                      value={fee}
+                      onChange={(e) => setFee(e.target.value)}
+                      rightIcon={<span className="typo-body-sm text-vintiga-slate-400">$</span>}
+                    />
+                  </Field>
                   <Field label="Membership Fee Tax Rate" helper="Pulled from the store's tax rates.">
                     <Select
                       value={taxRate}
@@ -236,7 +225,7 @@ export function ClubViewOverviewScreen() {
                       options={TAX_RATE_OPTIONS.map((o) => ({ value: o, label: o }))}
                     />
                   </Field>
-                </>
+                </div>
               )}
             </>
           )}
