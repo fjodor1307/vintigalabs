@@ -145,33 +145,19 @@ export function ClubOverviewScreen() {
             />
 
             {club.hasMembershipFee && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-                  <Field label="Membership Amount" required helper="Must be greater than $0.">
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min={0}
-                        value={club.membershipFee}
-                        onChange={(e) => clubActions.patch('membershipFee', Number(e.target.value))}
-                        className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
-                      />
-                      <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">$</span>
-                    </div>
-                  </Field>
-                  <Field label="Membership Duration" helper="Number of months (default 12).">
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min={1}
-                        value={club.membershipDurationMonths}
-                        onChange={(e) => clubActions.patch('membershipDurationMonths', e.target.value)}
-                        className="h-10 w-full pl-3 pr-16 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
-                      />
-                      <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">months</span>
-                    </div>
-                  </Field>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
+                <Field label="Membership Amount" required helper="Must be greater than $0.">
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={0}
+                      value={club.membershipFee}
+                      onChange={(e) => clubActions.patch('membershipFee', Number(e.target.value))}
+                      className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+                    />
+                    <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">$</span>
+                  </div>
+                </Field>
                 <Field label="Membership Fee Tax Rate" helper="Pulled from the store's tax rates.">
                   <Select
                     value={club.taxRate}
@@ -179,7 +165,7 @@ export function ClubOverviewScreen() {
                     options={TAX_RATE_OPTIONS.map((o) => ({ value: o, label: o }))}
                   />
                 </Field>
-              </>
+              </div>
             )}
           </>
         )}
