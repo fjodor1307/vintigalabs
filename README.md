@@ -6,6 +6,58 @@ This repo started as a template. The tooling, scaffolding scripts, and Claude wo
 
 ---
 
+## Invited as a collaborator? Start here
+
+You got an invite email from GitHub. Accept it first (the link in the email, or the banner that appears when you open the repo), then run through these once on your Mac.
+
+### 1. Install the tools
+
+| Tool | Why | Where |
+|---|---|---|
+| **GitHub CLI** | Clones the repo, opens PRs from the terminal | [cli.github.com](https://cli.github.com) · `brew install gh` |
+| **Node 20+** | Runs the dev server | [nodejs.org](https://nodejs.org) (or `nvm` / `fnm`) |
+| **Claude Code** | The whole prototyping workflow runs through it | [claude.com/claude-code](https://claude.com/claude-code) |
+| **Figma desktop** | Optional — lets Claude read frames you point at | [figma.com/downloads](https://www.figma.com/downloads/) |
+
+### 2. Log in + clone
+
+```bash
+gh auth login                              # GitHub.com → HTTPS → "Login with a web browser"
+cd ~/Documents
+gh repo clone fjodor1307/vintigalabs
+cd vintigalabs
+npm install
+npm run dev
+```
+
+The terminal will print a URL like `http://localhost:5174/` — open it. That's the prototype hub. Every flow in `src/prototypes/` shows up on the landing page.
+
+### 3. Open Claude Code in the repo
+
+From inside the `vintigalabs` folder:
+
+```bash
+claude
+```
+
+The bundled skills (`new-prototype`, `clone-prototype`, `publish-prototype`, `vintiga-tov`) load automatically. From here you talk to Claude in plain English:
+
+- *"Create a new prototype for X"* → scaffolds a folder + branch + dev server
+- *"I want my own version of Fedja's clubs flow"* → duplicates an existing one into your own slug
+- *"I'm done, ship this prototype"* → commits, pushes, opens a PR, watches CI, merges when green
+
+You never need to touch `git`, branch names, or PR etiquette directly.
+
+### 4. Pending invite check (for the inviter)
+
+If you're inviting someone, you can confirm pending invites from the terminal:
+
+```bash
+gh api /repos/fjodor1307/vintigalabs/invitations
+```
+
+---
+
 ## What you need
 
 | Tool | Why | Where to get it |
