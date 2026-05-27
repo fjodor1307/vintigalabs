@@ -14,7 +14,7 @@
 
 | Prototype | Last updated | Changelog |
 |-----------|--------------|-----------|
-| Clubs | 2026-05-20 | [src/prototypes/clubs/CHANGELOG.md](src/prototypes/clubs/CHANGELOG.md) |
+| Clubs | 2026-05-25 | [src/prototypes/clubs/CHANGELOG.md](src/prototypes/clubs/CHANGELOG.md) |
 | Customers | 2026-05-11 | [src/prototypes/customers/CHANGELOG.md](src/prototypes/customers/CHANGELOG.md) |
 | Experience Timeslots Matrix | — | [src/prototypes/experience-timeslots-matrix/CHANGELOG.md](src/prototypes/experience-timeslots-matrix/CHANGELOG.md) |
 | Onboarding | 2026-04-27 | [src/prototypes/onboarding/CHANGELOG.md](src/prototypes/onboarding/CHANGELOG.md) |
@@ -216,3 +216,7 @@ Created `src/prototypes/experience-timeslots/` via `npm run new-prototype`.
 ## 2026-05-16 — Scaffolded `experience-timeslots-matrix` prototype
 
 Created `src/prototypes/experience-timeslots-matrix/` via `npm run new-prototype`.
+
+## 2026-05-25 — Scaffolded `interactive-tasting-method` prototype
+
+Created `src/prototypes/interactive-tasting-method/` via `npm run new-prototype`.

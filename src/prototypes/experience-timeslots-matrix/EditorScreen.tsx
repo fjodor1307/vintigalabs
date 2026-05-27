@@ -26,7 +26,9 @@ interface TimeSlot {
   days: Set<WeekdayKey>
 }
 
-type BlackoutType = 'holiday' | 'event' | 'ops' | 'custom'
+type BlackoutType = 'holiday' | 'event' | 'ops' | 'other'
+
+type BlackoutWindow = 'upcoming' | 'past'
 
 interface Blackout {
   id: string
@@ -50,7 +52,7 @@ const TYPE_LABEL: Record<BlackoutType, string> = {
   holiday: 'Holiday',
   event:   'Event',
   ops:     'Ops',
-  custom:  'Custom',
+  other:   'Other',
 }
 
 function uid(prefix = 'id'): string {
@@ -78,7 +80,7 @@ function initialBlackouts(): Blackout[] {
     { id: uid('b'), reason: 'Staff training',   type: 'ops',     start: '2026-06-04', end: '' },
     { id: uid('b'), reason: 'Juneteenth',       type: 'holiday', start: '2026-06-19', end: '' },
     { id: uid('b'), reason: 'Independence Day', type: 'holiday', start: '2026-07-04', end: '' },
-    { id: uid('b'), reason: 'Custom date',      type: 'custom',  start: '2026-06-20', end: '' },
+    { id: uid('b'), reason: 'Custom date',      type: 'other',  start: '2026-06-20', end: '' },
   ]
 }
 
@@ -137,6 +139,12 @@ function ReservationTimeSlotsCard() {
     setSlots((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)))
   const remove = (id: string) => setSlots((prev) => prev.filter((s) => s.id !== id))
   const add = () => setSlots((prev) => [...prev, { id: uid('s'), startTime: '5:00', period: 'PM', online: true, days: new Set() }])
+  const removeAll = () => {
+    if (slots.length === 0) return
+    if (window.confirm('Delete all time slots? You can regenerate them or add them back manually.')) {
+      setSlots([])
+    }
+  }
 
   const toggleDay = (id: string, day: WeekdayKey) => {
     const slot = slots.find((s) => s.id === id)
@@ -147,7 +155,16 @@ function ReservationTimeSlotsCard() {
   }
 
   return (
-    <SectionCard title="Reservation Time Slots">
+    <SectionCard
+      title="Reservation Time Slots"
+      action={
+        slots.length > 0 && (
+          <Button variant="outline" size="sm" onClick={removeAll} leftIcon={<TrashIcon className="w-3.5 h-3.5" />}>
+            Delete all
+          </Button>
+        )
+      }
+    >
       <p className="typo-body-sm text-vintiga-slate-500">{slots.length} times · {totalBookable} bookable slots per week</p>
       {/* Quick-apply chips header */}
       <div className="flex items-center justify-between gap-vintiga-md flex-wrap">
@@ -270,14 +287,35 @@ function QuickApplyChips({ onApply }: { onApply: (scope: 'weekdays' | 'weekends'
 function BlackoutDatesCard() {
   const [blackouts, setBlackouts] = useState<Blackout[]>(initialBlackouts)
   const [modalOpen, setModalOpen] = useState(false)
+  const [window, setWindow] = useState<BlackoutWindow>('upcoming')
 
+  // ISO yyyy-mm-dd for "today" — anything ending before this is past, anything
+  // starting on/after is upcoming. Computed once per render so the prototype
+  // doesn't drift through midnight while the page is open.
+  const todayISO = new Date().toISOString().slice(0, 10)
+
+  const { upcoming, past } = useMemo(() => {
+    const upcoming: Blackout[] = []
+    const past: Blackout[] = []
+    for (const b of blackouts) {
+      const lastDay = b.end || b.start
+      if (lastDay < todayISO) past.push(b)
+      else upcoming.push(b)
+    }
+    // Soonest first for upcoming, most recent first for past.
+    upcoming.sort((a, b) => a.start.localeCompare(b.start))
+    past.sort((a, b) => b.start.localeCompare(a.start))
+    return { upcoming, past }
+  }, [blackouts, todayISO])
+
+  const visible = window === 'upcoming' ? upcoming : past
   const totalClosedDays = useMemo(() => {
-    return blackouts.reduce((sum, b) => {
+    return upcoming.reduce((sum, b) => {
       if (!b.start) return sum
       if (!b.end || b.end === b.start) return sum + 1
       return sum + humanRange(b.start, b.end)
     }, 0)
-  }, [blackouts])
+  }, [upcoming])
 
   const removeBlackout = (id: string) => setBlackouts((prev) => prev.filter((b) => b.id !== id))
 
@@ -288,10 +326,31 @@ function BlackoutDatesCard() {
         <Button variant="outline" size="sm" onClick={() => setModalOpen(true)} leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>Add dates</Button>
       }
     >
-      <p className="typo-body-sm text-vintiga-slate-500">{blackouts.length} entries · closed even when the weekly schedule allows</p>
+      <p className="typo-body-sm text-vintiga-slate-500">{upcoming.length} upcoming · closed even when the weekly schedule allows</p>
 
-      {blackouts.length === 0 ? (
-        <p className="typo-body-sm text-vintiga-slate-400 py-vintiga-md">No blackouts yet. Click "Add dates" to block out a holiday or event.</p>
+      {/* Upcoming / Past tabs — past blackouts get pushed under their own tab
+          so historical entries don't bury the next few closures. */}
+      <div className="flex items-center gap-1 self-start border border-vintiga-slate-200 rounded-vintiga-md p-1 bg-vintiga-slate-50">
+        <WindowTab
+          active={window === 'upcoming'}
+          label="Upcoming"
+          count={upcoming.length}
+          onClick={() => setWindow('upcoming')}
+        />
+        <WindowTab
+          active={window === 'past'}
+          label="Past"
+          count={past.length}
+          onClick={() => setWindow('past')}
+        />
+      </div>
+
+      {visible.length === 0 ? (
+        <p className="typo-body-sm text-vintiga-slate-400 py-vintiga-md">
+          {window === 'upcoming'
+            ? 'No upcoming blackouts. Click "Add dates" to block out a holiday or event.'
+            : 'No past blackouts on record.'}
+        </p>
       ) : (
         <Table>
           <TableHead>
@@ -303,7 +362,7 @@ function BlackoutDatesCard() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {blackouts.map((b) => (
+            {visible.map((b) => (
               <TableRow key={b.id}>
                 <TableCell>
                   <div className="flex flex-col">
@@ -334,7 +393,7 @@ function BlackoutDatesCard() {
       )}
 
       <div className="flex items-center justify-between pt-1">
-        <span className="typo-caption text-vintiga-slate-500">{totalClosedDays} closed days total</span>
+        <span className="typo-caption text-vintiga-slate-500">{totalClosedDays} upcoming closed days</span>
         <button type="button" className="typo-caption font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 transition-colors cursor-pointer bg-transparent border-none">
           Export to .ics
         </button>
@@ -352,17 +411,36 @@ function BlackoutDatesCard() {
   )
 }
 
+function WindowTab({ active, label, count, onClick }: { active: boolean; label: string; count: number; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={[
+        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-vintiga-md typo-body-sm font-medium transition-colors cursor-pointer border border-transparent',
+        active
+          ? 'bg-vintiga-white text-vintiga-slate-900 border-vintiga-slate-200 shadow-sm'
+          : 'text-vintiga-slate-600 hover:text-vintiga-slate-900',
+      ].join(' ')}
+    >
+      {label}
+      <span className={['typo-caption tabular-nums', active ? 'text-vintiga-slate-500' : 'text-vintiga-slate-400'].join(' ')}>{count}</span>
+    </button>
+  )
+}
+
 // ─── Add Blackout modal ───────────────────────────────────────────────────────
 
 function AddBlackoutModal({ open, onClose, onSave }: { open: boolean; onClose: () => void; onSave: (b: Blackout) => void }) {
   const [reason, setReason] = useState('')
-  const [type, setType] = useState<BlackoutType>('custom')
+  const [type, setType] = useState<BlackoutType>('other')
   const [start, setStart] = useState(new Date().toISOString().slice(0, 10))
   const [end, setEnd] = useState('')
 
   const reset = () => {
     setReason('')
-    setType('custom')
+    setType('other')
     setStart(new Date().toISOString().slice(0, 10))
     setEnd('')
   }
@@ -394,7 +472,7 @@ function AddBlackoutModal({ open, onClose, onSave }: { open: boolean; onClose: (
           <div className="flex flex-col gap-1.5">
             <span className="typo-body-sm font-medium text-vintiga-slate-700">Type</span>
             <div className="grid grid-cols-2 gap-2">
-              {(['holiday', 'event', 'ops', 'custom'] as BlackoutType[]).map((t) => (
+              {(['holiday', 'event', 'ops', 'other'] as BlackoutType[]).map((t) => (
                 <Radio key={t} checked={type === t} onChange={() => setType(t)} label={TYPE_LABEL[t]} />
               ))}
             </div>
@@ -438,7 +516,7 @@ function toneFor(t: BlackoutType): 'violet' | 'orange' | 'teal' | 'default' {
     case 'holiday': return 'violet'
     case 'event':   return 'orange'
     case 'ops':     return 'teal'
-    case 'custom':  return 'default'
+    case 'other':  return 'default'
   }
 }
 
