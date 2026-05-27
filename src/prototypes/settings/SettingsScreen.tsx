@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { SettingsLayout } from './SettingsLayout'
 import { LocationsTab } from './LocationsTab'
+import { TaxesTab } from './TaxesTab'
 import { Button } from '@ds/shared/Button'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
 
@@ -63,6 +64,8 @@ export function SettingsScreen() {
 
         {tab === 'locations' ? (
           <LocationsTab />
+        ) : tab === 'tax-settings' ? (
+          <TaxesTab />
         ) : (
           <PlaceholderTab label={TABS.find((t) => t.value === tab)!.label} description={TAB_DESCRIPTION[tab]} />
         )}

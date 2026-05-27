@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AppSidebar } from '@ds/shared/AppSidebar'
 import { Navbar } from '@ds/shared/Navbar'
 import { useResponsiveSidebar } from '@ds/shared/useResponsiveSidebar'
@@ -94,7 +94,26 @@ const SAVED_CARDS: SavedCard[] = [
 ]
 
 const MEMBERSHIPS_HASH = '#/web/clubs/memberships'
-const todayISO = new Date().toISOString().slice(0, 10)
+
+interface LaunchParams {
+  /** Customer pre-selected — Add Membership launched from the customer's view. */
+  customerId: string | null
+  /** Club pre-selected — Add Membership launched from a specific club's view.
+   *  Matches the format used by the club select: `clubKey` or `clubKey:levelId`. */
+  clubSelection: string | null
+}
+
+function parseLaunchParams(): LaunchParams {
+  if (typeof window === 'undefined') return { customerId: null, clubSelection: null }
+  const hash = window.location.hash
+  const qIdx = hash.indexOf('?')
+  if (qIdx === -1) return { customerId: null, clubSelection: null }
+  const search = new URLSearchParams(hash.slice(qIdx + 1))
+  return {
+    customerId:    search.get('customerId'),
+    clubSelection: search.get('club'),
+  }
+}
 
 function clubTagTone(kind: ClubKind): 'violet' | 'teal' | 'orange' | 'default' {
   switch (kind) {
@@ -115,12 +134,19 @@ function formatJoinDate(iso: string): string {
 export function AddMembershipScreen() {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
 
-  const [customer, setCustomer]       = useState('')
-  // Club selection holds either a club key (e.g. "curators") or a
-  // club:level pair (e.g. "blind-enthusiasm:silver") for Tasting Credit.
-  const [clubSelection, setClubSelection] = useState('')
+  // Pre-fill customer / club when the operator arrived via a contextual launcher
+  // (Customer view → Add Membership, Club view → Add Membership). The query
+  // string lives after the hash fragment, e.g. `#/web/clubs/memberships/add?customerId=c-jane`.
+  const launchParams = parseLaunchParams()
+
+  const [customer, setCustomer]       = useState(launchParams.customerId ?? '')
+  // Club selection holds a flat value matching one of the dropdown options —
+  // a club key (`curators`) or `clubKey:levelId` for Tasting Credit levels.
+  const [clubSelection, setClubSelection] = useState(launchParams.clubSelection ?? '')
   const [joinDate, setJoinDate]       = useState('')
-  const [delivery, setDelivery]       = useState<'shipping' | 'pickup'>('shipping')
+  // Defaults to Pickup — most operators creating a membership are doing it
+  // for a customer who'll grab their first shipment in the tasting room.
+  const [delivery, setDelivery]       = useState<'shipping' | 'pickup'>('pickup')
   const [shipAddress, setShipAddress] = useState('home')
   const [pickupLoc, setPickupLoc]     = useState('tasting-room')
   const [newStreet, setNewStreet]     = useState('')
@@ -128,6 +154,16 @@ export function AddMembershipScreen() {
   const [newState, setNewState]       = useState('')
   const [newZip, setNewZip]           = useState('')
   const [paymentCardId, setPaymentCardId] = useState<string>(SAVED_CARDS[0].id)
+
+  // Keep the customer / club in sync with hash query params so deep-linking
+  // from another tab (e.g. /customers/.../memberships → add) lands here with
+  // the right context pre-filled.
+  useEffect(() => {
+    if (launchParams.customerId)     setCustomer(launchParams.customerId)
+    if (launchParams.clubSelection)  setClubSelection(launchParams.clubSelection)
+    // We only want this to run for the params captured at mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const selection = parseClubSelection(clubSelection)
   const clubKey = selection?.clubKey ?? null
@@ -139,10 +175,6 @@ export function AddMembershipScreen() {
   // Curated / Rewards: the static club fee from CLUB_FEES (or zero).
   const fee     = selectedLevel ? selectedLevel.amount : (feeInfo?.fee ?? 0)
   const taxRate = feeInfo?.taxRate ?? 0
-  // Tasting-credit clubs charge the customer on the join date, so the join date
-  // can't be backdated — it must be today or later. Curated / membership clubs
-  // allow any date (incl. the past) for backfilling historical signups.
-  const isTastingCredit = !!clubKey && CLUBS_CATALOG[clubKey].kind === 'account-credit'
 
   const total = useMemo(() => fee + (fee * taxRate) / 100, [fee, taxRate])
 
@@ -199,50 +231,66 @@ export function AddMembershipScreen() {
             <div className="flex flex-col gap-vintiga-lg">
               <RecordsCard title="Membership" divider={false}>
                 <Field label="Customer" required>
-                  <Select
-                    value={customer}
-                    onChange={(e) => setCustomer(e.target.value)}
-                    options={[{ value: '', label: 'Select a customer' }, ...CUSTOMERS.map((c) => ({ value: c.id, label: c.name }))]}
-                  />
+                  {launchParams.customerId ? (
+                    /* Customer locked when arrived from a customer's view — no
+                       reason to re-pick the customer here. */
+                    <LockedFieldValue>
+                      {CUSTOMERS.find((c) => c.id === launchParams.customerId)?.name ?? launchParams.customerId}
+                    </LockedFieldValue>
+                  ) : (
+                    <Select
+                      value={customer}
+                      onChange={(e) => setCustomer(e.target.value)}
+                      options={[{ value: '', label: 'Select a customer' }, ...CUSTOMERS.map((c) => ({ value: c.id, label: c.name }))]}
+                    />
+                  )}
                 </Field>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-vintiga-md">
                   <Field label="Club" required>
-                    {/* Tree-list dropdown — Tasting Credit clubs expand into per-level
-                        children so the operator picks a tier in one go. */}
-                    <Select
-                      value={clubSelection}
-                      onChange={(e) => setClubSelection(e.target.value)}
-                    >
-                      <option value="">Select a club</option>
-                      {CLUB_KEYS.map((k) => {
-                        const info = CLUBS_CATALOG[k]
-                        const levels = CLUB_LEVELS[k]
-                        if (levels && levels.length > 0) {
-                          return (
-                            <optgroup key={k} label={info.name}>
-                              {levels.map((lvl) => (
-                                <option key={lvl.id} value={`${k}:${lvl.id}`}>
-                                  {lvl.name} — ${lvl.amount}/{lvl.cadence.toLowerCase()}
-                                </option>
-                              ))}
-                            </optgroup>
-                          )
-                        }
-                        return <option key={k} value={k}>{info.name}</option>
-                      })}
-                    </Select>
+                    {launchParams.clubSelection ? (
+                      /* Club locked when arrived from a specific club's view. */
+                      <LockedFieldValue>
+                        {(() => {
+                          const sel = parseClubSelection(launchParams.clubSelection!)
+                          if (!sel) return launchParams.clubSelection
+                          const club = CLUBS_CATALOG[sel.clubKey]
+                          const lvl = sel.levelId ? CLUB_LEVELS[sel.clubKey]?.find((l) => l.id === sel.levelId) : null
+                          return lvl ? `${club.name} — ${lvl.name} ($${lvl.amount}/${lvl.cadence.toLowerCase()})` : club.name
+                        })()}
+                      </LockedFieldValue>
+                    ) : (
+                      /* Flat dropdown — Tasting Credit levels are listed as
+                         individual options ("Blind Enthusiasm — Silver
+                         $50/month") so the operator picks the tier in one go
+                         without a second step. */
+                      <Select
+                        value={clubSelection}
+                        onChange={(e) => setClubSelection(e.target.value)}
+                      >
+                        <option value="">Select a club</option>
+                        {CLUB_KEYS.flatMap((k) => {
+                          const info = CLUBS_CATALOG[k]
+                          const levels = CLUB_LEVELS[k]
+                          if (levels && levels.length > 0) {
+                            return levels.map((lvl) => (
+                              <option key={`${k}:${lvl.id}`} value={`${k}:${lvl.id}`}>
+                                {info.name} — {lvl.name} (${lvl.amount}/{lvl.cadence.toLowerCase()})
+                              </option>
+                            ))
+                          }
+                          return [<option key={k} value={k}>{info.name}</option>]
+                        })}
+                      </Select>
+                    )}
                   </Field>
                   <Field
                     label="Join Date"
                     required
-                    helper={isTastingCredit
-                      ? 'Tasting Credit clubs are charged on the join date, so it must be today or later.'
-                      : 'Can be backdated to record an existing signup.'}
+                    helper="Pick any past or future date — backdated signups still create a record on the chosen date."
                   >
                     <input
                       type="date"
                       value={joinDate}
-                      min={isTastingCredit ? todayISO : undefined}
                       onChange={(e) => setJoinDate(e.target.value)}
                       className="h-10 w-full px-3 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
                     />
@@ -312,21 +360,20 @@ export function AddMembershipScreen() {
                 )}
               </RecordsCard>
 
-              {/* Payment Method — only after a customer is picked. Shows the
-                  customer's saved cards as selectable tiles. Mocked for now —
-                  every customer sees the same two cards in the prototype. */}
+              {/* Payment Method — only after a customer is picked. A dropdown
+                  keeps the surface compact even when the customer has 4–5
+                  cards on file, and once a card is chosen we don't want the
+                  other ones cluttering the row. Pre-selected to the
+                  customer's default card (the first saved card here). */}
               {customer && (
                 <RecordsCard title="Payment Method" divider={false}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-vintiga-md">
-                    {SAVED_CARDS.map((card) => (
-                      <PaymentCardOption
-                        key={card.id}
-                        card={card}
-                        selected={paymentCardId === card.id}
-                        onClick={() => setPaymentCardId(card.id)}
-                      />
-                    ))}
-                  </div>
+                  <Field label="Card on file" required>
+                    <PaymentCardSelect
+                      cards={SAVED_CARDS}
+                      value={paymentCardId}
+                      onChange={setPaymentCardId}
+                    />
+                  </Field>
                 </RecordsCard>
               )}
 
@@ -440,32 +487,88 @@ function RailRow({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-// Selectable payment-card tile — brand logo + expiry on the left, masked card
-// number on the right, radio top-right. Same picker pattern as Shipping /
-// Pickup at the top of the page.
-function PaymentCardOption({ card, selected, onClick }: { card: SavedCard; selected: boolean; onClick: () => void }) {
+// Compact card row — brand logo + masked number + expiry. Used inside the
+// payment-method dropdown's selected display so the operator sees the same
+// chrome whether the dropdown is open or closed.
+function PaymentCardRow({ card }: { card: SavedCard }) {
   return (
-    <div
-      role="radio"
-      aria-checked={selected}
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
-      className={[
-        'flex items-center gap-vintiga-md p-vintiga-md rounded-vintiga-lg border transition-colors cursor-pointer',
-        selected
-          ? 'border-vintiga-indigo-500 bg-vintiga-indigo-50'
-          : 'border-vintiga-slate-200 hover:border-vintiga-slate-300',
-      ].join(' ')}
-    >
+    <div className="flex items-center gap-vintiga-md min-w-0">
       <CardBrandLogo brand={card.brand} />
-      <div className="flex flex-col flex-1 min-w-0">
-        <span className="typo-caption text-vintiga-slate-500">Expires {card.expires}</span>
+      <div className="flex flex-col min-w-0">
         <span className="typo-body-sm font-semibold text-vintiga-slate-900">
           {card.brand[0].toUpperCase() + card.brand.slice(1)} **** {card.last4}
         </span>
+        <span className="typo-caption text-vintiga-slate-500">Expires {card.expires}</span>
       </div>
-      <Radio checked={selected} aria-label={`${card.brand} ending ${card.last4}`} />
+    </div>
+  )
+}
+
+// Custom dropdown — native `<select>` can't render card-brand logos, so we
+// build a small popover. Closes on outside click / Escape.
+function PaymentCardSelect({ cards, value, onChange }: { cards: SavedCard[]; value: string; onChange: (id: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const selected = cards.find((c) => c.id === value) ?? cards[0]
+
+  useEffect(() => {
+    if (!open) return
+    function onDocClick(e: MouseEvent) {
+      const target = e.target as HTMLElement
+      if (!target.closest('[data-payment-card-select]')) setOpen(false)
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onDocClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDocClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div data-payment-card-select className="relative">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="h-14 w-full px-3 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white hover:border-vintiga-slate-300 focus:outline-none focus:border-vintiga-indigo-600 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors flex items-center justify-between gap-vintiga-md cursor-pointer"
+      >
+        <PaymentCardRow card={selected} />
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-vintiga-slate-400 shrink-0">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div role="listbox" className="absolute z-10 mt-1 w-full rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white shadow-lg p-1 flex flex-col gap-0.5">
+          {cards.map((card) => (
+            <button
+              key={card.id}
+              type="button"
+              role="option"
+              aria-selected={card.id === value}
+              onClick={() => { onChange(card.id); setOpen(false) }}
+              className={[
+                'text-left rounded-vintiga-md px-3 py-2 transition-colors cursor-pointer',
+                card.id === value ? 'bg-vintiga-indigo-50' : 'hover:bg-vintiga-slate-50',
+              ].join(' ')}
+            >
+              <PaymentCardRow card={card} />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Read-only field display for locked Customer / Club when the operator
+// arrives via a contextual launcher — slightly muted chrome that signals "not
+// editable" without showing a disabled-looking input.
+function LockedFieldValue({ children }: { children: ReactNode }) {
+  return (
+    <div className="h-10 px-3 rounded-vintiga-md bg-vintiga-slate-50 border border-vintiga-slate-200 flex items-center typo-body-sm text-vintiga-slate-900">
+      {children}
     </div>
   )
 }

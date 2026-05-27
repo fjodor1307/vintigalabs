@@ -59,6 +59,15 @@ export interface LedgerEntry {
 
 export type CardBrand = 'visa' | 'mastercard' | 'amex' | 'discover'
 
+/**
+ * `vintiga` — saved here (POS / Vintiga checkout). Usable across our flows.
+ * `commerce7` — vaulted in Commerce 7 only. Surfaces here for visibility but
+ *   can't be charged via Vintiga POS or our own clubs, so we render it muted
+ *   with a "Saved in Commerce 7" tag (the Vintiga default-card flag doesn't
+ *   apply to these).
+ */
+export type PaymentMethodSource = 'vintiga' | 'commerce7'
+
 export interface PaymentMethod {
   id: string
   brand: CardBrand
@@ -66,6 +75,7 @@ export interface PaymentMethod {
   expiresMonth: string
   expiresYear: string
   isDefault: boolean
+  source: PaymentMethodSource
 }
 
 export interface Address {
@@ -267,8 +277,8 @@ function sumAmounts(entries: LedgerEntry[]): number {
 }
 
 const SEED_PAYMENT_METHODS: PaymentMethod[] = [
-  { id: 'pm-1', brand: 'mastercard', last4: '0092', expiresMonth: '07', expiresYear: '27', isDefault: true },
-  { id: 'pm-2', brand: 'mastercard', last4: '0044', expiresMonth: '08', expiresYear: '28', isDefault: false },
+  { id: 'pm-1', brand: 'mastercard', last4: '0092', expiresMonth: '07', expiresYear: '27', isDefault: true,  source: 'vintiga' },
+  { id: 'pm-2', brand: 'visa',       last4: '1111', expiresMonth: '08', expiresYear: '28', isDefault: false, source: 'commerce7' },
 ]
 
 const SEED_ADDRESSES: Address[] = [

@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-05-27 — Fedja + Claude: Add Membership UX (May 27 design review)
+
+- **Club dropdown is flat.** Tasting Credit levels render as siblings ("Blind Enthusiasm — Silver ($50/monthly)") instead of an `<optgroup>` tree, so the operator picks the tier in one step.
+- **Delivery method defaults to Pickup.** Operator-created memberships are mostly first-shipment-at-the-tasting-room flows.
+- **Payment Method is a dropdown.** Replaces the side-by-side card tiles — collapses cleanly when the customer has 4–5 cards on file, and once a card's chosen the others go away. Pre-selects the customer's default card.
+- **Join Date is fully backdate-able.** Dropped the today-or-later restriction for Tasting Credit clubs; helper copy now reads "Pick any past or future date".
+- **Contextual launchers pre-fill the form.** `#/web/clubs/memberships/add?customerId=...&club=...` locks the Customer / Club fields when launched from a customer view or a specific club view (no point making the operator re-pick what they already chose).
+
 ## 2026-05-25 — Fedja + Claude: Align club editor to VIN-496 spec (Figma 5078:4191)
 
 Reconciled the club editor and clubs list against the latest spec.

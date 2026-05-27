@@ -74,8 +74,13 @@ const BRAND_LABEL: Record<CardBrand, string> = {
 }
 
 function PaymentMethodRow({ method }: { method: PaymentMethod }) {
+  // Commerce 7 vaulted cards surface here for visibility but can't be used in
+  // any Vintiga flow (POS, club fees, our online store). We render them muted,
+  // skip the "Default Card" tag (it's Commerce 7's default, not ours), and
+  // only expose Delete in the row menu.
+  const c7Only = method.source === 'commerce7'
   return (
-    <div className="flex items-center gap-vintiga-md">
+    <div className={['flex items-center gap-vintiga-md', c7Only ? 'opacity-60' : ''].join(' ')}>
       <CardBrandLogo brand={method.brand} />
       <div className="flex flex-col">
         <span className="typo-caption text-vintiga-slate-500">
@@ -86,8 +91,10 @@ function PaymentMethodRow({ method }: { method: PaymentMethod }) {
         </span>
       </div>
       <div className="flex-1" />
-      {method.isDefault && (
-        <Tag variant="neutral-dark" size="md">Default Card</Tag>
+      {c7Only ? (
+        <Tag variant="neutral-light" size="md">Saved in Commerce 7</Tag>
+      ) : (
+        method.isDefault && <Tag variant="neutral-dark" size="md">Default Card</Tag>
       )}
       <PopoverMenu
         align="right"
@@ -101,12 +108,16 @@ function PaymentMethodRow({ method }: { method: PaymentMethod }) {
             aria-label={`More options for card ending ${method.last4}`}
           />
         )}
-        items={[
-          ...(method.isDefault
-            ? []
-            : [{ label: 'Set as default', onClick: () => customerActions.setDefaultPaymentMethod(method.id) }]),
-          { label: 'Delete', onClick: () => customerActions.deletePaymentMethod(method.id), danger: true },
-        ]}
+        items={
+          c7Only
+            ? [{ label: 'Delete', onClick: () => customerActions.deletePaymentMethod(method.id), danger: true }]
+            : [
+                ...(method.isDefault
+                  ? []
+                  : [{ label: 'Set as default', onClick: () => customerActions.setDefaultPaymentMethod(method.id) }]),
+                { label: 'Delete', onClick: () => customerActions.deletePaymentMethod(method.id), danger: true },
+              ]
+        }
       />
     </div>
   )

@@ -6,6 +6,12 @@
 
 ---
 
+## 2026-05-27 — Fedja + Claude: Surface Commerce 7-only cards (May 27 design review)
+
+`PaymentMethod` gained `source: 'vintiga' | 'commerce7'`. Commerce 7-vaulted cards render muted with a `Saved in Commerce 7` tag instead of the Vintiga `Default Card` flag — they can't be used by the POS or our clubs, so the row signals "look, don't touch". The row menu drops the "Set as default" item for those cards (Commerce 7 owns its own default).
+
+Seed data now has one of each so the difference is visible at a glance.
+
 ## 2026-05-11 — Fedja + Claude: Billing stat rows use DS KpiCard
 
 - `CustomerBillingScreen.tsx` — replaced the inline `StatRow` component (Account Balance + Loyalty Points) with `KpiCard size="sm"` from `@ds/shared/KpiCard`. Same visual, no local reimplementation.
