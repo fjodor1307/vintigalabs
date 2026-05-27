@@ -53,6 +53,10 @@ export interface CatalogueProduct {
   collections: string[]
   imageUrl?: string
   channels: ('Website' | 'POS')[]
+  /** Authoring source. Defaults to `'commerce7'` in the seed catalogue — most
+   *  rows came in via a Commerce 7 sync. A handful of seeded experiences are
+   *  marked `'vintiga'` to demo the editable state. */
+  source?: ProductSource
 }
 
 export interface Collection {
@@ -123,7 +127,18 @@ export interface TimeSlot {
   online: boolean
 }
 
-export type BlackoutType = 'holiday' | 'event' | 'ops' | 'custom'
+export type BlackoutType = 'holiday' | 'event' | 'ops' | 'other'
+
+/**
+ * Where this product was created.
+ *
+ * - `vintiga`   — created in Vintiga (standalone store). Fully editable here.
+ * - `commerce7` — synced from Commerce 7. Every commerce-7-connected store has
+ *   all of its products come from C7, so the entire editor surface is
+ *   disabled (read-only). The exception is the "Categorize as" override —
+ *   that's a Vintiga-side classification, never written back to C7.
+ */
+export type ProductSource = 'vintiga' | 'commerce7'
 
 export interface Blackout {
   id: string
@@ -143,8 +158,8 @@ export interface ProductState {
   status: 'Available' | 'Not Available'
   /** Per-channel status. Web Status mirrors the spec values for experiences. */
   webStatus: 'Available' | 'Not Available'
-  /** Eligible for redemption with loyalty points. Shared across product types. */
-  loyaltyPoints: boolean
+  /** Where the product was authored. `commerce7` rows are read-only here. */
+  source: ProductSource
   /** Web Subtitle / Teaser — moved to state so the editor can pre-fill them. */
   subtitle: string
   teaser: string
@@ -274,7 +289,7 @@ const initial: ProductState = {
   productType: 'Wine',
   status: 'Available',
   webStatus: 'Available',
-  loyaltyPoints: false,
+  source: 'commerce7',
   subtitle: '',
   teaser: '',
   metaTitle: '',
@@ -366,8 +381,8 @@ const initial: ProductState = {
     // ── Experiences ───────────────────────────────────────────────────────────
     // Bookable experiences live in the products catalogue under the
     // Experiences tab. IDs are e-prefixed.
-    { id: 'e1',  name: 'Reserve Cellar Tasting',           sku: 'EXP-1001',     price: '45.00', type: 'Experience', availability: 'Public',  collections: ['Experiences', 'Tastings'], channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1558346489-19413928158b?w=320&h=320&fit=crop&q=80' },
-    { id: 'e2',  name: 'Vineyard Walking Tour',            sku: 'EXP-1002',     price: '35.00', type: 'Experience', availability: 'Public',  collections: ['Experiences', 'Tours'],    channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1559528691-a48bcdb6d97b?w=320&h=320&fit=crop&q=80' },
+    { id: 'e1',  name: 'Reserve Cellar Tasting',           sku: 'EXP-1001',     price: '45.00', type: 'Experience', availability: 'Public',  collections: ['Experiences', 'Tastings'], channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1558346489-19413928158b?w=320&h=320&fit=crop&q=80', source: 'vintiga' },
+    { id: 'e2',  name: 'Vineyard Walking Tour',            sku: 'EXP-1002',     price: '35.00', type: 'Experience', availability: 'Public',  collections: ['Experiences', 'Tours'],    channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1559528691-a48bcdb6d97b?w=320&h=320&fit=crop&q=80', source: 'commerce7' },
     { id: 'e3',  name: 'Library Vintage Flight',           sku: 'EXP-1003',     price: '85.00', type: 'Experience', availability: 'Public',  collections: ['Experiences', 'Tastings'], channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=320&h=320&fit=crop&q=80' },
     { id: 'e4',  name: 'Sunset Estate Tour',               sku: 'EXP-1004',     price: '60.00', type: 'Experience', availability: 'Public',  collections: ['Experiences', 'Tours'],    channels: ['Website', 'POS'], imageUrl: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=320&h=320&fit=crop&q=80' },
     { id: 'e5',  name: 'Blending Workshop',                sku: 'EXP-1005',     price: '125.00',type: 'Experience', availability: 'Public',  collections: ['Experiences', 'Workshops'],channels: ['Website'],        imageUrl: 'https://images.unsplash.com/photo-1474722883778-792e7990302f?w=320&h=320&fit=crop&q=80' },
@@ -430,7 +445,7 @@ export const productActions = {
   setProductType(productType: string) { state = { ...state, productType }; emit() },
   setStatus(status: ProductState['status']) { state = { ...state, status }; emit() },
   setWebStatus(webStatus: ProductState['webStatus']) { state = { ...state, webStatus }; emit() },
-  setLoyaltyPoints(loyaltyPoints: boolean) { state = { ...state, loyaltyPoints }; emit() },
+  setSource(source: ProductSource) { state = { ...state, source }; emit() },
   setSubtitle(subtitle: string) { state = { ...state, subtitle }; emit() },
   setTeaser(teaser: string) { state = { ...state, teaser }; emit() },
   /** Direct Meta Title edit — flips auto-fill OFF so future name changes
@@ -700,6 +715,9 @@ export const productActions = {
       name: p.name,
       productType: p.type,
       productTypeOverride: p.productTypeOverride ?? 'None',
+      // Catalogue source flows into the editor — drives the read-only mode
+      // when the product was synced from Commerce 7.
+      source: p.source ?? 'commerce7',
       // Department mirrors product type — keeps the Advanced tab on the right
       // type-specific properties card (Wine vs Experience).
       department: p.type,
