@@ -12,6 +12,7 @@ import { Select } from '@ds/shared/Select'
 import { Radio } from '@ds/shared/Radio'
 import { Button } from '@ds/shared/Button'
 import { Tag } from '@ds/shared/Tag'
+import { CardBrandLogo, type CardBrand } from '@ds/shared/CardBrandLogo'
 import { InfoIcon, CalendarIcon, TruckIcon, StoreIcon } from '@ds/icons/Icons'
 import { CLUBS_CATALOG, CLUB_KEYS, type ClubKey, type ClubKind } from './clubsCatalog'
 
@@ -53,9 +54,43 @@ const PICKUP_LOCATIONS = [
   { value: 'downtown',     label: 'Vintiga Downtown — Seattle' },
 ]
 
-const CLUB_OPTIONS = [
-  { value: '', label: 'Select a club' },
-  ...CLUB_KEYS.map((k) => ({ value: k, label: CLUBS_CATALOG[k].name })),
+// Tasting Credit clubs expose their contribution levels as nested options in
+// the club select. Selecting a level resolves to a value like
+// `blind-enthusiasm:silver` so the membership row remembers which tier the
+// member picked.
+interface ClubLevel {
+  id: string
+  name: string
+  amount: number
+  cadence: 'Monthly' | 'Quarterly' | 'Semi-Annual' | 'Annual'
+}
+const CLUB_LEVELS: Partial<Record<ClubKey, ClubLevel[]>> = {
+  'blind-enthusiasm': [
+    { id: 'silver',   name: 'Silver',   amount: 50,  cadence: 'Monthly' },
+    { id: 'gold',     name: 'Gold',     amount: 100, cadence: 'Monthly' },
+    { id: 'platinum', name: 'Platinum', amount: 250, cadence: 'Monthly' },
+  ],
+}
+
+/** Parse a club-select value (`"curators"` or `"blind-enthusiasm:silver"`) into
+ *  its parts. Returns `null` when the value is the empty placeholder. */
+function parseClubSelection(value: string): { clubKey: ClubKey; levelId: string | null } | null {
+  if (!value) return null
+  const [clubKey, levelId] = value.split(':') as [ClubKey, string | undefined]
+  return { clubKey, levelId: levelId ?? null }
+}
+
+/** Saved cards a customer might pay with. Mocked — every customer sees the
+ *  same two cards for the prototype. */
+interface SavedCard {
+  id: string
+  brand: CardBrand
+  last4: string
+  expires: string
+}
+const SAVED_CARDS: SavedCard[] = [
+  { id: 'card-92', brand: 'mastercard', last4: '0092', expires: '07/27' },
+  { id: 'card-44', brand: 'mastercard', last4: '0044', expires: '08/28' },
 ]
 
 const MEMBERSHIPS_HASH = '#/web/clubs/memberships'
@@ -81,7 +116,9 @@ export function AddMembershipScreen() {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
 
   const [customer, setCustomer]       = useState('')
-  const [club, setClub]               = useState<ClubKey | ''>('')
+  // Club selection holds either a club key (e.g. "curators") or a
+  // club:level pair (e.g. "blind-enthusiasm:silver") for Tasting Credit.
+  const [clubSelection, setClubSelection] = useState('')
   const [joinDate, setJoinDate]       = useState('')
   const [delivery, setDelivery]       = useState<'shipping' | 'pickup'>('shipping')
   const [shipAddress, setShipAddress] = useState('home')
@@ -90,14 +127,22 @@ export function AddMembershipScreen() {
   const [newCity, setNewCity]         = useState('')
   const [newState, setNewState]       = useState('')
   const [newZip, setNewZip]           = useState('')
+  const [paymentCardId, setPaymentCardId] = useState<string>(SAVED_CARDS[0].id)
 
-  const feeInfo = club ? CLUB_FEES[club] : undefined
-  const fee     = feeInfo?.fee ?? 0
+  const selection = parseClubSelection(clubSelection)
+  const clubKey = selection?.clubKey ?? null
+  const selectedLevel = selection && selection.levelId
+    ? CLUB_LEVELS[selection.clubKey]?.find((l) => l.id === selection.levelId) ?? null
+    : null
+  const feeInfo = clubKey ? CLUB_FEES[clubKey] : undefined
+  // Tasting Credit: the first charge is the chosen level's contribution amount.
+  // Curated / Rewards: the static club fee from CLUB_FEES (or zero).
+  const fee     = selectedLevel ? selectedLevel.amount : (feeInfo?.fee ?? 0)
   const taxRate = feeInfo?.taxRate ?? 0
   // Tasting-credit clubs charge the customer on the join date, so the join date
   // can't be backdated — it must be today or later. Curated / membership clubs
   // allow any date (incl. the past) for backfilling historical signups.
-  const isTastingCredit = !!club && CLUBS_CATALOG[club].kind === 'account-credit'
+  const isTastingCredit = !!clubKey && CLUBS_CATALOG[clubKey].kind === 'account-credit'
 
   const total = useMemo(() => fee + (fee * taxRate) / 100, [fee, taxRate])
 
@@ -144,7 +189,8 @@ export function AddMembershipScreen() {
             }
             rail={
               <MembershipDetailsRail
-                clubKey={club || null}
+                clubKey={clubKey}
+                levelLabel={selectedLevel ? `${selectedLevel.name} · $${selectedLevel.amount}/${selectedLevel.cadence.toLowerCase()}` : null}
                 joinDate={joinDate}
                 delivery={delivery}
               />
@@ -161,11 +207,30 @@ export function AddMembershipScreen() {
                 </Field>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-vintiga-md">
                   <Field label="Club" required>
+                    {/* Tree-list dropdown — Tasting Credit clubs expand into per-level
+                        children so the operator picks a tier in one go. */}
                     <Select
-                      value={club}
-                      onChange={(e) => setClub(e.target.value as ClubKey | '')}
-                      options={CLUB_OPTIONS}
-                    />
+                      value={clubSelection}
+                      onChange={(e) => setClubSelection(e.target.value)}
+                    >
+                      <option value="">Select a club</option>
+                      {CLUB_KEYS.map((k) => {
+                        const info = CLUBS_CATALOG[k]
+                        const levels = CLUB_LEVELS[k]
+                        if (levels && levels.length > 0) {
+                          return (
+                            <optgroup key={k} label={info.name}>
+                              {levels.map((lvl) => (
+                                <option key={lvl.id} value={`${k}:${lvl.id}`}>
+                                  {lvl.name} — ${lvl.amount}/{lvl.cadence.toLowerCase()}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )
+                        }
+                        return <option key={k} value={k}>{info.name}</option>
+                      })}
+                    </Select>
                   </Field>
                   <Field
                     label="Join Date"
@@ -247,6 +312,24 @@ export function AddMembershipScreen() {
                 )}
               </RecordsCard>
 
+              {/* Payment Method — only after a customer is picked. Shows the
+                  customer's saved cards as selectable tiles. Mocked for now —
+                  every customer sees the same two cards in the prototype. */}
+              {customer && (
+                <RecordsCard title="Payment Method" divider={false}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-vintiga-md">
+                    {SAVED_CARDS.map((card) => (
+                      <PaymentCardOption
+                        key={card.id}
+                        card={card}
+                        selected={paymentCardId === card.id}
+                        onClick={() => setPaymentCardId(card.id)}
+                      />
+                    ))}
+                  </div>
+                </RecordsCard>
+              )}
+
               {/* Order Summary — always shown. Fee-free clubs create a $0 order
                   so the signup is still tracked in sales reporting + the POS. */}
               <RecordsCard title="Order Summary" divider={false}>
@@ -300,10 +383,12 @@ function DeliveryOption({ selected, onClick, icon, label }: { selected: boolean;
 // delivery method. Fields show "—" until the operator picks a value.
 function MembershipDetailsRail({
   clubKey,
+  levelLabel,
   joinDate,
   delivery,
 }: {
   clubKey: ClubKey | null
+  levelLabel: string | null
   joinDate: string
   delivery: 'shipping' | 'pickup'
 }) {
@@ -318,6 +403,11 @@ function MembershipDetailsRail({
             <span className="text-vintiga-slate-400">—</span>
           )}
         </RailRow>
+        {levelLabel && (
+          <RailRow label="Level">
+            <span className="typo-body-sm text-vintiga-slate-700">{levelLabel}</span>
+          </RailRow>
+        )}
         <RailRow label="Join Date">
           <span className="inline-flex items-center gap-1.5">
             <CalendarIcon className="w-4 h-4 text-vintiga-slate-400" />
@@ -340,6 +430,36 @@ function RailRow({ label, children }: { label: string; children: ReactNode }) {
     <div className="flex flex-col gap-vintiga-xs">
       <span className="typo-body-sm font-semibold text-vintiga-slate-900">{label}</span>
       <span className="typo-body-sm text-vintiga-slate-700">{children}</span>
+    </div>
+  )
+}
+
+// Selectable payment-card tile — brand logo + expiry on the left, masked card
+// number on the right, radio top-right. Same picker pattern as Shipping /
+// Pickup at the top of the page.
+function PaymentCardOption({ card, selected, onClick }: { card: SavedCard; selected: boolean; onClick: () => void }) {
+  return (
+    <div
+      role="radio"
+      aria-checked={selected}
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+      className={[
+        'flex items-center gap-vintiga-md p-vintiga-md rounded-vintiga-lg border transition-colors cursor-pointer',
+        selected
+          ? 'border-vintiga-indigo-500 bg-vintiga-indigo-50'
+          : 'border-vintiga-slate-200 hover:border-vintiga-slate-300',
+      ].join(' ')}
+    >
+      <CardBrandLogo brand={card.brand} />
+      <div className="flex flex-col flex-1 min-w-0">
+        <span className="typo-caption text-vintiga-slate-500">Expires {card.expires}</span>
+        <span className="typo-body-sm font-semibold text-vintiga-slate-900">
+          {card.brand[0].toUpperCase() + card.brand.slice(1)} **** {card.last4}
+        </span>
+      </div>
+      <Radio checked={selected} aria-label={`${card.brand} ending ${card.last4}`} />
     </div>
   )
 }
