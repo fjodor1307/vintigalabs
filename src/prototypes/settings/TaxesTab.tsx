@@ -22,11 +22,6 @@ import { LOCATIONS, type Location } from './locationsSample'
 //   2. Shipping Tax Rates — pulled in from Commerce 7 by state. Read-only in
 //      Vintiga; the action buttons jump back to C7 or re-sync.
 
-interface OnSiteRate {
-  locationId: string
-  rate: string // string so the input stays controlled even when empty
-}
-
 const SHIPPING_STATE_ROWS: { state: string }[] = [
   { state: 'California' },
   { state: 'Maine' },
