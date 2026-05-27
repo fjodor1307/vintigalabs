@@ -3,6 +3,7 @@ import { ProductLayout, SectionCard, Field, TextInput, InputWithAdornment } from
 import { Checkbox } from '@ds/shared/Checkbox'
 import { Radio } from '@ds/shared/Radio'
 import { Button } from '@ds/shared/Button'
+import { SegmentedControl } from '@ds/shared/SegmentedControl'
 import { Tag } from '@ds/shared/Tag'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@ds/shared/Modal'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@ds/shared/Table'
@@ -267,10 +268,17 @@ function BlackoutDatesCard() {
     >
       <p className="typo-body-sm text-vintiga-slate-500">{upcoming.length} upcoming · closed even when the weekly schedule allows</p>
 
-      <div className="flex items-center gap-1 self-start border border-vintiga-slate-200 rounded-vintiga-md p-1 bg-vintiga-slate-50">
-        <WindowTab active={windowTab === 'upcoming'} label="Upcoming" count={upcoming.length} onClick={() => setWindowTab('upcoming')} />
-        <WindowTab active={windowTab === 'past'}     label="Past"     count={past.length}     onClick={() => setWindowTab('past')} />
-      </div>
+      <SegmentedControl<BlackoutWindow>
+        className="self-start"
+        size="sm"
+        aria-label="Blackout window"
+        value={windowTab}
+        onChange={setWindowTab}
+        options={[
+          { value: 'upcoming', label: <WindowLabel label="Upcoming" count={upcoming.length} active={windowTab === 'upcoming'} /> },
+          { value: 'past',     label: <WindowLabel label="Past"     count={past.length}     active={windowTab === 'past'} /> },
+        ]}
+      />
 
       {visible.length === 0 ? (
         <p className="typo-body-sm text-vintiga-slate-400 py-vintiga-md">
@@ -330,22 +338,14 @@ function BlackoutDatesCard() {
   )
 }
 
-function WindowTab({ active, label, count, onClick }: { active: boolean; label: string; count: number; onClick: () => void }) {
+// Segment label with a trailing numeric count, muted relative to the label
+// text. Same shape as the rest of the DS (e.g. tab counts on inboxes).
+function WindowLabel({ label, count, active }: { label: string; count: number; active: boolean }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={[
-        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-vintiga-md typo-body-sm font-medium transition-colors cursor-pointer border border-transparent',
-        active
-          ? 'bg-vintiga-white text-vintiga-slate-900 border-vintiga-slate-200 shadow-sm'
-          : 'text-vintiga-slate-600 hover:text-vintiga-slate-900',
-      ].join(' ')}
-    >
+    <span className="inline-flex items-center gap-1.5">
       {label}
       <span className={['typo-caption tabular-nums', active ? 'text-vintiga-slate-500' : 'text-vintiga-slate-400'].join(' ')}>{count}</span>
-    </button>
+    </span>
   )
 }
 
