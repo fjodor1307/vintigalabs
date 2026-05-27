@@ -12,7 +12,7 @@ import { Select } from '@ds/shared/Select'
 import { Radio } from '@ds/shared/Radio'
 import { Button } from '@ds/shared/Button'
 import { Tag } from '@ds/shared/Tag'
-import { CardBrandLogo, type CardBrand } from '@ds/shared/CardBrandLogo'
+import { type CardBrand } from '@ds/shared/CardBrandLogo'
 import { InfoIcon, CalendarIcon, TruckIcon, StoreIcon } from '@ds/icons/Icons'
 import { CLUBS_CATALOG, CLUB_KEYS, type ClubKey, type ClubKind } from './clubsCatalog'
 
@@ -368,10 +368,13 @@ export function AddMembershipScreen() {
               {customer && (
                 <RecordsCard title="Payment Method" divider={false}>
                   <Field label="Card on file" required>
-                    <PaymentCardSelect
-                      cards={SAVED_CARDS}
+                    <Select
                       value={paymentCardId}
-                      onChange={setPaymentCardId}
+                      onChange={(e) => setPaymentCardId(e.target.value)}
+                      options={SAVED_CARDS.map((c) => ({
+                        value: c.id,
+                        label: `${c.brand[0].toUpperCase() + c.brand.slice(1)} **** ${c.last4} — Expires ${c.expires}`,
+                      }))}
                     />
                   </Field>
                 </RecordsCard>
@@ -483,81 +486,6 @@ function RailRow({ label, children }: { label: string; children: ReactNode }) {
     <div className="flex flex-col gap-vintiga-xs">
       <span className="typo-body-sm font-semibold text-vintiga-slate-900">{label}</span>
       <span className="typo-body-sm text-vintiga-slate-700">{children}</span>
-    </div>
-  )
-}
-
-// Compact card row — brand logo + masked number + expiry. Used inside the
-// payment-method dropdown's selected display so the operator sees the same
-// chrome whether the dropdown is open or closed.
-function PaymentCardRow({ card }: { card: SavedCard }) {
-  return (
-    <div className="flex items-center gap-vintiga-md min-w-0">
-      <CardBrandLogo brand={card.brand} />
-      <div className="flex flex-col min-w-0">
-        <span className="typo-body-sm font-semibold text-vintiga-slate-900">
-          {card.brand[0].toUpperCase() + card.brand.slice(1)} **** {card.last4}
-        </span>
-        <span className="typo-caption text-vintiga-slate-500">Expires {card.expires}</span>
-      </div>
-    </div>
-  )
-}
-
-// Custom dropdown — native `<select>` can't render card-brand logos, so we
-// build a small popover. Closes on outside click / Escape.
-function PaymentCardSelect({ cards, value, onChange }: { cards: SavedCard[]; value: string; onChange: (id: string) => void }) {
-  const [open, setOpen] = useState(false)
-  const selected = cards.find((c) => c.id === value) ?? cards[0]
-
-  useEffect(() => {
-    if (!open) return
-    function onDocClick(e: MouseEvent) {
-      const target = e.target as HTMLElement
-      if (!target.closest('[data-payment-card-select]')) setOpen(false)
-    }
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false) }
-    document.addEventListener('mousedown', onDocClick)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDocClick)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
-
-  return (
-    <div data-payment-card-select className="relative">
-      <button
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-        className="h-14 w-full px-3 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white hover:border-vintiga-slate-300 focus:outline-none focus:border-vintiga-indigo-600 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors flex items-center justify-between gap-vintiga-md cursor-pointer"
-      >
-        <PaymentCardRow card={selected} />
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-vintiga-slate-400 shrink-0">
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-      {open && (
-        <div role="listbox" className="absolute z-10 mt-1 w-full rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white shadow-lg p-1 flex flex-col gap-0.5">
-          {cards.map((card) => (
-            <button
-              key={card.id}
-              type="button"
-              role="option"
-              aria-selected={card.id === value}
-              onClick={() => { onChange(card.id); setOpen(false) }}
-              className={[
-                'text-left rounded-vintiga-md px-3 py-2 transition-colors cursor-pointer',
-                card.id === value ? 'bg-vintiga-indigo-50' : 'hover:bg-vintiga-slate-50',
-              ].join(' ')}
-            >
-              <PaymentCardRow card={card} />
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
