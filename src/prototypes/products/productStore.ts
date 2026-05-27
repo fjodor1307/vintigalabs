@@ -584,6 +584,15 @@ export const productActions = {
     state = { ...state, timeSlotsByDay: { ...state.timeSlotsByDay, [day]: slots } }
     emit()
   },
+  /** Wipe every day's slot list in one go — exposed so the editor can offer a
+   *  "Delete all" reset when the operator wants to regenerate from scratch. */
+  clearAllTimeSlots() {
+    const empty: Record<Weekday, TimeSlot[]> = {
+      Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: [],
+    }
+    state = { ...state, timeSlotsByDay: empty }
+    emit()
+  },
   setBookingInterval(minutes: number) {
     state = { ...state, bookingInterval: minutes }
     emit()

@@ -17,6 +17,10 @@
 - "Reclassify as" → **"Categorize as"** with rewritten helper text — the local override is a Vintiga categorisation, not an upstream rewrite.
 - Product Type chip drops the "Commerce7 type: Wine" / "synced from Commerce7" tail. When overridden, it now reads simply `Spirits (Wine)` — keeps the source visible without naming the integration.
 
+**Schedule — Weekly grid.**
+- New top-of-grid **Delete all** action (with confirm) — wipes every day's generated slots so the operator can regenerate from scratch when "Generate slots" landed on the wrong open/close.
+- Each day card now shows an inline **"Closed this {day} · {reason}"** pill when a blackout covers that weekday in the *current* calendar week — amber-tinted card border + filled tag, so the operator doesn't have to scroll down to the blackout table to see what's actually closed this week.
+
 **Schedule — Blackouts.**
 - Removed the *Export to .ics* button — not a current ask, and it was wired to nothing.
 - Blackouts split into **Upcoming / Past** tabs with counts, so historical entries stay accessible without crowding the next few closures.
