@@ -149,6 +149,13 @@ export interface Blackout {
   start: string
   /** ISO yyyy-mm-dd end. Empty = single day. */
   end: string
+  /**
+   * Optional partial-day window — when present the closure only spans
+   * `timeWindow.start`–`timeWindow.end` (24-hour "HH:MM") instead of the
+   * whole day. Useful for events like wedding setup that close the
+   * afternoon but leave the morning open.
+   */
+  timeWindow?: { start: string; end: string }
 }
 
 export interface ProductState {
@@ -215,6 +222,13 @@ export interface ProductState {
   /** ISO date (yyyy-mm-dd). Empty = recurs indefinitely. */
   scheduleRepeatsUntil: string
   blackouts: Blackout[]
+  /**
+   * Global-blackout IDs the operator has opted *out of* for this experience.
+   * Renders use `globals.filter(g => !excluded.includes(g.id))` so the default
+   * is "inherit every global"; the per-experience surface only stores the
+   * exceptions.
+   */
+  excludedGlobalBlackoutIds: string[]
   // Beer / Spirits override (only meaningful when productType === 'Wine')
   productTypeOverride: ProductTypeOverride
   beerStyle: string
@@ -340,12 +354,14 @@ const initial: ProductState = {
     Sunday: [],
   },
   scheduleRepeatsUntil: '',
+  // Per-experience blackouts only — holidays / company-wide closures live in
+  // the global Settings → Closures list (see _shared/globalBlackoutsStore.ts)
+  // and are inherited automatically.
   blackouts: [
-    { id: 'bl-1', reason: 'Memorial Day',     type: 'holiday', start: '2026-05-26', end: '' },
-    { id: 'bl-2', reason: 'Private event',    type: 'event',   start: '2026-05-27', end: '2026-05-28' },
-    { id: 'bl-3', reason: 'Staff training',   type: 'ops',     start: '2026-06-04', end: '' },
-    { id: 'bl-4', reason: 'Independence Day', type: 'holiday', start: '2026-07-04', end: '' },
+    { id: 'bl-1', reason: 'Private event',    type: 'event', start: '2026-05-27', end: '2026-05-28' },
+    { id: 'bl-2', reason: 'Staff training',   type: 'ops',   start: '2026-06-04', end: '' },
   ],
+  excludedGlobalBlackoutIds: [],
   productTypeOverride: 'None',
   beerStyle: '',
   beerFamily: '',
@@ -600,6 +616,14 @@ export const productActions = {
   },
   removeBlackout(id: string) {
     state = { ...state, blackouts: state.blackouts.filter((b) => b.id !== id) }
+    emit()
+  },
+  /** Flip whether `globalId` is excluded for this experience. */
+  toggleExcludedGlobalBlackout(globalId: string) {
+    const excluded = state.excludedGlobalBlackoutIds.includes(globalId)
+      ? state.excludedGlobalBlackoutIds.filter((id) => id !== globalId)
+      : [...state.excludedGlobalBlackoutIds, globalId]
+    state = { ...state, excludedGlobalBlackoutIds: excluded }
     emit()
   },
 

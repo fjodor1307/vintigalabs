@@ -8,7 +8,9 @@ import { Tag } from '@ds/shared/Tag'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@ds/shared/Modal'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@ds/shared/Table'
 import { useProductState, productActions, WEEKDAYS, type Blackout, type BlackoutType, type TimeSlot, type Weekday } from './productStore'
-import { PlusIcon, TrashIcon } from '@ds/icons/Icons'
+import { useGlobalBlackouts, type GlobalBlackout } from '../_shared/globalBlackoutsStore'
+import { Switch } from '@ds/shared/Switch'
+import { PlusIcon, TrashIcon, InfoIcon } from '@ds/icons/Icons'
 
 type Period = 'AM' | 'PM'
 
@@ -115,17 +117,17 @@ const TIME_INPUT = 'h-9 w-24 px-3 rounded-vintiga-md border border-vintiga-slate
 const PERIOD_SELECT = 'h-9 px-2 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors cursor-pointer'
 
 function DaySchedule({ day }: { day: Weekday }) {
-  const { timeSlotsByDay, bookingInterval, blackouts } = useProductState()
+  const { timeSlotsByDay, bookingInterval, blackouts, excludedGlobalBlackoutIds } = useProductState()
+  const globalBlackouts = useGlobalBlackouts()
   const slots = timeSlotsByDay[day]
   // Operating window used by "Generate slots" — local to the editor.
   const [open, setOpen] = useState<{ time: string; period: Period }>({ time: '9:00', period: 'AM' })
   const [close, setClose] = useState<{ time: string; period: Period }>({ time: '5:00', period: 'PM' })
 
-  // Current-week blackout indicator. If today's calendar week has this weekday
-  // covered by an active blackout, surface a small pill next to the weekday
-  // label so the operator doesn't have to scroll down and cross-reference the
-  // blackout table for "what's actually closed this week".
-  const thisWeekHit = findCurrentWeekBlackout(day, blackouts)
+  // Current-week closure indicator. Considers both per-experience blackouts
+  // and global closures (minus anything excluded for this experience) so the
+  // pill shows whatever is actually closing the day, regardless of source.
+  const thisWeekHit = findCurrentWeekClosure(day, blackouts, globalBlackouts, excludedGlobalBlackoutIds)
 
   return (
     <div className={[
@@ -137,7 +139,9 @@ function DaySchedule({ day }: { day: Weekday }) {
           <span className="typo-body-sm font-semibold text-vintiga-slate-900">{day}</span>
           {thisWeekHit && (
             <Tag variant="filled" tone={toneFor(thisWeekHit.type)} size="sm">
-              Closed this {day.slice(0, 3)} · {thisWeekHit.reason}
+              {thisWeekHit.timeWindow
+                ? `Closed ${thisWeekHit.timeWindow.start}–${thisWeekHit.timeWindow.end} · ${thisWeekHit.reason}`
+                : `Closed this ${day.slice(0, 3)} · ${thisWeekHit.reason}`}
             </Tag>
           )}
         </div>
@@ -238,19 +242,33 @@ function ReservationTimeSlots() {
 }
 
 /**
- * Find a blackout (if any) that covers `day` (Mon–Sun) in the **current
- * calendar week** (Mon-anchored). Returns the active blackout, or `null` if
- * the day is currently scheduled to run as normal.
+ * Find an active closure for `day` in the **current calendar week** —
+ * considering both the experience's own blackouts AND the non-excluded
+ * global closures. Returns a normalised row so the day pill can render the
+ * reason + tone without knowing where the closure came from.
  */
-function findCurrentWeekBlackout(day: Weekday, blackouts: Blackout[]): Blackout | null {
+interface DayPillData {
+  reason: string
+  type: BlackoutType
+  /** Present when only part of the day is closed. */
+  timeWindow?: { start: string; end: string }
+}
+function findCurrentWeekClosure(
+  day: Weekday,
+  perExperience: Blackout[],
+  globals: GlobalBlackout[],
+  excludedGlobalIds: string[],
+): DayPillData | null {
   const targetISO = toLocalISODate(dateForDayInCurrentWeek(day))
-  return (
-    blackouts.find((b) => {
-      const start = b.start
-      const end = b.end || b.start
-      return start <= targetISO && targetISO <= end
-    }) ?? null
-  )
+  const covers = (b: { start: string; end: string }) => {
+    const end = b.end || b.start
+    return b.start <= targetISO && targetISO <= end
+  }
+  const ownHit = perExperience.find(covers)
+  if (ownHit) return { reason: ownHit.reason, type: ownHit.type, timeWindow: ownHit.timeWindow }
+  const globalHit = globals.find((g) => !excludedGlobalIds.includes(g.id) && covers(g))
+  if (globalHit) return { reason: globalHit.reason, type: globalHit.type, timeWindow: globalHit.timeWindow }
+  return null
 }
 
 /** yyyy-mm-dd in the *local* timezone. `toISOString()` uses UTC and can
@@ -303,12 +321,23 @@ function formatDateShort(startIso: string, endIso: string): string {
 }
 
 function BlackoutDatesCard() {
-  const { blackouts } = useProductState()
+  const { blackouts, excludedGlobalBlackoutIds } = useProductState()
+  const globalBlackouts = useGlobalBlackouts()
   const [modalOpen, setModalOpen] = useState(false)
   const [windowTab, setWindowTab] = useState<BlackoutWindow>('upcoming')
 
   // Stable yyyy-mm-dd for "today" — anything ending before this is past.
   const todayISO = new Date().toISOString().slice(0, 10)
+
+  // Show every global here regardless of past/future — the operator needs to
+  // be able to opt out of any global at any time (e.g. the editor is opened
+  // mid-Memorial-Day-week and they realise this experience should run).
+  // The per-experience section below keeps the Upcoming/Past split since
+  // those are authored locally and can be cleaned up.
+  const inheritedGlobals = useMemo(
+    () => [...globalBlackouts].sort((a, b) => b.start.localeCompare(a.start)),
+    [globalBlackouts],
+  )
 
   const { upcoming, past } = useMemo(() => {
     const upcoming: Blackout[] = []
@@ -332,6 +361,8 @@ function BlackoutDatesCard() {
     }, 0)
   }, [upcoming])
 
+  const inheritedCount = inheritedGlobals.filter((g) => !excludedGlobalBlackoutIds.includes(g.id)).length
+
   return (
     <SectionCard
       title="Blackout Dates"
@@ -339,11 +370,26 @@ function BlackoutDatesCard() {
         <Button variant="outline" size="sm" onClick={() => setModalOpen(true)} leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>Add dates</Button>
       }
     >
-      <p className="typo-body-sm text-vintiga-slate-500">{upcoming.length} upcoming · closed even when the weekly schedule allows</p>
+      <p className="typo-body-sm text-vintiga-slate-500">{upcoming.length} from this experience · {inheritedCount} inherited · closed even when the weekly schedule allows</p>
+
+      {/* Inherited from Settings · Closures — read-only globals with per-row
+          "include in this experience" toggle. Defaults to ON; flipping it
+          off stores the global's id in excludedGlobalBlackoutIds. */}
+      {inheritedGlobals.length > 0 && (
+        <InheritedClosuresSection
+          rows={inheritedGlobals}
+          excludedIds={excludedGlobalBlackoutIds}
+        />
+      )}
+
+      <div className="flex flex-col gap-1">
+        <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">This experience</span>
+        <span className="typo-caption text-vintiga-slate-500">Closures that apply only to this experience.</span>
+      </div>
 
       <SegmentedControl<BlackoutWindow>
         className="self-start"
-        size="sm"
+        size="md"
         aria-label="Blackout window"
         value={windowTab}
         onChange={setWindowTab}
@@ -408,6 +454,77 @@ function BlackoutDatesCard() {
         onSave={(b) => { productActions.addBlackout(b); setModalOpen(false) }}
       />
     </SectionCard>
+  )
+}
+
+// ─── Inherited closures (from Settings · Closures) ───────────────────────────
+// Read-only view of tenant-wide closures with an Include/Exclude switch per
+// row. Defaults to "included" (i.e. the global applies); toggling Off stores
+// the global's id in `excludedGlobalBlackoutIds` so this experience runs on
+// that date even though the rest of the winery is closed.
+
+function InheritedClosuresSection({
+  rows,
+  excludedIds,
+}: {
+  rows: GlobalBlackout[]
+  excludedIds: string[]
+}) {
+  return (
+    <div className="flex flex-col gap-vintiga-sm">
+      <div className="flex items-center justify-between gap-vintiga-md">
+        <div className="flex flex-col gap-0.5">
+          <span className="typo-caption font-semibold text-vintiga-slate-500 uppercase tracking-wider">Inherited from Settings · Closures</span>
+          <span className="typo-caption text-vintiga-slate-500">Tenant-wide dates every experience inherits. Flip the toggle to opt this experience out of a specific one.</span>
+        </div>
+      </div>
+      <div className="border border-vintiga-slate-200 rounded-vintiga-lg overflow-hidden">
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableHeader>Reason</TableHeader>
+              <TableHeader>Type</TableHeader>
+              <TableHeader>Date</TableHeader>
+              <TableHeader>Window</TableHeader>
+              <TableHeader className="w-32">Applies to this</TableHeader>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.map((b) => {
+              const included = !excludedIds.includes(b.id)
+              return (
+                <TableRow key={b.id}>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className={['font-medium', included ? 'text-vintiga-slate-900' : 'text-vintiga-slate-400 line-through'].join(' ')}>{b.reason}</span>
+                      <span className="typo-caption text-vintiga-slate-500">
+                        {b.end && b.end !== b.start ? `${humanRange(b.start, b.end)} days` : '1 day'}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Tag variant="filled" tone={toneFor(b.type)}>{TYPE_LABEL[b.type]}</Tag>
+                  </TableCell>
+                  <TableCell className={included ? 'text-vintiga-slate-700' : 'text-vintiga-slate-400 line-through'}>{formatDateShort(b.start, b.end)}</TableCell>
+                  <TableCell className={included ? 'text-vintiga-slate-700' : 'text-vintiga-slate-400'}>
+                    {b.timeWindow ? `${b.timeWindow.start}–${b.timeWindow.end}` : 'Full day'}
+                  </TableCell>
+                  <TableCell>
+                    <Switch checked={included} onChange={() => productActions.toggleExcludedGlobalBlackout(b.id)} />
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-start gap-vintiga-sm">
+        <InfoIcon className="w-4 h-4 text-vintiga-slate-400 shrink-0 mt-0.5" />
+        <span className="typo-caption text-vintiga-slate-500">
+          Manage the master list in <span className="font-semibold text-vintiga-slate-700">Settings → Closures</span>. Changes there apply to every experience automatically.
+        </span>
+      </div>
+    </div>
   )
 }
 

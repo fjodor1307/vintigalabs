@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { SettingsLayout } from './SettingsLayout'
 import { LocationsTab } from './LocationsTab'
 import { TaxesTab } from './TaxesTab'
+import { ClosuresTab } from './ClosuresTab'
 import { Button } from '@ds/shared/Button'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
 
@@ -20,6 +21,7 @@ type SettingsTab =
   | 'integrations'
   | 'users-permissions'
   | 'locations'
+  | 'closures'
 
 const TABS: { value: SettingsTab; label: string }[] = [
   { value: 'general',           label: 'General' },
@@ -28,6 +30,7 @@ const TABS: { value: SettingsTab; label: string }[] = [
   { value: 'integrations',      label: 'Integrations' },
   { value: 'users-permissions', label: 'Users & Permissions' },
   { value: 'locations',         label: 'Locations' },
+  { value: 'closures',          label: 'Closures' },
 ]
 
 const TAB_DESCRIPTION: Record<SettingsTab, string> = {
@@ -37,6 +40,7 @@ const TAB_DESCRIPTION: Record<SettingsTab, string> = {
   integrations:        'Connections to accounting, marketing, and fulfilment partners.',
   'users-permissions': 'Team members, roles, and access permissions.',
   locations:           '',
+  closures:            '',
 }
 
 export function SettingsScreen() {
@@ -66,6 +70,8 @@ export function SettingsScreen() {
           <LocationsTab />
         ) : tab === 'tax-settings' ? (
           <TaxesTab />
+        ) : tab === 'closures' ? (
+          <ClosuresTab />
         ) : (
           <PlaceholderTab label={TABS.find((t) => t.value === tab)!.label} description={TAB_DESCRIPTION[tab]} />
         )}

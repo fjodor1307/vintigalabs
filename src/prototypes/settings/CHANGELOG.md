@@ -1,5 +1,11 @@
 # Settings — Changelog
 
+## 2026-05-27 — Fedja + Claude: Closures tab (tenant-wide blackouts)
+
+New **Closures** tab — authors the tenant-wide blackouts that every experience inherits. Same modal + table chrome as the per-experience editor (Upcoming/Past segmented control, holiday/event/ops/other type pill, Add dates modal) plus a **Partial day** switch that reveals from/until time inputs for the wedding-setup case Donna raised.
+
+Data lives in a new `src/prototypes/_shared/globalBlackoutsStore.ts` so the per-experience Schedule tab can read it without taking a settings dependency. The per-experience view surfaces these as a read-only "Inherited from Settings · Closures" table with an Applies-to-this toggle per row.
+
 ## 2026-05-27 — Fedja + Claude: Tax Settings tab (May 27 design review)
 
 - **On-site Tax Rates** — per-location fallback rate (POS uses these so checkout works offline). One row per physical location, % input each.

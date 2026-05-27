@@ -6,6 +6,17 @@
 
 ---
 
+## 2026-05-27 — Fedja + Claude: Inherit tenant-wide closures on the Schedule tab
+
+The Schedule tab's blackouts card grew two sections:
+
+- **Inherited from Settings · Closures** — read-only view of every global blackout authored in Settings (see `_shared/globalBlackoutsStore.ts`). Each row has an `Applies to this` switch — flipping it off stores the global's id in `excludedGlobalBlackoutIds` so this experience runs that day even though the rest of the winery is closed. Excluded rows render strikethrough + muted.
+- **This experience** — the existing per-experience table, now labelled and scoped clearly.
+
+`Blackout` interface gained an optional `timeWindow: { start, end }` so partial-day closures (e.g. afternoon wedding setup) render as `Closed 13:00–17:00 · {reason}` in the day-card pill instead of the full-day text. The current-week pill helper now scans both per-experience blackouts and non-excluded globals.
+
+Per-experience seed data dropped Memorial Day / Independence Day — they live in the global seed now and are inherited automatically.
+
 ## 2026-05-27 — Fedja + Claude: Experience editor refresh (May 27 design review)
 
 **Source-aware editing.** New `product.source: 'vintiga' | 'commerce7'`, seeded on each catalogue row. Commerce 7-sourced experiences render the Experience Details card with an explanatory "Synced from Commerce 7" banner and every form control disabled (via a single `<fieldset disabled>` wrapper, including the toggle switches). The Vintiga editor never writes back to Commerce 7, so we lock the surface to avoid the illusion that you can.
