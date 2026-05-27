@@ -114,16 +114,32 @@ const TIME_INPUT = 'h-9 w-24 px-3 rounded-vintiga-md border border-vintiga-slate
 const PERIOD_SELECT = 'h-9 px-2 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors cursor-pointer'
 
 function DaySchedule({ day }: { day: Weekday }) {
-  const { timeSlotsByDay, bookingInterval } = useProductState()
+  const { timeSlotsByDay, bookingInterval, blackouts } = useProductState()
   const slots = timeSlotsByDay[day]
   // Operating window used by "Generate slots" — local to the editor.
   const [open, setOpen] = useState<{ time: string; period: Period }>({ time: '9:00', period: 'AM' })
   const [close, setClose] = useState<{ time: string; period: Period }>({ time: '5:00', period: 'PM' })
 
+  // Current-week blackout indicator. If today's calendar week has this weekday
+  // covered by an active blackout, surface a small pill next to the weekday
+  // label so the operator doesn't have to scroll down and cross-reference the
+  // blackout table for "what's actually closed this week".
+  const thisWeekHit = findCurrentWeekBlackout(day, blackouts)
+
   return (
-    <div className="border border-vintiga-slate-200 rounded-vintiga-lg bg-vintiga-white px-4 py-3 flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-vintiga-md">
-        <span className="typo-body-sm font-semibold text-vintiga-slate-900">{day}</span>
+    <div className={[
+      'border rounded-vintiga-lg bg-vintiga-white px-4 py-3 flex flex-col gap-3',
+      thisWeekHit ? 'border-vintiga-amber-200 bg-vintiga-amber-50/30' : 'border-vintiga-slate-200',
+    ].join(' ')}>
+      <div className="flex items-center justify-between gap-vintiga-md flex-wrap">
+        <div className="flex items-center gap-vintiga-sm flex-wrap">
+          <span className="typo-body-sm font-semibold text-vintiga-slate-900">{day}</span>
+          {thisWeekHit && (
+            <Tag variant="filled" tone={toneFor(thisWeekHit.type)} size="sm">
+              Closed this {day.slice(0, 3)} · {thisWeekHit.reason}
+            </Tag>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => productActions.addTimeSlot(day)}
@@ -197,11 +213,72 @@ function DaySchedule({ day }: { day: Weekday }) {
 }
 
 function ReservationTimeSlots() {
+  const slotCount = useTotalSlotCount()
+  const handleDeleteAll = () => {
+    if (slotCount === 0) return
+    if (window.confirm('Delete every generated time slot for every day? Your operating hours stay set so you can regenerate.')) {
+      productActions.clearAllTimeSlots()
+    }
+  }
   return (
     <div className="flex flex-col gap-3">
+      {slotCount > 0 && (
+        <div className="flex items-center justify-between gap-vintiga-md">
+          <span className="typo-caption text-vintiga-slate-500">{slotCount} total slot{slotCount === 1 ? '' : 's'} across the week</span>
+          <Button variant="outline" size="sm" onClick={handleDeleteAll} leftIcon={<TrashIcon className="w-3.5 h-3.5" />}>
+            Delete all
+          </Button>
+        </div>
+      )}
       {WEEKDAYS.map((day) => <DaySchedule key={day} day={day} />)}
     </div>
   )
+}
+
+function useTotalSlotCount(): number {
+  const { timeSlotsByDay } = useProductState()
+  return WEEKDAYS.reduce((sum, d) => sum + timeSlotsByDay[d].length, 0)
+}
+
+/**
+ * Find a blackout (if any) that covers `day` (Mon–Sun) in the **current
+ * calendar week** (Mon-anchored). Returns the active blackout, or `null` if
+ * the day is currently scheduled to run as normal.
+ */
+function findCurrentWeekBlackout(day: Weekday, blackouts: Blackout[]): Blackout | null {
+  const targetISO = toLocalISODate(dateForDayInCurrentWeek(day))
+  return (
+    blackouts.find((b) => {
+      const start = b.start
+      const end = b.end || b.start
+      return start <= targetISO && targetISO <= end
+    }) ?? null
+  )
+}
+
+/** yyyy-mm-dd in the *local* timezone. `toISOString()` uses UTC and can
+ *  shift the date by a day in non-UTC zones, which mis-aligns "today's
+ *  weekday" against blackout ISO strings (which are local-date semantics). */
+function toLocalISODate(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+/** Map a weekday name to its date inside the *current* Mon-anchored week. */
+function dateForDayInCurrentWeek(day: Weekday): Date {
+  const order: Weekday[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  // JS Sunday=0, Monday=1, … Saturday=6. Convert to Mon=0…Sun=6.
+  const jsDay = today.getDay()
+  const isoTodayIdx = jsDay === 0 ? 6 : jsDay - 1
+  const targetIdx = order.indexOf(day)
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - isoTodayIdx)
+  monday.setDate(monday.getDate() + targetIdx)
+  return monday
 }
 
 // ─── Blackout dates — modal + table (ported from the matrix prototype) ────────
