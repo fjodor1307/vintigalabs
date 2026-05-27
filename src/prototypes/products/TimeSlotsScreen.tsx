@@ -141,14 +141,30 @@ function DaySchedule({ day }: { day: Weekday }) {
             </Tag>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => productActions.addTimeSlot(day)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
-        >
-          <PlusIcon className="w-3.5 h-3.5" />
-          Add slot
-        </button>
+        <div className="flex items-center gap-vintiga-sm">
+          {slots.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<TrashIcon className="w-3.5 h-3.5" />}
+              onClick={() => {
+                if (window.confirm(`Delete every slot on ${day}? You can regenerate from operating hours.`)) {
+                  productActions.setTimeSlots(day, [])
+                }
+              }}
+            >
+              Delete all
+            </Button>
+          )}
+          <button
+            type="button"
+            onClick={() => productActions.addTimeSlot(day)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors cursor-pointer"
+          >
+            <PlusIcon className="w-3.5 h-3.5" />
+            Add slot
+          </button>
+        </div>
       </div>
 
       {/* Generate from operating hours */}
@@ -214,31 +230,11 @@ function DaySchedule({ day }: { day: Weekday }) {
 }
 
 function ReservationTimeSlots() {
-  const slotCount = useTotalSlotCount()
-  const handleDeleteAll = () => {
-    if (slotCount === 0) return
-    if (window.confirm('Delete every generated time slot for every day? Your operating hours stay set so you can regenerate.')) {
-      productActions.clearAllTimeSlots()
-    }
-  }
   return (
     <div className="flex flex-col gap-3">
-      {slotCount > 0 && (
-        <div className="flex items-center justify-between gap-vintiga-md">
-          <span className="typo-caption text-vintiga-slate-500">{slotCount} total slot{slotCount === 1 ? '' : 's'} across the week</span>
-          <Button variant="outline" size="sm" onClick={handleDeleteAll} leftIcon={<TrashIcon className="w-3.5 h-3.5" />}>
-            Delete all
-          </Button>
-        </div>
-      )}
       {WEEKDAYS.map((day) => <DaySchedule key={day} day={day} />)}
     </div>
   )
-}
-
-function useTotalSlotCount(): number {
-  const { timeSlotsByDay } = useProductState()
-  return WEEKDAYS.reduce((sum, d) => sum + timeSlotsByDay[d].length, 0)
 }
 
 /**
