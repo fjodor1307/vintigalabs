@@ -236,9 +236,18 @@ function SingleVariantForm({ variant, isSpirits }: { variant: Variant; isSpirits
   )
 }
 
+// Charge types we support natively in Vintiga. `48 hours advance` is a
+// Commerce 7-only option for now (it needs a cron job we haven't built); show
+// it in the dropdown only when the experience is C7-sourced, so the demo
+// doesn't lose data on a synced row.
+const VINTIGA_CHARGE_TYPES = ['On Booking', 'On Checkin', 'No Charge']
+const ALL_CHARGE_TYPES     = ['On Booking', '48 hours advance', 'On Checkin', 'No Charge']
+
 export function GeneralScreen() {
   const product = useProductState()
   const isExperience = product.productType === 'Experience'
+  const syncedFromC7 = product.source === 'commerce7'
+  const CHARGE_TYPE_OPTIONS = syncedFromC7 ? ALL_CHARGE_TYPES : VINTIGA_CHARGE_TYPES
   const effectiveType = product.productType === 'Wine' && product.productTypeOverride !== 'None'
     ? product.productTypeOverride
     : product.productType
@@ -292,41 +301,33 @@ export function GeneralScreen() {
           />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Status" required>
-            <Select
-              value={product.status}
-              onChange={(v) => productActions.setStatus(v as typeof product.status)}
-              options={['Available', 'Not Available']}
-            />
-          </Field>
-          <div className="flex items-center justify-between gap-vintiga-md pt-vintiga-lg">
-            <div className="flex flex-col">
-              <span className="typo-body-sm font-medium text-vintiga-slate-900">Redeemable with Loyalty Points</span>
-              <span className="typo-caption text-vintiga-slate-500">Members can pay using loyalty points.</span>
-            </div>
-            <Switch
-              checked={product.loyaltyPoints}
-              onChange={(next) => productActions.setLoyaltyPoints(next)}
-            />
-          </div>
-        </div>
+        <Field label="Status" required>
+          <Select
+            value={product.status}
+            onChange={(v) => productActions.setStatus(v as typeof product.status)}
+            options={['Available', 'Not Available']}
+          />
+        </Field>
 
         <Field label="Product Type">
-          <div className="inline-flex w-fit items-center gap-2 px-3 py-1.5 rounded-vintiga-md bg-vintiga-slate-100 typo-body-sm font-semibold text-vintiga-slate-700">
-            {effectiveType}
-            {product.productType === 'Wine' && (
-              <span className="typo-caption font-normal text-vintiga-slate-500">
-                {product.productTypeOverride !== 'None' ? 'Commerce7 type: Wine' : 'synced from Commerce7'}
-              </span>
-            )}
-          </div>
+          {product.productType === 'Wine' && product.productTypeOverride !== 'None' ? (
+            // Override active — render the local categorisation with the
+            // original type in parens (e.g. "Spirits (Wine)").
+            <div className="inline-flex w-fit items-center gap-1 px-3 py-1.5 rounded-vintiga-md bg-vintiga-slate-100 typo-body-sm font-semibold text-vintiga-slate-700">
+              {effectiveType}
+              <span className="font-normal text-vintiga-slate-500">({product.productType})</span>
+            </div>
+          ) : (
+            <div className="inline-flex w-fit items-center px-3 py-1.5 rounded-vintiga-md bg-vintiga-slate-100 typo-body-sm font-semibold text-vintiga-slate-700">
+              {effectiveType}
+            </div>
+          )}
         </Field>
 
         {product.productType === 'Wine' && (
           <Field
-            label="Reclassify as"
-            helper="Commerce7 stores this product as Wine. Reclassify it locally as Beer or Spirits to capture beverage-specific attributes — the Commerce7 source is never changed."
+            label="Categorize as"
+            helper="Override how Vintiga categorises this product locally — useful when the upstream type doesn't match (e.g. a beer or spirit that came in as Wine). Reports and filters use the categorised value."
           >
             <Select
               value={product.productTypeOverride}
@@ -375,6 +376,20 @@ export function GeneralScreen() {
 
       {isExperience && (
         <SectionCard title="Experience Details" icon={<PartyPopperIcon className="w-4 h-4" />}>
+          {syncedFromC7 && (
+            <div className="flex items-start gap-vintiga-sm rounded-vintiga-md bg-vintiga-slate-50 border border-vintiga-slate-200 px-vintiga-md py-vintiga-sm">
+              <InfoIcon className="w-4 h-4 text-vintiga-slate-500 shrink-0 mt-0.5" />
+              <span className="typo-caption text-vintiga-slate-600">
+                Synced from Commerce 7 — these fields are read-only here. Edit the experience in Commerce 7 and the changes will sync back.
+              </span>
+            </div>
+          )}
+          {/* `<fieldset disabled>` cascades to every form control inside —
+              cleanest way to lock the entire card when synced from C7. */}
+          <fieldset
+            disabled={syncedFromC7}
+            className={['contents', syncedFromC7 ? 'opacity-75' : ''].join(' ')}
+          >
           <div className="grid grid-cols-2 gap-4">
             <Field label="Experience Type" required>
               <Select
@@ -420,7 +435,7 @@ export function GeneralScreen() {
                 placeholder="e.g. 24"
                 value={product.leadTimeHours}
                 onChange={(e) => productActions.setAdvanced({ leadTimeHours: e.target.value })}
-                className="h-10 w-full pl-3 pr-14 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
+                className="h-10 w-full pl-3 pr-14 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               />
               <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">hrs</span>
             </div>
@@ -430,7 +445,7 @@ export function GeneralScreen() {
             <Select
               value={product.chargeType}
               onChange={(v) => productActions.setAdvanced({ chargeType: v as ProductState['chargeType'] })}
-              options={['On Booking', '48 hours advance', 'On Checkin', 'No Charge']}
+              options={CHARGE_TYPE_OPTIONS}
             />
           </Field>
 
@@ -441,6 +456,7 @@ export function GeneralScreen() {
             </div>
             <Switch
               checked={product.requiresHost}
+              disabled={syncedFromC7}
               onChange={(next) => productActions.setAdvanced({ requiresHost: next })}
             />
           </div>
@@ -452,6 +468,7 @@ export function GeneralScreen() {
             </div>
             <Switch
               checked={product.allowCancelOnline}
+              disabled={syncedFromC7}
               onChange={(next) => productActions.setAdvanced({ allowCancelOnline: next })}
             />
           </div>
@@ -459,6 +476,7 @@ export function GeneralScreen() {
           <Field label="Customer Instructions" helper="Emailed to the customer when they book this experience.">
             <RichTextEditor placeholder="e.g. Please arrive 10 minutes early. Parking is on the east lot." />
           </Field>
+          </fieldset>
         </SectionCard>
       )}
 

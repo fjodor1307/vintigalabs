@@ -6,6 +6,22 @@
 
 ---
 
+## 2026-05-27 — Fedja + Claude: Experience editor refresh (May 27 design review)
+
+**Source-aware editing.** New `product.source: 'vintiga' | 'commerce7'`, seeded on each catalogue row. Commerce 7-sourced experiences render the Experience Details card with an explanatory "Synced from Commerce 7" banner and every form control disabled (via a single `<fieldset disabled>` wrapper, including the toggle switches). The Vintiga editor never writes back to Commerce 7, so we lock the surface to avoid the illusion that you can.
+
+**Charge Type narrowed for Vintiga.** Native charges support "On Booking", "On Checkin", "No Charge". The "48 hours advance" option only appears for Commerce 7-synced rows (we don't run the cron yet); this prevents the demo from losing data on a synced row.
+
+**Summary tidy-up.**
+- Removed the "Redeemable with Loyalty Points" toggle entirely — Commerce 7's loyalty points are an opt-in add-on that doesn't map to anything in Vintiga, and we'll model member spend differently when we get there.
+- "Reclassify as" → **"Categorize as"** with rewritten helper text — the local override is a Vintiga categorisation, not an upstream rewrite.
+- Product Type chip drops the "Commerce7 type: Wine" / "synced from Commerce7" tail. When overridden, it now reads simply `Spirits (Wine)` — keeps the source visible without naming the integration.
+
+**Schedule — Blackouts.**
+- Removed the *Export to .ics* button — not a current ask, and it was wired to nothing.
+- Blackouts split into **Upcoming / Past** tabs with counts, so historical entries stay accessible without crowding the next few closures.
+- Blackout type `Custom` → `Other` (`BlackoutType` updated in the store).
+
 ## 2026-05-20 — Fedja + Claude: Single-variant inline view, beer/spirits attributes + Schedule tab
 
 Design-sync follow-ups for the product editor.

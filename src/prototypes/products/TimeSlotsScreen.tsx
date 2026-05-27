@@ -15,8 +15,10 @@ const TYPE_LABEL: Record<BlackoutType, string> = {
   holiday: 'Holiday',
   event:   'Event',
   ops:     'Ops',
-  custom:  'Custom',
+  other:   'Other',
 }
+
+type BlackoutWindow = 'upcoming' | 'past'
 
 function blackoutUid() { return `bl-${Math.random().toString(36).slice(2, 8)}` }
 
@@ -209,7 +211,7 @@ function toneFor(t: BlackoutType): 'violet' | 'orange' | 'teal' | 'default' {
     case 'holiday': return 'violet'
     case 'event':   return 'orange'
     case 'ops':     return 'teal'
-    case 'custom':  return 'default'
+    case 'other':   return 'default'
   }
 }
 
@@ -229,14 +231,32 @@ function formatDateShort(startIso: string, endIso: string): string {
 function BlackoutDatesCard() {
   const { blackouts } = useProductState()
   const [modalOpen, setModalOpen] = useState(false)
+  const [windowTab, setWindowTab] = useState<BlackoutWindow>('upcoming')
 
+  // Stable yyyy-mm-dd for "today" — anything ending before this is past.
+  const todayISO = new Date().toISOString().slice(0, 10)
+
+  const { upcoming, past } = useMemo(() => {
+    const upcoming: Blackout[] = []
+    const past: Blackout[] = []
+    for (const b of blackouts) {
+      const lastDay = b.end || b.start
+      if (lastDay < todayISO) past.push(b)
+      else upcoming.push(b)
+    }
+    upcoming.sort((a, b) => a.start.localeCompare(b.start))
+    past.sort((a, b) => b.start.localeCompare(a.start))
+    return { upcoming, past }
+  }, [blackouts, todayISO])
+
+  const visible = windowTab === 'upcoming' ? upcoming : past
   const totalClosedDays = useMemo(() => {
-    return blackouts.reduce((sum, b) => {
+    return upcoming.reduce((sum, b) => {
       if (!b.start) return sum
       if (!b.end || b.end === b.start) return sum + 1
       return sum + humanRange(b.start, b.end)
     }, 0)
-  }, [blackouts])
+  }, [upcoming])
 
   return (
     <SectionCard
@@ -245,10 +265,19 @@ function BlackoutDatesCard() {
         <Button variant="outline" size="sm" onClick={() => setModalOpen(true)} leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>Add dates</Button>
       }
     >
-      <p className="typo-body-sm text-vintiga-slate-500">{blackouts.length} entries · closed even when the weekly schedule allows</p>
+      <p className="typo-body-sm text-vintiga-slate-500">{upcoming.length} upcoming · closed even when the weekly schedule allows</p>
 
-      {blackouts.length === 0 ? (
-        <p className="typo-body-sm text-vintiga-slate-400 py-vintiga-md">No blackouts yet. Click "Add dates" to block out a holiday or event.</p>
+      <div className="flex items-center gap-1 self-start border border-vintiga-slate-200 rounded-vintiga-md p-1 bg-vintiga-slate-50">
+        <WindowTab active={windowTab === 'upcoming'} label="Upcoming" count={upcoming.length} onClick={() => setWindowTab('upcoming')} />
+        <WindowTab active={windowTab === 'past'}     label="Past"     count={past.length}     onClick={() => setWindowTab('past')} />
+      </div>
+
+      {visible.length === 0 ? (
+        <p className="typo-body-sm text-vintiga-slate-400 py-vintiga-md">
+          {windowTab === 'upcoming'
+            ? 'No upcoming blackouts. Click "Add dates" to block out a holiday or event.'
+            : 'No past blackouts on record.'}
+        </p>
       ) : (
         <Table>
           <TableHead>
@@ -260,7 +289,7 @@ function BlackoutDatesCard() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {blackouts.map((b) => (
+            {visible.map((b) => (
               <TableRow key={b.id}>
                 <TableCell>
                   <div className="flex flex-col">
@@ -290,12 +319,7 @@ function BlackoutDatesCard() {
         </Table>
       )}
 
-      <div className="flex items-center justify-between pt-1">
-        <span className="typo-caption text-vintiga-slate-500">{totalClosedDays} closed days total</span>
-        <button type="button" className="typo-caption font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 transition-colors cursor-pointer bg-transparent border-none">
-          Export to .ics
-        </button>
-      </div>
+      <span className="typo-caption text-vintiga-slate-500 pt-1">{totalClosedDays} upcoming closed days</span>
 
       <AddBlackoutModal
         open={modalOpen}
@@ -306,15 +330,34 @@ function BlackoutDatesCard() {
   )
 }
 
+function WindowTab({ active, label, count, onClick }: { active: boolean; label: string; count: number; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={[
+        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-vintiga-md typo-body-sm font-medium transition-colors cursor-pointer border border-transparent',
+        active
+          ? 'bg-vintiga-white text-vintiga-slate-900 border-vintiga-slate-200 shadow-sm'
+          : 'text-vintiga-slate-600 hover:text-vintiga-slate-900',
+      ].join(' ')}
+    >
+      {label}
+      <span className={['typo-caption tabular-nums', active ? 'text-vintiga-slate-500' : 'text-vintiga-slate-400'].join(' ')}>{count}</span>
+    </button>
+  )
+}
+
 function AddBlackoutModal({ open, onClose, onSave }: { open: boolean; onClose: () => void; onSave: (b: Blackout) => void }) {
   const [reason, setReason] = useState('')
-  const [type, setType] = useState<BlackoutType>('custom')
+  const [type, setType] = useState<BlackoutType>('other')
   const [start, setStart] = useState(new Date().toISOString().slice(0, 10))
   const [end, setEnd] = useState('')
 
   const reset = () => {
     setReason('')
-    setType('custom')
+    setType('other')
     setStart(new Date().toISOString().slice(0, 10))
     setEnd('')
   }
@@ -344,7 +387,7 @@ function AddBlackoutModal({ open, onClose, onSave }: { open: boolean; onClose: (
           <div className="flex flex-col gap-1.5">
             <span className="typo-body-sm font-medium text-vintiga-slate-700">Type</span>
             <div className="grid grid-cols-2 gap-2">
-              {(['holiday', 'event', 'ops', 'custom'] as BlackoutType[]).map((t) => (
+              {(['holiday', 'event', 'ops', 'other'] as BlackoutType[]).map((t) => (
                 <Radio key={t} checked={type === t} onChange={() => setType(t)} label={TYPE_LABEL[t]} />
               ))}
             </div>
