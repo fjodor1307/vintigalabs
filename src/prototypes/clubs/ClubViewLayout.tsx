@@ -35,9 +35,9 @@ function tabsForSlug(slug: string, kind: ClubKind): { value: ClubViewTab; label:
   const members  = { value: 'members'  as ClubViewTab, label: 'Members',  href: `#/web/clubs/view/${slug}/members`  }
   const emails   = { value: 'emails'   as ClubViewTab, label: 'Emails',   href: `#/web/clubs/view/${slug}/emails`   }
   if (kind === 'membership') return [overview, members, emails]
-  if (kind === 'account-credit') {
-    return [overview, members, { value: 'levels', label: 'Levels', href: `#/web/clubs/view/${slug}/levels` }, emails]
-  }
+  // Tasting Credit (account-credit) — levels live inline on the Overview;
+  // no separate Levels tab.
+  if (kind === 'account-credit') return [overview, members, emails]
   // curated + traditional — release-driven fulfilment
   return [overview, members, { value: 'releases', label: 'Releases', href: `#/web/clubs/view/${slug}/releases` }, emails]
 }

@@ -33,7 +33,8 @@ function tabsFor(type: ClubKind): { value: ClubEditorTab; label: string; href: s
   const overview = { value: 'overview' as ClubEditorTab, label: 'Overview', href: ROUTES.overview }
   const emails   = { value: 'emails'   as ClubEditorTab, label: 'Emails',   href: ROUTES.emails }
   if (type === 'curated')         return [overview, { value: 'releases', label: 'Releases', href: ROUTES.releases }, emails]
-  if (type === 'account-credit')  return [overview, { value: 'levels',   label: 'Levels',   href: ROUTES.levels   }, emails]
+  // Tasting Credit (account-credit) — levels live inline on the Overview now;
+  // no separate Levels tab.
   return [overview, emails]
 }
 

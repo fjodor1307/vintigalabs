@@ -7,8 +7,8 @@ import { Select } from '@ds/shared/Select'
 import { Checkbox } from '@ds/shared/Checkbox'
 import { Textarea } from '@ds/shared/Textarea'
 import { RichTextEditor } from '@ds/shared/RichTextEditor'
-import { Tag } from '@ds/shared/Tag'
 import { Media } from '@ds/shared/Media'
+import { LevelsEditor } from './LevelsEditor'
 // ─── ClubOverviewScreen ───────────────────────────────────────────────────────
 // First (and primary) tab of the club editor. Field set varies by type:
 //   • Curated / Membership → Has Membership Fee checkbox gates Fee + Tax Rate;
@@ -23,7 +23,6 @@ export function ClubOverviewScreen() {
   const club = useClubState()
   const showFeeToggle   = club.type === 'curated' || club.type === 'membership'
   const showInlineLevel = club.type === 'account-credit'
-  const defaultLevel    = showInlineLevel ? club.levels.find((l) => l.isDefault) ?? club.levels[0] : null
 
   return (
     <ClubEditorLayout activeTab="overview">
@@ -70,56 +69,17 @@ export function ClubOverviewScreen() {
         {/* Tasting Credit (account-credit): Cadence (club-wide) + inline default
             Level (Name + Amount + SKU). No Membership SKU at club level — SKU
             lives per level. No Tax Rate (always non-taxable, not displayed). */}
-        {showInlineLevel && defaultLevel && (
-          <>
-            <Field label="Cadence" required helper="How often members are charged. Applies to every level.">
-              <Select
-                value={club.cadence}
-                onChange={(e) => clubActions.patch('cadence', e.target.value as ContributionCadence)}
-                options={CADENCE_OPTIONS}
-              />
-            </Field>
-
-            <div className="border border-vintiga-slate-200 rounded-vintiga-lg p-vintiga-md flex flex-col gap-vintiga-md">
-              <div className="flex items-center gap-vintiga-sm">
-                <h3 className="typo-body-sm font-semibold text-vintiga-slate-900">Level 1</h3>
-                <Tag variant="filled" tone="default" size="sm">Default</Tag>
-                <a
-                  href="#/web/clubs/new/levels"
-                  className="ml-auto inline-flex items-center px-3 h-8 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors no-underline"
-                >
-                  View All
-                </a>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-md">
-                <Field label="Level Name" required>
-                  <TextField
-                    placeholder="e.g., Silver, Gold, Platinum"
-                    value={defaultLevel.name}
-                    onChange={(e) => clubActions.patchLevel(defaultLevel.id, { name: e.target.value })}
-                  />
-                </Field>
-                <Field label="Amount" required>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      value={defaultLevel.amount}
-                      onChange={(e) => clubActions.patchLevel(defaultLevel.id, { amount: Number(e.target.value) })}
-                      className="h-10 w-full pl-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
-                    />
-                    <span className="absolute top-1/2 -translate-y-1/2 right-3 typo-body-sm text-vintiga-slate-400 pointer-events-none">$</span>
-                  </div>
-                </Field>
-                <Field label="SKU" required>
-                  <TextField
-                    placeholder="Enter SKU"
-                    value={defaultLevel.sku}
-                    onChange={(e) => clubActions.patchLevel(defaultLevel.id, { sku: e.target.value })}
-                  />
-                </Field>
-              </div>
-            </div>
-          </>
+        {showInlineLevel && (
+          // Tasting Credit (account-credit) — club-wide Cadence sits in the
+          // Overview card; the full per-level editor (Add Level + Level rows)
+          // is rendered as its own card below.
+          <Field label="Cadence" required helper="How often members are charged. Applies to every level.">
+            <Select
+              value={club.cadence}
+              onChange={(e) => clubActions.patch('cadence', e.target.value as ContributionCadence)}
+              options={CADENCE_OPTIONS}
+            />
+          </Field>
         )}
 
         {/* Curated / Rewards: SKU + Duration are required at the top.
@@ -190,6 +150,11 @@ export function ClubOverviewScreen() {
         onUpload={(files) => clubActions.addImages(files)}
         onRemove={(id) => clubActions.removeImage(id)}
       />
+
+      {/* Section: Levels — Tasting Credit only. Full per-level editor (Add
+          Level + Level rows + Set as Default + delete) lives inline now that
+          the Levels tab has been retired. */}
+      {showInlineLevel && <LevelsEditor />}
 
       {/* Section: Terms & Conditions */}
       <SectionCard title={
