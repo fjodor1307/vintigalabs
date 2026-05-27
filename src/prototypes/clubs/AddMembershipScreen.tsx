@@ -372,9 +372,15 @@ function DeliveryOption({ selected, onClick, icon, label }: { selected: boolean;
           : 'border-vintiga-slate-200 hover:border-vintiga-slate-300',
       ].join(' ')}
     >
+      <span className={[
+        '[&>svg]:w-5 [&>svg]:h-5',
+        selected ? 'text-vintiga-indigo-600' : 'text-vintiga-slate-500',
+      ].join(' ')}>{icon}</span>
+      <span className={[
+        'typo-body-sm font-semibold flex-1',
+        selected ? 'text-vintiga-indigo-700' : 'text-vintiga-slate-900',
+      ].join(' ')}>{label}</span>
       <Radio checked={selected} aria-label={label} />
-      <span className="text-vintiga-slate-500 [&>svg]:w-5 [&>svg]:h-5">{icon}</span>
-      <span className="typo-body-sm font-semibold text-vintiga-slate-900">{label}</span>
     </div>
   )
 }
