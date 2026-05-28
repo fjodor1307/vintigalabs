@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { AppSidebar } from '@ds/shared/AppSidebar'
 import { Navbar } from '@ds/shared/Navbar'
 import { useResponsiveSidebar } from '@ds/shared/useResponsiveSidebar'
@@ -25,6 +25,7 @@ import {
 import { CUSTOMER, type CustomerNote, type NoteKind } from './customerSample'
 import { customerActions, useCustomerDisplayName, useCustomerNotes } from './customerStore'
 import { NoteModal } from './NoteModal'
+import { CONVERSATIONS } from '../sales-chat/chatSamples'
 
 // ─── CustomerViewLayout ───────────────────────────────────────────────────────
 // Shared shell for the customer detail flow — AppSidebar (Customers active) +
@@ -240,6 +241,24 @@ export function CustomerViewLayout({
 }) {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
   const displayName = useCustomerDisplayName()
+  const launcher = useLauncherContext()
+  // When launched from Sales Chat we route the breadcrumbs back through the
+  // conversation thread the user came from (not the inbox list), so a single
+  // click lands them back on the chat they were reading.
+  const salesChatHref = launcher.conv
+    ? `#/web/sales-chat/${launcher.conv.id}`
+    : '#/web/sales-chat'
+  const breadcrumbs = launcher.fromSalesChat
+    ? [
+        { icon: <BreadcrumbHomeIcon />, href: '#/web/sales-chat' },
+        { label: 'Sales Chat', href: salesChatHref },
+        { label: displayName },
+      ]
+    : [
+        { icon: <BreadcrumbHomeIcon />, href: '#/web/customers' },
+        { label: 'Customers', href: '#/web/customers' },
+        { label: displayName },
+      ]
 
   return (
     <div className="flex h-full bg-vintiga-white">
@@ -261,11 +280,7 @@ export function CustomerViewLayout({
         />
         <div className="flex-1 overflow-y-auto pt-16 bg-vintiga-white">
           <PageTemplate
-            breadcrumbs={[
-              { icon: <BreadcrumbHomeIcon />, href: '#/web/customers' },
-              { label: 'Customers', href: '#/web/customers' },
-              { label: displayName },
-            ]}
+            breadcrumbs={breadcrumbs}
             title={hideTitle ? undefined : displayName}
             actions={
               hideTitle
@@ -302,4 +317,32 @@ export function CustomerViewLayout({
       </div>
     </div>
   )
+}
+
+// ─── Launcher context ────────────────────────────────────────────────────────
+// Parses `?from=…&conv=…` off the hash so the breadcrumb trail can route back
+// to wherever the user arrived from. Today only handles `from=sales-chat`;
+// add more clauses as other surfaces start linking in.
+
+interface LauncherContext {
+  fromSalesChat: boolean
+  conv: (typeof CONVERSATIONS)[number] | null
+}
+
+function useLauncherContext(): LauncherContext {
+  const [hash, setHash] = useState(() => (typeof window !== 'undefined' ? window.location.hash : ''))
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const onChange = () => setHash(window.location.hash)
+    window.addEventListener('hashchange', onChange)
+    return () => window.removeEventListener('hashchange', onChange)
+  }, [])
+
+  const qIdx = hash.indexOf('?')
+  if (qIdx === -1) return { fromSalesChat: false, conv: null }
+  const params = new URLSearchParams(hash.slice(qIdx + 1))
+  const fromSalesChat = params.get('from') === 'sales-chat'
+  const convId = params.get('conv')
+  const conv = convId ? CONVERSATIONS.find((c) => c.id === convId) ?? null : null
+  return { fromSalesChat, conv }
 }

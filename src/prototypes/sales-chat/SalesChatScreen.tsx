@@ -301,7 +301,16 @@ function CustomerRail({ conv }: { conv: ChatConversation }) {
       </div>
 
       <div className="px-vintiga-lg py-vintiga-md mt-auto">
-        <Button variant="outline" size="md" fullWidth onClick={() => {}}>
+        <Button
+          variant="outline"
+          size="md"
+          fullWidth
+          onClick={() => {
+            // Carry the conversation id so the customer view can render a
+            // "← Sales Chat / {conversation}" breadcrumb that routes back here.
+            window.location.hash = `#/web/customers/view/overview?from=sales-chat&conv=${conv.id}`
+          }}
+        >
           View customer profile
         </Button>
       </div>
