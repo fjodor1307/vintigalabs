@@ -8,6 +8,8 @@ import { Tag } from '@ds/shared/Tag'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@ds/shared/Modal'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@ds/shared/Table'
 import { useProductState, productActions, WEEKDAYS, type Blackout, type BlackoutType, type TimeSlot, type Weekday } from './productStore'
+import { useGlobalBlackouts, globalBlackoutsActions, type GlobalBlackout } from '../_shared/globalBlackoutsStore'
+import { Switch } from '@ds/shared/Switch'
 import { PlusIcon, TrashIcon } from '@ds/icons/Icons'
 
 type Period = 'AM' | 'PM'
@@ -116,16 +118,22 @@ const PERIOD_SELECT = 'h-9 px-2 rounded-vintiga-md border border-vintiga-slate-2
 
 function DaySchedule({ day }: { day: Weekday }) {
   const { timeSlotsByDay, bookingInterval, blackouts } = useProductState()
+  const globalBlackouts = useGlobalBlackouts()
   const slots = timeSlotsByDay[day]
   // Operating window used by "Generate slots" — local to the editor.
   const [open, setOpen] = useState<{ time: string; period: Period }>({ time: '9:00', period: 'AM' })
   const [close, setClose] = useState<{ time: string; period: Period }>({ time: '5:00', period: 'PM' })
 
-  // Current-week blackout indicator. If today's calendar week has this weekday
-  // covered by an active blackout, surface a small pill next to the weekday
-  // label so the operator doesn't have to scroll down and cross-reference the
-  // blackout table for "what's actually closed this week".
-  const thisWeekHit = findCurrentWeekBlackout(day, blackouts)
+  // Actual calendar date for this weekday in the current Mon-anchored week,
+  // formatted "May 25". Pinned next to the day name so the operator knows
+  // which specific date the pill / schedule lines up against.
+  const targetDate = dateForDayInCurrentWeek(day)
+  const dateLabel = targetDate.toLocaleString('en-US', { month: 'short', day: 'numeric' })
+
+  // Current-week closure indicator — scans both per-experience and global
+  // blackouts. The pill shows the source ("Global" / "This experience") so
+  // the operator knows where the entry lives.
+  const thisWeekHit = findCurrentWeekClosure(day, blackouts, globalBlackouts)
 
   return (
     <div className={[
@@ -135,9 +143,11 @@ function DaySchedule({ day }: { day: Weekday }) {
       <div className="flex items-center justify-between gap-vintiga-md flex-wrap">
         <div className="flex items-center gap-vintiga-sm flex-wrap">
           <span className="typo-body-sm font-semibold text-vintiga-slate-900">{day}</span>
+          <span className="typo-caption text-vintiga-slate-500 tabular-nums">{dateLabel}</span>
           {thisWeekHit && (
             <Tag variant="filled" tone={toneFor(thisWeekHit.type)} size="sm">
-              Closed this {day.slice(0, 3)} · {thisWeekHit.reason}
+              {thisWeekHit.scope === 'global' ? 'Global · ' : 'This experience · '}
+              {thisWeekHit.reason}
             </Tag>
           )}
         </div>
@@ -238,19 +248,30 @@ function ReservationTimeSlots() {
 }
 
 /**
- * Find a blackout (if any) that covers `day` (Mon–Sun) in the **current
- * calendar week** (Mon-anchored). Returns the active blackout, or `null` if
- * the day is currently scheduled to run as normal.
+ * Find a blackout (if any) covering `day` in the **current calendar week**
+ * (Mon-anchored). Scans both per-experience and global lists; returns a
+ * normalised row tagged with its scope so the pill can call out the source.
  */
-function findCurrentWeekBlackout(day: Weekday, blackouts: Blackout[]): Blackout | null {
+interface DayClosure {
+  reason: string
+  type: BlackoutType
+  scope: 'experience' | 'global'
+}
+function findCurrentWeekClosure(
+  day: Weekday,
+  perExperience: Blackout[],
+  globals: GlobalBlackout[],
+): DayClosure | null {
   const targetISO = toLocalISODate(dateForDayInCurrentWeek(day))
-  return (
-    blackouts.find((b) => {
-      const start = b.start
-      const end = b.end || b.start
-      return start <= targetISO && targetISO <= end
-    }) ?? null
-  )
+  const covers = (b: { start: string; end: string }) => {
+    const end = b.end || b.start
+    return b.start <= targetISO && targetISO <= end
+  }
+  const ownHit = perExperience.find(covers)
+  if (ownHit) return { reason: ownHit.reason, type: ownHit.type, scope: 'experience' }
+  const globalHit = globals.find(covers)
+  if (globalHit) return { reason: globalHit.reason, type: globalHit.type, scope: 'global' }
+  return null
 }
 
 /** yyyy-mm-dd in the *local* timezone. `toISOString()` uses UTC and can
@@ -302,18 +323,34 @@ function formatDateShort(startIso: string, endIso: string): string {
   return `${fmt(startIso)} – ${fmt(endIso)}`
 }
 
+/** Merged-list row — flatten Blackout / GlobalBlackout into one shape so the
+ *  table can render both with a Scope column and a per-source delete handler. */
+interface MergedBlackout {
+  id: string
+  reason: string
+  type: BlackoutType
+  start: string
+  end: string
+  scope: 'experience' | 'global'
+}
+
 function BlackoutDatesCard() {
   const { blackouts } = useProductState()
+  const globalBlackouts = useGlobalBlackouts()
   const [modalOpen, setModalOpen] = useState(false)
   const [windowTab, setWindowTab] = useState<BlackoutWindow>('upcoming')
 
-  // Stable yyyy-mm-dd for "today" — anything ending before this is past.
   const todayISO = new Date().toISOString().slice(0, 10)
 
+  const merged: MergedBlackout[] = useMemo(() => [
+    ...blackouts.map((b): MergedBlackout => ({ ...b, scope: 'experience' })),
+    ...globalBlackouts.map((b): MergedBlackout => ({ ...b, scope: 'global' })),
+  ], [blackouts, globalBlackouts])
+
   const { upcoming, past } = useMemo(() => {
-    const upcoming: Blackout[] = []
-    const past: Blackout[] = []
-    for (const b of blackouts) {
+    const upcoming: MergedBlackout[] = []
+    const past: MergedBlackout[] = []
+    for (const b of merged) {
       const lastDay = b.end || b.start
       if (lastDay < todayISO) past.push(b)
       else upcoming.push(b)
@@ -321,7 +358,7 @@ function BlackoutDatesCard() {
     upcoming.sort((a, b) => a.start.localeCompare(b.start))
     past.sort((a, b) => b.start.localeCompare(a.start))
     return { upcoming, past }
-  }, [blackouts, todayISO])
+  }, [merged, todayISO])
 
   const visible = windowTab === 'upcoming' ? upcoming : past
   const totalClosedDays = useMemo(() => {
@@ -332,6 +369,15 @@ function BlackoutDatesCard() {
     }, 0)
   }, [upcoming])
 
+  const handleRemove = (b: MergedBlackout) => {
+    if (b.scope === 'global') {
+      if (!window.confirm(`"${b.reason}" is a global closure — removing it deletes it from every experience. Continue?`)) return
+      globalBlackoutsActions.remove(b.id)
+    } else {
+      productActions.removeBlackout(b.id)
+    }
+  }
+
   return (
     <SectionCard
       title="Blackout Dates"
@@ -339,11 +385,13 @@ function BlackoutDatesCard() {
         <Button variant="outline" size="sm" onClick={() => setModalOpen(true)} leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>Add dates</Button>
       }
     >
-      <p className="typo-body-sm text-vintiga-slate-500">{upcoming.length} upcoming · closed even when the weekly schedule allows</p>
+      <p className="typo-body-sm text-vintiga-slate-500">
+        {upcoming.length} upcoming · {upcoming.filter((b) => b.scope === 'global').length} global, {upcoming.filter((b) => b.scope === 'experience').length} this experience
+      </p>
 
       <SegmentedControl<BlackoutWindow>
         className="self-start"
-        size="sm"
+        size="md"
         aria-label="Blackout window"
         value={windowTab}
         onChange={setWindowTab}
@@ -366,12 +414,13 @@ function BlackoutDatesCard() {
               <TableHeader>Reason</TableHeader>
               <TableHeader>Type</TableHeader>
               <TableHeader>Date</TableHeader>
+              <TableHeader>Scope</TableHeader>
               <TableHeader className="w-12" />
             </TableRow>
           </TableHead>
           <TableBody>
             {visible.map((b) => (
-              <TableRow key={b.id}>
+              <TableRow key={`${b.scope}-${b.id}`}>
                 <TableCell>
                   <div className="flex flex-col">
                     <span className="font-medium text-vintiga-slate-900">{b.reason}</span>
@@ -384,10 +433,13 @@ function BlackoutDatesCard() {
                   <Tag variant="filled" tone={toneFor(b.type)}>{TYPE_LABEL[b.type]}</Tag>
                 </TableCell>
                 <TableCell className="text-vintiga-slate-700">{formatDateShort(b.start, b.end)}</TableCell>
+                <TableCell>
+                  <ScopeTag scope={b.scope} />
+                </TableCell>
                 <TableCell className="text-right">
                   <button
                     type="button"
-                    onClick={() => productActions.removeBlackout(b.id)}
+                    onClick={() => handleRemove(b)}
                     aria-label="Remove blackout"
                     className="w-7 h-7 inline-flex items-center justify-center rounded-vintiga-md text-vintiga-slate-400 hover:text-vintiga-red-600 hover:bg-vintiga-slate-100 transition-colors cursor-pointer bg-transparent border border-transparent"
                   >
@@ -405,10 +457,28 @@ function BlackoutDatesCard() {
       <AddBlackoutModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSave={(b) => { productActions.addBlackout(b); setModalOpen(false) }}
+        onSave={(payload, isGlobal) => {
+          if (isGlobal) {
+            globalBlackoutsActions.add(payload)
+          } else {
+            productActions.addBlackout({ ...payload, id: blackoutUid() })
+          }
+          setModalOpen(false)
+        }}
       />
     </SectionCard>
   )
+}
+
+// Color-coded scope chip — sky/blue for global (tenant-wide), neutral for
+// experience-local. Using outline + neutral-dark variants to differentiate
+// the scope tag from the type tag (Holiday / Event / Ops / Other) without
+// clashing on tone.
+function ScopeTag({ scope }: { scope: 'experience' | 'global' }) {
+  if (scope === 'global') {
+    return <Tag variant="filled" tone="info" size="md">Global</Tag>
+  }
+  return <Tag variant="outline" size="md">This experience</Tag>
 }
 
 // Segment label with a trailing numeric count, muted relative to the label
@@ -422,22 +492,37 @@ function WindowLabel({ label, count, active }: { label: string; count: number; a
   )
 }
 
-function AddBlackoutModal({ open, onClose, onSave }: { open: boolean; onClose: () => void; onSave: (b: Blackout) => void }) {
+function AddBlackoutModal({
+  open,
+  onClose,
+  onSave,
+}: {
+  open: boolean
+  onClose: () => void
+  /** Receives a payload + whether this should be saved as a global tenant-wide
+   *  closure (true) or kept local to this experience (false). */
+  onSave: (payload: { reason: string; type: BlackoutType; start: string; end: string }, isGlobal: boolean) => void
+}) {
   const [reason, setReason] = useState('')
   const [type, setType] = useState<BlackoutType>('other')
   const [start, setStart] = useState(new Date().toISOString().slice(0, 10))
   const [end, setEnd] = useState('')
+  const [isGlobal, setIsGlobal] = useState(false)
 
   const reset = () => {
     setReason('')
     setType('other')
     setStart(new Date().toISOString().slice(0, 10))
     setEnd('')
+    setIsGlobal(false)
   }
 
   const handleClose = () => { reset(); onClose() }
   const handleSave = () => {
-    onSave({ id: blackoutUid(), reason: reason || TYPE_LABEL[type], type, start, end: end && end !== start ? end : '' })
+    onSave(
+      { reason: reason || TYPE_LABEL[type], type, start, end: end && end !== start ? end : '' },
+      isGlobal,
+    )
     reset()
   }
 
@@ -486,6 +571,14 @@ function AddBlackoutModal({ open, onClose, onSave }: { open: boolean; onClose: (
                 className="h-10 px-3 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
               />
             </label>
+          </div>
+
+          <div className="flex items-start justify-between gap-vintiga-md pt-vintiga-sm border-t border-vintiga-slate-100">
+            <div className="flex flex-col">
+              <span className="typo-body-sm font-medium text-vintiga-slate-900">Apply to all experiences</span>
+              <span className="typo-caption text-vintiga-slate-500">Saves this as a tenant-wide closure (e.g. national holiday). Off keeps it local to this experience only.</span>
+            </div>
+            <Switch checked={isGlobal} onChange={setIsGlobal} />
           </div>
         </div>
       </ModalBody>

@@ -6,6 +6,26 @@
 
 ---
 
+## 2026-05-27 — Fedja + Claude: Global blackouts + scoped table on Schedule tab
+
+The Schedule tab's blackouts now merge tenant-wide closures with per-experience ones into a single source-tagged table — landed after the client follow-up asking for clearer date labelling and inline global authoring.
+
+**Weekly grid:**
+- Each day card now writes the actual date next to the weekday name (e.g. `Monday May 25`) so the operator sees which calendar date the pill refers to.
+- The current-week pill calls out the source: `Global · Memorial Day` vs `This experience · Private event`.
+
+**Blackouts table:**
+- One table, one Upcoming/Past control. Each row gets a **Scope** column with a `Global` filled tag (info tone) or `This experience` outline tag.
+- Header line summarises counts: *X upcoming · Y global, Z this experience*.
+
+**Add modal:**
+- New **Apply to all experiences** switch. On → saves to the global store; off → keeps the closure local. The same modal authors both, so admins don't have to go to Settings to create a tenant-wide closure.
+- Deleting a global from the merged table prompts for confirmation since it affects every experience.
+
+**Data:**
+- New `src/prototypes/_shared/globalBlackoutsStore.ts` for the tenant-wide list (seeded with Memorial Day, July 4, Thanksgiving). `useSyncExternalStore` pattern, matching the rest of the codebase.
+- Per-experience seed dropped Memorial Day / Independence Day to avoid double-listing.
+
 ## 2026-05-27 — Fedja + Claude: Experience editor refresh (May 27 design review)
 
 **Source-aware editing.** New `product.source: 'vintiga' | 'commerce7'`, seeded on each catalogue row. Commerce 7-sourced experiences render the Experience Details card with an explanatory "Synced from Commerce 7" banner and every form control disabled (via a single `<fieldset disabled>` wrapper, including the toggle switches). The Vintiga editor never writes back to Commerce 7, so we lock the surface to avoid the illusion that you can.
