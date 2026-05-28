@@ -26,7 +26,9 @@ import {
   CONVERSATIONS,
   type ChatConversation,
   type ChatMessage,
+  type ChatSource,
 } from './chatSamples'
+import { SegmentedControl } from '@ds/shared/SegmentedControl'
 import { TemplatePicker } from './TemplatePicker'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -54,6 +56,44 @@ function fmtTime(offsetMin: number): string {
   if (h < 24) return `${h}h ago`
   const d = Math.floor(h / 24)
   return `${d}d ago`
+}
+
+// ─── Source labelling ────────────────────────────────────────────────────────
+// Drives the inline channel pill on each conversation row and the filter
+// tabs above the inbox.
+
+type InboxFilter = 'all' | ChatSource
+
+const SOURCE_META: Record<ChatSource, { label: string; dotClass: string }> = {
+  whatsapp: { label: 'WhatsApp', dotClass: 'bg-vintiga-green-500' },
+  website:  { label: 'Website',  dotClass: 'bg-vintiga-indigo-500' },
+  members:  { label: 'Members',  dotClass: 'bg-vintiga-violet-500' },
+}
+
+/** Tab label with a trailing unread-count chip. Hidden when the count is
+ *  zero so quiet channels stay tidy. */
+function ChannelLabel({ label, count, active }: { label: string; count: number; active: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {label}
+      {count > 0 && (
+        <span className={[
+          'typo-caption tabular-nums px-1 rounded-full min-w-[16px] text-center',
+          active ? 'bg-vintiga-indigo-100 text-vintiga-indigo-700' : 'bg-vintiga-slate-100 text-vintiga-slate-500',
+        ].join(' ')}>{count}</span>
+      )}
+    </span>
+  )
+}
+
+function SourcePill({ source }: { source: ChatSource }) {
+  const meta = SOURCE_META[source]
+  return (
+    <span className="inline-flex items-center gap-1 typo-caption text-vintiga-slate-500">
+      <span className={['w-1.5 h-1.5 rounded-full', meta.dotClass].join(' ')} />
+      {meta.label}
+    </span>
+  )
 }
 
 // ─── Conversation list (left pane) ───────────────────────────────────────────
@@ -95,10 +135,7 @@ function ConvListItem({
           {last?.body}
         </p>
         <div className="flex items-center gap-vintiga-xs">
-          <span className="inline-flex items-center gap-1 typo-caption text-vintiga-slate-500">
-            <span className="w-1.5 h-1.5 rounded-full bg-vintiga-green-500" />
-            WhatsApp
-          </span>
+          <SourcePill source={conv.source} />
           {expired ? (
             <span className="typo-caption text-vintiga-orange-600 font-medium">
               · Session expired
@@ -181,19 +218,20 @@ function Composer({
 
   if (expired) {
     return (
-      <div className="border-t border-vintiga-slate-200 bg-vintiga-orange-50/40 px-vintiga-lg py-vintiga-md flex items-center gap-vintiga-md">
-        <LockIcon className="w-5 h-5 text-vintiga-orange-600 shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="typo-body-sm font-semibold text-vintiga-slate-900">
-            24-hour customer service window has expired
-          </p>
-          <p className="typo-caption text-vintiga-slate-600">
-            You can only send a pre-approved template until the customer replies again.
-          </p>
-        </div>
-        <Button variant="solid" size="md" leftIcon={<LayersIcon />} onClick={onOpenTemplates}>
-          Use template
-        </Button>
+      // Slim strip — copy carries the call to action (text link → template
+      // picker), no separate button per the May 28 review with Donna.
+      <div className="border-t border-vintiga-slate-200 bg-vintiga-orange-50/40 px-vintiga-lg py-vintiga-md flex items-center gap-vintiga-sm">
+        <LockIcon className="w-4 h-4 text-vintiga-orange-600 shrink-0" />
+        <p className="typo-body-sm text-vintiga-slate-700">
+          Session expired — templates only.{' '}
+          <button
+            type="button"
+            onClick={onOpenTemplates}
+            className="typo-body-sm font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 underline-offset-2 hover:underline bg-transparent border-none p-0 cursor-pointer"
+          >
+            Open templates
+          </button>
+        </p>
       </div>
     )
   }
@@ -230,7 +268,7 @@ function Composer({
 function CustomerRail({ conv }: { conv: ChatConversation }) {
   const c = conv.customer
   return (
-    <aside className="w-[320px] shrink-0 border-l border-vintiga-slate-200 bg-vintiga-white flex flex-col">
+    <aside className="hidden lg:flex w-[320px] shrink-0 border-l border-vintiga-slate-200 bg-vintiga-white flex-col">
       <div className="px-vintiga-lg py-vintiga-lg flex flex-col items-center gap-vintiga-sm border-b border-vintiga-slate-200">
         <Avatar initials={c.initials} size="xl" />
         <div className="flex flex-col items-center gap-1">
@@ -330,29 +368,42 @@ export function SalesChatScreen() {
   const [convs,    setConvs]    = useState<ChatConversation[]>(CONVERSATIONS)
   const [search,   setSearch]   = useState('')
   const [picking,  setPicking]  = useState(false)
+  const [channel,  setChannel]  = useState<InboxFilter>('all')
 
   const initialId = readSelectedFromHash() ?? convs[0]?.id ?? null
   const [selectedId, setSelectedId] = useState<string | null>(initialId)
 
-  // Keep the hash in sync (one-way: state → hash, on selection change)
+  // Keep the hash in sync (one-way: state → hash, on selection change).
+  // Clearing the selection on mobile (back arrow) routes back to the index.
   useEffect(() => {
-    if (!selectedId) return
-    const next = `#/web/sales-chat/${selectedId}`
+    const next = selectedId ? `#/web/sales-chat/${selectedId}` : '#/web/sales-chat'
     if (window.location.hash !== next) window.location.hash = next
   }, [selectedId])
 
+  // Counts per channel — drive the badge after each tab label so the operator
+  // knows where work is queued up without flipping through tabs.
+  const counts = useMemo(() => {
+    const c = { all: 0, whatsapp: 0, website: 0, members: 0 } as Record<InboxFilter, number>
+    convs.forEach((cv) => { c.all += cv.unread; c[cv.source] += cv.unread })
+    return c
+  }, [convs])
+
   const filtered = useMemo(() => {
+    const byChannel = channel === 'all' ? convs : convs.filter((c) => c.source === channel)
     const q = search.toLowerCase().trim()
-    if (!q) return convs
-    return convs.filter(
+    if (!q) return byChannel
+    return byChannel.filter(
       (c) =>
         c.customer.name.toLowerCase().includes(q) ||
         c.customer.phone.toLowerCase().includes(q) ||
         c.messages.some((m) => m.body.toLowerCase().includes(q)),
     )
-  }, [convs, search])
+  }, [convs, channel, search])
 
-  const selected = convs.find((c) => c.id === selectedId) ?? convs[0]
+  // `selected` only resolves when the operator has actively chosen a thread.
+  // We DON'T fall back to convs[0] anymore — on mobile that would prevent the
+  // "back to inbox" gesture from clearing the thread pane.
+  const selected = convs.find((c) => c.id === selectedId) ?? null
   const expired  = selected ? selected.windowRemainingMin <= 0 : false
 
   // Scroll the thread to the bottom when conversation changes or a message is appended.
@@ -400,8 +451,14 @@ export function SalesChatScreen() {
         <main className="flex-1 overflow-hidden pt-16 bg-vintiga-slate-50">
           <div className="h-full flex">
             {/* ── Left: inbox list ─────────────────────────────────────── */}
-            <aside className="w-[340px] shrink-0 border-r border-vintiga-slate-200 bg-vintiga-white flex flex-col">
-              <div className="px-vintiga-lg py-vintiga-lg border-b border-vintiga-slate-200 flex flex-col gap-vintiga-sm">
+            {/* Mobile: shown only when no conversation is open. */}
+            <aside
+              className={[
+                'w-full md:w-[340px] shrink-0 border-r border-vintiga-slate-200 bg-vintiga-white flex-col',
+                selected ? 'hidden md:flex' : 'flex',
+              ].join(' ')}
+            >
+              <div className="px-vintiga-lg pt-vintiga-lg pb-vintiga-md border-b border-vintiga-slate-200 flex flex-col gap-vintiga-sm">
                 <h1 className="typo-title-section font-semibold text-vintiga-slate-900">
                   Sales Chat
                 </h1>
@@ -410,6 +467,18 @@ export function SalesChatScreen() {
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search conversations"
                   leftIcon={<SearchIcon />}
+                />
+                <SegmentedControl<InboxFilter>
+                  size="sm"
+                  aria-label="Inbox channel"
+                  value={channel}
+                  onChange={setChannel}
+                  options={[
+                    { value: 'all',      label: <ChannelLabel label="All"     count={counts.all}      active={channel === 'all'} /> },
+                    { value: 'whatsapp', label: <ChannelLabel label="Direct"  count={counts.whatsapp} active={channel === 'whatsapp'} /> },
+                    { value: 'website',  label: <ChannelLabel label="Website" count={counts.website}  active={channel === 'website'} /> },
+                    { value: 'members',  label: <ChannelLabel label="Members" count={counts.members}  active={channel === 'members'} /> },
+                  ]}
                 />
               </div>
               <div className="flex-1 overflow-y-auto">
@@ -431,18 +500,42 @@ export function SalesChatScreen() {
             </aside>
 
             {/* ── Center: thread ───────────────────────────────────────── */}
-            <section className="flex-1 min-w-0 flex flex-col bg-vintiga-slate-50">
+            {/* Mobile: shown only when a conversation is open (no inbox visible). */}
+            <section
+              className={[
+                'flex-1 min-w-0 flex-col bg-vintiga-slate-50',
+                selected ? 'flex' : 'hidden md:flex',
+              ].join(' ')}
+            >
+              {!selected && (
+                <div className="hidden md:flex flex-1 items-center justify-center text-center px-vintiga-lg">
+                  <p className="typo-body-sm text-vintiga-slate-500 max-w-xs">
+                    Pick a conversation from the inbox to view it here.
+                  </p>
+                </div>
+              )}
               {selected && (
                 <>
                   <header className="px-vintiga-lg py-vintiga-md border-b border-vintiga-slate-200 bg-vintiga-white flex items-center gap-vintiga-md">
+                    {/* Mobile back arrow — closes the thread and reveals the inbox. */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(null)}
+                      className="md:hidden -ml-1 w-8 h-8 inline-flex items-center justify-center rounded-vintiga-md text-vintiga-slate-600 hover:bg-vintiga-slate-100 bg-transparent border-none cursor-pointer"
+                      aria-label="Back to inbox"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
                     <Avatar initials={selected.customer.initials} size="md" />
                     <div className="flex-1 min-w-0">
                       <p className="typo-body font-semibold text-vintiga-slate-900 truncate">
                         {selected.customer.name}
                       </p>
-                      <p className="typo-caption text-vintiga-slate-500 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-vintiga-green-500" />
-                        WhatsApp · {selected.customer.phone}
+                      <p className="typo-caption text-vintiga-slate-500 flex items-center gap-1 min-w-0">
+                        <SourcePill source={selected.source} />
+                        {selected.customer.phone && (
+                          <span className="hidden sm:inline text-vintiga-slate-400 truncate">· {selected.customer.phone}</span>
+                        )}
                       </p>
                     </div>
                     <Tag
@@ -485,6 +578,7 @@ export function SalesChatScreen() {
         open={picking}
         onClose={() => setPicking(false)}
         onSend={(body, templateId) => appendMessage(body, templateId)}
+        customer={selected?.customer}
       />
     </div>
   )

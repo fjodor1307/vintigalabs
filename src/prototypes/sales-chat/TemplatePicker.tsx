@@ -4,7 +4,7 @@ import { Button } from '@ds/shared/Button'
 import { TextField } from '@ds/shared/TextField'
 import { Tag, type TagTone } from '@ds/shared/Tag'
 import { SearchIcon } from '@ds/icons/Icons'
-import { TEMPLATES, type MessageTemplate, type TemplateCategory } from './chatSamples'
+import { TEMPLATES, readCustomerVar, type ChatCustomer, type MessageTemplate, type TemplateCategory } from './chatSamples'
 
 // ─── TemplatePicker ──────────────────────────────────────────────────────────
 // Two-step modal:
@@ -13,6 +13,7 @@ import { TEMPLATES, type MessageTemplate, type TemplateCategory } from './chatSa
 // `onSend` returns the rendered body so the parent can append a message.
 
 const CATEGORY_TONE: Record<TemplateCategory, TagTone> = {
+  compliance:     'warning',
   marketing:      'info',
   utility:        'success',
   authentication: 'warning',
@@ -20,6 +21,7 @@ const CATEGORY_TONE: Record<TemplateCategory, TagTone> = {
 }
 
 const CATEGORY_LABEL: Record<TemplateCategory, string> = {
+  compliance:     'Compliance',
   marketing:      'Marketing',
   utility:        'Utility',
   authentication: 'Authentication',
@@ -30,9 +32,12 @@ interface TemplatePickerProps {
   open: boolean
   onClose: () => void
   onSend: (body: string, templateId: string) => void
+  /** When provided, template variables flagged `fillFrom: …` pre-fill from
+   *  this customer the moment a template is opened. */
+  customer?: ChatCustomer
 }
 
-export function TemplatePicker({ open, onClose, onSend }: TemplatePickerProps) {
+export function TemplatePicker({ open, onClose, onSend, customer }: TemplatePickerProps) {
   const [picked, setPicked] = useState<MessageTemplate | null>(null)
   const [values, setValues] = useState<string[]>([])
   const [query,  setQuery]  = useState('')
@@ -57,7 +62,12 @@ export function TemplatePicker({ open, onClose, onSend }: TemplatePickerProps) {
 
   function selectTemplate(t: MessageTemplate) {
     setPicked(t)
-    setValues(new Array(t.variables.length).fill(''))
+    // Seed the value array from the active customer's profile. Variables
+    // without a `fillFrom` start empty; ones we can resolve land pre-filled
+    // so the operator skips typing the obvious bits (first name, city, …).
+    setValues(
+      t.variables.map((v) => (v.fillFrom && customer ? readCustomerVar(customer, v.fillFrom) : '')),
+    )
   }
 
   const rendered = useMemo(() => {
@@ -134,19 +144,23 @@ export function TemplatePicker({ open, onClose, onSend }: TemplatePickerProps) {
             </div>
 
             <div className="flex flex-col gap-vintiga-sm">
-              {picked.variables.map((label, i) => (
-                <TextField
-                  key={i}
-                  label={`{{${i + 1}}} — ${label}`}
-                  value={values[i] ?? ''}
-                  onChange={(e) => {
-                    const next = [...values]
-                    next[i] = e.target.value
-                    setValues(next)
-                  }}
-                  placeholder={label}
-                />
-              ))}
+              {picked.variables.map((v, i) => {
+                const autoFilled = !!v.fillFrom && (values[i] ?? '').length > 0
+                return (
+                  <TextField
+                    key={i}
+                    label={`{{${i + 1}}} — ${v.label}`}
+                    value={values[i] ?? ''}
+                    onChange={(e) => {
+                      const next = [...values]
+                      next[i] = e.target.value
+                      setValues(next)
+                    }}
+                    placeholder={v.label}
+                    helperText={autoFilled ? 'Auto-filled from customer profile — edit if needed' : undefined}
+                  />
+                )
+              })}
             </div>
 
             <div className="flex flex-col gap-vintiga-xs">
