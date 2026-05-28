@@ -341,10 +341,11 @@ const initial: ProductState = {
   },
   scheduleRepeatsUntil: '',
   blackouts: [
-    { id: 'bl-1', reason: 'Memorial Day',     type: 'holiday', start: '2026-05-26', end: '' },
-    { id: 'bl-2', reason: 'Private event',    type: 'event',   start: '2026-05-27', end: '2026-05-28' },
-    { id: 'bl-3', reason: 'Staff training',   type: 'ops',     start: '2026-06-04', end: '' },
-    { id: 'bl-4', reason: 'Independence Day', type: 'holiday', start: '2026-07-04', end: '' },
+    // Per-experience closures only — national holidays live in the global
+    // blackouts store (see _shared/globalBlackoutsStore.ts) so every
+    // experience inherits them automatically.
+    { id: 'bl-1', reason: 'Private event',  type: 'event', start: '2026-05-27', end: '2026-05-28' },
+    { id: 'bl-2', reason: 'Staff training', type: 'ops',   start: '2026-06-04', end: '' },
   ],
   productTypeOverride: 'None',
   beerStyle: '',
