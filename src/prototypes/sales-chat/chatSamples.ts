@@ -4,9 +4,32 @@
 // that conversation. Fixed offsets from `now()` keep the demo stable across
 // reloads — see the export below.
 
-export type TemplateCategory = 'marketing' | 'utility' | 'authentication' | 'service'
+export type TemplateCategory = 'marketing' | 'utility' | 'authentication' | 'service' | 'compliance'
 export type MessageStatus    = 'sent' | 'delivered' | 'read'
 export type MessageKind      = 'inbound' | 'outbound'
+
+/**
+ * Where the conversation originated.
+ *
+ * - `whatsapp` — direct customer chat over WhatsApp Business (legacy default).
+ * - `website` — anonymous visitor using the chat widget embedded on the
+ *   marketing site.
+ * - `members` — wine-club member messaging through the My Account page.
+ */
+export type ChatSource = 'whatsapp' | 'website' | 'members'
+
+/**
+ * Which field on the active conversation's customer pre-fills a template
+ * variable. Templates flag each variable with one of these keys (or
+ * `undefined` for "operator types it in"); the picker reads from the
+ * selected conversation's customer record and seeds the input.
+ */
+export type CustomerVarKey =
+  | 'firstName'
+  | 'fullName'
+  | 'city'
+  | 'phone'
+  | 'segment'
 
 export interface ChatMessage {
   id: string
@@ -34,6 +57,8 @@ export interface ChatCustomer {
 export interface ChatConversation {
   id: string
   customer: ChatCustomer
+  /** Channel this conversation came in on — drives the inbox filter tabs. */
+  source: ChatSource
   unread: number
   /** Minutes since the customer's last inbound — drives the "X min ago" label. */
   lastActivityMin: number
@@ -45,6 +70,16 @@ export interface ChatConversation {
   messages: ChatMessage[]
 }
 
+export interface TemplateVariable {
+  /** Human-readable label rendered above the input. */
+  label: string
+  /**
+   * Auto-fill source from the active conversation's customer. Undefined =
+   * operator types it. The picker uses this on open to seed the input.
+   */
+  fillFrom?: CustomerVarKey
+}
+
 export interface MessageTemplate {
   id: string
   name: string
@@ -53,8 +88,23 @@ export interface MessageTemplate {
   language: string
   /** Body with `{{1}}`, `{{2}}` placeholders. */
   body: string
-  /** Labels for each variable so the agent knows what to fill in. */
-  variables: string[]
+  /** Per-variable metadata — order matches `{{1}}`, `{{2}}`, … */
+  variables: TemplateVariable[]
+}
+
+/**
+ * Resolve a customer-var key to a concrete string for the active customer.
+ * Returns empty string when the field isn't available — the picker then
+ * leaves the input blank so the operator can fill it in.
+ */
+export function readCustomerVar(customer: ChatCustomer, key: CustomerVarKey): string {
+  switch (key) {
+    case 'firstName': return customer.name.split(' ')[0] ?? ''
+    case 'fullName':  return customer.name
+    case 'city':      return customer.city
+    case 'phone':     return customer.phone
+    case 'segment':   return customer.segment
+  }
 }
 
 // ─── Customers ───────────────────────────────────────────────────────────────
@@ -103,12 +153,38 @@ const ETHAN: ChatCustomer = {
   ordersCount: 1,
 }
 
+// Anonymous website visitor — chat widget threads can land before the
+// visitor identifies themselves, so phone is blank and segment defaults
+// to "New customer".
+const ANON_VISITOR: ChatCustomer = {
+  id: 'cust-anon-1',
+  name: 'Website visitor',
+  initials: 'WV',
+  phone: '',
+  segment: 'New customer',
+  city: 'Unknown',
+  lifetimeSpend: 0,
+  ordersCount: 0,
+}
+
+const PRIYA: ChatCustomer = {
+  id: 'cust-5',
+  name: 'Priya Iyer',
+  initials: 'PI',
+  phone: '+1 (555) 401-9912',
+  segment: 'Member',
+  city: 'Austin, TX',
+  lifetimeSpend: 940.0,
+  ordersCount: 6,
+}
+
 // ─── Conversations ───────────────────────────────────────────────────────────
 
 export const CONVERSATIONS: ChatConversation[] = [
   {
     id: 'conv-1',
     customer: JANE,
+    source: 'whatsapp',
     unread: 2,
     lastActivityMin: 7,
     windowRemainingMin: 23 * 60 + 53, // ~23h 53m — fresh window
@@ -124,6 +200,7 @@ export const CONVERSATIONS: ChatConversation[] = [
   {
     id: 'conv-2',
     customer: MARCUS,
+    source: 'whatsapp',
     unread: 0,
     lastActivityMin: 60 * 3 + 12,
     windowRemainingMin: 35, // ~35 min left — almost expired
@@ -137,6 +214,7 @@ export const CONVERSATIONS: ChatConversation[] = [
   {
     id: 'conv-3',
     customer: SOFIA,
+    source: 'whatsapp',
     unread: 0,
     lastActivityMin: 60 * 30, // 30h ago
     windowRemainingMin: -360, // 6h past expiry
@@ -149,6 +227,7 @@ export const CONVERSATIONS: ChatConversation[] = [
   {
     id: 'conv-4',
     customer: ETHAN,
+    source: 'whatsapp',
     unread: 1,
     lastActivityMin: 60 * 26, // 26h — just past expiry
     windowRemainingMin: -120,
@@ -158,42 +237,64 @@ export const CONVERSATIONS: ChatConversation[] = [
       { id: 'm-4-3', kind: 'inbound',  body: "Yes please",                                                                     atOffsetMin: 60 * 26 },
     ],
   },
+  // ── Website channel: anonymous chat-widget visitor ──────────────────────────
+  {
+    id: 'conv-5',
+    customer: ANON_VISITOR,
+    source: 'website',
+    unread: 3,
+    lastActivityMin: 4,
+    windowRemainingMin: 23 * 60 + 30,
+    messages: [
+      { id: 'm-5-1', kind: 'inbound', body: "Hey, the site says the Founders Pack ships free over $100 — does that include Texas?", atOffsetMin: 10 },
+      { id: 'm-5-2', kind: 'inbound', body: "Also wondering if you ship to PO boxes",                                                atOffsetMin: 7 },
+      { id: 'm-5-3', kind: 'inbound', body: "Sorry one more — do you do gift wrap?",                                                atOffsetMin: 4 },
+    ],
+  },
+  // ── Members channel: club member messaging from My Account ──────────────────
+  {
+    id: 'conv-6',
+    customer: PRIYA,
+    source: 'members',
+    unread: 1,
+    lastActivityMin: 38,
+    windowRemainingMin: 23 * 60 + 18,
+    messages: [
+      { id: 'm-6-1', kind: 'inbound',  body: "Hi! Can I switch my June shipment to the white-only allocation?",            atOffsetMin: 90 },
+      { id: 'm-6-2', kind: 'outbound', body: "Hi Priya — yes, no problem. Switching you to the all-whites pack for June.", atOffsetMin: 75, status: 'read' },
+      { id: 'm-6-3', kind: 'inbound',  body: "Amazing, thank you. Also: when does the August allocation go out?",          atOffsetMin: 38 },
+    ],
+  },
 ]
 
 // ─── Templates ───────────────────────────────────────────────────────────────
 
 export const TEMPLATES: MessageTemplate[] = [
+  // ── Compliance ───────────────────────────────────────────────────────────────
+  // Age verification has to fire before anything alcohol-related on a brand-new
+  // thread (US wine compliance). Pinned to the top of the picker.
+  {
+    id: 'age_verification',
+    name: 'Age verification',
+    category: 'compliance',
+    language: 'en_US',
+    body: "Hi {{1}}, before we chat about anything alcohol-related — can you confirm you're over 21? Reply YES to continue.",
+    variables: [
+      { label: 'Customer first name', fillFrom: 'firstName' },
+    ],
+  },
+  // ── Utility ──────────────────────────────────────────────────────────────────
   {
     id: 'order_shipped',
     name: 'Order shipped',
     category: 'utility',
     language: 'en_US',
     body: "Hi {{1}}! Your order {{2}} just shipped. Tracking: {{3}}. Expected delivery in 2–3 business days.",
-    variables: ['Customer first name', 'Order number', 'Tracking number'],
-  },
-  {
-    id: 'abandoned_cart',
-    name: 'Abandoned cart reminder',
-    category: 'marketing',
-    language: 'en_US',
-    body: "Hi {{1}}, you left {{2}} in your cart. We saved it for you — finish your order at {{3}} and use code WELCOME10 for 10% off.",
-    variables: ['Customer first name', 'Product name', 'Checkout link'],
-  },
-  {
-    id: 'back_in_stock',
-    name: 'Back in stock',
-    category: 'marketing',
-    language: 'en_US',
-    body: "Good news {{1}} — {{2}} is back in stock. We have {{3}} left. Reply YES and we'll set one aside.",
-    variables: ['Customer first name', 'Product name', 'Units in stock'],
-  },
-  {
-    id: 'founders_pack_intro',
-    name: 'Founders Pack intro',
-    category: 'marketing',
-    language: 'en_US',
-    body: "Hi {{1}}! Welcome to Vintiga. The Founders Pack is {{2}} — three hand-picked bottles plus member pricing on future orders. Join here: {{3}}",
-    variables: ['Customer first name', 'Pack price', 'Join link'],
+    variables: [
+      { label: 'Customer first name', fillFrom: 'firstName' },
+      { label: 'Order number' },
+      { label: 'Tracking number' },
+    ],
   },
   {
     id: 'reservation_confirm',
@@ -201,14 +302,60 @@ export const TEMPLATES: MessageTemplate[] = [
     category: 'utility',
     language: 'en_US',
     body: "Hi {{1}}, you're confirmed for {{2}} on {{3}} at {{4}}. Reply STOP to cancel.",
-    variables: ['Customer first name', 'Event name', 'Date', 'Time'],
+    variables: [
+      { label: 'Customer first name', fillFrom: 'firstName' },
+      { label: 'Event name' },
+      { label: 'Date' },
+      { label: 'Time' },
+    ],
   },
+  // ── Marketing ────────────────────────────────────────────────────────────────
+  {
+    id: 'abandoned_cart',
+    name: 'Abandoned cart reminder',
+    category: 'marketing',
+    language: 'en_US',
+    body: "Hi {{1}}, you left {{2}} in your cart. We saved it for you — finish your order at {{3}} and use code WELCOME10 for 10% off.",
+    variables: [
+      { label: 'Customer first name', fillFrom: 'firstName' },
+      { label: 'Product name' },
+      { label: 'Checkout link' },
+    ],
+  },
+  {
+    id: 'back_in_stock',
+    name: 'Back in stock',
+    category: 'marketing',
+    language: 'en_US',
+    body: "Good news {{1}} — {{2}} is back in stock. We have {{3}} left. Reply YES and we'll set one aside.",
+    variables: [
+      { label: 'Customer first name', fillFrom: 'firstName' },
+      { label: 'Product name' },
+      { label: 'Units in stock' },
+    ],
+  },
+  {
+    id: 'founders_pack_intro',
+    name: 'Founders Pack intro',
+    category: 'marketing',
+    language: 'en_US',
+    body: "Hi {{1}}! Welcome to Vintiga. The Founders Pack is {{2}} — three hand-picked bottles plus member pricing on future orders. Join here: {{3}}",
+    variables: [
+      { label: 'Customer first name', fillFrom: 'firstName' },
+      { label: 'Pack price' },
+      { label: 'Join link' },
+    ],
+  },
+  // ── Service ──────────────────────────────────────────────────────────────────
   {
     id: 'service_followup',
     name: 'Customer service follow-up',
     category: 'service',
     language: 'en_US',
     body: "Hi {{1}}, just checking in on your recent question about {{2}}. Anything else I can help with?",
-    variables: ['Customer first name', 'Topic'],
+    variables: [
+      { label: 'Customer first name', fillFrom: 'firstName' },
+      { label: 'Topic' },
+    ],
   },
 ]
