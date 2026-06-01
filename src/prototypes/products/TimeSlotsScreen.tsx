@@ -954,6 +954,17 @@ function AddSeasonModal({
                   </option>
                 ))}
               </select>
+              {/* Quiet shortcut to the master list — the dropdown shows only
+                  the seasons not already used by this experience, so an
+                  operator wondering what else is on file routes to Settings
+                  here. Closes the modal so the navigation feels clean. */}
+              <a
+                href="#/web/settings?tab=seasons"
+                onClick={handleClose}
+                className="self-start typo-caption text-vintiga-indigo-600 hover:text-vintiga-indigo-700 hover:underline transition-colors"
+              >
+                View all seasons in Settings →
+              </a>
             </Field>
           )}
 
