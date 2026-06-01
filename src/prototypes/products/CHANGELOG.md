@@ -6,6 +6,20 @@
 
 ---
 
+## 2026-06-01 — Fedja + Claude: Experience Seasons on the Schedule tab (PR 2 of 2)
+
+The Chain Reaction follow-up: each experience now keeps **one or more availability seasons**, and the existing booking-settings + weekly-schedule + blackouts cards live *inside* the active season. Pairs with the Settings → Seasons tab from PR 1.
+
+**Data model (productStore.ts)** — flat schedule fields gone, replaced by a `seasons: ExperienceSeason[]` array + `activeSeasonId`. Each `ExperienceSeason` carries either a `storeSeasonId` (shared) or a `customName + start + end` (one-off), plus its own `durationMinutes`, `bookingInterval`, `minGuestsPerSlot`, `maxGuestsPerSlot`, `timeSlotsByDay`, `blackouts`, and `excludedGlobalBlackoutIds`. All schedule actions (`addTimeSlot`, `addBlackout`, `toggleExcludedGlobalBlackout`, …) now route through a new `patchActiveSeason` helper so the UI never needs to know which season-id is mutating. New `useActiveSeason()` hook is the canonical read.
+
+**Schedule tab UI (TimeSlotsScreen.tsx)** — new top-of-page **Seasons strip**: clickable pill per season showing its name + a `Shared` / `Custom` badge, with **+ Add season** on the right. The season's date range surfaces inline next to *Booking settings* with a **Remove season** action.
+
+**Add Season modal** — radio between *Use existing store season* (dropdown of un-used store seasons, sourced from `useStoreSeasons()`) and *Create experience-only season* (name + start + end). Overlap is validated against this experience's other seasons; on conflict the spec-wording error renders inline: *"This season overlaps an existing availability season for this experience. Existing: {name} — {dates}"*. The Add button stays disabled until the conflict is resolved.
+
+**Migration** — every experience now seeds with one default *Year-round 2026* custom season wrapping the previous demo data (Monday 10am / 2pm slots, Private event + Staff training blackouts) so existing demos still work. Removing the last season drops to an empty state that surfaces an *Add season* CTA.
+
+**Bookable-from / Bookable-until removed** — those inputs no longer live in Booking settings; the season's own start/end replaces them.
+
 ## 2026-05-27 — Fedja + Claude: Global blackouts + scoped table on Schedule tab
 
 The Schedule tab's blackouts now merge tenant-wide closures with per-experience ones into a single source-tagged table — landed after the client follow-up asking for clearer date labelling and inline global authoring.
