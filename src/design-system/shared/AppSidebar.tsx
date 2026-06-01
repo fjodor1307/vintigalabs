@@ -56,11 +56,11 @@ const NAV_TOP: NavItemDef[] = [
 ]
 
 const NAV_BOTTOM_GROUP: NavItemDef[] = [
-  { icon: <UsersIcon />,        label: 'Customers' },
-  { icon: <PackageIcon />,      label: 'Products', href: '#/web/products/list' },
+  { icon: <UsersIcon />,        label: 'Customers', href: '#/web/customers' },
+  { icon: <PackageIcon />,      label: 'Products',  href: '#/web/products/list' },
   { icon: <ShoppingCartIcon />, label: 'Orders' },
   { icon: <CalendarIcon />,     label: 'Reservations' },
-  { icon: <BookmarkIcon />,     label: 'Clubs' },
+  { icon: <BookmarkIcon />,     label: 'Clubs',     href: '#/web/clubs' },
 ]
 
 const NAV_FOOTER: NavItemDef[] = [
