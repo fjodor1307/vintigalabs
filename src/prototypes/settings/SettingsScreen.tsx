@@ -43,24 +43,67 @@ const TAB_DESCRIPTION: Record<SettingsTab, string> = {
   seasons:             '',
 }
 
+/** Read the hash query string once at module evaluation. */
+function readHashParams(): URLSearchParams {
+  if (typeof window === 'undefined') return new URLSearchParams()
+  const hash = window.location.hash
+  const qIdx = hash.indexOf('?')
+  if (qIdx === -1) return new URLSearchParams()
+  return new URLSearchParams(hash.slice(qIdx + 1))
+}
+
 /** Read `?tab=…` off the hash query string. Lets other surfaces deep-link
  *  to a specific Settings tab — e.g. the Schedule tab's "Edit in Settings"
  *  affordance on Shared seasons routes to `#/web/settings?tab=seasons`. */
 function readInitialTab(): SettingsTab {
-  if (typeof window === 'undefined') return 'locations'
-  const hash = window.location.hash
-  const qIdx = hash.indexOf('?')
-  if (qIdx === -1) return 'locations'
-  const params = new URLSearchParams(hash.slice(qIdx + 1))
+  const params = readHashParams()
   const t = params.get('tab') as SettingsTab | null
   return t && TABS.some((row) => row.value === t) ? t : 'locations'
 }
 
+/**
+ * Parses `?from=…&productId=…&productName=…` off the hash so Settings can
+ * render a launcher-aware breadcrumb trail back to the surface that opened
+ * it. Today only `from=experience` is wired — the Schedule tab routes back
+ * to its `#/web/products/timeslots?id=<id>` page.
+ */
+interface LauncherContext {
+  fromExperience: boolean
+  productId: string | null
+  productName: string
+}
+function readLauncherContext(): LauncherContext {
+  const params = readHashParams()
+  return {
+    fromExperience: params.get('from') === 'experience',
+    productId:      params.get('productId'),
+    productName:    params.get('productName') ?? 'Experience',
+  }
+}
+
 export function SettingsScreen() {
   const [tab, setTab] = useState<SettingsTab>(readInitialTab)
+  // Captured once at mount — doesn't change as the user navigates inside Settings.
+  const [launcher] = useState<LauncherContext>(readLauncherContext)
 
   return (
     <SettingsLayout
+      breadcrumbs={
+        launcher.fromExperience && launcher.productId
+          ? [
+              {
+                label: launcher.productName,
+                href: `#/web/products/timeslots?id=${encodeURIComponent(launcher.productId)}`,
+              },
+              { label: TABS.find((t) => t.value === tab)?.label ?? 'Settings' },
+            ]
+          : undefined
+      }
+      breadcrumbHomeHref={
+        launcher.fromExperience && launcher.productId
+          ? `#/web/products/timeslots?id=${encodeURIComponent(launcher.productId)}`
+          : undefined
+      }
       title={
         <div className="flex flex-col gap-1">
           <span className="typo-title-screen font-semibold text-vintiga-slate-900">Settings</span>

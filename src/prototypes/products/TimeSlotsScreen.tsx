@@ -582,7 +582,7 @@ function AddBlackoutModal({
 }
 
 export function TimeSlotsScreen() {
-  const { seasons, activeSeasonId } = useProductState()
+  const { seasons, activeSeasonId, name: productName, editingId } = useProductState()
   const storeSeasons = useStoreSeasons()
   const activeSeason = useActiveSeason()
   const [addOpen, setAddOpen] = useState(false)
@@ -600,6 +600,8 @@ export function TimeSlotsScreen() {
         activeSeasonId={activeSeasonId}
         resolveName={resolveSeasonName}
         onAdd={() => setAddOpen(true)}
+        launcherProductId={editingId}
+        launcherProductName={productName}
       />
 
       {activeSeason ? (
@@ -660,11 +662,18 @@ function SeasonsStrip({
   activeSeasonId,
   resolveName,
   onAdd,
+  launcherProductId,
+  launcherProductName,
 }: {
   seasons: ExperienceSeason[]
   activeSeasonId: string
   resolveName: (s: ExperienceSeason) => string
   onAdd: () => void
+  /** When set, the gear-icon shortcut on Shared pills carries these as a
+   *  launcher context so Settings can render a "back to this product"
+   *  breadcrumb trail. */
+  launcherProductId: string | null
+  launcherProductName: string
 }) {
   if (seasons.length === 0) return null
   return (
@@ -711,7 +720,11 @@ function SeasonsStrip({
                   jump to. */}
               {s.source === 'store' && s.storeSeasonId && (
                 <a
-                  href={`#/web/settings?tab=seasons&edit=${s.storeSeasonId}`}
+                  href={
+                    launcherProductId
+                      ? `#/web/settings?tab=seasons&edit=${s.storeSeasonId}&from=experience&productId=${encodeURIComponent(launcherProductId)}&productName=${encodeURIComponent(launcherProductName)}`
+                      : `#/web/settings?tab=seasons&edit=${s.storeSeasonId}`
+                  }
                   aria-label={`Edit ${resolveName(s)} in Settings`}
                   title="Edit dates in Settings"
                   className="inline-flex items-center justify-center px-vintiga-sm border-l border-vintiga-slate-200 text-vintiga-slate-400 hover:text-vintiga-slate-700 hover:bg-vintiga-slate-100 transition-colors cursor-pointer"
