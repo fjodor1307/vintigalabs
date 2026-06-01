@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@ds/shared/Button'
 import { RecordsCard, RecordsCardEmpty } from '@ds/shared/RecordsCard'
 import {
@@ -45,6 +45,23 @@ function formatDateLong(iso: string): string {
 export function SeasonsTab() {
   const seasons = useStoreSeasons()
   const [modalState, setModalState] = useState<{ mode: 'add' } | { mode: 'edit'; season: StoreSeason } | null>(null)
+
+  // Honour `?edit=<seasonId>` on the hash query so deep links from other
+  // surfaces (e.g. the experience Schedule tab's gear icon on a Shared
+  // season pill) land with the edit modal already open.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const hash = window.location.hash
+    const qIdx = hash.indexOf('?')
+    if (qIdx === -1) return
+    const editId = new URLSearchParams(hash.slice(qIdx + 1)).get('edit')
+    if (!editId) return
+    const target = seasons.find((s) => s.id === editId)
+    if (target) setModalState({ mode: 'edit', season: target })
+    // Run once on mount — we only want to react to the params captured on
+    // arrival, not as the user navigates around inside Settings.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Sort by start date so the table reads chronologically — operators scan
   // it the way they'd flip through a calendar.
