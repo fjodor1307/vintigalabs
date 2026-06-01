@@ -10,6 +10,7 @@ import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@
 import { useActiveSeason, useProductState, productActions, WEEKDAYS, type Blackout, type BlackoutType, type ExperienceSeason, type TimeSlot, type Weekday } from './productStore'
 import { useGlobalBlackouts, globalBlackoutsActions, type GlobalBlackout } from '../_shared/globalBlackoutsStore'
 import { useStoreSeasons, type StoreSeason } from '../_shared/storeSeasonsStore'
+import { StoreSeasonModal, type StoreSeasonModalState } from '../_shared/StoreSeasonModal'
 import { Switch } from '@ds/shared/Switch'
 import { PlusIcon, TrashIcon, SettingsIcon } from '@ds/icons/Icons'
 
@@ -586,11 +587,27 @@ export function TimeSlotsScreen() {
   const storeSeasons = useStoreSeasons()
   const activeSeason = useActiveSeason()
   const [addOpen, setAddOpen] = useState(false)
+  // Opening the gear icon on a Shared pill flips this to an Edit state — the
+  // shared StoreSeasonModal commits straight to the storeSeasonsStore, so
+  // every consumer (Settings + every experience using the season) updates
+  // on save without us having to plumb anything else.
+  const [editStoreSeason, setEditStoreSeason] = useState<StoreSeasonModalState>(null)
 
   function resolveSeasonName(season: ExperienceSeason): string {
     if (season.source === 'custom') return season.customName ?? 'Custom season'
     const store = storeSeasons.find((s) => s.id === season.storeSeasonId)
     return store?.name ?? 'Unknown season'
+  }
+  // Shared seasons read their dates from the live store season — so when
+  // the operator edits Summer's dates via the gear modal, every experience
+  // already using Summer picks up the new range without us touching their
+  // copy. Custom seasons keep their own dates as authored.
+  function resolveSeasonRange(season: ExperienceSeason): { start: string; end: string } {
+    if (season.source === 'store') {
+      const store = storeSeasons.find((s) => s.id === season.storeSeasonId)
+      if (store) return { start: store.start, end: store.end }
+    }
+    return { start: season.start, end: season.end }
   }
 
   return (
@@ -600,6 +617,10 @@ export function TimeSlotsScreen() {
         activeSeasonId={activeSeasonId}
         resolveName={resolveSeasonName}
         onAdd={() => setAddOpen(true)}
+        onEditStoreSeasonId={(id) => {
+          const target = storeSeasons.find((x) => x.id === id)
+          if (target) setEditStoreSeason({ mode: 'edit', season: target })
+        }}
       />
 
       {activeSeason ? (
@@ -608,7 +629,7 @@ export function TimeSlotsScreen() {
             title="Booking settings"
             action={
               <SeasonHeaderActions
-                season={activeSeason}
+                range={resolveSeasonRange(activeSeason)}
                 onRemove={() => {
                   if (window.confirm(`Remove "${resolveSeasonName(activeSeason)}" from this experience? Slots and blackouts for this season will be deleted.`)) {
                     productActions.removeSeason(activeSeason.id)
@@ -649,6 +670,11 @@ export function TimeSlotsScreen() {
         seasons={seasons}
         storeSeasons={storeSeasons}
       />
+
+      <StoreSeasonModal
+        state={editStoreSeason}
+        onClose={() => setEditStoreSeason(null)}
+      />
     </ProductLayout>
   )
 }
@@ -660,11 +686,16 @@ function SeasonsStrip({
   activeSeasonId,
   resolveName,
   onAdd,
+  onEditStoreSeasonId,
 }: {
   seasons: ExperienceSeason[]
   activeSeasonId: string
   resolveName: (s: ExperienceSeason) => string
   onAdd: () => void
+  /** Click the gear icon on a Shared pill → opens the inline edit modal for
+   *  the store season with this id. Parent does the lookup since it already
+   *  has the store-seasons list to hand. */
+  onEditStoreSeasonId: (storeSeasonId: string) => void
 }) {
   // Sort tabs chronologically so the operator reads them the way they'd flip
   // through a calendar — Spring before Summer before Holiday — rather than
@@ -712,19 +743,20 @@ function SeasonsStrip({
                   {s.source === 'store' ? 'Shared' : 'Custom'}
                 </Tag>
               </button>
-              {/* Shortcut to Settings → Seasons with this season's edit
-                  modal pre-opened. Only shown on Shared (store) seasons —
-                  Custom seasons live on this experience, no Settings to
-                  jump to. */}
+              {/* Edit-dates affordance on Shared (store) seasons. Opens the
+                  StoreSeasonModal inline — saving writes through to the
+                  shared storeSeasonsStore, so the change propagates to
+                  every experience using that season + the Settings tab. */}
               {s.source === 'store' && s.storeSeasonId && (
-                <a
-                  href={`#/web/settings?tab=seasons&edit=${s.storeSeasonId}`}
-                  aria-label={`Edit ${resolveName(s)} in Settings`}
-                  title="Edit dates in Settings"
-                  className="inline-flex items-center justify-center px-vintiga-sm border-l border-vintiga-slate-200 text-vintiga-slate-400 hover:text-vintiga-slate-700 hover:bg-vintiga-slate-100 transition-colors cursor-pointer"
+                <button
+                  type="button"
+                  onClick={() => onEditStoreSeasonId(s.storeSeasonId!)}
+                  aria-label={`Edit ${resolveName(s)} dates`}
+                  title="Edit dates"
+                  className="inline-flex items-center justify-center px-vintiga-sm border-l border-vintiga-slate-200 text-vintiga-slate-400 hover:text-vintiga-slate-700 hover:bg-vintiga-slate-100 transition-colors cursor-pointer bg-transparent border-y-0 border-r-0"
                 >
                   <SettingsIcon className="w-3.5 h-3.5" />
-                </a>
+                </button>
               )}
             </span>
           )
@@ -740,16 +772,18 @@ function SeasonsStrip({
 // ─── Season header actions (next to the section card titles) ────────────────
 
 function SeasonHeaderActions({
-  season,
+  range,
   onRemove,
 }: {
-  season: ExperienceSeason
+  /** Resolved start/end — for Shared seasons this is the live store-season
+   *  range, not the (possibly stale) copy on the experience. */
+  range: { start: string; end: string }
   onRemove: () => void
 }) {
   return (
     <div className="flex items-center gap-vintiga-sm">
       <span className="typo-caption text-vintiga-slate-500 tabular-nums">
-        {formatDateShort(season.start, season.end)}
+        {formatDateShort(range.start, range.end)}
       </span>
       <Button
         variant="outline"
@@ -814,15 +848,26 @@ function AddSeasonModal({
 
   // Per-experience overlap detection — store-level overlap is fine, but two
   // seasons covering the same day on ONE experience is the spec's "critical
-  // constraint" (booking engine wouldn't know whose schedule wins).
+  // constraint" (booking engine wouldn't know whose schedule wins). Read
+  // each existing season's dates through the store for Shared seasons so a
+  // recent gear-icon edit is honoured immediately.
+  const resolveExistingRange = (s: ExperienceSeason): { start: string; end: string } => {
+    if (s.source === 'store') {
+      const store = storeSeasons.find((x) => x.id === s.storeSeasonId)
+      if (store) return { start: store.start, end: store.end }
+    }
+    return { start: s.start, end: s.end }
+  }
   const overlap = useMemo(() => {
     if (!candidateStart || !candidateEnd) return null
     return seasons.find((s) => {
-      const sEnd = s.end || s.start
+      const r = resolveExistingRange(s)
+      const sEnd = r.end || r.start
       const cEnd = candidateEnd || candidateStart
-      return s.start <= cEnd && candidateStart <= sEnd
+      return r.start <= cEnd && candidateStart <= sEnd
     }) ?? null
-  }, [seasons, candidateStart, candidateEnd])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seasons, storeSeasons, candidateStart, candidateEnd])
 
   function resolveExistingName(s: ExperienceSeason): string {
     if (s.source === 'custom') return s.customName ?? 'Custom season'
@@ -938,7 +983,7 @@ function AddSeasonModal({
                 This season overlaps an existing availability season for this experience.
               </p>
               <p className="typo-body-sm text-vintiga-red-700 mt-1">
-                Existing: <span className="font-semibold">{resolveExistingName(overlap)}</span> — {formatDateShort(overlap.start, overlap.end)}
+                Existing: <span className="font-semibold">{resolveExistingName(overlap)}</span> — {(() => { const r = resolveExistingRange(overlap); return formatDateShort(r.start, r.end) })()}
               </p>
             </div>
           )}
