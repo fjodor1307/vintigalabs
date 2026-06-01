@@ -7,8 +7,9 @@ import { SegmentedControl } from '@ds/shared/SegmentedControl'
 import { Tag } from '@ds/shared/Tag'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@ds/shared/Modal'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@ds/shared/Table'
-import { useProductState, productActions, WEEKDAYS, type Blackout, type BlackoutType, type TimeSlot, type Weekday } from './productStore'
+import { useActiveSeason, useProductState, productActions, WEEKDAYS, type Blackout, type BlackoutType, type ExperienceSeason, type TimeSlot, type Weekday } from './productStore'
 import { useGlobalBlackouts, globalBlackoutsActions, type GlobalBlackout } from '../_shared/globalBlackoutsStore'
+import { useStoreSeasons, type StoreSeason } from '../_shared/storeSeasonsStore'
 import { Switch } from '@ds/shared/Switch'
 import { PlusIcon, TrashIcon } from '@ds/icons/Icons'
 
@@ -66,8 +67,7 @@ function buildSlots(open: { time: string; period: Period }, close: { time: strin
 // These drive what the website renders: a 30-minute experience booked "every 15
 // minutes" shows 9:00, 9:15, 9:30… on the calendar.
 
-function BookingSettings() {
-  const product = useProductState()
+function BookingSettings({ season }: { season: ExperienceSeason }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-4">
@@ -75,13 +75,13 @@ function BookingSettings() {
           <InputWithAdornment
             adornment="min"
             placeholder="e.g. 30"
-            value={product.durationMinutes}
-            onChange={(e) => productActions.setAdvanced({ durationMinutes: e.target.value })}
+            value={season.durationMinutes}
+            onChange={(e) => productActions.setSeasonField('durationMinutes', e.target.value)}
           />
         </Field>
         <Field label="Booking interval" helper="How often a start time can be reserved.">
           <select
-            value={product.bookingInterval}
+            value={season.bookingInterval}
             onChange={(e) => productActions.setBookingInterval(Number(e.target.value))}
             className="h-10 w-full px-3 pr-8 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors cursor-pointer"
           >
@@ -92,19 +92,10 @@ function BookingSettings() {
 
       <div className="grid grid-cols-2 gap-4">
         <Field label="Min guests per time slot" helper="Smallest party size that can book a slot.">
-          <TextInput type="number" min={0} placeholder="e.g. 1" value={product.minGuestsPerSlot} onChange={(e) => productActions.setAdvanced({ minGuestsPerSlot: e.target.value })} />
+          <TextInput type="number" min={0} placeholder="e.g. 1" value={season.minGuestsPerSlot} onChange={(e) => productActions.setSeasonField('minGuestsPerSlot', e.target.value)} />
         </Field>
         <Field label="Max guests per time slot" helper="Total shared capacity at one slot.">
-          <TextInput type="number" min={0} placeholder="e.g. 8" value={product.maxGuestsPerSlot} onChange={(e) => productActions.setAdvanced({ maxGuestsPerSlot: e.target.value })} />
-        </Field>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Bookable from">
-          <TextInput type="date" value={product.startDate} onChange={(e) => productActions.setAdvanced({ startDate: e.target.value })} />
-        </Field>
-        <Field label="Bookable until" helper="Leave empty to keep the schedule open-ended.">
-          <TextInput type="date" value={product.endDate} onChange={(e) => productActions.setAdvanced({ endDate: e.target.value })} />
+          <TextInput type="number" min={0} placeholder="e.g. 8" value={season.maxGuestsPerSlot} onChange={(e) => productActions.setSeasonField('maxGuestsPerSlot', e.target.value)} />
         </Field>
       </div>
     </div>
@@ -116,8 +107,8 @@ function BookingSettings() {
 const TIME_INPUT = 'h-9 w-24 px-3 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 text-center tabular-nums focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors'
 const PERIOD_SELECT = 'h-9 px-2 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors cursor-pointer'
 
-function DaySchedule({ day }: { day: Weekday }) {
-  const { timeSlotsByDay, bookingInterval, blackouts } = useProductState()
+function DaySchedule({ day, season }: { day: Weekday; season: ExperienceSeason }) {
+  const { timeSlotsByDay, bookingInterval, blackouts } = season
   const globalBlackouts = useGlobalBlackouts()
   const slots = timeSlotsByDay[day]
   // Operating window used by "Generate slots" — local to the editor.
@@ -239,10 +230,10 @@ function DaySchedule({ day }: { day: Weekday }) {
   )
 }
 
-function ReservationTimeSlots() {
+function ReservationTimeSlots({ season }: { season: ExperienceSeason }) {
   return (
     <div className="flex flex-col gap-3">
-      {WEEKDAYS.map((day) => <DaySchedule key={day} day={day} />)}
+      {WEEKDAYS.map((day) => <DaySchedule key={day} day={day} season={season} />)}
     </div>
   )
 }
@@ -334,8 +325,8 @@ interface MergedBlackout {
   scope: 'experience' | 'global'
 }
 
-function BlackoutDatesCard() {
-  const { blackouts } = useProductState()
+function BlackoutDatesCard({ season }: { season: ExperienceSeason }) {
+  const { blackouts } = season
   const globalBlackouts = useGlobalBlackouts()
   const [modalOpen, setModalOpen] = useState(false)
   const [windowTab, setWindowTab] = useState<BlackoutWindow>('upcoming')
@@ -591,23 +582,339 @@ function AddBlackoutModal({
 }
 
 export function TimeSlotsScreen() {
+  const { seasons, activeSeasonId } = useProductState()
+  const storeSeasons = useStoreSeasons()
+  const activeSeason = useActiveSeason()
+  const [addOpen, setAddOpen] = useState(false)
+
+  function resolveSeasonName(season: ExperienceSeason): string {
+    if (season.source === 'custom') return season.customName ?? 'Custom season'
+    const store = storeSeasons.find((s) => s.id === season.storeSeasonId)
+    return store?.name ?? 'Unknown season'
+  }
+
   return (
     <ProductLayout activeTab="timeslots">
-      <SectionCard title="Booking settings">
-        <p className="typo-body-sm text-vintiga-slate-500">
-          These apply to every time slot below. Duration sets how long a booking runs; the booking interval sets how often a start time can be reserved.
-        </p>
-        <BookingSettings />
-      </SectionCard>
+      <SeasonsStrip
+        seasons={seasons}
+        activeSeasonId={activeSeasonId}
+        resolveName={resolveSeasonName}
+        onAdd={() => setAddOpen(true)}
+      />
 
-      <SectionCard title="Weekly schedule">
-        <p className="typo-body-sm text-vintiga-slate-500">
-          Set the operating hours and tap “Generate slots” to fill in start times at your booking interval — then tweak, remove, or hide individual slots from the website.
-        </p>
-        <ReservationTimeSlots />
-      </SectionCard>
+      {activeSeason ? (
+        <>
+          <SectionCard
+            title="Booking settings"
+            action={
+              <SeasonHeaderActions
+                season={activeSeason}
+                onRemove={() => {
+                  if (window.confirm(`Remove "${resolveSeasonName(activeSeason)}" from this experience? Slots and blackouts for this season will be deleted.`)) {
+                    productActions.removeSeason(activeSeason.id)
+                  }
+                }}
+              />
+            }
+          >
+            <p className="typo-body-sm text-vintiga-slate-500">
+              Duration sets how long a booking runs; the booking interval sets how often a start time can be reserved. Each season can have its own values.
+            </p>
+            <BookingSettings season={activeSeason} />
+          </SectionCard>
 
-      <BlackoutDatesCard />
+          <SectionCard title="Weekly schedule">
+            <p className="typo-body-sm text-vintiga-slate-500">
+              Set the operating hours and tap “Generate slots” to fill in start times at your booking interval — then tweak, remove, or hide individual slots from the website.
+            </p>
+            <ReservationTimeSlots season={activeSeason} />
+          </SectionCard>
+
+          <BlackoutDatesCard season={activeSeason} />
+        </>
+      ) : (
+        <SectionCard title="No seasons yet">
+          <p className="typo-body-sm text-vintiga-slate-500">
+            Add an availability season to start setting hours and time slots for this experience.
+          </p>
+          <Button onClick={() => setAddOpen(true)} leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>
+            Add season
+          </Button>
+        </SectionCard>
+      )}
+
+      <AddSeasonModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        seasons={seasons}
+        storeSeasons={storeSeasons}
+      />
     </ProductLayout>
+  )
+}
+
+// ─── Seasons strip — tab list of this experience's seasons ──────────────────
+
+function SeasonsStrip({
+  seasons,
+  activeSeasonId,
+  resolveName,
+  onAdd,
+}: {
+  seasons: ExperienceSeason[]
+  activeSeasonId: string
+  resolveName: (s: ExperienceSeason) => string
+  onAdd: () => void
+}) {
+  if (seasons.length === 0) return null
+  return (
+    <div className="flex items-center justify-between gap-vintiga-md flex-wrap">
+      <div className="flex items-center gap-vintiga-sm flex-wrap">
+        {seasons.map((s) => {
+          const active = s.id === activeSeasonId
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => productActions.setActiveSeasonId(s.id)}
+              aria-pressed={active}
+              className={[
+                'inline-flex items-center gap-vintiga-sm px-vintiga-md py-1.5 rounded-vintiga-md border transition-colors cursor-pointer',
+                active
+                  ? 'bg-vintiga-white text-vintiga-slate-900 border-vintiga-slate-300 shadow-sm'
+                  : 'bg-vintiga-slate-50 text-vintiga-slate-600 border-vintiga-slate-200 hover:text-vintiga-slate-900 hover:border-vintiga-slate-300',
+              ].join(' ')}
+            >
+              <span className="typo-body-sm font-semibold">{resolveName(s)}</span>
+              <Tag
+                variant="filled"
+                tone={s.source === 'store' ? 'info' : 'default'}
+                size="sm"
+              >
+                {s.source === 'store' ? 'Shared' : 'Custom'}
+              </Tag>
+            </button>
+          )
+        })}
+      </div>
+      <Button variant="outline" size="sm" leftIcon={<PlusIcon className="w-3.5 h-3.5" />} onClick={onAdd}>
+        Add season
+      </Button>
+    </div>
+  )
+}
+
+// ─── Season header actions (next to the section card titles) ────────────────
+
+function SeasonHeaderActions({
+  season,
+  onRemove,
+}: {
+  season: ExperienceSeason
+  onRemove: () => void
+}) {
+  return (
+    <div className="flex items-center gap-vintiga-sm">
+      <span className="typo-caption text-vintiga-slate-500 tabular-nums">
+        {formatDateShort(season.start, season.end)}
+      </span>
+      <Button
+        variant="outline"
+        size="sm"
+        leftIcon={<TrashIcon className="w-3.5 h-3.5" />}
+        onClick={onRemove}
+      >
+        Remove season
+      </Button>
+    </div>
+  )
+}
+
+// ─── Add Season modal ────────────────────────────────────────────────────────
+
+function AddSeasonModal({
+  open,
+  onClose,
+  seasons,
+  storeSeasons,
+}: {
+  open: boolean
+  onClose: () => void
+  seasons: ExperienceSeason[]
+  storeSeasons: StoreSeason[]
+}) {
+  const [mode, setMode] = useState<'store' | 'custom'>('store')
+  const [storeId, setStoreId] = useState<string>('')
+  const [customName, setCustomName] = useState('')
+  const [start, setStart] = useState('')
+  const [end, setEnd] = useState('')
+
+  // Filter the store-season dropdown to ones not already used here.
+  const availableStoreSeasons = useMemo(
+    () => storeSeasons.filter((ss) => !seasons.some((es) => es.storeSeasonId === ss.id)),
+    [storeSeasons, seasons],
+  )
+
+  function reset() {
+    setMode(availableStoreSeasons.length > 0 ? 'store' : 'custom')
+    setStoreId(availableStoreSeasons[0]?.id ?? '')
+    setCustomName('')
+    setStart('')
+    setEnd('')
+  }
+
+  // Re-seed when modal opens / available list changes.
+  useMemo(() => {
+    if (open) reset()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  function handleClose() { reset(); onClose() }
+
+  // Resolve the candidate range based on selected mode.
+  const candidateStart = mode === 'store'
+    ? (storeSeasons.find((s) => s.id === storeId)?.start ?? '')
+    : start
+  const candidateEnd = mode === 'store'
+    ? (storeSeasons.find((s) => s.id === storeId)?.end ?? '')
+    : end
+
+  // Per-experience overlap detection — store-level overlap is fine, but two
+  // seasons covering the same day on ONE experience is the spec's "critical
+  // constraint" (booking engine wouldn't know whose schedule wins).
+  const overlap = useMemo(() => {
+    if (!candidateStart || !candidateEnd) return null
+    return seasons.find((s) => {
+      const sEnd = s.end || s.start
+      const cEnd = candidateEnd || candidateStart
+      return s.start <= cEnd && candidateStart <= sEnd
+    }) ?? null
+  }, [seasons, candidateStart, candidateEnd])
+
+  function resolveExistingName(s: ExperienceSeason): string {
+    if (s.source === 'custom') return s.customName ?? 'Custom season'
+    return storeSeasons.find((x) => x.id === s.storeSeasonId)?.name ?? 'Unknown season'
+  }
+
+  const canSubmit =
+    !overlap &&
+    (mode === 'store'
+      ? !!storeId
+      : customName.trim().length > 0 && start.length > 0 && end.length > 0 && start <= end)
+
+  function handleSubmit() {
+    const id = `es-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+    const blank: Pick<ExperienceSeason, 'durationMinutes' | 'bookingInterval' | 'minGuestsPerSlot' | 'maxGuestsPerSlot' | 'timeSlotsByDay' | 'blackouts' | 'excludedGlobalBlackoutIds'> = {
+      durationMinutes: '',
+      bookingInterval: 30,
+      minGuestsPerSlot: '',
+      maxGuestsPerSlot: '',
+      timeSlotsByDay: { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: [] },
+      blackouts: [],
+      excludedGlobalBlackoutIds: [],
+    }
+    if (mode === 'store') {
+      const store = storeSeasons.find((s) => s.id === storeId)
+      if (!store) return
+      productActions.addSeason({
+        id,
+        source: 'store',
+        storeSeasonId: store.id,
+        start: store.start,
+        end:   store.end,
+        ...blank,
+      })
+    } else {
+      productActions.addSeason({
+        id,
+        source: 'custom',
+        customName: customName.trim(),
+        start,
+        end,
+        ...blank,
+      })
+    }
+    handleClose()
+  }
+
+  return (
+    <Modal open={open} onClose={handleClose} size="md">
+      <ModalHeader
+        title="Add availability season"
+        description="Pull a season from the store-wide list or define a one-off range for this experience only."
+        onClose={handleClose}
+      />
+      <ModalBody>
+        <div className="flex flex-col gap-vintiga-md">
+          <div className="flex flex-col gap-vintiga-sm">
+            <Radio
+              checked={mode === 'store'}
+              onChange={() => setMode('store')}
+              disabled={availableStoreSeasons.length === 0}
+              label={availableStoreSeasons.length === 0
+                ? 'Use existing store season (all already used)'
+                : 'Use existing store season'}
+            />
+            <Radio
+              checked={mode === 'custom'}
+              onChange={() => setMode('custom')}
+              label="Create experience-only season"
+            />
+          </div>
+
+          {mode === 'store' && availableStoreSeasons.length > 0 && (
+            <Field label="Store season" required>
+              <select
+                value={storeId}
+                onChange={(e) => setStoreId(e.target.value)}
+                className="h-10 w-full px-3 pr-8 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors cursor-pointer"
+              >
+                <option value="">Select a season…</option>
+                {availableStoreSeasons.map((ss) => (
+                  <option key={ss.id} value={ss.id}>
+                    {ss.name} — {formatDateShort(ss.start, ss.end)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+
+          {mode === 'custom' && (
+            <>
+              <Field label="Season name" required>
+                <TextInput
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="e.g. Annual Availability, VIP Winter Schedule"
+                />
+              </Field>
+              <div className="grid grid-cols-2 gap-vintiga-md">
+                <Field label="Start" required>
+                  <TextInput type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+                </Field>
+                <Field label="End" required>
+                  <TextInput type="date" value={end} min={start || undefined} onChange={(e) => setEnd(e.target.value)} />
+                </Field>
+              </div>
+            </>
+          )}
+
+          {overlap && (
+            <div className="border border-vintiga-red-200 bg-vintiga-red-50 rounded-vintiga-md p-vintiga-md">
+              <p className="typo-body-sm font-semibold text-vintiga-red-700">
+                This season overlaps an existing availability season for this experience.
+              </p>
+              <p className="typo-body-sm text-vintiga-red-700 mt-1">
+                Existing: <span className="font-semibold">{resolveExistingName(overlap)}</span> — {formatDateShort(overlap.start, overlap.end)}
+              </p>
+            </div>
+          )}
+        </div>
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="outline" onClick={handleClose}>Cancel</Button>
+        <Button onClick={handleSubmit} disabled={!canSubmit}>Add season</Button>
+      </ModalFooter>
+    </Modal>
   )
 }
