@@ -89,13 +89,21 @@ export function SeasonsTab() {
             </TableHead>
             <TableBody>
               {sorted.map((s) => (
-                <TableRow key={s.id}>
+                <TableRow
+                  key={s.id}
+                  onClick={() => setModalState({ mode: 'edit', season: s })}
+                >
                   <TableCell className="font-medium text-vintiga-slate-900">{s.name}</TableCell>
                   <TableCell className="text-vintiga-slate-700">{formatDateLong(s.start)}</TableCell>
                   <TableCell className="text-vintiga-slate-700">{formatDateLong(s.end)}</TableCell>
                   <TableCell className="text-vintiga-slate-500 typo-caption">{humanRange(s.start, s.end)} days</TableCell>
                   <TableCell className="text-right">
-                    <span className="inline-flex items-center gap-1">
+                    {/* The row click handles edit — keep the icons here as
+                        affordances + a way to delete without opening the row. */}
+                    <span
+                      className="inline-flex items-center gap-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <button
                         type="button"
                         onClick={() => setModalState({ mode: 'edit', season: s })}
