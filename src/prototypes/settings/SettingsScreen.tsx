@@ -43,8 +43,21 @@ const TAB_DESCRIPTION: Record<SettingsTab, string> = {
   seasons:             '',
 }
 
+/** Read `?tab=…` off the hash query string. Lets other surfaces deep-link
+ *  to a specific Settings tab — e.g. the Schedule tab's "Edit in Settings"
+ *  affordance on Shared seasons routes to `#/web/settings?tab=seasons`. */
+function readInitialTab(): SettingsTab {
+  if (typeof window === 'undefined') return 'locations'
+  const hash = window.location.hash
+  const qIdx = hash.indexOf('?')
+  if (qIdx === -1) return 'locations'
+  const params = new URLSearchParams(hash.slice(qIdx + 1))
+  const t = params.get('tab') as SettingsTab | null
+  return t && TABS.some((row) => row.value === t) ? t : 'locations'
+}
+
 export function SettingsScreen() {
-  const [tab, setTab] = useState<SettingsTab>('locations')
+  const [tab, setTab] = useState<SettingsTab>(readInitialTab)
 
   return (
     <SettingsLayout

@@ -11,7 +11,7 @@ import { useActiveSeason, useProductState, productActions, WEEKDAYS, type Blacko
 import { useGlobalBlackouts, globalBlackoutsActions, type GlobalBlackout } from '../_shared/globalBlackoutsStore'
 import { useStoreSeasons, type StoreSeason } from '../_shared/storeSeasonsStore'
 import { Switch } from '@ds/shared/Switch'
-import { PlusIcon, TrashIcon } from '@ds/icons/Icons'
+import { PlusIcon, TrashIcon, SettingsIcon } from '@ds/icons/Icons'
 
 type Period = 'AM' | 'PM'
 
@@ -679,28 +679,54 @@ function SeasonsStrip({
       <div className="flex items-center gap-vintiga-sm flex-wrap">
         {sorted.map((s) => {
           const active = s.id === activeSeasonId
+          // `<button>` can't nest a `<button>`, so the gear is a sibling
+          // inside a shared border. The outer span owns the rounded chrome;
+          // the pill button + gear button divide the click surface.
           return (
-            <button
+            <span
               key={s.id}
-              type="button"
-              onClick={() => productActions.setActiveSeasonId(s.id)}
-              aria-pressed={active}
               className={[
-                'inline-flex items-center gap-vintiga-sm px-vintiga-md py-1.5 rounded-vintiga-md border transition-colors cursor-pointer',
+                'inline-flex items-stretch rounded-vintiga-md border transition-colors overflow-hidden',
                 active
-                  ? 'bg-vintiga-white text-vintiga-slate-900 border-vintiga-slate-300 shadow-sm'
-                  : 'bg-vintiga-slate-50 text-vintiga-slate-600 border-vintiga-slate-200 hover:text-vintiga-slate-900 hover:border-vintiga-slate-300',
+                  ? 'bg-vintiga-white border-vintiga-slate-300 shadow-sm'
+                  : 'bg-vintiga-slate-50 border-vintiga-slate-200 hover:border-vintiga-slate-300',
               ].join(' ')}
             >
-              <span className="typo-body-sm font-semibold">{resolveName(s)}</span>
-              <Tag
-                variant="filled"
-                tone={s.source === 'store' ? 'info' : 'default'}
-                size="sm"
+              <button
+                type="button"
+                onClick={() => productActions.setActiveSeasonId(s.id)}
+                aria-pressed={active}
+                className={[
+                  'inline-flex items-center gap-vintiga-sm px-vintiga-md py-1.5 transition-colors cursor-pointer bg-transparent border-none',
+                  active
+                    ? 'text-vintiga-slate-900'
+                    : 'text-vintiga-slate-600 hover:text-vintiga-slate-900',
+                ].join(' ')}
               >
-                {s.source === 'store' ? 'Shared' : 'Custom'}
-              </Tag>
-            </button>
+                <span className="typo-body-sm font-semibold">{resolveName(s)}</span>
+                <Tag
+                  variant="filled"
+                  tone={s.source === 'store' ? 'info' : 'default'}
+                  size="sm"
+                >
+                  {s.source === 'store' ? 'Shared' : 'Custom'}
+                </Tag>
+              </button>
+              {/* Shortcut to Settings → Seasons with this season's edit
+                  modal pre-opened. Only shown on Shared (store) seasons —
+                  Custom seasons live on this experience, no Settings to
+                  jump to. */}
+              {s.source === 'store' && s.storeSeasonId && (
+                <a
+                  href={`#/web/settings?tab=seasons&edit=${s.storeSeasonId}`}
+                  aria-label={`Edit ${resolveName(s)} in Settings`}
+                  title="Edit dates in Settings"
+                  className="inline-flex items-center justify-center px-vintiga-sm border-l border-vintiga-slate-200 text-vintiga-slate-400 hover:text-vintiga-slate-700 hover:bg-vintiga-slate-100 transition-colors cursor-pointer"
+                >
+                  <SettingsIcon className="w-3.5 h-3.5" />
+                </a>
+              )}
+            </span>
           )
         })}
       </div>
