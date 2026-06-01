@@ -79,7 +79,10 @@ function ChannelLabel({ label, count, active }: { label: string; count: number; 
       {count > 0 && (
         <span className={[
           'typo-caption tabular-nums px-1 rounded-full min-w-[16px] text-center',
-          active ? 'bg-vintiga-indigo-100 text-vintiga-indigo-700' : 'bg-vintiga-slate-100 text-vintiga-slate-500',
+          // Inactive chip must contrast with the SegmentedControl's slate-100
+          // container — otherwise it disappears into the background. Use white
+          // on inactive, indigo-tinted on active.
+          active ? 'bg-vintiga-indigo-100 text-vintiga-indigo-700' : 'bg-vintiga-white text-vintiga-slate-500 border border-vintiga-slate-200',
         ].join(' ')}>{count}</span>
       )}
     </span>
