@@ -13,6 +13,7 @@ import { BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
 
 export function SettingsLayout({
   breadcrumbs,
+  breadcrumbHomeHref = '#/web/settings',
   title,
   actions,
   rail,
@@ -20,6 +21,10 @@ export function SettingsLayout({
 }: {
   /** Omit to hide the breadcrumb row entirely (used on the Settings index). */
   breadcrumbs?: { icon?: ReactNode; label?: ReactNode; href?: string }[]
+  /** Target for the leading home-icon crumb. Defaults to the Settings index,
+   *  but can point elsewhere when Settings is opened from a launcher (e.g.
+   *  the Experience Schedule tab routes Home back to the product editor). */
+  breadcrumbHomeHref?: string
   title: ReactNode
   actions?: ReactNode
   /** Optional right rail — when set, main column shrinks to 2/3 width. */
@@ -28,7 +33,7 @@ export function SettingsLayout({
 }) {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
   const fullCrumbs = breadcrumbs && breadcrumbs.length > 0
-    ? [{ icon: <BreadcrumbHomeIcon />, href: '#/web/settings' }, ...breadcrumbs]
+    ? [{ icon: <BreadcrumbHomeIcon />, href: breadcrumbHomeHref }, ...breadcrumbs]
     : undefined
 
   return (
