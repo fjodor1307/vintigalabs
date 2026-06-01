@@ -1,5 +1,11 @@
 # Settings — Changelog
 
+## 2026-05-28 — Fedja + Claude: Seasons tab (PR 1 of 2 for Chain Reaction's seasons ask)
+
+New **Settings → Seasons** tab — tenant-wide reusable date ranges (Spring · Summer · Fall · Harvest · Holiday seeded). Tables sort chronologically by start date; modal-driven add/edit; delete confirms with a warning that experiences pointing at the season will lose the reference. Overlap is allowed by design at this level — the spec calls these "operational calendars", and the no-overlap rule lives on the per-experience seasons (PR 2).
+
+Data lives in a new shared store `src/prototypes/_shared/storeSeasonsStore.ts` (same `useSyncExternalStore` pattern as `globalBlackoutsStore`), so the upcoming Schedule-tab restructure can read it without a settings dependency.
+
 ## 2026-05-27 — Fedja + Claude: Tax Settings tab (May 27 design review)
 
 - **On-site Tax Rates** — per-location fallback rate (POS uses these so checkout works offline). One row per physical location, % input each.
