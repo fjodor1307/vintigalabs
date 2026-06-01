@@ -4,7 +4,7 @@ import contributorsData from './generated/contributors.json'
 import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { FilterBar } from './design-system/shared/FilterBar'
-import { BackArrowIcon } from './design-system/icons/Icons'
+import { BackArrowIcon, DownloadIcon } from './design-system/icons/Icons'
 import { SegmentedControl } from './design-system/shared/SegmentedControl'
 import {
   allRoutes,
@@ -174,13 +174,28 @@ function IndexPage() {
 
   return (
     <div className="min-h-screen bg-vintiga-surface p-vintiga-lg sm:p-vintiga-2xl font-vintiga-body">
-      <header className="mb-vintiga-xl">
-        <h1 className="typo-display font-light text-vintiga-foreground">
-          Vintiga Prototypes
-        </h1>
-        <p className="typo-body-lg text-vintiga-foreground-muted mt-vintiga-sm">
-          Clickable prototypes for validating flows and user stories
-        </p>
+      <header className="mb-vintiga-xl flex items-start justify-between gap-vintiga-md">
+        <div>
+          <h1 className="typo-display font-light text-vintiga-foreground">
+            Vintiga Prototypes
+          </h1>
+          <p className="typo-body-lg text-vintiga-foreground-muted mt-vintiga-sm">
+            Clickable prototypes for validating flows and user stories
+          </p>
+        </div>
+        {/* Download repo as a ZIP — handy for dev handoff so the engineering
+            team can grab the latest main without cloning. GitHub's
+            archive URL works without auth on public repos. */}
+        <a
+          href="https://github.com/fjodor1307/vintigalabs/archive/refs/heads/main.zip"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Download repository as ZIP"
+          title="Download repository as ZIP"
+          className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white text-vintiga-slate-600 hover:text-vintiga-slate-900 hover:border-vintiga-slate-300 transition-colors no-underline"
+        >
+          <DownloadIcon className="w-4 h-4" />
+        </a>
       </header>
 
       <FilterBar

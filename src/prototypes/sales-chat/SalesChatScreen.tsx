@@ -476,6 +476,11 @@ export function SalesChatScreen() {
                   aria-label="Inbox channel"
                   value={channel}
                   onChange={setChannel}
+                  // 4 tabs with count chips don't fit on a single row at the
+                  // 340-px inbox width. Override the DS component's
+                  // `inline-flex` so the strip becomes a full-width flex
+                  // container that wraps to a second row when it must.
+                  className="!flex w-full flex-wrap"
                   options={[
                     { value: 'all',      label: <ChannelLabel label="All"     count={counts.all}      active={channel === 'all'} /> },
                     { value: 'whatsapp', label: <ChannelLabel label="Direct"  count={counts.whatsapp} active={channel === 'whatsapp'} /> },
