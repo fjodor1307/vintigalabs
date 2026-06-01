@@ -635,10 +635,10 @@ export function TimeSlotsScreen() {
       ) : (
         <SectionCard title="No seasons yet">
           <p className="typo-body-sm text-vintiga-slate-500">
-            Add an availability season to start setting hours and time slots for this experience.
+            Choose an availability season to start setting hours and time slots for this experience.
           </p>
           <Button onClick={() => setAddOpen(true)} leftIcon={<PlusIcon className="w-3.5 h-3.5" />}>
-            Add season
+            Choose season
           </Button>
         </SectionCard>
       )}
@@ -666,11 +666,18 @@ function SeasonsStrip({
   resolveName: (s: ExperienceSeason) => string
   onAdd: () => void
 }) {
-  if (seasons.length === 0) return null
+  // Sort tabs chronologically so the operator reads them the way they'd flip
+  // through a calendar — Spring before Summer before Holiday — rather than
+  // in arbitrary "order I happened to add them" order.
+  const sorted = useMemo(
+    () => [...seasons].sort((a, b) => a.start.localeCompare(b.start)),
+    [seasons],
+  )
+  if (sorted.length === 0) return null
   return (
     <div className="flex items-center justify-between gap-vintiga-md flex-wrap">
       <div className="flex items-center gap-vintiga-sm flex-wrap">
-        {seasons.map((s) => {
+        {sorted.map((s) => {
           const active = s.id === activeSeasonId
           return (
             <button
@@ -698,7 +705,7 @@ function SeasonsStrip({
         })}
       </div>
       <Button variant="outline" size="sm" leftIcon={<PlusIcon className="w-3.5 h-3.5" />} onClick={onAdd}>
-        Add season
+        Choose season
       </Button>
     </div>
   )
@@ -840,7 +847,7 @@ function AddSeasonModal({
   return (
     <Modal open={open} onClose={handleClose} size="md">
       <ModalHeader
-        title="Add availability season"
+        title="Choose availability season"
         description="Pull a season from the store-wide list or define a one-off range for this experience only."
         onClose={handleClose}
       />
@@ -913,7 +920,7 @@ function AddSeasonModal({
       </ModalBody>
       <ModalFooter>
         <Button variant="outline" onClick={handleClose}>Cancel</Button>
-        <Button onClick={handleSubmit} disabled={!canSubmit}>Add season</Button>
+        <Button onClick={handleSubmit} disabled={!canSubmit}>Choose season</Button>
       </ModalFooter>
     </Modal>
   )
