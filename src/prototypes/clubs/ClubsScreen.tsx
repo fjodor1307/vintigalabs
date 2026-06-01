@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Tooltip } from '@base-ui/react/tooltip'
 import { ClubsLayout } from './ClubsLayout'
 import { AddClubModal } from './AddClubModal'
 import { ClubCard } from '@ds/shared/ClubCard'
@@ -14,6 +15,7 @@ import {
   EllipsisIcon,
   ChevronDownIcon,
   CheckIcon,
+  InfoIcon,
 } from '@ds/icons/Icons'
 
 // ─── Demo data ────────────────────────────────────────────────────────────────
@@ -243,34 +245,56 @@ export function ClubsScreen() {
 }
 
 // ─── ReadOnlyClubRow ─────────────────────────────────────────────────────────
-// Commerce7-synced clubs are surfaced for visibility but managed in C7. The
-// card stays hover-styled (so it reads as part of the list, not greyed out)
-// but its click is intercepted: instead of navigating, we flash the tooltip
-// anchored to the disabled action button so the operator knows why nothing
-// happened. Hover/focus on the action button shows the same tooltip via the
-// usual base-ui auto-open behaviour.
+// Commerce7-synced clubs are surfaced for visibility but managed in C7. Per
+// VIN-496 the 3-dot action menu is hidden — operators can't Edit / Duplicate
+// / Archive a synced club from this list. To keep the "why is this card
+// inert?" question answerable, we replace the 3-dot slot with a small info
+// icon that opens a base-ui tooltip explaining the read-only state on
+// hover / focus. Same pattern as `FlaggedFlag`.
 
-// Commerce7-synced ("Vintiga-Connect") clubs are read-only. Per spec the 3-dot
-// action menu is hidden entirely — the card stays visible so KPIs surface, but
-// nothing on it is interactive.
 function ReadOnlyClubRow({ club }: { club: Club }) {
   return (
-    <ClubCard
-      image={
-        <img
-          src={club.imageUrl}
-          alt=""
-          className="w-full h-full object-cover"
-          loading="lazy"
+    <Tooltip.Provider>
+      <Tooltip.Root>
+        <ClubCard
+          image={
+            <img
+              src={club.imageUrl}
+              alt=""
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          }
+          title={club.name}
+          tags={club.tags.map((t) => (
+            <Tag tone={t.tone} size="sm">
+              {t.label}
+            </Tag>
+          ))}
+          meta={`${club.active} Active | ${club.onHold} On-hold | ${club.newM} New | ${club.canceled} Canceled`}
+          action={
+            <Tooltip.Trigger
+              render={
+                <button
+                  type="button"
+                  aria-label={`${club.name} — read-only, managed in Commerce 7`}
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault() }}
+                  className="w-8 h-8 rounded-vintiga-md flex items-center justify-center bg-transparent border-none cursor-help text-vintiga-slate-400 hover:text-vintiga-slate-600 hover:bg-vintiga-slate-50 transition-colors"
+                >
+                  <InfoIcon className="w-4 h-4" />
+                </button>
+              }
+            />
+          }
         />
-      }
-      title={club.name}
-      tags={club.tags.map((t) => (
-        <Tag tone={t.tone} size="sm">
-          {t.label}
-        </Tag>
-      ))}
-      meta={`${club.active} Active | ${club.onHold} On-hold | ${club.newM} New | ${club.canceled} Canceled`}
-    />
+        <Tooltip.Portal>
+          <Tooltip.Positioner sideOffset={6}>
+            <Tooltip.Popup className="max-w-[260px] bg-vintiga-foreground text-vintiga-surface typo-caption font-medium px-2 py-1.5 rounded shadow-lg">
+              This club is synced from Commerce 7. To make changes, manage it in Commerce 7.
+            </Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   )
 }
