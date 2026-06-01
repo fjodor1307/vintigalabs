@@ -151,6 +151,44 @@ export interface Blackout {
   end: string
 }
 
+/**
+ * One availability "season" on a specific experience. Either references a
+ * shared store season (Spring / Summer / Harvest …) or defines its own
+ * one-off date range. Each season carries its own schedule rules — slots,
+ * duration, capacity, blackouts — so the same experience can run a
+ * different schedule from May to October than it does in December.
+ *
+ * Per-experience seasons CANNOT overlap (validated at add time). Store
+ * seasons CAN overlap at the store level — that constraint is local.
+ */
+export interface ExperienceSeason {
+  id: string
+  /** `store` = pulls dates from the shared StoreSeason list; `custom` =
+   *  one-off range defined on this experience only. */
+  source: 'store' | 'custom'
+  /** Only set when source === 'store'. Resolves the live name + dates from
+   *  storeSeasonsStore at render time. */
+  storeSeasonId?: string
+  /** Only set when source === 'custom'. */
+  customName?: string
+  /** Resolved start date (yyyy-mm-dd). Mirrors the store season when
+   *  `source === 'store'`; user-controlled when `source === 'custom'`. */
+  start: string
+  /** Resolved end date (yyyy-mm-dd, inclusive). */
+  end: string
+  // Schedule rules:
+  /** Total length of a booking, in minutes. */
+  durationMinutes: string
+  /** Booking interval (minutes between start times). */
+  bookingInterval: number
+  minGuestsPerSlot: string
+  maxGuestsPerSlot: string
+  timeSlotsByDay: Record<Weekday, TimeSlot[]>
+  blackouts: Blackout[]
+  /** Global blackout IDs the operator opted out of for this season. */
+  excludedGlobalBlackoutIds: string[]
+}
+
 export interface ProductState {
   name: string
   productType: string
@@ -189,32 +227,26 @@ export interface ProductState {
   experienceType: ExperienceType
   seatingType: SeatingType
   location: string
-  durationMinutes: string
-  /** How often a start time can be booked, in minutes (the booking granularity). */
-  bookingInterval: number
   leadTimeHours: string
-  // Capacity — interpretation depends on seatingType.
-  // Communal: per-time-slot headcount. Table: per-group size + tabletops per slot.
-  minGuestsPerSlot: string
-  maxGuestsPerSlot: string
+  /** Group capacity (Table seating). Kept top-level — same value across all
+   *  seasons of this experience. */
   minGuestsPerGroup: string
   maxGuestsPerGroup: string
   maxGroupsPerSlot: string
   requiresHost: boolean
-  /** ISO date (yyyy-mm-dd) — the date this experience first becomes available. */
-  startDate: string
-  /** ISO date (yyyy-mm-dd). Empty string means "no end date" (open-ended). */
-  endDate: string
   chargeType: ChargeType
   /** Whether customers can cancel the booking themselves on the website. */
   allowCancelOnline: boolean
   /** Free-form instructions emailed to the customer on purchase. */
   customerInstructions: string
-  /** Weekly bookable time slots, keyed by weekday. */
-  timeSlotsByDay: Record<Weekday, TimeSlot[]>
-  /** ISO date (yyyy-mm-dd). Empty = recurs indefinitely. */
-  scheduleRepeatsUntil: string
-  blackouts: Blackout[]
+  // Seasons — every experience has at least one season. The per-season
+  // schedule rules (duration, slots, blackouts, capacity) replaced the old
+  // flat fields on ProductState (durationMinutes, timeSlotsByDay, etc.).
+  seasons: ExperienceSeason[]
+  /** ID of the season the Schedule tab is currently editing. Always set
+   *  while there's at least one season — falls back to seasons[0] in the
+   *  active-season hook so consumers never need to null-check. */
+  activeSeasonId: string
   // Beer / Spirits override (only meaningful when productType === 'Wine')
   productTypeOverride: ProductTypeOverride
   beerStyle: string
@@ -313,40 +345,50 @@ const initial: ProductState = {
   experienceType: 'Tasting',
   seatingType: 'Table',
   location: '',
-  durationMinutes: '',
-  bookingInterval: 30,
   leadTimeHours: '',
-  minGuestsPerSlot: '',
-  maxGuestsPerSlot: '',
   minGuestsPerGroup: '',
   maxGuestsPerGroup: '',
   maxGroupsPerSlot: '',
   requiresHost: false,
-  startDate: '',
-  endDate: '',
   chargeType: 'On Booking',
   allowCancelOnline: true,
   customerInstructions: '',
-  timeSlotsByDay: {
-    Monday: [
-      { id: 'ts-mon-1', time: '10:00', period: 'AM', online: true },
-      { id: 'ts-mon-2', time: '2:00', period: 'PM', online: true },
-    ],
-    Tuesday: [],
-    Wednesday: [],
-    Thursday: [],
-    Friday: [],
-    Saturday: [],
-    Sunday: [],
-  },
-  scheduleRepeatsUntil: '',
-  blackouts: [
-    // Per-experience closures only — national holidays live in the global
-    // blackouts store (see _shared/globalBlackoutsStore.ts) so every
-    // experience inherits them automatically.
-    { id: 'bl-1', reason: 'Private event',  type: 'event', start: '2026-05-27', end: '2026-05-28' },
-    { id: 'bl-2', reason: 'Staff training', type: 'ops',   start: '2026-06-04', end: '' },
+  // Default seed: one custom "Year-round 2026" season carrying the previous
+  // top-level schedule data. Lets existing experiences open with a working
+  // demo, while the seasons strip lets the operator add Summer, Holiday, etc.
+  seasons: [
+    {
+      id: 'season-default',
+      source: 'custom',
+      customName: 'Year-round 2026',
+      start: '2026-01-01',
+      end:   '2026-12-31',
+      durationMinutes: '',
+      bookingInterval: 30,
+      minGuestsPerSlot: '',
+      maxGuestsPerSlot: '',
+      timeSlotsByDay: {
+        Monday: [
+          { id: 'ts-mon-1', time: '10:00', period: 'AM', online: true },
+          { id: 'ts-mon-2', time: '2:00',  period: 'PM', online: true },
+        ],
+        Tuesday: [],
+        Wednesday: [],
+        Thursday: [],
+        Friday: [],
+        Saturday: [],
+        Sunday: [],
+      },
+      blackouts: [
+        // Per-experience closures only — national holidays live in the
+        // global blackouts store so every experience inherits them.
+        { id: 'bl-1', reason: 'Private event',  type: 'event', start: '2026-05-27', end: '2026-05-28' },
+        { id: 'bl-2', reason: 'Staff training', type: 'ops',   start: '2026-06-04', end: '' },
+      ],
+      excludedGlobalBlackoutIds: [],
+    },
   ],
+  activeSeasonId: 'season-default',
   productTypeOverride: 'None',
   beerStyle: '',
   beerFamily: '',
@@ -430,6 +472,40 @@ export function useProductState(): ProductState {
     () => state,
     () => state,
   )
+}
+
+// ─── Active-season selector ──────────────────────────────────────────────────
+// All schedule-tab UI reads through this hook so it never needs to know which
+// season-id is active. Falls back to seasons[0] when the active id is stale.
+
+function resolveActiveSeason(s: ProductState): ExperienceSeason | null {
+  return s.seasons.find((x) => x.id === s.activeSeasonId) ?? s.seasons[0] ?? null
+}
+
+export function useActiveSeason(): ExperienceSeason | null {
+  return useSyncExternalStore(
+    (l) => { listeners.add(l); return () => { listeners.delete(l) } },
+    () => resolveActiveSeason(state),
+    () => resolveActiveSeason(state),
+  )
+}
+
+/** Snapshot read for the active season — for non-React consumers. */
+export function getActiveSeason(): ExperienceSeason | null {
+  return resolveActiveSeason(state)
+}
+
+/** Functional update of the active season. Returns a new top-level state. */
+function patchActiveSeason(
+  s: ProductState,
+  update: (season: ExperienceSeason) => ExperienceSeason,
+): ProductState {
+  const active = resolveActiveSeason(s)
+  if (!active) return s
+  return {
+    ...s,
+    seasons: s.seasons.map((x) => (x.id === active.id ? update(x) : x)),
+  }
 }
 
 export const productActions = {
@@ -552,55 +628,101 @@ export const productActions = {
     emit()
   },
 
-  // Reservation time slots — keyed by weekday
+  // ── Schedule actions (target the active season) ──────────────────────────
+  // Every schedule mutation goes through the active season so the UI doesn't
+  // have to know which season-id to write to. Switching seasons via
+  // `setActiveSeasonId` flips which one these write to.
+
   addTimeSlot(day: Weekday) {
     const slot: TimeSlot = { id: uid('ts'), time: '', period: 'AM', online: true }
-    state = {
-      ...state,
-      timeSlotsByDay: { ...state.timeSlotsByDay, [day]: [...state.timeSlotsByDay[day], slot] },
-    }
+    state = patchActiveSeason(state, (s) => ({
+      ...s,
+      timeSlotsByDay: { ...s.timeSlotsByDay, [day]: [...s.timeSlotsByDay[day], slot] },
+    }))
     emit()
   },
   updateTimeSlot(day: Weekday, id: string, patch: Partial<TimeSlot>) {
-    state = {
-      ...state,
+    state = patchActiveSeason(state, (s) => ({
+      ...s,
       timeSlotsByDay: {
-        ...state.timeSlotsByDay,
-        [day]: state.timeSlotsByDay[day].map((s) => (s.id === id ? { ...s, ...patch } : s)),
+        ...s.timeSlotsByDay,
+        [day]: s.timeSlotsByDay[day].map((t) => (t.id === id ? { ...t, ...patch } : t)),
       },
-    }
+    }))
     emit()
   },
   removeTimeSlot(day: Weekday, id: string) {
-    state = {
-      ...state,
-      timeSlotsByDay: {
-        ...state.timeSlotsByDay,
-        [day]: state.timeSlotsByDay[day].filter((s) => s.id !== id),
-      },
-    }
+    state = patchActiveSeason(state, (s) => ({
+      ...s,
+      timeSlotsByDay: { ...s.timeSlotsByDay, [day]: s.timeSlotsByDay[day].filter((t) => t.id !== id) },
+    }))
     emit()
   },
   setTimeSlots(day: Weekday, slots: TimeSlot[]) {
-    state = { ...state, timeSlotsByDay: { ...state.timeSlotsByDay, [day]: slots } }
+    state = patchActiveSeason(state, (s) => ({
+      ...s,
+      timeSlotsByDay: { ...s.timeSlotsByDay, [day]: slots },
+    }))
     emit()
   },
   setBookingInterval(minutes: number) {
-    state = { ...state, bookingInterval: minutes }
+    state = patchActiveSeason(state, (s) => ({ ...s, bookingInterval: minutes }))
     emit()
   },
-
-  // Recurrence + blackouts
-  setScheduleRepeatsUntil(value: string) {
-    state = { ...state, scheduleRepeatsUntil: value }
+  /** Set season-scoped schedule fields (duration, capacity, etc.). */
+  setSeasonField<K extends keyof ExperienceSeason>(key: K, value: ExperienceSeason[K]) {
+    state = patchActiveSeason(state, (s) => ({ ...s, [key]: value }))
     emit()
   },
   addBlackout(b: Blackout) {
-    state = { ...state, blackouts: [...state.blackouts, b] }
+    state = patchActiveSeason(state, (s) => ({ ...s, blackouts: [...s.blackouts, b] }))
     emit()
   },
   removeBlackout(id: string) {
-    state = { ...state, blackouts: state.blackouts.filter((b) => b.id !== id) }
+    state = patchActiveSeason(state, (s) => ({ ...s, blackouts: s.blackouts.filter((b) => b.id !== id) }))
+    emit()
+  },
+  /** Toggle whether a tenant-wide global blackout applies to the active
+   *  season. Excluded globals appear strikethrough in the inherited row. */
+  toggleExcludedGlobalBlackout(globalId: string) {
+    state = patchActiveSeason(state, (s) => {
+      const has = s.excludedGlobalBlackoutIds.includes(globalId)
+      return {
+        ...s,
+        excludedGlobalBlackoutIds: has
+          ? s.excludedGlobalBlackoutIds.filter((id) => id !== globalId)
+          : [...s.excludedGlobalBlackoutIds, globalId],
+      }
+    })
+    emit()
+  },
+
+  // ── Season management ───────────────────────────────────────────────────
+  addSeason(season: ExperienceSeason) {
+    state = { ...state, seasons: [...state.seasons, season], activeSeasonId: season.id }
+    emit()
+  },
+  removeSeason(id: string) {
+    const next = state.seasons.filter((s) => s.id !== id)
+    state = {
+      ...state,
+      seasons: next,
+      activeSeasonId:
+        state.activeSeasonId === id ? (next[0]?.id ?? '') : state.activeSeasonId,
+    }
+    emit()
+  },
+  setActiveSeasonId(id: string) {
+    state = { ...state, activeSeasonId: id }
+    emit()
+  },
+  /** Update season metadata (custom name / dates). Schedule fields use
+   *  `setSeasonField` / dedicated time-slot actions instead. */
+  updateSeasonMeta(id: string, patch: Partial<Pick<ExperienceSeason, 'customName' | 'start' | 'end'>>) {
+    state = {
+      ...state,
+      seasons: state.seasons.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+    }
     emit()
   },
 
