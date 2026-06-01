@@ -62,7 +62,7 @@ function fmtTime(offsetMin: number): string {
 // Drives the inline channel pill on each conversation row and the filter
 // tabs above the inbox.
 
-type InboxFilter = 'all' | ChatSource
+type InboxFilter = ChatSource
 
 const SOURCE_META: Record<ChatSource, { label: string; dotClass: string }> = {
   whatsapp: { label: 'WhatsApp', dotClass: 'bg-vintiga-green-500' },
@@ -371,7 +371,10 @@ export function SalesChatScreen() {
   const [convs,    setConvs]    = useState<ChatConversation[]>(CONVERSATIONS)
   const [search,   setSearch]   = useState('')
   const [picking,  setPicking]  = useState(false)
-  const [channel,  setChannel]  = useState<InboxFilter>('all')
+  // Defaults to Direct (WhatsApp) — the longest-lived channel for these
+  // operators. Unread counts on the Website/Members tabs surface work
+  // queued in the other channels without forcing them to flip there first.
+  const [channel,  setChannel]  = useState<InboxFilter>('whatsapp')
 
   const initialId = readSelectedFromHash() ?? convs[0]?.id ?? null
   const [selectedId, setSelectedId] = useState<string | null>(initialId)
@@ -384,15 +387,15 @@ export function SalesChatScreen() {
   }, [selectedId])
 
   // Counts per channel — drive the badge after each tab label so the operator
-  // knows where work is queued up without flipping through tabs.
+  // knows where work is queued up without flipping there first.
   const counts = useMemo(() => {
-    const c = { all: 0, whatsapp: 0, website: 0, members: 0 } as Record<InboxFilter, number>
-    convs.forEach((cv) => { c.all += cv.unread; c[cv.source] += cv.unread })
+    const c = { whatsapp: 0, website: 0, members: 0 } as Record<InboxFilter, number>
+    convs.forEach((cv) => { c[cv.source] += cv.unread })
     return c
   }, [convs])
 
   const filtered = useMemo(() => {
-    const byChannel = channel === 'all' ? convs : convs.filter((c) => c.source === channel)
+    const byChannel = convs.filter((c) => c.source === channel)
     const q = search.toLowerCase().trim()
     if (!q) return byChannel
     return byChannel.filter(
@@ -476,13 +479,7 @@ export function SalesChatScreen() {
                   aria-label="Inbox channel"
                   value={channel}
                   onChange={setChannel}
-                  // 4 tabs with count chips don't fit on a single row at the
-                  // 340-px inbox width. Override the DS component's
-                  // `inline-flex` so the strip becomes a full-width flex
-                  // container that wraps to a second row when it must.
-                  className="!flex w-full flex-wrap"
                   options={[
-                    { value: 'all',      label: <ChannelLabel label="All"     count={counts.all}      active={channel === 'all'} /> },
                     { value: 'whatsapp', label: <ChannelLabel label="Direct"  count={counts.whatsapp} active={channel === 'whatsapp'} /> },
                     { value: 'website',  label: <ChannelLabel label="Website" count={counts.website}  active={channel === 'website'} /> },
                     { value: 'members',  label: <ChannelLabel label="Members" count={counts.members}  active={channel === 'members'} /> },
