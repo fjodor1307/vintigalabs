@@ -50,8 +50,8 @@ const SAVED_ADDRESSES = [
 ]
 
 const PICKUP_LOCATIONS = [
-  { value: 'tasting-room', label: 'Vintiga Tasting Room — Bellingham' },
-  { value: 'downtown',     label: 'Vintiga Downtown — Seattle' },
+  { value: 'estate',       label: 'Estate' },
+  { value: 'tasting-room', label: 'Tasting Room' },
 ]
 
 // Tasting Credit clubs expose their contribution levels as nested options in
@@ -322,7 +322,7 @@ export function AddMembershipScreen() {
                         selected={deliveryOption === value}
                         onClick={() => setDeliveryOption(value)}
                         icon={<StoreIcon />}
-                        label={`Pickup — ${loc.label}`}
+                        label={`Pickup - ${loc.label}`}
                       />
                     )
                   })}
@@ -485,7 +485,7 @@ function MembershipDetailsRail({
             {isShipping
               ? <TruckIcon className="w-4 h-4 text-vintiga-slate-400" />
               : <StoreIcon className="w-4 h-4 text-vintiga-slate-400" />}
-            {isShipping ? 'Shipping' : (pickedPickupLabel ? `Pickup · ${pickedPickupLabel}` : 'Pickup')}
+            {isShipping ? 'Shipping' : (pickedPickupLabel ? `Pickup - ${pickedPickupLabel}` : 'Pickup')}
           </span>
         </RailRow>
       </div>
