@@ -144,11 +144,15 @@ export function AddMembershipScreen() {
   // a club key (`curators`) or `clubKey:levelId` for Tasting Credit levels.
   const [clubSelection, setClubSelection] = useState(launchParams.clubSelection ?? '')
   const [joinDate, setJoinDate]       = useState('')
-  // Defaults to Pickup — most operators creating a membership are doing it
-  // for a customer who'll grab their first shipment in the tasting room.
-  const [delivery, setDelivery]       = useState<'shipping' | 'pickup'>('pickup')
-  const [shipAddress, setShipAddress] = useState('home')
-  const [pickupLoc, setPickupLoc]     = useState('tasting-room')
+  // Defaults to the first pickup location — most operators creating a
+  // membership are doing it for a customer who'll grab their first
+  // shipment in the tasting room. `'shipping'` flips the address picker on.
+  // Per-pickup-location options expanded into the radio (no second
+  // dropdown) so the operator picks the destination in one step.
+  const [deliveryOption, setDeliveryOption] = useState<string>(`pickup:${PICKUP_LOCATIONS[0].value}`)
+  const [shipAddress, setShipAddress]       = useState('home')
+  const isShipping = deliveryOption === 'shipping'
+  const pickedPickupId = isShipping ? null : deliveryOption.slice('pickup:'.length)
   const [newStreet, setNewStreet]     = useState('')
   const [newCity, setNewCity]         = useState('')
   const [newState, setNewState]       = useState('')
@@ -224,7 +228,8 @@ export function AddMembershipScreen() {
                 clubKey={clubKey}
                 levelLabel={selectedLevel ? `${selectedLevel.name} · $${selectedLevel.amount}/${selectedLevel.cadence.toLowerCase()}` : null}
                 joinDate={joinDate}
-                delivery={delivery}
+                isShipping={isShipping}
+                pickedPickupLabel={pickedPickupId ? PICKUP_LOCATIONS.find((l) => l.value === pickedPickupId)?.label ?? null : null}
               />
             }
           >
@@ -299,22 +304,31 @@ export function AddMembershipScreen() {
               </RecordsCard>
 
               <RecordsCard title="Delivery Method" divider={false}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-vintiga-md">
+                {/* One tile per destination. Stacked vertically so each row
+                    has room for the full "Pickup — Vintiga Tasting Room
+                    (Bellingham)" label without truncation. */}
+                <div className="grid grid-cols-1 gap-vintiga-sm">
                   <DeliveryOption
-                    selected={delivery === 'shipping'}
-                    onClick={() => setDelivery('shipping')}
+                    selected={isShipping}
+                    onClick={() => setDeliveryOption('shipping')}
                     icon={<TruckIcon />}
                     label="Shipping"
                   />
-                  <DeliveryOption
-                    selected={delivery === 'pickup'}
-                    onClick={() => setDelivery('pickup')}
-                    icon={<StoreIcon />}
-                    label="Pickup"
-                  />
+                  {PICKUP_LOCATIONS.map((loc) => {
+                    const value = `pickup:${loc.value}`
+                    return (
+                      <DeliveryOption
+                        key={value}
+                        selected={deliveryOption === value}
+                        onClick={() => setDeliveryOption(value)}
+                        icon={<StoreIcon />}
+                        label={`Pickup — ${loc.label}`}
+                      />
+                    )
+                  })}
                 </div>
 
-                {delivery === 'shipping' ? (
+                {isShipping && (
                   <>
                     <Field label="Shipping Address" required>
                       <Select
@@ -326,21 +340,13 @@ export function AddMembershipScreen() {
                     <div className="flex items-start gap-vintiga-sm rounded-vintiga-md bg-vintiga-slate-50 px-vintiga-md py-vintiga-sm">
                       <InfoIcon className="w-4 h-4 text-vintiga-slate-400 shrink-0 mt-0.5" />
                       <span className="typo-caption text-vintiga-slate-500">
-                        If the customer has no saved address, add one below or switch to Pickup.
+                        If the customer has no saved address, add one below or pick a Pickup location.
                       </span>
                     </div>
                   </>
-                ) : (
-                  <Field label="Pickup Location" required>
-                    <Select
-                      value={pickupLoc}
-                      onChange={(e) => setPickupLoc(e.target.value)}
-                      options={PICKUP_LOCATIONS}
-                    />
-                  </Field>
                 )}
 
-                {delivery === 'shipping' && shipAddress === 'new' && (
+                {isShipping && shipAddress === 'new' && (
                   <div className="border border-vintiga-slate-200 rounded-vintiga-lg p-vintiga-md flex flex-col gap-vintiga-md">
                     <Field label="Street Address" required>
                       <TextField value={newStreet} onChange={(e) => setNewStreet(e.target.value)} placeholder="123 Main Street" />
@@ -441,12 +447,16 @@ function MembershipDetailsRail({
   clubKey,
   levelLabel,
   joinDate,
-  delivery,
+  isShipping,
+  pickedPickupLabel,
 }: {
   clubKey: ClubKey | null
   levelLabel: string | null
   joinDate: string
-  delivery: 'shipping' | 'pickup'
+  isShipping: boolean
+  /** When pickup is selected, the human-readable location label. Null when
+   *  shipping is selected. */
+  pickedPickupLabel: string | null
 }) {
   const club = clubKey ? CLUBS_CATALOG[clubKey] : null
   return (
@@ -472,8 +482,10 @@ function MembershipDetailsRail({
         </RailRow>
         <RailRow label="Delivery Method">
           <span className="inline-flex items-center gap-1.5">
-            {delivery === 'shipping' ? <TruckIcon className="w-4 h-4 text-vintiga-slate-400" /> : <StoreIcon className="w-4 h-4 text-vintiga-slate-400" />}
-            {delivery === 'shipping' ? 'Shipping' : 'Pickup'}
+            {isShipping
+              ? <TruckIcon className="w-4 h-4 text-vintiga-slate-400" />
+              : <StoreIcon className="w-4 h-4 text-vintiga-slate-400" />}
+            {isShipping ? 'Shipping' : (pickedPickupLabel ? `Pickup · ${pickedPickupLabel}` : 'Pickup')}
           </span>
         </RailRow>
       </div>
