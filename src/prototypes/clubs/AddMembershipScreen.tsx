@@ -304,16 +304,11 @@ export function AddMembershipScreen() {
               </RecordsCard>
 
               <RecordsCard title="Delivery Method" divider={false}>
-                {/* One tile per destination. Stacked vertically so each row
-                    has room for the full "Pickup — Vintiga Tasting Room
-                    (Bellingham)" label without truncation. */}
+                {/* Pickup tiles first — most operators creating a membership
+                    are doing it for a customer who'll grab their first
+                    shipment in person. Shipping sits at the bottom as the
+                    fallback for remote customers. */}
                 <div className="grid grid-cols-1 gap-vintiga-sm">
-                  <DeliveryOption
-                    selected={isShipping}
-                    onClick={() => setDeliveryOption('shipping')}
-                    icon={<TruckIcon />}
-                    label="Shipping"
-                  />
                   {PICKUP_LOCATIONS.map((loc) => {
                     const value = `pickup:${loc.value}`
                     return (
@@ -326,6 +321,12 @@ export function AddMembershipScreen() {
                       />
                     )
                   })}
+                  <DeliveryOption
+                    selected={isShipping}
+                    onClick={() => setDeliveryOption('shipping')}
+                    icon={<TruckIcon />}
+                    label="Shipping"
+                  />
                 </div>
 
                 {isShipping && (
