@@ -674,6 +674,7 @@ export function TimeSlotsScreen() {
       <StoreSeasonModal
         state={editStoreSeason}
         onClose={() => setEditStoreSeason(null)}
+        showSettingsLink
       />
     </ProductLayout>
   )
