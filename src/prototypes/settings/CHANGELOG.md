@@ -1,5 +1,11 @@
 # Settings — Changelog
 
+## 2026-06-04 — Fedja + Claude: Drop the Seasons tab (Jun 4 design review)
+
+Decided in the Jun 4 review that there's no separate **Seasons** settings page — seasons are managed entirely from each experience's Schedule tab (same pattern as blackout dates: create locally, optionally promote to a tenant-wide season via a switch). The Seasons tab + `SeasonsTab.tsx` are gone; the `'seasons'` tab union, deep-link param, and route branch are removed from `SettingsScreen.tsx`. The shared `storeSeasonsStore` stays — it now only writes through the experience-side modal.
+
+> *Jim (Jun 4):* "I think we can simplify it by not even having a setup-seasons page. Every season is either for this experience or for anybody to use, just like we did with the blackout dates."
+
 ## 2026-05-28 — Fedja + Claude: Seasons tab (PR 1 of 2 for Chain Reaction's seasons ask)
 
 New **Settings → Seasons** tab — tenant-wide reusable date ranges (Spring · Summer · Fall · Harvest · Holiday seeded). Tables sort chronologically by start date; modal-driven add/edit; delete confirms with a warning that experiences pointing at the season will lose the reference. Overlap is allowed by design at this level — the spec calls these "operational calendars", and the no-overlap rule lives on the per-experience seasons (PR 2).

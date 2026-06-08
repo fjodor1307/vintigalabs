@@ -6,6 +6,12 @@
 
 ---
 
+## 2026-06-04 — Fedja + Claude: "Make global" switch on Choose Season (Jun 4 review)
+
+Per the Jun 4 design review, season management moves entirely to the experience Schedule tab (the Settings → Seasons page is gone in the same PR). The `AddSeasonModal`'s **Create experience-only season** mode now ends with a "Make available to all experiences" switch — mirrors the **Apply to all experiences** pattern on the blackouts modal. When on, the custom range is also written to `storeSeasonsStore`, so other experiences see it in their store-season dropdown immediately.
+
+Also removed the now-dead "View all seasons in Settings →" link from the modal, since there's nothing to deep-link to.
+
 ## 2026-06-01 — Fedja + Claude: Experience Seasons on the Schedule tab (PR 2 of 2)
 
 The Chain Reaction follow-up: each experience now keeps **one or more availability seasons**, and the existing booking-settings + weekly-schedule + blackouts cards live *inside* the active season. Pairs with the Settings → Seasons tab from PR 1.

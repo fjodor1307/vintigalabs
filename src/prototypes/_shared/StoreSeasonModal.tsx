@@ -4,12 +4,13 @@ import { Button } from '@ds/shared/Button'
 import { storeSeasonsActions, type StoreSeason } from './storeSeasonsStore'
 
 // ─── StoreSeasonModal ────────────────────────────────────────────────────────
-// Add / Edit modal for a tenant-wide store season. Mounted from two places:
-//   • Settings → Seasons — full CRUD on the list.
-//   • Experience Schedule tab — gear icon on Shared season pills opens it
-//     inline so the operator can nudge a season's dates without leaving the
-//     editor. Writes go straight to `storeSeasonsStore`; every consumer
-//     re-renders automatically.
+// Add / Edit modal for a tenant-wide store season. Decided 2026-06-04 there
+// is no Settings → Seasons page — seasons are managed entirely from each
+// experience's Schedule tab. This modal is mounted from:
+//   • The gear icon on Shared season pills (inline edit, so the operator can
+//     nudge a season's dates without leaving the editor).
+// Writes go straight to `storeSeasonsStore`; every consumer re-renders
+// automatically.
 
 export type StoreSeasonModalState =
   | { mode: 'add' }
@@ -20,19 +21,11 @@ export interface StoreSeasonModalProps {
   state: StoreSeasonModalState
   onClose: () => void
   /** Optional override — when omitted, the modal commits to
-   *  `storeSeasonsStore` itself. Settings keeps its own handler so it can
-   *  reuse the modal for both add + edit; the experience editor lets the
-   *  default handler do the write. */
+   *  `storeSeasonsStore` itself. */
   onSubmit?: (payload: { name: string; start: string; end: string }) => void
-  /** Show a "View all seasons in Settings →" exit link in the footer area.
-   *  Useful when the modal is opened OUTSIDE Settings (e.g. from an
-   *  experience's Schedule tab) so the operator has a one-click path to the
-   *  master list. Set to false (the default) inside Settings itself, where
-   *  the link would be redundant. */
-  showSettingsLink?: boolean
 }
 
-export function StoreSeasonModal({ state, onClose, onSubmit, showSettingsLink = false }: StoreSeasonModalProps) {
+export function StoreSeasonModal({ state, onClose, onSubmit }: StoreSeasonModalProps) {
   const open = state !== null
   const editing = state?.mode === 'edit' ? state.season : null
 
@@ -124,18 +117,6 @@ export function StoreSeasonModal({ state, onClose, onSubmit, showSettingsLink = 
             <p className="typo-caption text-vintiga-slate-500">
               Changes apply to every experience using this season.
             </p>
-          )}
-          {showSettingsLink && (
-            // Quiet exit to the master list — only renders when the modal is
-            // opened from outside Settings (e.g. the experience Schedule
-            // tab). Closes the modal first so the navigation lands cleanly.
-            <a
-              href="#/web/settings?tab=seasons"
-              onClick={handleClose}
-              className="self-start typo-caption text-vintiga-indigo-600 hover:text-vintiga-indigo-700 hover:underline transition-colors"
-            >
-              View all seasons in Settings →
-            </a>
           )}
         </div>
       </ModalBody>
