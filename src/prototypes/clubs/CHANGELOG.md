@@ -6,6 +6,20 @@
 
 ---
 
+## 2026-06-04 — Fedja + Claude: Add Payment Method + Tasting Credit Charges tab (Jun 4 design review)
+
+Two changes from the Jun 4 design review:
+
+**Add Membership → Add Payment Method.** The Payment Method card now has a trailing **+ Add Payment Method** button (matches the screenshot Donna ran by Jim/Geoff). Opens a modal that captures card number / expires / CVC / cardholder / ZIP. Saved cards become local state — the new card auto-selects on save so it's the one charged on submit. Prototype only — production uses processor-hosted fields.
+
+> *Jim (Jun 4):* "If the card they have on… if they don't have a card associated with this customer record, they would need to add a payment method."
+
+**View Tasting Credit Club → Charges tab.** New tab on `account-credit` clubs only (Overview / Members / **Charges** / Emails). Surfaces *per-club* revenue distinct from the customer-side account-balance history — which is what Donna asked for: "how much revenue is *this club* generating without any sort of returns or store credits or anything." KPI strip (Total charged net · Months active · Avg per month · Contributing members), a **By month** roll-up table (gross / refunds / net / failed count), and a filterable **Charge log** (date / member / level / amount / status). Refunds back out of "net" so the headline matches the framing; failed charges surface as a follow-up nudge without polluting the totals.
+
+> *Geoff (Jun 4):* "After this you're in the club so when you go to view your club and it's a tasting credit club we want to see how many months you've been charged and what the total amount was."
+
+Wires `#/web/clubs/view/{slug}/charges` for every account-credit club via `prototype.config.ts`; tab set in `ClubViewLayout.tsx` updated to include it. New screen file: `ClubViewChargesScreen.tsx` with mocked 6-month data for Blind Enthusiasm.
+
 ## 2026-05-27 — Fedja + Claude: Add Membership UX (May 27 design review)
 
 - **Club dropdown is flat.** Tasting Credit levels render as siblings ("Blind Enthusiasm — Silver ($50/monthly)") instead of an `<optgroup>` tree, so the operator picks the tier in one step.

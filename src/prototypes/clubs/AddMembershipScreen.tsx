@@ -12,8 +12,9 @@ import { Select } from '@ds/shared/Select'
 import { Radio } from '@ds/shared/Radio'
 import { Button } from '@ds/shared/Button'
 import { Tag } from '@ds/shared/Tag'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@ds/shared/Modal'
 import { type CardBrand } from '@ds/shared/CardBrandLogo'
-import { InfoIcon, CalendarIcon, TruckIcon, StoreIcon } from '@ds/icons/Icons'
+import { InfoIcon, CalendarIcon, TruckIcon, StoreIcon, PlusIcon } from '@ds/icons/Icons'
 import { CLUBS_CATALOG, CLUB_KEYS, type ClubKey, type ClubKind } from './clubsCatalog'
 
 // ─── AddMembershipScreen ──────────────────────────────────────────────────────
@@ -88,10 +89,14 @@ interface SavedCard {
   last4: string
   expires: string
 }
-const SAVED_CARDS: SavedCard[] = [
+const INITIAL_SAVED_CARDS: SavedCard[] = [
   { id: 'card-92', brand: 'mastercard', last4: '0092', expires: '07/27' },
   { id: 'card-44', brand: 'mastercard', last4: '0044', expires: '08/28' },
 ]
+
+function formatCardLabel(c: SavedCard): string {
+  return `${c.brand[0].toUpperCase() + c.brand.slice(1)} **** ${c.last4} — Expires ${c.expires}`
+}
 
 const MEMBERSHIPS_HASH = '#/web/clubs/memberships'
 
@@ -157,7 +162,13 @@ export function AddMembershipScreen() {
   const [newCity, setNewCity]         = useState('')
   const [newState, setNewState]       = useState('')
   const [newZip, setNewZip]           = useState('')
-  const [paymentCardId, setPaymentCardId] = useState<string>(SAVED_CARDS[0].id)
+  // Cards on file for the selected customer. Held in local state so the
+  // operator can add a card from the inline "Add Payment Method" affordance
+  // when the customer has nothing on record — newly-added cards become the
+  // default selection so they're charged on submit.
+  const [savedCards, setSavedCards] = useState<SavedCard[]>(INITIAL_SAVED_CARDS)
+  const [paymentCardId, setPaymentCardId] = useState<string>(INITIAL_SAVED_CARDS[0].id)
+  const [addCardOpen, setAddCardOpen] = useState(false)
 
   // Keep the customer / club in sync with hash query params so deep-linking
   // from another tab (e.g. /customers/.../memberships → add) lands here with
@@ -373,14 +384,27 @@ export function AddMembershipScreen() {
                   other ones cluttering the row. Pre-selected to the
                   customer's default card (the first saved card here). */}
               {customer && (
-                <RecordsCard title="Payment Method" divider={false}>
+                <RecordsCard
+                  title="Payment Method"
+                  divider={false}
+                  action={
+                    <Button
+                      variant="outline"
+                      size="md"
+                      leftIcon={<PlusIcon className="w-3.5 h-3.5" />}
+                      onClick={() => setAddCardOpen(true)}
+                    >
+                      Add Payment Method
+                    </Button>
+                  }
+                >
                   <Field label="Card on file" required>
                     <Select
                       value={paymentCardId}
                       onChange={(e) => setPaymentCardId(e.target.value)}
-                      options={SAVED_CARDS.map((c) => ({
+                      options={savedCards.map((c) => ({
                         value: c.id,
-                        label: `${c.brand[0].toUpperCase() + c.brand.slice(1)} **** ${c.last4} — Expires ${c.expires}`,
+                        label: formatCardLabel(c),
                       }))}
                     />
                   </Field>
@@ -410,6 +434,16 @@ export function AddMembershipScreen() {
           </PageTemplate>
         </div>
       </div>
+
+      <AddPaymentMethodModal
+        open={addCardOpen}
+        onClose={() => setAddCardOpen(false)}
+        onAdd={(card) => {
+          setSavedCards((prev) => [...prev, card])
+          setPaymentCardId(card.id)
+          setAddCardOpen(false)
+        }}
+      />
     </div>
   )
 }
@@ -520,5 +554,141 @@ function SummaryRow({ label, value, bold }: { label: string; value: string; bold
       <span className={`typo-body-sm ${bold ? 'font-semibold text-vintiga-slate-900' : 'text-vintiga-slate-600'}`}>{label}</span>
       <span className={`typo-body-sm ${bold ? 'font-semibold text-vintiga-slate-900' : 'text-vintiga-slate-900'}`}>{value}</span>
     </div>
+  )
+}
+
+// ─── AddPaymentMethodModal ───────────────────────────────────────────────────
+// Inline-only-in-prototype card capture. Real implementation will use the
+// payment processor's hosted fields — we'd never collect raw PAN here in
+// production. The modal is just enough to make the membership flow feel
+// complete when a customer has no card on file (per the Jun 4 review:
+// "if the card they have on if they don't have a card associated with this
+// customer record they would need to add a payment method").
+function AddPaymentMethodModal({
+  open,
+  onClose,
+  onAdd,
+}: {
+  open: boolean
+  onClose: () => void
+  onAdd: (card: SavedCard) => void
+}) {
+  const [cardNumber, setCardNumber] = useState('')
+  const [expires, setExpires]       = useState('')
+  const [cvc, setCvc]               = useState('')
+  const [name, setName]             = useState('')
+  const [zip, setZip]               = useState('')
+
+  function reset() {
+    setCardNumber('')
+    setExpires('')
+    setCvc('')
+    setName('')
+    setZip('')
+  }
+
+  function handleClose() { reset(); onClose() }
+
+  function detectBrand(num: string): CardBrand {
+    const digits = num.replace(/\D/g, '')
+    if (/^4/.test(digits))       return 'visa'
+    if (/^(5[1-5]|2[2-7])/.test(digits)) return 'mastercard'
+    if (/^3[47]/.test(digits))   return 'amex'
+    if (/^6/.test(digits))       return 'discover'
+    return 'mastercard'
+  }
+
+  const digits = cardNumber.replace(/\D/g, '')
+  const last4  = digits.slice(-4)
+  // Accept either "MM/YY" or the date-input "YYYY-MM" — normalise to MM/YY.
+  const expiresPretty = (() => {
+    if (/^\d{4}-\d{2}$/.test(expires)) {
+      const [yyyy, mm] = expires.split('-')
+      return `${mm}/${yyyy.slice(2)}`
+    }
+    return expires
+  })()
+
+  const valid =
+    digits.length >= 13 &&
+    /^(\d{2}\/\d{2}|\d{4}-\d{2})$/.test(expires) &&
+    cvc.length >= 3 &&
+    name.trim().length > 0
+
+  function handleAdd() {
+    if (!valid) return
+    const card: SavedCard = {
+      id: `card-${Date.now()}`,
+      brand: detectBrand(digits),
+      last4,
+      expires: expiresPretty,
+    }
+    onAdd(card)
+    reset()
+  }
+
+  return (
+    <Modal open={open} onClose={handleClose} size="md">
+      <ModalHeader
+        title="Add Payment Method"
+        description="Card details are tokenised by the payment processor on save — Vintiga never stores the full number."
+        onClose={handleClose}
+      />
+      <ModalBody>
+        <div className="flex flex-col gap-vintiga-md">
+          <Field label="Card number" required>
+            <TextField
+              value={cardNumber}
+              onChange={(e) => setCardNumber(e.target.value)}
+              placeholder="1234 5678 9012 3456"
+              inputMode="numeric"
+              autoComplete="cc-number"
+            />
+          </Field>
+
+          <div className="grid grid-cols-2 gap-vintiga-md">
+            <Field label="Expires" required>
+              <TextField
+                value={expires}
+                onChange={(e) => setExpires(e.target.value)}
+                placeholder="MM/YY"
+                autoComplete="cc-exp"
+              />
+            </Field>
+            <Field label="CVC" required>
+              <TextField
+                value={cvc}
+                onChange={(e) => setCvc(e.target.value)}
+                placeholder="•••"
+                inputMode="numeric"
+                autoComplete="cc-csc"
+              />
+            </Field>
+          </div>
+
+          <Field label="Cardholder name" required>
+            <TextField
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Name on card"
+              autoComplete="cc-name"
+            />
+          </Field>
+
+          <Field label="Billing ZIP">
+            <TextField
+              value={zip}
+              onChange={(e) => setZip(e.target.value)}
+              placeholder="98229"
+              autoComplete="postal-code"
+            />
+          </Field>
+        </div>
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="outline" onClick={handleClose}>Cancel</Button>
+        <Button onClick={handleAdd} disabled={!valid}>Save card</Button>
+      </ModalFooter>
+    </Modal>
   )
 }
