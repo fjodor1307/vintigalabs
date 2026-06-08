@@ -24,20 +24,25 @@ import { CLUBS_CATALOG, getCurrentClubSlug, type ClubKind } from './clubsCatalog
 // Sample data is hard-coded — this is a prototype with a single canonical
 // club ("Blind Enthusiasm"). Real wiring loads by id.
 
-export type ClubViewTab = 'overview' | 'members' | 'releases' | 'levels' | 'emails'
+export type ClubViewTab = 'overview' | 'members' | 'releases' | 'levels' | 'charges' | 'emails'
 
 // Tab set varies by kind — mirrors the editor side (`ClubEditorLayout`):
 //   • curated / traditional  → Overview / Members / Releases / Emails
 //   • membership             → Overview / Members / Emails
-//   • account-credit         → Overview / Members / Levels / Emails
+//   • account-credit         → Overview / Members / Charges / Emails
 function tabsForSlug(slug: string, kind: ClubKind): { value: ClubViewTab; label: string; href: string }[] {
   const overview = { value: 'overview' as ClubViewTab, label: 'Overview', href: `#/web/clubs/view/${slug}/overview` }
   const members  = { value: 'members'  as ClubViewTab, label: 'Members',  href: `#/web/clubs/view/${slug}/members`  }
   const emails   = { value: 'emails'   as ClubViewTab, label: 'Emails',   href: `#/web/clubs/view/${slug}/emails`   }
   if (kind === 'membership') return [overview, members, emails]
-  // Tasting Credit (account-credit) — levels live inline on the Overview;
-  // no separate Levels tab.
-  if (kind === 'account-credit') return [overview, members, emails]
+  // Tasting Credit (account-credit) — Charges tab surfaces the club-level
+  // revenue history (months × member × contribution) that Donna asked about
+  // in the Jun 4 review. Account balance lives on the customer record;
+  // this is "what revenue is this club generating".
+  if (kind === 'account-credit') {
+    const charges = { value: 'charges' as ClubViewTab, label: 'Charges', href: `#/web/clubs/view/${slug}/charges` }
+    return [overview, members, charges, emails]
+  }
   // curated + traditional — release-driven fulfilment
   return [overview, members, { value: 'releases', label: 'Releases', href: `#/web/clubs/view/${slug}/releases` }, emails]
 }
