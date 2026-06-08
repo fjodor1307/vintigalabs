@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { SettingsLayout } from './SettingsLayout'
 import { LocationsTab } from './LocationsTab'
 import { TaxesTab } from './TaxesTab'
-import { SeasonsTab } from './SeasonsTab'
 import { Button } from '@ds/shared/Button'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
 
@@ -21,7 +20,6 @@ type SettingsTab =
   | 'integrations'
   | 'users-permissions'
   | 'locations'
-  | 'seasons'
 
 const TABS: { value: SettingsTab; label: string }[] = [
   { value: 'general',           label: 'General' },
@@ -30,7 +28,6 @@ const TABS: { value: SettingsTab; label: string }[] = [
   { value: 'integrations',      label: 'Integrations' },
   { value: 'users-permissions', label: 'Users & Permissions' },
   { value: 'locations',         label: 'Locations' },
-  { value: 'seasons',           label: 'Seasons' },
 ]
 
 const TAB_DESCRIPTION: Record<SettingsTab, string> = {
@@ -40,12 +37,10 @@ const TAB_DESCRIPTION: Record<SettingsTab, string> = {
   integrations:        'Connections to accounting, marketing, and fulfilment partners.',
   'users-permissions': 'Team members, roles, and access permissions.',
   locations:           '',
-  seasons:             '',
 }
 
 /** Read `?tab=…` off the hash query string. Lets other surfaces deep-link
- *  to a specific Settings tab — e.g. the Schedule tab's "Edit in Settings"
- *  affordance on Shared seasons routes to `#/web/settings?tab=seasons`. */
+ *  to a specific Settings tab. */
 function readInitialTab(): SettingsTab {
   if (typeof window === 'undefined') return 'locations'
   const hash = window.location.hash
@@ -83,8 +78,6 @@ export function SettingsScreen() {
           <LocationsTab />
         ) : tab === 'tax-settings' ? (
           <TaxesTab />
-        ) : tab === 'seasons' ? (
-          <SeasonsTab />
         ) : (
           <PlaceholderTab label={TABS.find((t) => t.value === tab)!.label} description={TAB_DESCRIPTION[tab]} />
         )}

@@ -9,7 +9,7 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@ds/shared/Modal'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@ds/shared/Table'
 import { useActiveSeason, useProductState, productActions, WEEKDAYS, type Blackout, type BlackoutType, type ExperienceSeason, type TimeSlot, type Weekday } from './productStore'
 import { useGlobalBlackouts, globalBlackoutsActions, type GlobalBlackout } from '../_shared/globalBlackoutsStore'
-import { useStoreSeasons, type StoreSeason } from '../_shared/storeSeasonsStore'
+import { useStoreSeasons, storeSeasonsActions, type StoreSeason } from '../_shared/storeSeasonsStore'
 import { StoreSeasonModal, type StoreSeasonModalState } from '../_shared/StoreSeasonModal'
 import { Switch } from '@ds/shared/Switch'
 import { PlusIcon, TrashIcon, SettingsIcon } from '@ds/icons/Icons'
@@ -674,7 +674,6 @@ export function TimeSlotsScreen() {
       <StoreSeasonModal
         state={editStoreSeason}
         onClose={() => setEditStoreSeason(null)}
-        showSettingsLink
       />
     </ProductLayout>
   )
@@ -816,6 +815,12 @@ function AddSeasonModal({
   const [customName, setCustomName] = useState('')
   const [start, setStart] = useState('')
   const [end, setEnd] = useState('')
+  // When on, also save the custom season as a store season so other
+  // experiences can reuse it (mirrors the "Apply to all experiences" toggle
+  // on the blackout modal). Decided 2026-06-04: there's no separate Seasons
+  // settings page — this switch is the only way to promote a season to the
+  // shared list.
+  const [isGlobal, setIsGlobal] = useState(false)
 
   // Filter the store-season dropdown to ones not already used here.
   const availableStoreSeasons = useMemo(
@@ -829,6 +834,7 @@ function AddSeasonModal({
     setCustomName('')
     setStart('')
     setEnd('')
+    setIsGlobal(false)
   }
 
   // Re-seed when modal opens / available list changes.
@@ -903,6 +909,23 @@ function AddSeasonModal({
         end:   store.end,
         ...blank,
       })
+    } else if (isGlobal) {
+      // "Make global" — promote this custom range to a tenant-wide store
+      // season, then attach this experience to it. Other experiences will
+      // see it in their own dropdown immediately.
+      const promoted = storeSeasonsActions.add({
+        name: customName.trim(),
+        start,
+        end,
+      })
+      productActions.addSeason({
+        id,
+        source: 'store',
+        storeSeasonId: promoted.id,
+        start: promoted.start,
+        end:   promoted.end,
+        ...blank,
+      })
     } else {
       productActions.addSeason({
         id,
@@ -955,17 +978,6 @@ function AddSeasonModal({
                   </option>
                 ))}
               </select>
-              {/* Quiet shortcut to the master list — the dropdown shows only
-                  the seasons not already used by this experience, so an
-                  operator wondering what else is on file routes to Settings
-                  here. Closes the modal so the navigation feels clean. */}
-              <a
-                href="#/web/settings?tab=seasons"
-                onClick={handleClose}
-                className="self-start typo-caption text-vintiga-indigo-600 hover:text-vintiga-indigo-700 hover:underline transition-colors"
-              >
-                View all seasons in Settings →
-              </a>
             </Field>
           )}
 
@@ -985,6 +997,16 @@ function AddSeasonModal({
                 <Field label="End" required>
                   <TextInput type="date" value={end} min={start || undefined} onChange={(e) => setEnd(e.target.value)} />
                 </Field>
+              </div>
+
+              <div className="flex items-start justify-between gap-vintiga-md pt-vintiga-sm border-t border-vintiga-slate-100">
+                <div className="flex flex-col">
+                  <span className="typo-body-sm font-medium text-vintiga-slate-900">Make available to all experiences</span>
+                  <span className="typo-caption text-vintiga-slate-500">
+                    Saves this as a shared store season so other experiences can pick it. Off keeps it local to this experience only.
+                  </span>
+                </div>
+                <Switch checked={isGlobal} onChange={setIsGlobal} />
               </div>
             </>
           )}
