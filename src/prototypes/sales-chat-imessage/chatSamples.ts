@@ -1,361 +1,558 @@
-// ─── Sales Chat fixtures ─────────────────────────────────────────────────────
-// Conversations + messages + templates for the WhatsApp Business–style inbox.
-// `windowExpiresAt` is the moment the 24h customer-service window closes for
-// that conversation. Fixed offsets from `now()` keep the demo stable across
-// reloads — see the export below.
+// ─── Sales Chat (iMessage / Sendblue) fixtures ──────────────────────────────
+// Conversations are modelled the way Sendblue's API thinks about them:
+//   • Each message has a `channel` — iMessage / SMS / RCS — because a single
+//     thread can transparently fall back when the recipient's phone can't
+//     receive iMessage at that moment.
+//   • Reactions are Apple "tapbacks" (heart / thumbs / haha / exclaim / question).
+//   • Voice memos, photos, link previews, and shared contacts are first-class
+//     message kinds — not text with a paperclip icon glued on.
+//
+// We drop the WhatsApp 24-hour customer-service window entirely — iMessage /
+// SMS has no equivalent rule. Pricing throttling instead lives on the
+// contact-cap quota Sendblue exposes per phone line.
 
-export type TemplateCategory = 'marketing' | 'utility' | 'authentication' | 'service' | 'compliance'
-export type MessageStatus    = 'sent' | 'delivered' | 'read'
-export type MessageKind      = 'inbound' | 'outbound'
+export type ChatChannel = 'imessage' | 'sms' | 'rcs'
+export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed'
+export type MessageKind   = 'inbound' | 'outbound'
 
-/**
- * Where the conversation originated.
- *
- * - `whatsapp` — direct customer chat over WhatsApp Business (legacy default).
- * - `website` — anonymous visitor using the chat widget embedded on the
- *   marketing site.
- * - `members` — wine-club member messaging through the My Account page.
- */
-export type ChatSource = 'whatsapp' | 'website' | 'members'
+/** Apple tapbacks. Same set Sendblue's API supports. */
+export type Tapback = 'heart' | 'thumbs-up' | 'thumbs-down' | 'haha' | 'exclaim' | 'question'
 
-/**
- * Which field on the active conversation's customer pre-fills a template
- * variable. Templates flag each variable with one of these keys (or
- * `undefined` for "operator types it in"); the picker reads from the
- * selected conversation's customer record and seeds the input.
- */
-export type CustomerVarKey =
-  | 'firstName'
-  | 'fullName'
-  | 'city'
-  | 'phone'
-  | 'segment'
-
-export interface ChatMessage {
-  id: string
-  kind: MessageKind
-  body: string
-  /** Relative minutes offset from the conversation's "anchor" (last activity). */
-  atOffsetMin: number
-  /** Outbound only — delivery state. */
-  status?: MessageStatus
-  /** Outbound only — flagged when the message came from a template (not free-form). */
-  fromTemplate?: string
+export interface MessageReaction {
+  by: 'agent' | 'customer'
+  type: Tapback
 }
 
-export interface ChatCustomer {
+interface MessageBase {
+  id: string
+  kind: MessageKind
+  /** Channel this message went over — iMessage threads can mix in a stray SMS
+   *  when the recipient briefly went off-Wi-Fi or out of iMessage range. */
+  channel: ChatChannel
+  /** Relative minutes from the conversation anchor (last activity). */
+  atOffsetMin: number
+  /** Outbound only. Inbound messages are always read by the time we render. */
+  status?: MessageStatus
+  /** Apple tapbacks attached to this message — usually 0 or 1. */
+  reactions?: MessageReaction[]
+  /** Outbound only — the agent picked a quick reply (not free-typed). */
+  fromQuickReply?: string
+  /** Outbound only — message came from the AI agent rather than a human. */
+  fromAi?: boolean
+}
+
+export interface TextMessage    extends MessageBase { type: 'text';    body: string }
+export interface ImageMessage   extends MessageBase { type: 'image';   src: string; caption?: string }
+export interface VoiceMessage   extends MessageBase { type: 'voice';   durationSec: number }
+export interface LinkMessage    extends MessageBase {
+  type: 'link'
+  url: string
+  preview: { title: string; description?: string; thumbnail?: string; host: string }
+}
+export interface ContactMessage extends MessageBase {
+  type: 'contact'
+  contact: { name: string; phone?: string; email?: string; org?: string }
+}
+
+export type ChatMessage =
+  | TextMessage
+  | ImageMessage
+  | VoiceMessage
+  | LinkMessage
+  | ContactMessage
+
+// ─── Contacts ───────────────────────────────────────────────────────────────
+
+export interface ChatContact {
   id: string
   name: string
   initials: string
+  photoUrl?: string
   phone: string
-  segment: 'Member' | 'VIP' | 'New customer' | 'Returning'
-  city: string
+  /** Whether this number is registered with iMessage right now. Drives the
+   *  composer's channel pill: iMessage if true, green SMS-only fallback if
+   *  false. Mirrors Sendblue's `evaluate_service` API. */
+  iMessageCapable: boolean
+  /** Lifetime spend, in dollars. */
   lifetimeSpend: number
   ordersCount: number
+  segment: 'Member' | 'VIP' | 'New customer' | 'Returning'
+  city: string
+  /** Quick contextual tags surfaced on the right rail. */
+  tags?: string[]
 }
+
+const DONNA: ChatContact = {
+  id: 'cust-donna',
+  name: 'Donna Ottoman',
+  initials: 'DO',
+  phone: '+1 250 555 0118',
+  iMessageCapable: true,
+  lifetimeSpend: 4820.5,
+  ordersCount: 24,
+  segment: 'VIP',
+  city: 'Victoria, BC',
+  tags: ['Founders Club', '2018 vintage fan'],
+}
+
+const MARCUS: ChatContact = {
+  id: 'cust-marcus',
+  name: 'Marcus Reed',
+  initials: 'MR',
+  phone: '+1 250 555 0142',
+  // Android user — every outbound falls back to SMS (green bubble).
+  iMessageCapable: false,
+  lifetimeSpend: 612.5,
+  ordersCount: 4,
+  segment: 'Returning',
+  city: 'Portland, OR',
+  tags: ['Newsletter sub'],
+}
+
+const SOFIA: ChatContact = {
+  id: 'cust-sofia',
+  name: 'Sofía Reyes',
+  initials: 'SR',
+  phone: '+1 604 555 0145',
+  iMessageCapable: true,
+  lifetimeSpend: 940.0,
+  ordersCount: 6,
+  segment: 'Member',
+  city: 'Seattle, WA',
+  tags: ['Tasting Credit'],
+}
+
+const ETHAN: ChatContact = {
+  id: 'cust-ethan',
+  name: 'Ethan Walker',
+  initials: 'EW',
+  phone: '+1 778 555 0193',
+  iMessageCapable: true,
+  lifetimeSpend: 89.0,
+  ordersCount: 1,
+  segment: 'New customer',
+  city: 'Vancouver, BC',
+}
+
+const LINDA: ChatContact = {
+  id: 'cust-linda',
+  name: 'Linda Harper',
+  initials: 'LH',
+  phone: '+1 250 555 0117',
+  iMessageCapable: true,
+  lifetimeSpend: 2150.0,
+  ordersCount: 12,
+  segment: 'Member',
+  city: 'Sidney, BC',
+  tags: ['Pickup preferred'],
+}
+
+const PRIYA: ChatContact = {
+  id: 'cust-priya',
+  name: 'Priya Iyer',
+  initials: 'PI',
+  phone: '+1 555 401 9912',
+  iMessageCapable: true,
+  lifetimeSpend: 1260.0,
+  ordersCount: 9,
+  segment: 'Member',
+  city: 'Austin, TX',
+}
+
+// ─── Conversations ──────────────────────────────────────────────────────────
 
 export interface ChatConversation {
   id: string
-  customer: ChatCustomer
-  /** Channel this conversation came in on — drives the inbox filter tabs. */
-  source: ChatSource
+  contact: ChatContact
+  /** Last channel used to message this contact — drives the inbox row's
+   *  pill and the composer's default. Auto-flips on send when iMessage
+   *  isn't available. */
+  lastChannel: ChatChannel
+  /** Unread inbound messages. */
   unread: number
-  /** Minutes since the customer's last inbound — drives the "X min ago" label. */
+  /** Minutes since the contact's last inbound — drives "X min ago". */
   lastActivityMin: number
-  /**
-   * Minutes until the 24h service window closes. Positive = still inside; 0 or
-   * negative = expired and only templates can be sent.
-   */
-  windowRemainingMin: number
+  /** Is the customer currently typing? Renders the bouncing-dots bubble. */
+  typing?: boolean
+  /** AI agent on/off for this thread. Persists per conversation. */
+  aiAgent: boolean
+  /** Pinned to the top of the inbox. */
+  pinned?: boolean
+  /** Snoozed conversations drop out of the default inbox view. */
+  snoozedUntil?: string
   messages: ChatMessage[]
 }
 
-export interface TemplateVariable {
-  /** Human-readable label rendered above the input. */
-  label: string
-  /**
-   * Auto-fill source from the active conversation's customer. Undefined =
-   * operator types it. The picker uses this on open to seed the input.
-   */
-  fillFrom?: CustomerVarKey
-}
+export const CONVERSATIONS: ChatConversation[] = [
+  // ── Donna — active iMessage thread, mix of media + reactions ──────────────
+  {
+    id: 'conv-donna',
+    contact: DONNA,
+    lastChannel: 'imessage',
+    unread: 2,
+    lastActivityMin: 4,
+    typing: true,
+    aiAgent: false,
+    pinned: true,
+    messages: [
+      {
+        id: 'm-d-1',
+        kind: 'inbound',
+        channel: 'imessage',
+        type: 'text',
+        body: 'Hey! Picked up the Reserve Pinot last week — absolutely loved it 🍷',
+        atOffsetMin: 28,
+      },
+      {
+        id: 'm-d-2',
+        kind: 'outbound',
+        channel: 'imessage',
+        type: 'text',
+        body: "So glad you enjoyed it, Donna! The '22 is drinking beautifully right now.",
+        atOffsetMin: 26,
+        status: 'read',
+        reactions: [{ by: 'customer', type: 'heart' }],
+      },
+      {
+        id: 'm-d-3',
+        kind: 'inbound',
+        channel: 'imessage',
+        type: 'text',
+        body: 'Any chance you have more of the 2018 reserve still in the cellar?',
+        atOffsetMin: 20,
+      },
+      {
+        id: 'm-d-4',
+        kind: 'outbound',
+        channel: 'imessage',
+        type: 'text',
+        body: "We have 6 bottles left — and I'd actually love to invite you to the cellar tasting on the 22nd. Reserve-only line-up.",
+        atOffsetMin: 18,
+        status: 'read',
+      },
+      {
+        id: 'm-d-5',
+        kind: 'outbound',
+        channel: 'imessage',
+        type: 'link',
+        url: 'https://vintiga.com/events/cellar-tasting-jun-22',
+        preview: {
+          title: 'Cellar Tasting · June 22 — Reserve Line-Up',
+          description: 'An intimate 8-person tasting with the winemaker. Pinot Noir Reserve verticals from 2014–2022.',
+          host: 'vintiga.com',
+          thumbnail: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=320&h=200&fit=crop&q=80',
+        },
+        atOffsetMin: 17,
+        status: 'read',
+      },
+      {
+        id: 'm-d-6',
+        kind: 'inbound',
+        channel: 'imessage',
+        type: 'image',
+        src: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=400&h=520&fit=crop&q=80',
+        caption: 'My set-up tonight 😍',
+        atOffsetMin: 10,
+      },
+      {
+        id: 'm-d-7',
+        kind: 'inbound',
+        channel: 'imessage',
+        type: 'text',
+        body: "Yes please for the tasting! I'll bring my husband too — he's been asking about the 2014.",
+        atOffsetMin: 6,
+        reactions: [{ by: 'agent', type: 'thumbs-up' }],
+      },
+      {
+        id: 'm-d-8',
+        kind: 'inbound',
+        channel: 'imessage',
+        type: 'voice',
+        durationSec: 9,
+        atOffsetMin: 5,
+      },
+      {
+        id: 'm-d-9',
+        kind: 'inbound',
+        channel: 'imessage',
+        type: 'text',
+        body: 'Quick one — can we add another guest? Sorry, last-minute',
+        atOffsetMin: 4,
+      },
+    ],
+  },
 
-export interface MessageTemplate {
+  // ── Marcus — SMS-only (Android phone), green bubbles end-to-end ───────────
+  {
+    id: 'conv-marcus',
+    contact: MARCUS,
+    lastChannel: 'sms',
+    unread: 0,
+    lastActivityMin: 38,
+    aiAgent: true, // AI handling routine product questions for new contacts
+    messages: [
+      {
+        id: 'm-m-1',
+        kind: 'inbound',
+        channel: 'sms',
+        type: 'text',
+        body: "Hi — saw the Founders Pack on your site. Does it ship to Oregon?",
+        atOffsetMin: 60,
+      },
+      {
+        id: 'm-m-2',
+        kind: 'outbound',
+        channel: 'sms',
+        type: 'text',
+        body: "Hi Marcus — yes, we ship the Founders Pack to Oregon. 2-day ground from Sidney, BC. $129 + $12 shipping.",
+        atOffsetMin: 58,
+        status: 'delivered',
+        fromAi: true,
+      },
+      {
+        id: 'm-m-3',
+        kind: 'inbound',
+        channel: 'sms',
+        type: 'text',
+        body: 'Perfect. Send me the link?',
+        atOffsetMin: 42,
+      },
+      {
+        id: 'm-m-4',
+        kind: 'outbound',
+        channel: 'sms',
+        type: 'link',
+        url: 'https://vintiga.com/founders-pack',
+        preview: {
+          title: 'Founders Pack — Vintiga',
+          description: '3 hand-picked bottles + member pricing on future orders. $129 intro.',
+          host: 'vintiga.com',
+        },
+        atOffsetMin: 41,
+        status: 'delivered',
+        fromAi: true,
+      },
+      {
+        id: 'm-m-5',
+        kind: 'inbound',
+        channel: 'sms',
+        type: 'text',
+        body: 'Thanks 🙏',
+        atOffsetMin: 38,
+      },
+    ],
+  },
+
+  // ── Sofia — recent iMessage exchange, contact card shared ─────────────────
+  {
+    id: 'conv-sofia',
+    contact: SOFIA,
+    lastChannel: 'imessage',
+    unread: 1,
+    lastActivityMin: 12,
+    aiAgent: false,
+    messages: [
+      {
+        id: 'm-s-1',
+        kind: 'inbound',
+        channel: 'imessage',
+        type: 'text',
+        body: 'My friend Maya is in town next week — can she pick up my June allocation for me?',
+        atOffsetMin: 22,
+      },
+      {
+        id: 'm-s-2',
+        kind: 'outbound',
+        channel: 'imessage',
+        type: 'text',
+        body: "Absolutely — send me her name and phone and I'll add her as an authorised pickup.",
+        atOffsetMin: 20,
+        status: 'read',
+      },
+      {
+        id: 'm-s-3',
+        kind: 'inbound',
+        channel: 'imessage',
+        type: 'contact',
+        contact: {
+          name: 'Maya Chen',
+          phone: '+1 604 555 0167',
+          email: 'maya.chen@example.com',
+        },
+        atOffsetMin: 12,
+      },
+    ],
+  },
+
+  // ── Ethan — quick exchange, brand-new lead ────────────────────────────────
+  {
+    id: 'conv-ethan',
+    contact: ETHAN,
+    lastChannel: 'imessage',
+    unread: 0,
+    lastActivityMin: 60 * 2 + 5,
+    aiAgent: false,
+    messages: [
+      {
+        id: 'm-e-1',
+        kind: 'inbound',
+        channel: 'imessage',
+        type: 'text',
+        body: 'Hey — is the cellar tour bookable on weekends?',
+        atOffsetMin: 60 * 3,
+      },
+      {
+        id: 'm-e-2',
+        kind: 'outbound',
+        channel: 'imessage',
+        type: 'text',
+        body: 'Yes! Saturdays at 11am and 2pm. Want me to send the booking link?',
+        atOffsetMin: 60 * 2 + 50,
+        status: 'read',
+      },
+      {
+        id: 'm-e-3',
+        kind: 'inbound',
+        channel: 'imessage',
+        type: 'text',
+        body: 'Please, for the 11am if 2 spots are open',
+        atOffsetMin: 60 * 2 + 10,
+        reactions: [{ by: 'agent', type: 'thumbs-up' }],
+      },
+      {
+        id: 'm-e-4',
+        kind: 'outbound',
+        channel: 'imessage',
+        type: 'text',
+        body: "Two spots reserved for Saturday 11am — I'll text the confirmation in a sec.",
+        atOffsetMin: 60 * 2 + 5,
+        status: 'read',
+      },
+    ],
+  },
+
+  // ── Linda — pickup reminder, voice note from agent ────────────────────────
+  {
+    id: 'conv-linda',
+    contact: LINDA,
+    lastChannel: 'imessage',
+    unread: 0,
+    lastActivityMin: 60 * 5,
+    aiAgent: false,
+    messages: [
+      {
+        id: 'm-l-1',
+        kind: 'outbound',
+        channel: 'imessage',
+        type: 'text',
+        body: "Hi Linda — your Q2 club allocation is ready for pickup at the tasting room whenever you're in town.",
+        atOffsetMin: 60 * 6,
+        status: 'read',
+        fromQuickReply: 'club-pickup-ready',
+      },
+      {
+        id: 'm-l-2',
+        kind: 'inbound',
+        channel: 'imessage',
+        type: 'text',
+        body: 'Lovely! Will swing by Saturday morning.',
+        atOffsetMin: 60 * 5,
+        reactions: [{ by: 'agent', type: 'thumbs-up' }],
+      },
+    ],
+  },
+
+  // ── Priya — older thread, mostly archived ─────────────────────────────────
+  {
+    id: 'conv-priya',
+    contact: PRIYA,
+    lastChannel: 'imessage',
+    unread: 0,
+    lastActivityMin: 60 * 36,
+    aiAgent: false,
+    messages: [
+      {
+        id: 'm-p-1',
+        kind: 'inbound',
+        channel: 'imessage',
+        type: 'text',
+        body: 'Can I switch my June shipment to whites only?',
+        atOffsetMin: 60 * 38,
+      },
+      {
+        id: 'm-p-2',
+        kind: 'outbound',
+        channel: 'imessage',
+        type: 'text',
+        body: "Done — you're booked into the all-whites pack for June.",
+        atOffsetMin: 60 * 37,
+        status: 'read',
+        reactions: [{ by: 'customer', type: 'heart' }],
+      },
+      {
+        id: 'm-p-3',
+        kind: 'inbound',
+        channel: 'imessage',
+        type: 'text',
+        body: 'Thanks!',
+        atOffsetMin: 60 * 36,
+      },
+    ],
+  },
+]
+
+// ─── Quick replies (Sendblue-style snippets, no template variables) ────────
+
+export type QuickReplyCategory = 'greeting' | 'sales' | 'service' | 'club' | 'compliance'
+
+export interface QuickReply {
   id: string
+  category: QuickReplyCategory
   name: string
-  category: TemplateCategory
-  /** Human label shown in the picker. */
-  language: string
-  /** Body with `{{1}}`, `{{2}}` placeholders. */
   body: string
-  /** Per-variable metadata — order matches `{{1}}`, `{{2}}`, … */
-  variables: TemplateVariable[]
 }
 
-/**
- * Resolve a customer-var key to a concrete string for the active customer.
- * Returns empty string when the field isn't available — the picker then
- * leaves the input blank so the operator can fill it in.
- */
-export function readCustomerVar(customer: ChatCustomer, key: CustomerVarKey): string {
-  switch (key) {
-    case 'firstName': return customer.name.split(' ')[0] ?? ''
-    case 'fullName':  return customer.name
-    case 'city':      return customer.city
-    case 'phone':     return customer.phone
-    case 'segment':   return customer.segment
+export const QUICK_REPLIES: QuickReply[] = [
+  // Greeting
+  { id: 'hello',         category: 'greeting',  name: 'Friendly intro',        body: "Hi! Thanks for reaching out 👋 How can I help today?" },
+  { id: 'thanks',        category: 'greeting',  name: 'Thanks',                body: "Thanks so much — appreciate you!" },
+
+  // Sales
+  { id: 'in-stock',      category: 'sales',     name: 'Bottle in stock',       body: "Yes, we still have it in stock. Want me to set one aside?" },
+  { id: 'club-pricing',  category: 'sales',     name: 'Club pricing',          body: "Club members get 15% off this bottle. Worth joining if you're picking up a case!" },
+  { id: 'pairing',       category: 'sales',     name: 'Pairing suggestion',    body: "It pairs really well with grilled lamb or aged cheddar — happy to suggest more if you'd like." },
+
+  // Club / service
+  { id: 'club-pickup-ready', category: 'club',  name: 'Club pickup ready',     body: "Your club allocation is ready for pickup at the tasting room whenever you're in town." },
+  { id: 'club-switch',   category: 'club',      name: 'Allocation switch',     body: "Sure — I can switch your next allocation. Want all reds, all whites, or the regular mixed pack?" },
+  { id: 'shipping-eta',  category: 'service',   name: 'Shipping ETA',          body: "Your order shipped ground from Sidney, BC — usually 2 business days. I'll send tracking shortly." },
+
+  // Compliance — Sendblue handles SMS opt-out at the carrier level, but
+  // wineries still need this one occasionally for over-21 confirmation.
+  { id: 'age-verify',    category: 'compliance', name: 'Age verification',     body: "Quick check — can you confirm you're over 21 before we chat about anything alcohol-related? Reply YES to continue." },
+]
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+export function tapbackEmoji(t: Tapback): string {
+  switch (t) {
+    case 'heart':        return '❤️'
+    case 'thumbs-up':    return '👍'
+    case 'thumbs-down':  return '👎'
+    case 'haha':         return '😂'
+    case 'exclaim':      return '‼️'
+    case 'question':     return '❓'
   }
 }
 
-// ─── Customers ───────────────────────────────────────────────────────────────
-
-const JANE: ChatCustomer = {
-  id: 'cust-1',
-  name: 'Jane Davis',
-  initials: 'JD',
-  phone: '+1 (555) 123-4567',
-  segment: 'Member',
-  city: 'Bellingham, WA',
-  lifetimeSpend: 1240.5,
-  ordersCount: 8,
+export function channelLabel(ch: ChatChannel): string {
+  if (ch === 'imessage') return 'iMessage'
+  if (ch === 'rcs')      return 'RCS'
+  return 'SMS'
 }
 
-const MARCUS: ChatCustomer = {
-  id: 'cust-2',
-  name: 'Marcus Allen',
-  initials: 'MA',
-  phone: '+1 (555) 904-1180',
-  segment: 'VIP',
-  city: 'Portland, OR',
-  lifetimeSpend: 3820.0,
-  ordersCount: 22,
+/** Pick the channel a brand-new message should use given the contact's
+ *  current iMessage status. Sendblue's `evaluate_service` returns this. */
+export function preferredChannel(contact: ChatContact): ChatChannel {
+  return contact.iMessageCapable ? 'imessage' : 'sms'
 }
-
-const SOFIA: ChatCustomer = {
-  id: 'cust-3',
-  name: 'Sofía Reyes',
-  initials: 'SR',
-  phone: '+1 (555) 220-7714',
-  segment: 'Returning',
-  city: 'Seattle, WA',
-  lifetimeSpend: 612.75,
-  ordersCount: 4,
-}
-
-const ETHAN: ChatCustomer = {
-  id: 'cust-4',
-  name: 'Ethan Walker',
-  initials: 'EW',
-  phone: '+1 (555) 661-3309',
-  segment: 'New customer',
-  city: 'Vancouver, BC',
-  lifetimeSpend: 89.0,
-  ordersCount: 1,
-}
-
-// Anonymous website visitor — chat widget threads can land before the
-// visitor identifies themselves, so phone is blank and segment defaults
-// to "New customer".
-const ANON_VISITOR: ChatCustomer = {
-  id: 'cust-anon-1',
-  name: 'Website visitor',
-  initials: 'WV',
-  phone: '',
-  segment: 'New customer',
-  city: 'Unknown',
-  lifetimeSpend: 0,
-  ordersCount: 0,
-}
-
-const PRIYA: ChatCustomer = {
-  id: 'cust-5',
-  name: 'Priya Iyer',
-  initials: 'PI',
-  phone: '+1 (555) 401-9912',
-  segment: 'Member',
-  city: 'Austin, TX',
-  lifetimeSpend: 940.0,
-  ordersCount: 6,
-}
-
-// ─── Conversations ───────────────────────────────────────────────────────────
-
-export const CONVERSATIONS: ChatConversation[] = [
-  {
-    id: 'conv-1',
-    customer: JANE,
-    source: 'whatsapp',
-    unread: 2,
-    lastActivityMin: 7,
-    windowRemainingMin: 23 * 60 + 53, // ~23h 53m — fresh window
-    messages: [
-      { id: 'm-1-1', kind: 'inbound',  body: "Hi! I saw the new Reserva Cabernet on your site — is the 2018 still in stock?", atOffsetMin: 22 },
-      { id: 'm-1-2', kind: 'outbound', body: "Hi Jane! Yes — we have 14 bottles of the 2018 left at $48 each. Want me to set one aside?", atOffsetMin: 18, status: 'read' },
-      { id: 'm-1-3', kind: 'inbound',  body: "Yes please. Actually — can I get two?", atOffsetMin: 14 },
-      { id: 'm-1-4', kind: 'outbound', body: "Done. I've reserved 2 bottles under your account. Pick up or ship?", atOffsetMin: 12, status: 'read' },
-      { id: 'm-1-5', kind: 'inbound',  body: "Ship to my Bellingham address please 🙂", atOffsetMin: 9 },
-      { id: 'm-1-6', kind: 'inbound',  body: "Also — does it go well with lamb?", atOffsetMin: 7 },
-    ],
-  },
-  {
-    id: 'conv-2',
-    customer: MARCUS,
-    source: 'whatsapp',
-    unread: 0,
-    lastActivityMin: 60 * 3 + 12,
-    windowRemainingMin: 35, // ~35 min left — almost expired
-    messages: [
-      { id: 'm-2-1', kind: 'inbound',  body: "Saw the Founder's Club invite — can I bring a +1 to the May tasting?",       atOffsetMin: 60 * 5 },
-      { id: 'm-2-2', kind: 'outbound', body: "Of course, Marcus. Adding you + 1 to the list for May 22, 6:30pm.",            atOffsetMin: 60 * 4 + 50, status: 'read' },
-      { id: 'm-2-3', kind: 'outbound', body: "Anything special you'd like us to pour? We can pull a magnum if you like.",   atOffsetMin: 60 * 4 + 40, status: 'read' },
-      { id: 'm-2-4', kind: 'inbound',  body: "Surprise me. And thanks for sorting the shipping last week 🙏",                atOffsetMin: 60 * 3 + 12 },
-    ],
-  },
-  {
-    id: 'conv-3',
-    customer: SOFIA,
-    source: 'whatsapp',
-    unread: 0,
-    lastActivityMin: 60 * 30, // 30h ago
-    windowRemainingMin: -360, // 6h past expiry
-    messages: [
-      { id: 'm-3-1', kind: 'inbound',  body: "Hey! My order #ORD-5102 — did it ship?",                                         atOffsetMin: 60 * 32 },
-      { id: 'm-3-2', kind: 'outbound', body: "Hi Sofía! It went out yesterday. Tracking: 1Z-VTG-99041. Should arrive Tuesday.", atOffsetMin: 60 * 31 + 40, status: 'read' },
-      { id: 'm-3-3', kind: 'inbound',  body: "Perfect, thank you!",                                                            atOffsetMin: 60 * 30 },
-    ],
-  },
-  {
-    id: 'conv-4',
-    customer: ETHAN,
-    source: 'whatsapp',
-    unread: 1,
-    lastActivityMin: 60 * 26, // 26h — just past expiry
-    windowRemainingMin: -120,
-    messages: [
-      { id: 'm-4-1', kind: 'inbound',  body: "Is the Founders Pack still available for new members?",                          atOffsetMin: 60 * 28 },
-      { id: 'm-4-2', kind: 'outbound', body: "Hi Ethan! Yes — $129 for the intro 3-bottle set. Want me to send the join link?", atOffsetMin: 60 * 27, status: 'delivered', fromTemplate: 'founders_pack_intro' },
-      { id: 'm-4-3', kind: 'inbound',  body: "Yes please",                                                                     atOffsetMin: 60 * 26 },
-    ],
-  },
-  // ── Website channel: anonymous chat-widget visitor ──────────────────────────
-  {
-    id: 'conv-5',
-    customer: ANON_VISITOR,
-    source: 'website',
-    unread: 3,
-    lastActivityMin: 4,
-    windowRemainingMin: 23 * 60 + 30,
-    messages: [
-      { id: 'm-5-1', kind: 'inbound', body: "Hey, the site says the Founders Pack ships free over $100 — does that include Texas?", atOffsetMin: 10 },
-      { id: 'm-5-2', kind: 'inbound', body: "Also wondering if you ship to PO boxes",                                                atOffsetMin: 7 },
-      { id: 'm-5-3', kind: 'inbound', body: "Sorry one more — do you do gift wrap?",                                                atOffsetMin: 4 },
-    ],
-  },
-  // ── Members channel: club member messaging from My Account ──────────────────
-  {
-    id: 'conv-6',
-    customer: PRIYA,
-    source: 'members',
-    unread: 1,
-    lastActivityMin: 38,
-    windowRemainingMin: 23 * 60 + 18,
-    messages: [
-      { id: 'm-6-1', kind: 'inbound',  body: "Hi! Can I switch my June shipment to the white-only allocation?",            atOffsetMin: 90 },
-      { id: 'm-6-2', kind: 'outbound', body: "Hi Priya — yes, no problem. Switching you to the all-whites pack for June.", atOffsetMin: 75, status: 'read' },
-      { id: 'm-6-3', kind: 'inbound',  body: "Amazing, thank you. Also: when does the August allocation go out?",          atOffsetMin: 38 },
-    ],
-  },
-]
-
-// ─── Templates ───────────────────────────────────────────────────────────────
-
-export const TEMPLATES: MessageTemplate[] = [
-  // ── Compliance ───────────────────────────────────────────────────────────────
-  // Age verification has to fire before anything alcohol-related on a brand-new
-  // thread (US wine compliance). Pinned to the top of the picker.
-  {
-    id: 'age_verification',
-    name: 'Age verification',
-    category: 'compliance',
-    language: 'en_US',
-    body: "Hi {{1}}, before we chat about anything alcohol-related — can you confirm you're over 21? Reply YES to continue.",
-    variables: [
-      { label: 'Customer first name', fillFrom: 'firstName' },
-    ],
-  },
-  // ── Utility ──────────────────────────────────────────────────────────────────
-  {
-    id: 'order_shipped',
-    name: 'Order shipped',
-    category: 'utility',
-    language: 'en_US',
-    body: "Hi {{1}}! Your order {{2}} just shipped. Tracking: {{3}}. Expected delivery in 2–3 business days.",
-    variables: [
-      { label: 'Customer first name', fillFrom: 'firstName' },
-      { label: 'Order number' },
-      { label: 'Tracking number' },
-    ],
-  },
-  {
-    id: 'reservation_confirm',
-    name: 'Reservation confirmation',
-    category: 'utility',
-    language: 'en_US',
-    body: "Hi {{1}}, you're confirmed for {{2}} on {{3}} at {{4}}. Reply STOP to cancel.",
-    variables: [
-      { label: 'Customer first name', fillFrom: 'firstName' },
-      { label: 'Event name' },
-      { label: 'Date' },
-      { label: 'Time' },
-    ],
-  },
-  // ── Marketing ────────────────────────────────────────────────────────────────
-  {
-    id: 'abandoned_cart',
-    name: 'Abandoned cart reminder',
-    category: 'marketing',
-    language: 'en_US',
-    body: "Hi {{1}}, you left {{2}} in your cart. We saved it for you — finish your order at {{3}} and use code WELCOME10 for 10% off.",
-    variables: [
-      { label: 'Customer first name', fillFrom: 'firstName' },
-      { label: 'Product name' },
-      { label: 'Checkout link' },
-    ],
-  },
-  {
-    id: 'back_in_stock',
-    name: 'Back in stock',
-    category: 'marketing',
-    language: 'en_US',
-    body: "Good news {{1}} — {{2}} is back in stock. We have {{3}} left. Reply YES and we'll set one aside.",
-    variables: [
-      { label: 'Customer first name', fillFrom: 'firstName' },
-      { label: 'Product name' },
-      { label: 'Units in stock' },
-    ],
-  },
-  {
-    id: 'founders_pack_intro',
-    name: 'Founders Pack intro',
-    category: 'marketing',
-    language: 'en_US',
-    body: "Hi {{1}}! Welcome to Vintiga. The Founders Pack is {{2}} — three hand-picked bottles plus member pricing on future orders. Join here: {{3}}",
-    variables: [
-      { label: 'Customer first name', fillFrom: 'firstName' },
-      { label: 'Pack price' },
-      { label: 'Join link' },
-    ],
-  },
-  // ── Service ──────────────────────────────────────────────────────────────────
-  {
-    id: 'service_followup',
-    name: 'Customer service follow-up',
-    category: 'service',
-    language: 'en_US',
-    body: "Hi {{1}}, just checking in on your recent question about {{2}}. Anything else I can help with?",
-    variables: [
-      { label: 'Customer first name', fillFrom: 'firstName' },
-      { label: 'Topic' },
-    ],
-  },
-]

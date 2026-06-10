@@ -6,7 +6,7 @@ import { CONVERSATIONS } from './chatSamples'
 // Every conversation route resolves to the same screen — the screen reads the
 // id from the hash and looks up the matching record.
 const routes: Record<string, ComponentType> = {
-  '#/web/sales-chat': SalesChatScreen,
+  '#/web/sales-chat-imessage': SalesChatScreen,
 }
 for (const c of CONVERSATIONS) {
   routes[`#/web/sales-chat-imessage/${c.id}`] = SalesChatScreen
@@ -15,13 +15,13 @@ for (const c of CONVERSATIONS) {
 export const config: PrototypeConfig = {
   slug: 'sales-chat-imessage',
   frame: 'web',
-  tags: ['messaging', 'whatsapp', 'inbox'],
+  tags: ['messaging', 'imessage', 'sms', 'sendblue', 'inbox'],
   entries: [
     {
-      name: 'Sales Chat',
+      name: 'Sales Chat — iMessage',
       description:
-        'WhatsApp Business–style agent inbox. Three-pane layout (conversation list, message thread, customer context) with composer behavior gated by the 24-hour customer service window — free-form inside, template-only after expiry.',
-      path: '#/web/sales-chat',
+        "iMessage-first sales chat modelled on Sendblue's API. Blue iMessage bubbles, green-bubble SMS fallback for Android contacts, Apple tapback reactions, voice memos, link previews, contact-card sharing, typing indicators, read receipts, per-conversation AI agent toggle, and a quick-replies snippet library.",
+      path: '#/web/sales-chat-imessage',
       screens: 1,
     },
   ],

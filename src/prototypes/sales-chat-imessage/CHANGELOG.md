@@ -1,8 +1,25 @@
-# Sales Chat — Changelog
+# Sales Chat (iMessage / Sendblue) — Changelog
 
 > Living handoff document for this prototype. Read first if you're picking up someone else's work.
 >
 > **Convention:** Add new entries at the top. Each entry needs a date, who made the change, what changed, and why.
+
+## 2026-06-12 — Fedja + Claude: Pivot from WhatsApp to iMessage / Sendblue (Jun 4 design review)
+
+Cloned the legacy `sales-chat` prototype (WhatsApp Business shape) into `sales-chat-imessage` and rebuilt it end-to-end against Sendblue's product model. Per the Jun 4 review, WhatsApp doesn't fit the North American winery audience — iMessage does. CONTEXT.md documents the Sendblue Mac-mini-farm approach and the Apple ToS caveat.
+
+**Data layer (`chatSamples.ts`)** — every message carries a `channel` (iMessage / SMS / RCS) so a single thread can transparently mix bubble colours when fallback happens. Contacts carry `iMessageCapable` (mirrors Sendblue's `evaluate_service`). New message variants: `text`, `image`, `voice` (with `durationSec`), `link` (with Open Graph preview), `contact` (vCard). Reactions are Apple's six tapbacks. AI-sent messages flagged via `fromAi`.
+
+**Screen (`SalesChatScreen.tsx`)**:
+- **Inbox column** — search + filter tabs (All / iMessage / SMS / Unread). Row shows avatar, channel dot, last-message preview, unread badge, "AI handling" sub-line when the agent is on.
+- **Thread** — blue bubbles for iMessage outbound, green for SMS outbound, gray for inbound. Tapback reactions render as overlapping pill badges on bubble corners. Voice memo bubbles show a play button + simulated waveform + duration. Image messages render as rounded thumbnails with an optional caption. Link messages render an OG-style preview card with thumbnail + title + description + host. Contact messages render a vCard block. Typing-indicator bubble (three bouncing dots) when the customer is typing. Read receipt ("Read · 11:14 AM") under the latest read outbound message.
+- **Composer** — channel pill above the input ("Will send as iMessage" blue / "Will send as SMS · Android" green) auto-derived from the contact. Plus / Quick-replies / Mic icon buttons; send button only when there's a draft. "Schedule send" affordance pinned top-right.
+- **Header** — AI agent toggle (per-conversation switch), call + more buttons, capability subtitle ("iMessage · falls back to SMS" or "SMS only · Android device").
+- **Right rail** — contact card with avatar, segment chip, Call/Profile actions, Messaging section (channel, city, tags), Lifetime value (spend + orders), Quick actions list.
+
+**Quick replies (`QuickReplyPicker.tsx`)** — replaces the WhatsApp `TemplatePicker`. Sendblue-style snippet library with category tabs (Greeting / Sales / Service / Club / Compliance) and a search box. No `{{1}}` variables — quick replies are plain text the operator can edit after insertion.
+
+**Removed** — the WhatsApp 24-hour customer-service window (no equivalent in iMessage/SMS), template variable system, WhatsApp channel filter.
 
 ---
 
