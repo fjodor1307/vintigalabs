@@ -49,19 +49,22 @@ function Tabs({ active, isExperience, override }: { active: TabKey; isExperience
   const suffix = query ? `?${query}` : ''
   const options = [
     { value: 'general'   as TabKey, label: 'General',   href: `#/web/products/general${suffix}` },
-    // Schedule is experience-only — wines don't have a weekly bookable schedule.
+    // Every product type gets a "details" tab in position 2 so the tab order
+    // reads the same regardless of category:
+    //   Wine        → Details (wine-specific: varietal, vintage, region, taste)
+    //   Beer        → Details (beer-specific overrides)
+    //   Spirits     → Details (spirits-specific overrides)
+    //   Experience  → Schedule (its category's "details" — bookable hours)
+    // The editor that mounts behind the tab varies; the chrome doesn't.
     ...(isExperience ? [{ value: 'timeslots' as TabKey, label: 'Schedule', href: `#/web/products/timeslots${suffix}` }] : []),
-    // Beer / Spirits tabs appear when the product is overridden from Wine.
-    // The label is universal ("Details") so the tab reads the same regardless
-    // of the underlying product type — the override drives WHICH editor opens,
-    // not how the tab is named.
     ...(override === 'Beer'    ? [{ value: 'beer'    as TabKey, label: 'Details', href: `#/web/products/beer${suffix}` }]    : []),
     ...(override === 'Spirits' ? [{ value: 'spirits' as TabKey, label: 'Details', href: `#/web/products/spirits${suffix}` }] : []),
+    // Wine (no override) — the legacy "Advanced" tab is now Details in this
+    // slot. Hidden for experiences and for Wines overridden to Beer / Spirits
+    // (those have their own Details tab above).
+    ...(isExperience || override !== 'None' ? [] : [{ value: 'advanced' as TabKey, label: 'Details', href: `#/web/products/advanced${suffix}` }]),
     { value: 'pos'       as TabKey, label: 'POS',       href: `#/web/products/pos${suffix}` },
     { value: 'website'   as TabKey, label: 'Website',   href: `#/web/products/website${suffix}` },
-    // Advanced is wine-specific (varietal, vintage, region, taste). Hide for
-    // experiences and any Wine that's been overridden to Beer or Spirits.
-    ...(isExperience || override !== 'None' ? [] : [{ value: 'advanced' as TabKey, label: 'Advanced', href: `#/web/products/advanced${suffix}` }]),
     // Experiences don't have modifiers — spec defines options via Variants only.
     ...(isExperience ? [] : [{ value: 'modifiers' as TabKey, label: 'Modifiers', href: `#/web/products/modifiers${suffix}` }]),
   ]
