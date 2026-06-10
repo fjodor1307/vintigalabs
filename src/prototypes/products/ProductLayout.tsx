@@ -52,8 +52,11 @@ function Tabs({ active, isExperience, override }: { active: TabKey; isExperience
     // Schedule is experience-only — wines don't have a weekly bookable schedule.
     ...(isExperience ? [{ value: 'timeslots' as TabKey, label: 'Schedule', href: `#/web/products/timeslots${suffix}` }] : []),
     // Beer / Spirits tabs appear when the product is overridden from Wine.
-    ...(override === 'Beer'    ? [{ value: 'beer'    as TabKey, label: 'Beer',    href: `#/web/products/beer${suffix}` }]    : []),
-    ...(override === 'Spirits' ? [{ value: 'spirits' as TabKey, label: 'Spirits', href: `#/web/products/spirits${suffix}` }] : []),
+    // The label is universal ("Details") so the tab reads the same regardless
+    // of the underlying product type — the override drives WHICH editor opens,
+    // not how the tab is named.
+    ...(override === 'Beer'    ? [{ value: 'beer'    as TabKey, label: 'Details', href: `#/web/products/beer${suffix}` }]    : []),
+    ...(override === 'Spirits' ? [{ value: 'spirits' as TabKey, label: 'Details', href: `#/web/products/spirits${suffix}` }] : []),
     { value: 'pos'       as TabKey, label: 'POS',       href: `#/web/products/pos${suffix}` },
     { value: 'website'   as TabKey, label: 'Website',   href: `#/web/products/website${suffix}` },
     // Advanced is wine-specific (varietal, vintage, region, taste). Hide for
