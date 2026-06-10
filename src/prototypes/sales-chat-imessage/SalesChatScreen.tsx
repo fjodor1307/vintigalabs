@@ -590,7 +590,7 @@ export function SalesChatScreen() {
         activeNav="Sales Chat"
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 relative">
         <Navbar
           device="responsive"
           fixed
