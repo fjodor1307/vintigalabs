@@ -641,8 +641,6 @@ function AddPaymentMethodModal({
               value={cardNumber}
               onChange={(e) => setCardNumber(e.target.value)}
               placeholder="1234 5678 9012 3456"
-              inputMode="numeric"
-              autoComplete="cc-number"
             />
           </Field>
 
@@ -652,7 +650,6 @@ function AddPaymentMethodModal({
                 value={expires}
                 onChange={(e) => setExpires(e.target.value)}
                 placeholder="MM/YY"
-                autoComplete="cc-exp"
               />
             </Field>
             <Field label="CVC" required>
@@ -660,8 +657,6 @@ function AddPaymentMethodModal({
                 value={cvc}
                 onChange={(e) => setCvc(e.target.value)}
                 placeholder="•••"
-                inputMode="numeric"
-                autoComplete="cc-csc"
               />
             </Field>
           </div>
@@ -671,7 +666,6 @@ function AddPaymentMethodModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Name on card"
-              autoComplete="cc-name"
             />
           </Field>
 
@@ -680,7 +674,6 @@ function AddPaymentMethodModal({
               value={zip}
               onChange={(e) => setZip(e.target.value)}
               placeholder="98229"
-              autoComplete="postal-code"
             />
           </Field>
         </div>
