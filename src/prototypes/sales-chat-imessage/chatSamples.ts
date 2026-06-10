@@ -82,10 +82,10 @@ export interface ChatContact {
   tags?: string[]
 }
 
-const DONNA: ChatContact = {
-  id: 'cust-donna',
-  name: 'Donna Ottoman',
-  initials: 'DO',
+const DIANA: ChatContact = {
+  id: 'cust-diana',
+  name: 'Diana Doe',
+  initials: 'DD',
   phone: '+1 250 555 0118',
   iMessageCapable: true,
   lifetimeSpend: 4820.5,
@@ -184,10 +184,10 @@ export interface ChatConversation {
 }
 
 export const CONVERSATIONS: ChatConversation[] = [
-  // ── Donna — active iMessage thread, mix of media + reactions ──────────────
+  // ── Diana — active iMessage thread, mix of media + reactions ──────────────
   {
-    id: 'conv-donna',
-    contact: DONNA,
+    id: 'conv-diana',
+    contact: DIANA,
     lastChannel: 'imessage',
     unread: 2,
     lastActivityMin: 4,
@@ -208,7 +208,7 @@ export const CONVERSATIONS: ChatConversation[] = [
         kind: 'outbound',
         channel: 'imessage',
         type: 'text',
-        body: "So glad you enjoyed it, Donna! The '22 is drinking beautifully right now.",
+        body: "So glad you enjoyed it, Diana! The '22 is drinking beautifully right now.",
         atOffsetMin: 26,
         status: 'read',
         reactions: [{ by: 'customer', type: 'heart' }],
