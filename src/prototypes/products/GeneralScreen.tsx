@@ -220,18 +220,29 @@ function SingleVariantForm({ variant, isSpirits }: { variant: Variant; isSpirits
         </Field>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Weight" required>
-          <InputWithAdornment adornment="lbs" placeholder="0.00" value={variant.weight} onChange={(e) => patch('weight', e.target.value)} />
-        </Field>
-        <Field label="Volume" required>
-          <InputWithAdornment adornment="ml" placeholder="0.00" value={variant.volume} onChange={(e) => patch('volume', e.target.value)} />
-        </Field>
+      {/* Physical Product gates Weight + Volume — those are only needed for
+          shipping (Commerce 7 calls the flag "shipping" under the covers).
+          Putting the checkbox first means turning it off hides the fields
+          rather than discarding values the operator was forced to fill in. */}
+      <div className="flex flex-col gap-1.5">
+        <CheckboxField checked={variant.physicalProduct} onChange={(next) => patch('physicalProduct', next)}>
+          Physical Product
+        </CheckboxField>
+        <p className="typo-caption text-vintiga-slate-500 pl-[26px]">
+          Turn on for anything you ship — weight and volume are required to calculate shipping. Leave off for tasting-room-only items (a glass pour, a plate of food).
+        </p>
       </div>
 
-      <CheckboxField checked={variant.physicalProduct} onChange={(next) => patch('physicalProduct', next)}>
-        Physical Product
-      </CheckboxField>
+      {variant.physicalProduct && (
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Weight" required>
+            <InputWithAdornment adornment="lbs" placeholder="0.00" value={variant.weight} onChange={(e) => patch('weight', e.target.value)} />
+          </Field>
+          <Field label="Volume" required>
+            <InputWithAdornment adornment="ml" placeholder="0.00" value={variant.volume} onChange={(e) => patch('volume', e.target.value)} />
+          </Field>
+        </div>
+      )}
     </div>
   )
 }

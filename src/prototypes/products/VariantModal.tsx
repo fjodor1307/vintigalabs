@@ -141,6 +141,31 @@ export function VariantModal({ open, onClose, initial }: VariantModalProps) {
                 onChange={(e) => patch('alcoholPercentage', e.target.value)}
               />
             </Field>
+            {isSpirits && (
+              <Field label="Proof" helper="Calculated automatically as 2 × alcohol percentage.">
+                <InputWithAdornment adornment="proof" placeholder="0" value={proofFromAbv(v.alcoholPercentage)} readOnly />
+              </Field>
+            )}
+          </div>
+        )}
+
+        {/* Physical Product gates Weight + Volume (shipping-only fields). */}
+        {!isExperience && (
+          <div className="flex flex-col gap-1.5">
+            <CheckboxField
+              checked={v.physicalProduct}
+              onChange={(next) => patch('physicalProduct', next)}
+            >
+              Physical Product
+            </CheckboxField>
+            <p className="typo-caption text-vintiga-slate-500 pl-[26px]">
+              Turn on for anything you ship — weight and volume are required to calculate shipping. Leave off for tasting-room-only items.
+            </p>
+          </div>
+        )}
+
+        {!isExperience && v.physicalProduct && (
+          <div className="grid grid-cols-2 gap-4">
             <Field label="Weight" required>
               <InputWithAdornment
                 adornment="lbs"
@@ -149,33 +174,15 @@ export function VariantModal({ open, onClose, initial }: VariantModalProps) {
                 onChange={(e) => patch('weight', e.target.value)}
               />
             </Field>
+            <Field label="Volume" required>
+              <InputWithAdornment
+                adornment="ml"
+                placeholder="0.00"
+                value={v.volume}
+                onChange={(e) => patch('volume', e.target.value)}
+              />
+            </Field>
           </div>
-        )}
-
-        {!isExperience && isSpirits && (
-          <Field label="Proof" helper="Calculated automatically as 2 × alcohol percentage.">
-            <InputWithAdornment adornment="proof" placeholder="0" value={proofFromAbv(v.alcoholPercentage)} readOnly />
-          </Field>
-        )}
-
-        {!isExperience && (
-          <Field label="Volume" required>
-            <InputWithAdornment
-              adornment="ml"
-              placeholder="0.00"
-              value={v.volume}
-              onChange={(e) => patch('volume', e.target.value)}
-            />
-          </Field>
-        )}
-
-        {!isExperience && (
-          <CheckboxField
-            checked={v.physicalProduct}
-            onChange={(next) => patch('physicalProduct', next)}
-          >
-            Physical Product
-          </CheckboxField>
         )}
       </div>
     </Modal>
