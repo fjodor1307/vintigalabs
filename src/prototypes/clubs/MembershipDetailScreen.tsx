@@ -29,6 +29,9 @@ import {
   ChevronRightIcon,
   CreditCardIcon,
   StoreIcon,
+  ClockIcon,
+  CalendarIcon,
+  PencilIcon,
 } from '@ds/icons/Icons'
 import { Checkbox } from '@ds/shared/Checkbox'
 import { Textarea } from '@ds/shared/Textarea'
@@ -36,6 +39,15 @@ import { AgeVerifiedBadge } from '@ds/shared/AgeVerifiedBadge'
 import { BlindEnthusiasmLogo } from './BlindEnthusiasmLogo'
 import { getMember, type Member } from './memberSamples'
 import { CLUBS_CATALOG, type ClubKey } from './clubsCatalog'
+import {
+  deriveMembershipState,
+  formatHoldDate,
+  formatHoldRange,
+  TODAY_ISO,
+  type MembershipHold,
+} from './holdStatus'
+import { MembershipStatusTag } from './MembershipStatusTag'
+import { HoldModal } from './HoldModal'
 
 // ─── MembershipDetailScreen ──────────────────────────────────────────────────
 // Drill-down from the Memberships table (Figma 5078:5161). Reads the member id
@@ -43,23 +55,16 @@ import { CLUBS_CATALOG, type ClubKey } from './clubsCatalog'
 // up in `memberSamples`. Orders / history are shared mock fixtures — only the
 // member-specific fields (name, photo, club, etc.) vary by id.
 
-const STATUS_LABEL: Record<Member['status'], string> = {
-  active:    'Active',
-  pending:   'Pending',
-  'on-hold': 'On Hold',
-  cancelled: 'Cancelled',
-}
-
-const STATUS_TAG_TONE: Record<Member['status'], { tone: 'success' | 'orange' | 'default' | 'danger'; variant: 'filled' | 'neutral-light' }> = {
-  active:    { tone: 'success', variant: 'filled' },
-  pending:   { tone: 'orange',  variant: 'filled' },
-  'on-hold': { tone: 'default', variant: 'neutral-light' },
-  cancelled: { tone: 'danger',  variant: 'filled' },
-}
-
 const DELIVERY_LABEL: Record<Member['delivery'], string> = {
   shipping: 'Shipping',
   pickup:   'Pickup',
+}
+
+interface HistoryEntry {
+  date: string
+  change: string
+  by: string
+  notes: string
 }
 
 const ORDERS = [
@@ -84,7 +89,7 @@ const ORDER_STATUS_TONE: Record<OrderStatus, { tone: 'success' | 'orange' | 'def
   Completed:  { tone: 'success', variant: 'filled' },
 }
 
-const HISTORY = [
+const BASE_HISTORY: HistoryEntry[] = [
   { date: 'Mar 15, 2025', change: 'Re-Activated', by: 'Jim Secord',    notes: '—' },
   { date: 'Mar 13, 2025', change: 'Cancelled',    by: 'Donna Ataman',  notes: 'Other; new partner objects to drinking (Reason + Cancellation Notes)' },
   { date: 'Mar 11, 2025', change: 'Put on Hold',  by: 'Donna Ataman',  notes: "Customer isn't sure they want to keep membership" },
@@ -93,6 +98,36 @@ const HISTORY = [
   { date: 'Mar 08, 2025', change: 'Activated',    by: 'Geoff Spears',  notes: '—' },
   { date: 'Mar 08, 2025', change: 'Pending',      by: 'System',        notes: 'Outstanding Requirements' },
 ]
+
+const CURRENT_USER = 'Tom Cook'
+
+/** Today, formatted for a freshly-written history row. */
+function todayLabel(): string {
+  return formatHoldDate(TODAY_ISO)
+}
+
+/** Build the history note + change label for a hold mutation. */
+function holdHistoryEntry(prev: MembershipHold | undefined, next: MembershipHold | undefined): HistoryEntry {
+  const base = { date: todayLabel(), by: CURRENT_USER }
+  if (!next) {
+    return { ...base, change: 'Hold Lifted', notes: 'Hold removed — membership resumed.' }
+  }
+  const range = next.end
+    ? `${formatHoldDate(next.start)} → ${formatHoldDate(next.end)}`
+    : `from ${formatHoldDate(next.start)} (indefinite)`
+  const future = next.start > TODAY_ISO
+  if (!prev) {
+    return {
+      ...base,
+      change: future ? 'Future Hold Scheduled' : 'Put on Hold',
+      notes: range,
+    }
+  }
+  const prevRange = prev.end
+    ? `${formatHoldDate(prev.start)} → ${formatHoldDate(prev.end)}`
+    : `from ${formatHoldDate(prev.start)} (indefinite)`
+  return { ...base, change: 'Hold Updated', notes: `${prevRange}  ⟶  ${range}` }
+}
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
@@ -104,12 +139,25 @@ function getMemberFromHash(): Member {
 export function MembershipDetailScreen() {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
   const member = getMemberFromHash()
-  const statusTone = STATUS_TAG_TONE[member.status]
+
+  // Hold + history are local state so editing the hold updates the title tag,
+  // the Hold card, and the history table live.
+  const [hold, setHold] = useState<MembershipHold | undefined>(member.hold)
+  const [history, setHistory] = useState<HistoryEntry[]>(BASE_HISTORY)
+  const [holdModalOpen, setHoldModalOpen] = useState(false)
+
+  const state = deriveMembershipState(member.status, hold, { cancelledDate: member.statusDate })
+
+  function commitHold(next: MembershipHold | undefined) {
+    setHistory((h) => [holdHistoryEntry(hold, next), ...h])
+    setHold(next)
+    setHoldModalOpen(false)
+  }
 
   const titleNode = (
     <h1 className="typo-title-screen font-semibold text-vintiga-slate-900 inline-flex items-center gap-vintiga-sm">
       Membership #{member.id}
-      <Tag variant={statusTone.variant} tone={statusTone.tone} size="md">{STATUS_LABEL[member.status]}</Tag>
+      <MembershipStatusTag state={state} size="md" showFutureHold={false} />
     </h1>
   )
 
@@ -164,7 +212,12 @@ export function MembershipDetailScreen() {
             rail={<ClubOverviewRail member={member} />}
           >
             <div className="flex flex-col gap-vintiga-lg">
-              <CustomerHeaderCard member={member} />
+              <CustomerHeaderCard member={member} statusLabel={state.label} />
+              <HoldCard
+                hold={hold}
+                onEdit={() => setHoldModalOpen(true)}
+                disabled={member.status === 'cancelled'}
+              />
               {member.delivery === 'pickup'
                 ? <PickupDeliveryCard />
                 : <AddressCard title="Shipping Address" />}
@@ -172,18 +225,101 @@ export function MembershipDetailScreen() {
               <PaymentMethodCard member={member} />
               <OrderReviewCard member={member} />
               <ClubOrdersCard />
-              <MembershipHistoryCard />
+              <MembershipHistoryCard history={history} />
             </div>
           </PageTemplate>
         </div>
       </div>
+
+      <HoldModal
+        open={holdModalOpen}
+        hold={hold}
+        onClose={() => setHoldModalOpen(false)}
+        onSave={(next) => commitHold(next)}
+        onRemove={() => commitHold(undefined)}
+      />
     </div>
+  )
+}
+
+// ─── Hold card ───────────────────────────────────────────────────────────────
+// Surfaces the membership's current / scheduled hold and the entry point to
+// edit it. Three states:
+//   • no hold      → "Place on Hold" CTA
+//   • current hold → On Hold / Hold Until {end}, since {start}
+//   • future hold  → indigo-tinted "Hold scheduled" — membership stays active
+function HoldCard({
+  hold,
+  onEdit,
+  disabled,
+}: {
+  hold?: MembershipHold
+  onEdit: () => void
+  disabled?: boolean
+}) {
+  const future = !!hold && hold.start > TODAY_ISO
+
+  return (
+    <RecordsCard
+      title="Membership Hold"
+      action={
+        <Button variant="outline" size="sm" leftIcon={hold ? <PencilIcon /> : <ClockIcon />} onClick={onEdit} disabled={disabled}>
+          {hold ? 'Edit Hold' : 'Place on Hold'}
+        </Button>
+      }
+      divider={false}
+    >
+      {!hold ? (
+        <p className="typo-body-sm text-vintiga-slate-500">
+          No hold on this membership. Releases process on the normal schedule.
+        </p>
+      ) : (
+        <div
+          className={[
+            'flex items-start gap-vintiga-md rounded-vintiga-md p-vintiga-md',
+            future ? 'bg-vintiga-indigo-50' : 'bg-vintiga-slate-50',
+          ].join(' ')}
+        >
+          <div
+            className={[
+              'w-10 h-10 rounded-full inline-flex items-center justify-center shrink-0',
+              future ? 'bg-vintiga-indigo-100 text-vintiga-indigo-600' : 'bg-vintiga-slate-200 text-vintiga-slate-600',
+            ].join(' ')}
+          >
+            {future ? <ClockIcon className="w-5 h-5" /> : <CalendarIcon className="w-5 h-5" />}
+          </div>
+          <div className="flex flex-col gap-0.5">
+            {future ? (
+              <>
+                <span className="typo-body-sm font-semibold text-vintiga-indigo-700">
+                  Hold scheduled · {formatHoldRange(hold)}
+                </span>
+                <span className="typo-caption text-vintiga-slate-600">
+                  Membership stays <strong>Active</strong> until {formatHoldDate(hold.start)}, then goes on hold
+                  {hold.end ? ` and auto-resumes ${formatHoldDate(hold.end)}.` : ' until lifted.'}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="typo-body-sm font-semibold text-vintiga-slate-900">
+                  {hold.end ? `On hold until ${formatHoldDate(hold.end)}` : 'On hold indefinitely'}
+                </span>
+                <span className="typo-caption text-vintiga-slate-600">
+                  On hold since {formatHoldDate(hold.start)}
+                  {hold.end ? ' · auto-resumes on the end date' : ' · lift the hold to resume releases'}.
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </RecordsCard>
   )
 }
 
 // ─── Customer header card ────────────────────────────────────────────────────
 
-function CustomerHeaderCard({ member }: { member: Member }) {
+function CustomerHeaderCard({ member, statusLabel }: { member: Member; statusLabel: string }) {
   const club = CLUBS_CATALOG[member.club]
   return (
     <CustomerCard
@@ -220,7 +356,7 @@ function CustomerHeaderCard({ member }: { member: Member }) {
           </span>
           <span>{member.city} {member.zip}</span>
           <span className="text-vintiga-slate-500">Last Visit: {member.lastVisit}</span>
-          <span className="text-vintiga-slate-500">Club Status: {STATUS_LABEL[member.status]}</span>
+          <span className="text-vintiga-slate-500">Club Status: {statusLabel}</span>
         </>
       }
       actions={
@@ -466,7 +602,7 @@ function AddressCard({ title }: { title: string }) {
 
 // ─── Membership History card ─────────────────────────────────────────────────
 
-function MembershipHistoryCard() {
+function MembershipHistoryCard({ history }: { history: HistoryEntry[] }) {
   return (
     <div className="flex flex-col gap-vintiga-md">
       <h3 className="typo-title-section font-semibold text-vintiga-slate-900">Membership History</h3>
@@ -480,7 +616,7 @@ function MembershipHistoryCard() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {HISTORY.map((h, i) => (
+          {history.map((h, i) => (
             <TableRow key={i}>
               <TableCell className="text-vintiga-slate-700 whitespace-nowrap">{h.date}</TableCell>
               <TableCell className="text-vintiga-slate-900">{h.change}</TableCell>

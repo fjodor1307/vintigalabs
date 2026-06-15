@@ -6,6 +6,27 @@
 
 ---
 
+## 2026-06-13 — Fedja + Claude: Membership hold with start + end dates
+
+Holds now carry a **start** and an optional **end** date, and the displayed status is derived from where today sits between them (single source of truth in `holdStatus.ts`):
+
+| Start | End | Shows as | Filter bucket |
+|-------|-----|----------|---------------|
+| Past | set | **Hold Until {end}** | On Hold |
+| Past | — | **On Hold** | On Hold |
+| Future | set | **Active** + "Hold scheduled {range}" | Active |
+| Future | — | **Active** + "Hold from {start}" | Active |
+
+A future-dated hold keeps the membership **Active** until the start date arrives — the list + detail flag the scheduled hold so staff aren't surprised.
+
+**Data model (`memberSamples.ts`)** — `Member.status` narrowed to the base lifecycle (`pending | active | cancelled`); on-hold is never stored, only derived. New `Member.hold?: { start; end? }`. Sample rows cover all four cases (Phoenix = On Hold, Albert = Hold Until, Dorothy = future hold w/ end, Jerome = future hold indefinite).
+
+**Shared helper (`holdStatus.ts`)** — `deriveMembershipState(base, hold, …)` returns label/tone/variant/kind + filter bucket + caption + `futureHold`/`activeHold`. `MembershipStatusTag` renders it consistently across all three surfaces.
+
+**Lists** — the cross-club Memberships table and the per-club Members tab both derive their status cell + status filter from the helper. The On Hold filter returns current holds *and* hold-untils; future holds stay under Active.
+
+**Detail page (`MembershipDetailScreen.tsx`)** — title tag is derived; new **Membership Hold card** shows the current/scheduled hold (indigo future-hold treatment) with an **Edit Hold / Place on Hold** button. `HoldModal` edits the start/end with a live preview of the resulting status and a **Lift hold** action. Every change is captured in the **Membership History** table ("Put on Hold", "Future Hold Scheduled", "Hold Updated", "Hold Lifted") with the before→after dates.
+
 ## 2026-06-04 — Fedja + Claude: Add Payment Method + Tasting Credit Charges tab (Jun 4 design review)
 
 Two changes from the Jun 4 design review:

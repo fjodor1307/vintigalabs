@@ -11,6 +11,7 @@ Designer scratchpad. Anything strange, unclear, or worth improving goes here. Ke
 ## Open questions
 Things that need an answer from PM, research, or a stakeholder.
 
+- **🔴 Membership lifecycle gaps** — when a membership is created Pending vs Active, how cancel/on-hold transition, future-join behaviour. Full spec + 6 open PM questions in [`MEMBERSHIP-LIFECYCLE.md`](MEMBERSHIP-LIFECYCLE.md) · raised 2026-06-13 by Dejan (dev)
 - **🔴 Example question title** — why it matters · `ScreenName.tsx:line` · raised YYYY-MM-DD by {name}
 
 ## Improvements
