@@ -86,6 +86,11 @@ export const BEER_STYLES_BY_FAMILY: Record<BeerFamily, string[]> = {
   'Other': ['Dry Cider', 'Pear Cider', 'Hard Seltzer', 'Non-Alcoholic'],
 }
 export const BEER_TAGS = ['Hazy', 'Crisp', 'Fruity', 'Juicy', 'Malty', 'Barrel-Aged', 'Seasonal', 'Imperial', 'Nitro', 'Coffee', 'Rosé', 'Botanical'] as const
+// Split for the Details tab (Jun 10 review): taste descriptors live under
+// "Tasting Profile"; release/serve qualifiers live under "Tags". Both write to
+// the same `beerTags` array — the split is purely how they're grouped in the UI.
+export const BEER_TASTE = ['Hazy', 'Crisp', 'Fruity', 'Juicy', 'Malty', 'Coffee', 'Rosé', 'Botanical'] as const
+export const BEER_QUALIFIERS = ['Barrel-Aged', 'Imperial', 'Nitro', 'Seasonal'] as const
 
 export type SpiritsFamily = 'Whiskey' | 'Agave Spirits' | 'Rum' | 'Gin' | 'Vodka' | 'Brandy' | 'Liqueur' | 'Ready-to-Drink' | 'Other'
 export const SPIRITS_STYLES_BY_FAMILY: Record<SpiritsFamily, string[]> = {
@@ -100,6 +105,9 @@ export const SPIRITS_STYLES_BY_FAMILY: Record<SpiritsFamily, string[]> = {
   'Other': ['Moonshine', 'Absinthe', 'Non-Alcoholic Spirits'],
 }
 export const SPIRITS_TAGS = ['Smoky', 'Sweet', 'Spiced', 'Herbal', 'Citrus', 'Vanilla', 'Coffee', 'Caramel', 'Barrel-Aged', 'Small Batch', 'Single Barrel', 'Cask Strength', 'Ready-to-Drink', 'Nitro', 'Organic', 'Limited Release', 'Seasonal'] as const
+// Taste vs. release/production qualifiers — see BEER_TASTE comment above.
+export const SPIRITS_TASTE = ['Smoky', 'Sweet', 'Spiced', 'Herbal', 'Citrus', 'Vanilla', 'Coffee', 'Caramel'] as const
+export const SPIRITS_QUALIFIERS = ['Barrel-Aged', 'Small Batch', 'Single Barrel', 'Cask Strength', 'Ready-to-Drink', 'Nitro', 'Organic', 'Limited Release', 'Seasonal'] as const
 
 /** Reverse lookup: style → family. Auto-assigned on Style change. */
 export function beerFamilyForStyle(style: string): BeerFamily | '' {
@@ -216,6 +224,9 @@ export interface ProductState {
   // Advanced
   department: string
   vendor: string
+  /** Commerce 7 "sales attribute" — a freeform classification on every product
+   *  (e.g. Retail, Restaurant, Wholesale). Surfaced on the Details tab. */
+  salesAttribute: string
   wineType: string
   varietal: string
   vintage: string
@@ -287,7 +298,7 @@ export function proofFromAbv(abv: string): string {
   return String(+(n * 2).toFixed(1))
 }
 
-export function emptyVariant(title = '', sortOrder = 0): Variant {
+export function emptyVariant(title = '', sortOrder = 0, physicalProduct = true): Variant {
   return {
     id: uid('v'),
     title,
@@ -300,7 +311,7 @@ export function emptyVariant(title = '', sortOrder = 0): Variant {
     alcoholPercentage: '',
     weight: '',
     volume: '',
-    physicalProduct: true,
+    physicalProduct,
     sortOrder,
   }
 }
@@ -332,9 +343,12 @@ const initial: ProductState = {
   tags: [],
   collections: ['Wines', 'Red Wines'],
   images: [],
-  variants: [],
+  // Seed one blank variant so a new product opens straight into the inline
+  // single-variant form (price / SKU / measurements) instead of an empty state.
+  variants: [emptyVariant('', 0)],
   department: 'Wine',
   vendor: 'Wine',
+  salesAttribute: '',
   wineType: 'Red',
   varietal: 'Cabernet Sauvignon',
   vintage: '2015',
@@ -883,7 +897,10 @@ export const productActions = {
       tags: [],
       collections: [],
       images: [],
-      variants: [],
+      // One blank variant → inline form. Food defaults to non-physical
+      // (tasting-room item) so the operator isn't forced to enter shipping
+      // weight/volume; jam/jelly shippers tick Physical Product back on.
+      variants: [emptyVariant('', 0, productType !== 'Food')],
       // Reset SEO auto-fill so a fresh product starts with empty Meta Title + Slug.
       metaTitle: '',
       slug: '',
