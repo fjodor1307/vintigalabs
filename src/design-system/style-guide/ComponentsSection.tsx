@@ -63,10 +63,10 @@ const HeartIcon = ({ className }: { className?: string }) => (
   </svg>
 )
 
-function SubSection({ id, title, description, children }: { id: string; title: string; description: string; children: React.ReactNode }) {
+function SubSection({ id, title, description, figmaUrl, children }: { id: string; title: string; description: string; figmaUrl?: string; children: React.ReactNode }) {
   return (
     <section id={id} className="space-y-4 scroll-mt-20">
-      <SectionHeader id={id} title={title} description={description} />
+      <SectionHeader id={id} title={title} description={description} figmaUrl={figmaUrl} />
       <div className="border border-vintiga-border rounded-vintiga-card p-6 bg-vintiga-surface">{children}</div>
     </section>
   )
@@ -142,6 +142,7 @@ function ButtonsSection() {
       id="ds-buttons"
       title="Buttons"
       description="Two variants — Solid (primary CTA) and Outline (secondary, neutral slate border). Each supports primary and destructive intents, five sizes, optional icons, and a disabled state."
+      figmaUrl="https://www.figma.com/design/3DnxyYDZqDGQqvknlD4aTu/05.-Dashboard?node-id=5568-17935"
     >
       <div className="flex flex-col gap-vintiga-xl">
         <PlaygroundStage>
