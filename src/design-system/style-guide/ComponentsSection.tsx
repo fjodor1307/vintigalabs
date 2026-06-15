@@ -63,10 +63,61 @@ const HeartIcon = ({ className }: { className?: string }) => (
   </svg>
 )
 
+// ─── Figma source links ──────────────────────────────────────────────────────
+// Our DS components were drawn from the Vintiga Figma library, where each
+// component family lives on its own page. Map every style-guide section to the
+// node-id of its source page so each section can deep-link "View in Figma".
+// Sections with no dedicated Figma page (pure-prototype helpers) are omitted
+// and simply render no button.
+const FIGMA_FILE_BASE =
+  'https://www.figma.com/design/3DnxyYDZqDGQqvknlD4aTu/05.-Dashboard?node-id='
+
+const FIGMA_NODES: Record<string, string> = {
+  'ds-buttons':             '5568-17935', // Buttons
+  'ds-icon-buttons':        '5568-17935', // Buttons (icon-only variants)
+  'ds-checkbox':            '5568-29837', // Checkbox
+  'ds-select-all-checkbox': '5568-29837', // Checkbox
+  'ds-radio':               '5568-30010', // Radio
+  'ds-switch':              '5568-29820', // Switch
+  'ds-alert-soft':          '5568-30046', // Notifications
+  'ds-toast':               '5568-30046', // Notifications
+  'ds-empty-states':        '5568-29764', // Empty State
+  'ds-error-states':        '5568-29764', // Empty State
+  'ds-dialog':              '5569-30160', // Modal
+  'ds-cards':               '5568-21829', // Cards
+  'ds-list-card':           '5568-21829', // Cards
+  'ds-club-card':           '5568-21829', // Cards
+  'ds-customer-card':       '5568-21829', // Cards
+  'ds-records-card':        '5568-21829', // Cards
+  'ds-selection-card':      '5568-21829', // Cards
+  'ds-section-card':        '5568-21829', // Cards
+  'ds-kpi-card':            '5569-30545', // Insights
+  'ds-pill':                '5568-24986', // Tags
+  'ds-tags':                '5568-24986', // Tags
+  'ds-avatars':             '5568-17934', // Avatars
+  'ds-text-fields':         '5568-25039', // Text Fields
+  'ds-textarea':            '5568-25039', // Text Fields
+  'ds-field':               '5568-28114', // Forms
+  'ds-select':              '5568-30071', // Dropdown
+  'ds-dropdown':            '5568-30071', // Dropdown
+  'ds-rich-text-editor':    '5667-185327', // Rich Text Editor
+  'ds-table':               '5568-28281', // Table
+  'ds-segmented-control':   '5568-29353', // Segmented Controls
+  'ds-navbar':              '5568-17950', // Navbar
+  'ds-widget':              '5568-28196', // Widget
+  'ds-sidebar':             '5568-18371', // Sidebar
+}
+
+/** Resolve the Figma deep-link for a section, if one is registered. */
+function figmaUrlFor(id: string): string | undefined {
+  const node = FIGMA_NODES[id]
+  return node ? FIGMA_FILE_BASE + node : undefined
+}
+
 function SubSection({ id, title, description, figmaUrl, children }: { id: string; title: string; description: string; figmaUrl?: string; children: React.ReactNode }) {
   return (
     <section id={id} className="space-y-4 scroll-mt-20">
-      <SectionHeader id={id} title={title} description={description} figmaUrl={figmaUrl} />
+      <SectionHeader id={id} title={title} description={description} figmaUrl={figmaUrl ?? figmaUrlFor(id)} />
       <div className="border border-vintiga-border rounded-vintiga-card p-6 bg-vintiga-surface">{children}</div>
     </section>
   )
@@ -142,7 +193,6 @@ function ButtonsSection() {
       id="ds-buttons"
       title="Buttons"
       description="Two variants — Solid (primary CTA) and Outline (secondary, neutral slate border). Each supports primary and destructive intents, five sizes, optional icons, and a disabled state."
-      figmaUrl="https://www.figma.com/design/3DnxyYDZqDGQqvknlD4aTu/05.-Dashboard?node-id=5568-17935"
     >
       <div className="flex flex-col gap-vintiga-xl">
         <PlaygroundStage>
@@ -1082,7 +1132,8 @@ function InteractiveTagShowcase() {
           pressed={selected.has(label)}
           onToggle={() => {
             const next = new Set(selected)
-            next.has(label) ? next.delete(label) : next.add(label)
+            if (next.has(label)) next.delete(label)
+            else next.add(label)
             setSelected(next)
           }}
         >
