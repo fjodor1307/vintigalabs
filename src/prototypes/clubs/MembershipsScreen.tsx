@@ -6,8 +6,10 @@ import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
 import { FilterDropdown } from '@ds/shared/FilterDropdown'
 import { FlaggedFlag } from './FlaggedFlag'
-import { MEMBERS, type Delivery, type MemberStatus } from './memberSamples'
+import { MEMBERS, type Delivery, type MemberStatus, type Member } from './memberSamples'
 import { CLUBS_CATALOG, type ClubKey } from './clubsCatalog'
+import { deriveMembershipState } from './holdStatus'
+import { MembershipStatusTag } from './MembershipStatusTag'
 import {
   Table,
   TableHead,
@@ -41,22 +43,10 @@ const CLUB_LABEL: Record<ClubKey, string> = {
   'c7':                 CLUBS_CATALOG.c7.name,
 }
 
-// Status palette unified with `ClubViewMembersScreen` (per Figma 5078:4277).
-// Active = green-success · Pending = orange · On Hold = neutral-light gray
-// · Cancelled = red-danger.
-const STATUS_TONE: Record<MemberStatus, { tone: 'success' | 'orange' | 'default' | 'danger'; variant: 'filled' | 'neutral-light' }> = {
-  active:    { tone: 'success', variant: 'filled' },
-  pending:   { tone: 'orange',  variant: 'filled' },
-  'on-hold': { tone: 'default', variant: 'neutral-light' },
-  cancelled: { tone: 'danger',  variant: 'filled' },
-}
-
-const STATUS_LABEL: Record<MemberStatus, string> = {
-  active:    'Active',
-  pending:   'Pending',
-  'on-hold': 'On Hold',
-  cancelled: 'Cancelled',
-}
+// Status display (tag tone + caption + future-hold sub-line) is resolved per
+// row from the member's hold dates — see `deriveMembershipState`.
+const memberState = (m: Member) =>
+  deriveMembershipState(m.status, m.hold, { cancelledDate: m.statusDate })
 
 // ─── Filter options ───────────────────────────────────────────────────────────
 
@@ -92,7 +82,9 @@ export function MembershipsScreen() {
     return MEMBERS.filter((m) => {
       if (q && !m.name.toLowerCase().includes(q)) return false
       if (delivery.size > 0 && !delivery.has(m.delivery)) return false
-      if (status.size > 0 && !status.has(m.status)) return false
+      // On Hold (incl. Hold Until) collapses into one filter bucket; a
+      // future-dated hold still counts as Active.
+      if (status.size > 0 && !status.has(memberState(m).filter as MemberStatus)) return false
       if (club.size > 0 && !club.has(m.club)) return false
       return true
     })
@@ -190,14 +182,7 @@ export function MembershipsScreen() {
                 </div>
               </TableCell>
               <TableCell>
-                <div className="flex flex-col items-start gap-0.5">
-                  <Tag variant={STATUS_TONE[m.status].variant} tone={STATUS_TONE[m.status].tone} size="sm">
-                    {STATUS_LABEL[m.status]}
-                  </Tag>
-                  {m.statusDate && (
-                    <span className="typo-caption text-vintiga-slate-500">{m.statusDate}</span>
-                  )}
-                </div>
+                <MembershipStatusTag state={memberState(m)} />
               </TableCell>
             </TableRow>
           ))}
