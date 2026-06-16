@@ -5,7 +5,6 @@
 # Add extra reviewers by appending usernames separated by spaces.
 #
 # Team handles:
-#   @fedjasymphony      Fedja
 #   @nikola-stojanovic  Nikola
 #   @medinapit          Medina
 #   @eldinherenda-gif   Hera
@@ -17,7 +16,5 @@
 # Per-prototype ownership. Only the owner should touch their folder unless
 # you've coordinated a hand-off or the owner is out. New designers: claim
 # your folder here when you scaffold a prototype.
-/src/prototypes/invited-director/        @fedjasymphony
-/src/prototypes/onboarding-fedja/        @fedjasymphony
 /src/prototypes/experience-timeslots/    @fjodor1307
 /src/prototypes/sales-chat-imessage/     @fjodor1307
