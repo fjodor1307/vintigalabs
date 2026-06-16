@@ -30,8 +30,6 @@ import {
   ChevronRightIcon,
   CreditCardIcon,
   StoreIcon,
-  ClockIcon,
-  PencilIcon,
 } from '@ds/icons/Icons'
 import { Checkbox } from '@ds/shared/Checkbox'
 import { Textarea } from '@ds/shared/Textarea'
@@ -197,15 +195,6 @@ export function MembershipDetailScreen() {
             title={titleNode}
             actions={
               <>
-                {!cancelled && (
-                  <Button
-                    variant="outline"
-                    leftIcon={onHold ? <PencilIcon /> : <ClockIcon />}
-                    onClick={() => setHoldModalOpen(true)}
-                  >
-                    {onHold ? 'Edit hold' : 'Hold membership'}
-                  </Button>
-                )}
                 <Button onClick={() => {}}>Save</Button>
                 <PopoverMenu
                   align="right"
@@ -220,6 +209,9 @@ export function MembershipDetailScreen() {
                     />
                   )}
                   items={[
+                    ...(!cancelled
+                      ? [{ label: onHold ? 'Edit hold' : 'Hold membership', onClick: () => setHoldModalOpen(true) }]
+                      : []),
                     ...(onHold ? [{ label: 'Lift hold', onClick: () => commitHold(undefined) }] : []),
                     { label: 'Cancel membership', onClick: () => {}, danger: true },
                   ]}
@@ -236,12 +228,12 @@ export function MembershipDetailScreen() {
                 onEditHold={() => setHoldModalOpen(true)}
               />
               <CustomerHeaderCard member={member} statusLabel={state.label} />
+              <OrderReviewCard member={member} />
               {member.delivery === 'pickup'
                 ? <PickupDeliveryCard />
                 : <AddressCard title="Shipping Address" />}
               <AddressCard title="Billing Address" />
               <PaymentMethodCard member={member} />
-              <OrderReviewCard member={member} />
               <ClubOrdersCard />
               <MembershipHistoryCard history={history} />
             </div>

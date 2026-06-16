@@ -11,7 +11,8 @@
 Reworked the membership detail screen from the Jun 16 review:
 
 - **Hold card removed.** The big "Membership Hold" card rendered on every membership (including a "Place on Hold" CTA), eating real estate on the ~90% that are never held. Gone.
-- **Hold is promoted to a header action.** Top-right now shows **Hold membership** (→ opens the hold modal) when there's no hold, and **Edit hold** when there is. The kebab menu gains **Lift hold** when on hold. Both hidden when cancelled.
+- **Hold lives in the kebab menu.** The "More actions" dropdown carries **Hold membership** (no hold) / **Edit hold** (held) + **Lift hold** (when held) + **Cancel membership**; hold items hidden when cancelled. The header stays clean — just **Save** + the kebab. The hold banner also has its own inline **Edit**.
+- **Order Review moved above the delivery method** section (matches the club-order layout convention).
 - **Hold + status now surface as a top alert stack** (`MembershipAlerts`, built on `AlertSoft`), rendered at the top of the content below the breadcrumbs — only when there's something to say. Stacks most-urgent-first: **cancelled** (error) · **pending activation** (warning) · **manual processing required** (info, from `flagged`) · **hold** (future → indigo info "Hold scheduled · {range}", current → amber "On hold until {end}"). The hold banner carries an inline **Edit** action.
 - **Title leads with the club + number** (e.g. "Blind Enthusiasm #1004") instead of repeating "Membership" across breadcrumb → title; the member's name stays on the customer card below. Last breadcrumb matches.
 
