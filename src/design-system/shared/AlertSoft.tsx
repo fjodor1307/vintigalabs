@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { InfoIcon, CheckCircleIcon, WarningIcon, CircleAlertIcon, CircleXIcon, XIcon } from '@ds/icons/Icons'
+import { Button } from '@ds/shared/Button'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -98,13 +99,9 @@ export function AlertSoft({
 
       {/* Action button (optional) */}
       {actionLabel && (
-        <button
-          type="button"
-          onClick={onAction}
-          className="shrink-0 text-[12px] font-semibold text-vintiga-primary leading-4 tracking-[0.24px] border border-vintiga-primary rounded-full px-2 py-1 bg-transparent hover:bg-vintiga-primary-soft transition-colors cursor-pointer"
-        >
+        <Button variant="outline" size="sm" onClick={onAction} className="shrink-0">
           {actionLabel}
-        </button>
+        </Button>
       )}
 
       {/* Close button (optional) */}

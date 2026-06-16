@@ -10,6 +10,7 @@ import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import { Tag } from '@ds/shared/Tag'
 import { Avatar } from '@ds/shared/Avatar'
 import { CustomerCard } from '@ds/shared/CustomerCard'
+import { AlertSoft } from '@ds/shared/AlertSoft'
 import { CardBrandLogo } from '@ds/shared/CardBrandLogo'
 import { RecordsCard, RecordsCardEmpty } from '@ds/shared/RecordsCard'
 import { RailSection } from '@ds/shared/RightRail'
@@ -29,9 +30,6 @@ import {
   ChevronRightIcon,
   CreditCardIcon,
   StoreIcon,
-  ClockIcon,
-  CalendarIcon,
-  PencilIcon,
 } from '@ds/icons/Icons'
 import { Checkbox } from '@ds/shared/Checkbox'
 import { Textarea } from '@ds/shared/Textarea'
@@ -45,6 +43,7 @@ import {
   formatHoldRange,
   TODAY_ISO,
   type MembershipHold,
+  type MembershipState,
 } from './holdStatus'
 import { MembershipStatusTag } from './MembershipStatusTag'
 import { HoldModal } from './HoldModal'
@@ -154,9 +153,15 @@ export function MembershipDetailScreen() {
     setHoldModalOpen(false)
   }
 
+  const club = CLUBS_CATALOG[member.club]
+  const onHold = !!hold
+  const cancelled = state.kind === 'cancelled'
+
+  // Lead the title with the club + membership number so "Membership" doesn't
+  // repeat across breadcrumb → title; the member's name lives on the card below.
   const titleNode = (
     <h1 className="typo-title-screen font-semibold text-vintiga-slate-900 inline-flex items-center gap-vintiga-sm">
-      Membership #{member.id}
+      {club.name} #{member.id}
       <MembershipStatusTag state={state} size="md" showFutureHold={false} />
     </h1>
   )
@@ -185,7 +190,7 @@ export function MembershipDetailScreen() {
               { icon: <BreadcrumbHomeIcon />, href: '#/web/clubs' },
               { label: 'Clubs',       href: '#/web/clubs' },
               { label: 'Memberships', href: '#/web/clubs/memberships' },
-              { label: `Membership #${member.id}` },
+              { label: `${club.name} #${member.id}` },
             ]}
             title={titleNode}
             actions={
@@ -204,6 +209,10 @@ export function MembershipDetailScreen() {
                     />
                   )}
                   items={[
+                    ...(!cancelled
+                      ? [{ label: onHold ? 'Edit hold' : 'Hold membership', onClick: () => setHoldModalOpen(true) }]
+                      : []),
+                    ...(onHold ? [{ label: 'Lift hold', onClick: () => commitHold(undefined) }] : []),
                     { label: 'Cancel membership', onClick: () => {}, danger: true },
                   ]}
                 />
@@ -212,18 +221,19 @@ export function MembershipDetailScreen() {
             rail={<ClubOverviewRail member={member} />}
           >
             <div className="flex flex-col gap-vintiga-lg">
-              <CustomerHeaderCard member={member} statusLabel={state.label} />
-              <HoldCard
+              <MembershipAlerts
+                state={state}
                 hold={hold}
-                onEdit={() => setHoldModalOpen(true)}
-                disabled={member.status === 'cancelled'}
+                flagged={member.flagged}
+                onEditHold={() => setHoldModalOpen(true)}
               />
+              <CustomerHeaderCard member={member} statusLabel={state.label} />
+              <OrderReviewCard member={member} />
               {member.delivery === 'pickup'
                 ? <PickupDeliveryCard />
                 : <AddressCard title="Shipping Address" />}
               <AddressCard title="Billing Address" />
               <PaymentMethodCard member={member} />
-              <OrderReviewCard member={member} />
               <ClubOrdersCard />
               <MembershipHistoryCard history={history} />
             </div>
@@ -242,79 +252,86 @@ export function MembershipDetailScreen() {
   )
 }
 
-// ─── Hold card ───────────────────────────────────────────────────────────────
-// Surfaces the membership's current / scheduled hold and the entry point to
-// edit it. Three states:
-//   • no hold      → "Place on Hold" CTA
-//   • current hold → On Hold / Hold Until {end}, since {start}
-//   • future hold  → indigo-tinted "Hold scheduled" — membership stays active
-function HoldCard({
+// ─── Membership alerts ───────────────────────────────────────────────────────
+// Top-of-page status banners — the back-office equivalent of the POS "pay
+// attention to this" note. Only render when there's something to surface, so
+// the ~90% of memberships in good standing don't carry an empty hold section
+// hogging real estate. Stacks most-urgent-first: cancelled · pending · manual
+// review · hold. The hold banner replaces the old always-on Hold card; you can
+// edit the hold straight from it (or from the header action).
+function MembershipAlerts({
+  state,
   hold,
-  onEdit,
-  disabled,
+  flagged,
+  onEditHold,
 }: {
+  state: MembershipState
   hold?: MembershipHold
-  onEdit: () => void
-  disabled?: boolean
+  flagged?: boolean
+  onEditHold: () => void
 }) {
-  const future = !!hold && hold.start > TODAY_ISO
+  const alerts: ReactNode[] = []
 
-  return (
-    <RecordsCard
-      title="Membership Hold"
-      action={
-        <Button variant="outline" size="sm" leftIcon={hold ? <PencilIcon /> : <ClockIcon />} onClick={onEdit} disabled={disabled}>
-          {hold ? 'Edit Hold' : 'Place on Hold'}
-        </Button>
-      }
-      divider={false}
-    >
-      {!hold ? (
-        <p className="typo-body-sm text-vintiga-slate-500">
-          No hold on this membership. Releases process on the normal schedule.
-        </p>
+  if (state.kind === 'cancelled') {
+    alerts.push(
+      <AlertSoft
+        key="cancelled"
+        variant="error"
+        title="Membership cancelled"
+        subtitle={`This membership was cancelled${state.caption ? ` on ${state.caption}` : ''}. No further releases will be charged.`}
+      />,
+    )
+  }
+
+  if (state.kind === 'pending') {
+    alerts.push(
+      <AlertSoft
+        key="pending"
+        variant="warning"
+        title="Pending activation"
+        subtitle="The member signed up but the membership isn't active yet — activate it to start releases."
+      />,
+    )
+  }
+
+  if (flagged && state.kind !== 'cancelled') {
+    alerts.push(
+      <AlertSoft
+        key="review"
+        variant="info"
+        title="Manual processing required"
+        subtitle="This member's club orders are held for manual review instead of auto-batching."
+      />,
+    )
+  }
+
+  if (hold && state.kind !== 'cancelled') {
+    const future = hold.start > TODAY_ISO
+    alerts.push(
+      future ? (
+        <AlertSoft
+          key="hold"
+          variant="info"
+          title={`Hold scheduled · ${formatHoldRange(hold)}`}
+          subtitle={`Stays Active until ${formatHoldDate(hold.start)}, then pauses${hold.end ? ` and resumes ${formatHoldDate(hold.end)}` : ' until lifted'}.`}
+          actionLabel="Edit"
+          onAction={onEditHold}
+        />
       ) : (
-        <div
-          className={[
-            'flex items-start gap-vintiga-md rounded-vintiga-md p-vintiga-md',
-            future ? 'bg-vintiga-indigo-50' : 'bg-vintiga-slate-50',
-          ].join(' ')}
-        >
-          <div
-            className={[
-              'w-10 h-10 rounded-full inline-flex items-center justify-center shrink-0',
-              future ? 'bg-vintiga-indigo-100 text-vintiga-indigo-600' : 'bg-vintiga-slate-200 text-vintiga-slate-600',
-            ].join(' ')}
-          >
-            {future ? <ClockIcon className="w-5 h-5" /> : <CalendarIcon className="w-5 h-5" />}
-          </div>
-          <div className="flex flex-col gap-0.5">
-            {future ? (
-              <>
-                <span className="typo-body-sm font-semibold text-vintiga-indigo-700">
-                  Hold scheduled · {formatHoldRange(hold)}
-                </span>
-                <span className="typo-caption text-vintiga-slate-600">
-                  Membership stays <strong>Active</strong> until {formatHoldDate(hold.start)}, then goes on hold
-                  {hold.end ? ` and auto-resumes ${formatHoldDate(hold.end)}.` : ' until lifted.'}
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="typo-body-sm font-semibold text-vintiga-slate-900">
-                  {hold.end ? `On hold until ${formatHoldDate(hold.end)}` : 'On hold indefinitely'}
-                </span>
-                <span className="typo-caption text-vintiga-slate-600">
-                  On hold since {formatHoldDate(hold.start)}
-                  {hold.end ? ' · auto-resumes on the end date' : ' · lift the hold to resume releases'}.
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </RecordsCard>
-  )
+        <AlertSoft
+          key="hold"
+          variant="warning"
+          title={hold.end ? `On hold until ${formatHoldDate(hold.end)}` : 'On hold indefinitely'}
+          subtitle={`On hold since ${formatHoldDate(hold.start)}${hold.end ? ' · resumes automatically on the end date' : ' · lift the hold to resume releases'}.`}
+          actionLabel="Edit"
+          onAction={onEditHold}
+        />
+      ),
+    )
+  }
+
+  if (alerts.length === 0) return null
+  return <div className="flex flex-col gap-vintiga-sm">{alerts}</div>
 }
 
 // ─── Customer header card ────────────────────────────────────────────────────
