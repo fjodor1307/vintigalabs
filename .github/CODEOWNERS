@@ -5,36 +5,19 @@
 # Add extra reviewers by appending usernames separated by spaces.
 #
 # Team handles:
-#   @ogiogi-sy          Ogi (Lead Designer)
 #   @fedjasymphony      Fedja
 #   @nikola-stojanovic  Nikola
 #   @medinapit          Medina
 #   @eldinherenda-gif   Hera
-
-# Default: Ogi owns anything not otherwise claimed.
-*                               @ogiogi-sy
-
-# Shared design system + root docs — Ogi reviews.
-/src/design-system/             @ogiogi-sy
-/_context/                      @ogiogi-sy
-/_templates/                    @ogiogi-sy
-/scripts/                       @ogiogi-sy
-/CLAUDE.md                      @ogiogi-sy
-/CONTRIBUTING.md                @ogiogi-sy
-/CHANGELOG.md                   @ogiogi-sy
-/README.md                      @ogiogi-sy
-/.github/                       @ogiogi-sy
+#
+# No catch-all owner: shared design-system and root-doc changes don't
+# auto-request a reviewer. Get a second pair of eyes manually before merging
+# (see CONTRIBUTING.md → Reviewing PRs).
 
 # Per-prototype ownership. Only the owner should touch their folder unless
 # you've coordinated a hand-off or the owner is out. New designers: claim
 # your folder here when you scaffold a prototype.
-/src/prototypes/subscription/            @ogiogi-sy
-/src/prototypes/subscription-v2/         @ogiogi-sy
-/src/prototypes/subscription-v4/         @ogiogi-sy
-/src/prototypes/onboarding/              @ogiogi-sy
 /src/prototypes/invited-director/        @fedjasymphony
-
-/src/prototypes/onboarding-fedja/    @fedjasymphony
-/src/prototypes/subscription-choose-plan/ @ogiogi-sy
+/src/prototypes/onboarding-fedja/        @fedjasymphony
 /src/prototypes/experience-timeslots/    @fjodor1307
 /src/prototypes/sales-chat-imessage/     @fjodor1307
