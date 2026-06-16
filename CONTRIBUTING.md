@@ -120,7 +120,7 @@ If you need to do it by hand instead of `npm run new-prototype`:
 
 ## Reviewing PRs
 
-- DS / shared changes: @ogiogi-sy reviews by default
+- DS / shared changes: no default reviewer is assigned — ping a teammate for a second pair of eyes before merging
 - Prototype-only changes: self-approval is fine; ping another designer only if you want a second pair of eyes
 
 ## What breaks the rules
