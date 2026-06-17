@@ -6,6 +6,16 @@
 
 ---
 
+## 2026-06-17 — Fedja + Claude: Pending membership → activation prompt
+
+When a staff member supplies the missing info on a **pending** membership (adding the card via Payment Method → "Add Card"), a modal now asks **"Would you like to activate this membership?"** with **Yes, activate now** / **No, leave as pending**:
+
+- **Yes** → membership flips to **Active** (local `baseStatus`); the pending message clears.
+- **No** → stays pending, but the message changes from "Requires information to activate: {info}" to **"Membership is ready for activation."**
+- The kebab menu on a pending membership now offers **Activate membership** (· Cancel Membership).
+
+Payment-method state + activation are lifted to the screen so the message, the card, and the modal stay in sync.
+
 ## 2026-06-17 — Fedja + Claude: Membership detail — copy spec pass
 
 Implemented the client's copy/structure spec for the membership detail:
