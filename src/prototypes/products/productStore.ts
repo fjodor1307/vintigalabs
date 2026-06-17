@@ -347,7 +347,7 @@ const initial: ProductState = {
   // single-variant form (price / SKU / measurements) instead of an empty state.
   variants: [emptyVariant('', 0)],
   department: 'Wine',
-  vendor: 'Wine',
+  vendor: '',
   salesAttribute: '',
   wineType: 'Red',
   varietal: 'Cabernet Sauvignon',
