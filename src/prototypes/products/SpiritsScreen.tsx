@@ -8,11 +8,10 @@ import {
   SPIRITS_QUALIFIERS,
   type SpiritsFamily,
 } from './productStore'
+import { GlobalPropertiesCard } from './GlobalPropertiesCard'
 
 const ALL_SPIRITS_STYLES: string[] = (Object.keys(SPIRITS_STYLES_BY_FAMILY) as SpiritsFamily[])
   .flatMap((family) => SPIRITS_STYLES_BY_FAMILY[family])
-
-const SALES_ATTRIBUTES = ['', 'Retail', 'Restaurant', 'Wholesale', 'Club', 'Event']
 
 export function SpiritsScreen() {
   const product = useProductState()
@@ -20,34 +19,7 @@ export function SpiritsScreen() {
   return (
     <ProductLayout activeTab="spirits">
       {/* Commerce 7 fields that live on every product, regardless of type. */}
-      <SectionCard title="Global properties">
-        <p className="typo-body-sm text-vintiga-slate-500">
-          Synced with Commerce 7 — used for accounting, reporting, and POS routing.
-        </p>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Department">
-            <Select
-              value={product.department}
-              onChange={(v) => productActions.setAdvanced({ department: v })}
-              options={['Wine', 'Beer', 'Spirits', 'Food', 'Merchandise']}
-            />
-          </Field>
-          <Field label="Vendor">
-            <Select
-              value={product.vendor}
-              onChange={(v) => productActions.setAdvanced({ vendor: v })}
-              options={['Wine', 'House', 'Imported', 'Local']}
-            />
-          </Field>
-          <Field label="Sales Attribute" helper="How this product is classified for sales reporting.">
-            <Select
-              value={product.salesAttribute}
-              onChange={(v) => productActions.setAdvanced({ salesAttribute: v })}
-              options={SALES_ATTRIBUTES}
-            />
-          </Field>
-        </div>
-      </SectionCard>
+      <GlobalPropertiesCard />
 
       <SectionCard title="Spirits classification">
         <p className="typo-body-sm text-vintiga-slate-500">

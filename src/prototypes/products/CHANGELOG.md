@@ -6,6 +6,16 @@
 
 ---
 
+## 2026-06-17 — Fedja + Claude: Global Properties — optional dropdowns + Brand / Vendor
+
+Beer/Spirits Details → **Global properties** updates from client feedback:
+
+- **None of Department / Brand-Vendor / Sales Attribute are required.** Every dropdown now leads with a non-selection **"—"** option (the shared `Select` renders `''` as "—").
+- **"Vendor" renamed to "Brand / Vendor"** — it's the label a wine is sold under (a winery may carry several brands), not a supplier. Options are now winery brand names (Vintiga Estate, Willow Glen, Cedar & Stone, Lakeview Cellars, Old Vine Reserve) and it **defaults to non-selection** (store default `vendor: ''`).
+- Extracted the block into a shared **`GlobalPropertiesCard`** so Beer and Spirits stay in lock-step for the upcoming override-spec changes.
+
+Department still shows "Wine" by default (Commerce 7 syncs beer/spirits as Wine) but is now clearable.
+
 ## 2026-06-04 — Fedja + Claude: "Make global" switch on Choose Season (Jun 4 review)
 
 Per the Jun 4 design review, season management moves entirely to the experience Schedule tab (the Settings → Seasons page is gone in the same PR). The `AddSeasonModal`'s **Create experience-only season** mode now ends with a "Make available to all experiences" switch — mirrors the **Apply to all experiences** pattern on the blackouts modal. When on, the custom range is also written to `storeSeasonsStore`, so other experiences see it in their store-season dropdown immediately.
