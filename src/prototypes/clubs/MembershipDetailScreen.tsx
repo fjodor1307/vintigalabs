@@ -31,7 +31,7 @@ import {
   CreditCardIcon,
   StoreIcon,
 } from '@ds/icons/Icons'
-import { Checkbox } from '@ds/shared/Checkbox'
+import { Switch } from '@ds/shared/Switch'
 import { Textarea } from '@ds/shared/Textarea'
 import { AgeVerifiedBadge } from '@ds/shared/AgeVerifiedBadge'
 import { BlindEnthusiasmLogo } from './BlindEnthusiasmLogo'
@@ -227,7 +227,7 @@ export function MembershipDetailScreen() {
                 flagged={member.flagged}
                 onEditHold={() => setHoldModalOpen(true)}
               />
-              <CustomerHeaderCard member={member} statusLabel={state.label} />
+              <CustomerHeaderCard member={member} />
               <OrderReviewCard member={member} />
               {member.delivery === 'pickup'
                 ? <PickupDeliveryCard />
@@ -336,7 +336,7 @@ function MembershipAlerts({
 
 // ─── Customer header card ────────────────────────────────────────────────────
 
-function CustomerHeaderCard({ member, statusLabel }: { member: Member; statusLabel: string }) {
+function CustomerHeaderCard({ member }: { member: Member }) {
   const club = CLUBS_CATALOG[member.club]
   return (
     <CustomerCard
@@ -371,9 +371,7 @@ function CustomerHeaderCard({ member, statusLabel }: { member: Member; statusLab
             {member.email}
             <span className="text-vintiga-slate-500"> | Preferred</span>
           </span>
-          <span>{member.city} {member.zip}</span>
-          <span className="text-vintiga-slate-500">Last Visit: {member.lastVisit}</span>
-          <span className="text-vintiga-slate-500">Club Status: {statusLabel}</span>
+          <span>{member.phone}</span>
         </>
       }
       actions={
@@ -559,15 +557,22 @@ function OrderReviewCard({ member }: { member: Member }) {
       ? 'Call before each release — customer reviews the bottle selection and may swap. Do not auto-batch.'
       : '',
   )
+  // Toggle in the header keeps this compact: off → just the title row; on →
+  // reveals the instructions field. Saves vertical space on the ~majority of
+  // members who don't need manual review.
   return (
-    <RecordsCard title="Order Review" divider={false}>
-      <Checkbox
-        checked={required}
-        onChange={setRequired}
-        label="Order review required"
-        description="Hold this member's club orders for manual review instead of auto-processing with the batch."
-      />
-      {required && (
+    <RecordsCard
+      title="Order Review"
+      action={
+        <Switch
+          checked={required}
+          onChange={setRequired}
+          aria-label="Order review required"
+        />
+      }
+      divider={false}
+    >
+      {required ? (
         <div className="flex flex-col gap-vintiga-xs">
           <label className="typo-caption font-semibold text-vintiga-slate-600">Order review instructions</label>
           <Textarea
@@ -577,7 +582,7 @@ function OrderReviewCard({ member }: { member: Member }) {
             onChange={(e) => setInstructions(e.target.value)}
           />
         </div>
-      )}
+      ) : null}
     </RecordsCard>
   )
 }
