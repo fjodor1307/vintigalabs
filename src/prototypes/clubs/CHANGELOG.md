@@ -6,6 +6,23 @@
 
 ---
 
+## 2026-06-17 — Fedja + Claude: Membership detail — copy spec pass
+
+Implemented the client's copy/structure spec for the membership detail:
+
+- **Breadcrumb** last crumb is now the **customer name** (Clubs / Memberships / {name}).
+- **Header** = club name + membership ID + status tag; the status tag is now bare (no date caption) — dates live in the messaging area.
+- **Hold messaging** rewritten to the exact date matrix in `holdStatus.ts` + a `holdMessage()` helper:
+  - start past, no end → **On Hold** / "Hold started on {start}"
+  - start past, end future → **On Hold until {end}** / "Hold started on {start}"
+  - start future, end future → **Hold scheduled for {start}** / "Hold ends on {end}"
+  - start future, no end → **Hold scheduled for {start}**
+  - start past, **end past** → hold has expired → membership is **Active** again (new derivation in `deriveMembershipState`; previously stayed "Hold Until"). "Hold Until" label retired in favour of **On Hold**.
+- **Menu options**: no hold → *Hold Membership · Cancel Membership*; has hold → *Remove Hold · Edit Hold · Cancel Membership*.
+- **Cancellation message**: "Membership Cancelled on {date}" / "{reason}" (added `cancelReason` to samples).
+- **Pending message**: "Pending Activation" / "Created on {created}. Requires information to activate: {info}" (added `activationInfo`).
+- **Order Review message** now surfaces under the header ("Order Review Required" + instructions) — order-review state lifted to the screen so the messaging and the body toggle stay in sync.
+
 ## 2026-06-16 — Fedja + Claude: Membership detail — hold as a top banner, not an always-on card
 
 Reworked the membership detail screen from the Jun 16 review:
@@ -13,6 +30,8 @@ Reworked the membership detail screen from the Jun 16 review:
 - **Hold card removed.** The big "Membership Hold" card rendered on every membership (including a "Place on Hold" CTA), eating real estate on the ~90% that are never held. Gone.
 - **Hold lives in the kebab menu.** The "More actions" dropdown carries **Hold membership** (no hold) / **Edit hold** (held) + **Lift hold** (when held) + **Cancel membership**; hold items hidden when cancelled. The header stays clean — just **Save** + the kebab. The hold banner also has its own inline **Edit**.
 - **Order Review moved above the delivery method** section (matches the club-order layout convention).
+- **Customer tile trimmed** (Jim's feedback): shows only tags + email + phone now — dropped city/zip, last visit, and club status. For the rest, go to the customer record. Added a `phone` field to `memberSamples`.
+- **Order Review made compact** with our DS `Switch`: the card is now a title row + toggle; the instructions textarea only appears when the toggle is on. Replaces the old checkbox + always-visible description.
 - **Hold + status now surface as a top alert stack** (`MembershipAlerts`, built on `AlertSoft`), rendered at the top of the content below the breadcrumbs — only when there's something to say. Stacks most-urgent-first: **cancelled** (error) · **pending activation** (warning) · **manual processing required** (info, from `flagged`) · **hold** (future → indigo info "Hold scheduled · {range}", current → amber "On hold until {end}"). The hold banner carries an inline **Edit** action.
 - **Title leads with the club + number** (e.g. "Blind Enthusiasm #1004") instead of repeating "Membership" across breadcrumb → title; the member's name stays on the customer card below. Last breadcrumb matches.
 
