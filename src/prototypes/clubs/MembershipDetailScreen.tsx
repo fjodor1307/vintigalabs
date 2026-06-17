@@ -30,6 +30,7 @@ import {
   ChevronRightIcon,
   CreditCardIcon,
   StoreIcon,
+  CheckCircleIcon,
 } from '@ds/icons/Icons'
 import { Switch } from '@ds/shared/Switch'
 import { Textarea } from '@ds/shared/Textarea'
@@ -46,6 +47,7 @@ import {
 } from './holdStatus'
 import { MembershipStatusTag } from './MembershipStatusTag'
 import { HoldModal } from './HoldModal'
+import { Modal, ModalAlertHeader, ModalFooter } from '@ds/shared/Modal'
 
 // ─── MembershipDetailScreen ──────────────────────────────────────────────────
 // Drill-down from the Memberships table (Figma 5078:5161). Reads the member id
@@ -152,7 +154,29 @@ export function MembershipDetailScreen() {
       : '',
   )
 
-  const state = deriveMembershipState(member.status, hold, { cancelledDate: member.statusDate })
+  // Pending → active flow. A pending membership starts with no card on file;
+  // once a staff member adds the missing info (the card) we prompt to activate.
+  // `baseStatus` is local so "Activate" / "Yes, activate now" flips it live.
+  const [baseStatus, setBaseStatus] = useState(member.status)
+  const [hasCard, setHasCard] = useState(member.status !== 'pending')
+  const [activationModalOpen, setActivationModalOpen] = useState(false)
+
+  const state = deriveMembershipState(baseStatus, hold, { cancelledDate: member.statusDate })
+  const isPending = state.kind === 'pending'
+  // A pending membership with its missing info now supplied is "ready" — the
+  // pending note flips to "ready for activation" even if staff leave it pending.
+  const readyForActivation = isPending && hasCard
+
+  function activateNow() {
+    setBaseStatus('active')
+    setActivationModalOpen(false)
+  }
+  // Adding the card supplies the missing info; on a pending membership that
+  // prompts the activate-now / leave-pending choice.
+  function addCard() {
+    setHasCard(true)
+    if (baseStatus === 'pending') setActivationModalOpen(true)
+  }
 
   function commitHold(next: MembershipHold | undefined) {
     setHistory((h) => [holdHistoryEntry(hold, next), ...h])
@@ -216,16 +240,18 @@ export function MembershipDetailScreen() {
                     />
                   )}
                   items={[
-                    // No hold → Hold Membership · Cancel.
-                    // Has hold → Remove Hold · Edit Hold · Cancel.
+                    // Pending → Activate. No hold → Hold Membership.
+                    // Has hold → Remove Hold · Edit Hold. (Then always Cancel.)
                     ...(cancelled
                       ? []
-                      : onHold
-                        ? [
-                            { label: 'Remove Hold', onClick: () => commitHold(undefined) },
-                            { label: 'Edit Hold', onClick: () => setHoldModalOpen(true) },
-                          ]
-                        : [{ label: 'Hold Membership', onClick: () => setHoldModalOpen(true) }]),
+                      : isPending
+                        ? [{ label: 'Activate membership', onClick: activateNow }]
+                        : onHold
+                          ? [
+                              { label: 'Remove Hold', onClick: () => commitHold(undefined) },
+                              { label: 'Edit Hold', onClick: () => setHoldModalOpen(true) },
+                            ]
+                          : [{ label: 'Hold Membership', onClick: () => setHoldModalOpen(true) }]),
                     { label: 'Cancel Membership', onClick: () => {}, danger: true },
                   ]}
                 />
@@ -238,6 +264,7 @@ export function MembershipDetailScreen() {
                 state={state}
                 hold={hold}
                 member={member}
+                readyForActivation={readyForActivation}
                 orderReviewRequired={orderReviewRequired}
                 orderReviewInstructions={orderReviewInstructions}
                 onEditHold={() => setHoldModalOpen(true)}
@@ -253,7 +280,7 @@ export function MembershipDetailScreen() {
                 ? <PickupDeliveryCard />
                 : <AddressCard title="Shipping Address" />}
               <AddressCard title="Billing Address" />
-              <PaymentMethodCard member={member} />
+              <PaymentMethodCard hasCard={hasCard} onAddCard={addCard} />
               <ClubOrdersCard />
               <MembershipHistoryCard history={history} />
             </div>
@@ -268,6 +295,20 @@ export function MembershipDetailScreen() {
         onSave={(next) => commitHold(next)}
         onRemove={() => commitHold(undefined)}
       />
+
+      {/* Prompted after the missing info is supplied on a pending membership. */}
+      <Modal open={activationModalOpen} onClose={() => setActivationModalOpen(false)} size="sm">
+        <ModalAlertHeader
+          icon={<CheckCircleIcon />}
+          iconColor="green"
+          title="Would you like to activate this membership?"
+          description="The information needed to activate is now on file. You can activate it now, or leave it pending for later."
+        />
+        <ModalFooter shaded>
+          <Button variant="outline" onClick={() => setActivationModalOpen(false)}>No, leave as pending</Button>
+          <Button onClick={activateNow}>Yes, activate now</Button>
+        </ModalFooter>
+      </Modal>
     </div>
   )
 }
@@ -304,6 +345,7 @@ function MembershipAlerts({
   state,
   hold,
   member,
+  readyForActivation,
   orderReviewRequired,
   orderReviewInstructions,
   onEditHold,
@@ -311,6 +353,7 @@ function MembershipAlerts({
   state: MembershipState
   hold?: MembershipHold
   member: Member
+  readyForActivation: boolean
   orderReviewRequired: boolean
   orderReviewInstructions: string
   onEditHold: () => void
@@ -333,7 +376,11 @@ function MembershipAlerts({
         key="pending"
         variant="warning"
         title="Pending Activation"
-        subtitle={`Created on ${member.signupDate}.${member.activationInfo ? ` Requires information to activate: ${member.activationInfo}` : ''}`}
+        subtitle={
+          readyForActivation
+            ? 'Membership is ready for activation'
+            : `Created on ${member.signupDate}.${member.activationInfo ? ` Requires information to activate: ${member.activationInfo}` : ''}`
+        }
       />,
     )
   } else if (hold) {
@@ -512,9 +559,10 @@ function ClubOrdersCard() {
 
 // ─── Payment Method card ─────────────────────────────────────────────────────
 
-function PaymentMethodCard({ member }: { member: Member }) {
+function PaymentMethodCard({ hasCard, onAddCard }: { hasCard: boolean; onAddCard: () => void }) {
   // Pending memberships haven't had a card vaulted yet — show the empty state.
-  const hasCard = member.status !== 'pending'
+  // Adding the card supplies the missing info and (when pending) prompts to
+  // activate the membership.
   return (
     <RecordsCard
       title="Payment Method"
@@ -527,7 +575,7 @@ function PaymentMethodCard({ member }: { member: Member }) {
             title="No card on file"
             hint="Add a card to charge membership fees and club releases. The member can also pay in person."
           />
-          <Button variant="outline" size="sm" onClick={() => {}}>Add Card</Button>
+          <Button variant="outline" size="sm" onClick={onAddCard}>Add Card</Button>
         </div>
       ) : undefined}
     >
