@@ -13,18 +13,22 @@ export function MembershipStatusTag({
   state,
   size = 'sm',
   showFutureHold = true,
+  showCaption = true,
 }: {
   state: MembershipState
   size?: 'sm' | 'md'
   /** Hide the "Hold scheduled" sub-line where space is tight (e.g. page title). */
   showFutureHold?: boolean
+  /** Hide the caption (end / cancellation date) — the detail header keeps the
+   *  tag bare and shows the dates in the messaging area instead. */
+  showCaption?: boolean
 }) {
   return (
     <span className="inline-flex flex-col items-start gap-0.5 align-middle">
       <Tag variant={state.variant} tone={state.tone} size={size}>
         {state.label}
       </Tag>
-      {state.caption && (
+      {showCaption && state.caption && (
         <span className="typo-caption text-vintiga-slate-500">{state.caption}</span>
       )}
       {showFutureHold && state.futureHold && (

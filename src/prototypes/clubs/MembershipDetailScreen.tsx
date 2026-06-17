@@ -40,7 +40,6 @@ import { CLUBS_CATALOG, type ClubKey } from './clubsCatalog'
 import {
   deriveMembershipState,
   formatHoldDate,
-  formatHoldRange,
   TODAY_ISO,
   type MembershipHold,
   type MembershipState,
@@ -144,6 +143,14 @@ export function MembershipDetailScreen() {
   const [hold, setHold] = useState<MembershipHold | undefined>(member.hold)
   const [history, setHistory] = useState<HistoryEntry[]>(BASE_HISTORY)
   const [holdModalOpen, setHoldModalOpen] = useState(false)
+  // Order review is editable in the body card AND surfaced in the messaging
+  // area under the header, so its state lives here and is shared by both.
+  const [orderReviewRequired, setOrderReviewRequired] = useState(member.flagged ?? false)
+  const [orderReviewInstructions, setOrderReviewInstructions] = useState(
+    member.flagged
+      ? 'Call before each release — customer reviews the bottle selection and may swap. Do not auto-batch.'
+      : '',
+  )
 
   const state = deriveMembershipState(member.status, hold, { cancelledDate: member.statusDate })
 
@@ -162,7 +169,7 @@ export function MembershipDetailScreen() {
   const titleNode = (
     <h1 className="typo-title-screen font-semibold text-vintiga-slate-900 inline-flex items-center gap-vintiga-sm">
       {club.name} #{member.id}
-      <MembershipStatusTag state={state} size="md" showFutureHold={false} />
+      <MembershipStatusTag state={state} size="md" showFutureHold={false} showCaption={false} />
     </h1>
   )
 
@@ -190,7 +197,7 @@ export function MembershipDetailScreen() {
               { icon: <BreadcrumbHomeIcon />, href: '#/web/clubs' },
               { label: 'Clubs',       href: '#/web/clubs' },
               { label: 'Memberships', href: '#/web/clubs/memberships' },
-              { label: `${club.name} #${member.id}` },
+              { label: member.name },
             ]}
             title={titleNode}
             actions={
@@ -209,11 +216,17 @@ export function MembershipDetailScreen() {
                     />
                   )}
                   items={[
-                    ...(!cancelled
-                      ? [{ label: onHold ? 'Edit hold' : 'Hold membership', onClick: () => setHoldModalOpen(true) }]
-                      : []),
-                    ...(onHold ? [{ label: 'Lift hold', onClick: () => commitHold(undefined) }] : []),
-                    { label: 'Cancel membership', onClick: () => {}, danger: true },
+                    // No hold → Hold Membership · Cancel.
+                    // Has hold → Remove Hold · Edit Hold · Cancel.
+                    ...(cancelled
+                      ? []
+                      : onHold
+                        ? [
+                            { label: 'Remove Hold', onClick: () => commitHold(undefined) },
+                            { label: 'Edit Hold', onClick: () => setHoldModalOpen(true) },
+                          ]
+                        : [{ label: 'Hold Membership', onClick: () => setHoldModalOpen(true) }]),
+                    { label: 'Cancel Membership', onClick: () => {}, danger: true },
                   ]}
                 />
               </>
@@ -224,11 +237,18 @@ export function MembershipDetailScreen() {
               <MembershipAlerts
                 state={state}
                 hold={hold}
-                flagged={member.flagged}
+                member={member}
+                orderReviewRequired={orderReviewRequired}
+                orderReviewInstructions={orderReviewInstructions}
                 onEditHold={() => setHoldModalOpen(true)}
               />
               <CustomerHeaderCard member={member} />
-              <OrderReviewCard member={member} />
+              <OrderReviewCard
+                required={orderReviewRequired}
+                onRequiredChange={setOrderReviewRequired}
+                instructions={orderReviewInstructions}
+                onInstructionsChange={setOrderReviewInstructions}
+              />
               {member.delivery === 'pickup'
                 ? <PickupDeliveryCard />
                 : <AddressCard title="Shipping Address" />}
@@ -253,80 +273,92 @@ export function MembershipDetailScreen() {
 }
 
 // ─── Membership alerts ───────────────────────────────────────────────────────
-// Top-of-page status banners — the back-office equivalent of the POS "pay
-// attention to this" note. Only render when there's something to surface, so
-// the ~90% of memberships in good standing don't carry an empty hold section
-// hogging real estate. Stacks most-urgent-first: cancelled · pending · manual
-// review · hold. The hold banner replaces the old always-on Hold card; you can
-// edit the hold straight from it (or from the header action).
+// Status messaging that sits directly under the header text — the back-office
+// equivalent of the POS "pay attention to this" note. Only renders when there's
+// something to say. Copy follows the spec: cancellation · pending · hold (the
+// five start/end-date cases) · order review.
+
+/** Hold messaging per the spec's start/end-date matrix (relative to today). */
+function holdMessage(hold: MembershipHold): { title: string; subtitle?: string; variant: 'info' | 'warning' } {
+  const startPast = hold.start <= TODAY_ISO
+  const endFuture = !!hold.end && hold.end > TODAY_ISO
+  const fmt = formatHoldDate
+  // Start in the past, no end → On Hold (indefinite).
+  if (startPast && !hold.end) {
+    return { variant: 'warning', title: 'On Hold', subtitle: `Hold started on ${fmt(hold.start)}` }
+  }
+  // Start in the past, end in the future → On Hold until the end date.
+  if (startPast && endFuture) {
+    return { variant: 'warning', title: `On Hold until ${fmt(hold.end!)}`, subtitle: `Hold started on ${fmt(hold.start)}` }
+  }
+  // Start in the future, end in the future → scheduled, with an end.
+  if (!startPast && endFuture) {
+    return { variant: 'info', title: `Hold scheduled for ${fmt(hold.start)}`, subtitle: `Hold ends on ${fmt(hold.end!)}` }
+  }
+  // Start in the future, no end → scheduled (open-ended). Also the fallback for
+  // an already-expired hold (start + end both in the past).
+  return { variant: 'info', title: `Hold scheduled for ${fmt(hold.start)}` }
+}
+
 function MembershipAlerts({
   state,
   hold,
-  flagged,
+  member,
+  orderReviewRequired,
+  orderReviewInstructions,
   onEditHold,
 }: {
   state: MembershipState
   hold?: MembershipHold
-  flagged?: boolean
+  member: Member
+  orderReviewRequired: boolean
+  orderReviewInstructions: string
   onEditHold: () => void
 }) {
   const alerts: ReactNode[] = []
 
+  // Primary status message — one of cancelled / pending / hold.
   if (state.kind === 'cancelled') {
     alerts.push(
       <AlertSoft
         key="cancelled"
         variant="error"
-        title="Membership cancelled"
-        subtitle={`This membership was cancelled${state.caption ? ` on ${state.caption}` : ''}. No further releases will be charged.`}
+        title={`Membership Cancelled${member.statusDate ? ` on ${member.statusDate}` : ''}`}
+        subtitle={member.cancelReason}
       />,
     )
-  }
-
-  if (state.kind === 'pending') {
+  } else if (state.kind === 'pending') {
     alerts.push(
       <AlertSoft
         key="pending"
         variant="warning"
-        title="Pending activation"
-        subtitle="The member signed up but the membership isn't active yet — activate it to start releases."
+        title="Pending Activation"
+        subtitle={`Created on ${member.signupDate}.${member.activationInfo ? ` Requires information to activate: ${member.activationInfo}` : ''}`}
+      />,
+    )
+  } else if (hold) {
+    const msg = holdMessage(hold)
+    alerts.push(
+      <AlertSoft
+        key="hold"
+        variant={msg.variant}
+        title={msg.title}
+        subtitle={msg.subtitle}
+        actionLabel="Edit"
+        onAction={onEditHold}
       />,
     )
   }
 
-  if (flagged && state.kind !== 'cancelled') {
+  // Order review rides alongside the status (but not on a cancelled membership).
+  if (orderReviewRequired && state.kind !== 'cancelled') {
     alerts.push(
       <AlertSoft
         key="review"
         variant="info"
-        title="Manual processing required"
-        subtitle="This member's club orders are held for manual review instead of auto-batching."
+        title="Order Review Required"
+        subtitle={orderReviewInstructions || undefined}
       />,
-    )
-  }
-
-  if (hold && state.kind !== 'cancelled') {
-    const future = hold.start > TODAY_ISO
-    alerts.push(
-      future ? (
-        <AlertSoft
-          key="hold"
-          variant="info"
-          title={`Hold scheduled · ${formatHoldRange(hold)}`}
-          subtitle={`Stays Active until ${formatHoldDate(hold.start)}, then pauses${hold.end ? ` and resumes ${formatHoldDate(hold.end)}` : ' until lifted'}.`}
-          actionLabel="Edit"
-          onAction={onEditHold}
-        />
-      ) : (
-        <AlertSoft
-          key="hold"
-          variant="warning"
-          title={hold.end ? `On hold until ${formatHoldDate(hold.end)}` : 'On hold indefinitely'}
-          subtitle={`On hold since ${formatHoldDate(hold.start)}${hold.end ? ' · resumes automatically on the end date' : ' · lift the hold to resume releases'}.`}
-          actionLabel="Edit"
-          onAction={onEditHold}
-        />
-      ),
     )
   }
 
@@ -549,24 +581,27 @@ function PickupDeliveryCard() {
 
 // ─── Order Review Required card ──────────────────────────────────────────────
 // VIP / finicky members whose club orders must be held for manual review before
-// they batch-process. The admin types the reason into the instructions field.
-function OrderReviewCard({ member }: { member: Member }) {
-  const [required, setRequired] = useState(member.flagged ?? false)
-  const [instructions, setInstructions] = useState(
-    member.flagged
-      ? 'Call before each release — customer reviews the bottle selection and may swap. Do not auto-batch.'
-      : '',
-  )
-  // Toggle in the header keeps this compact: off → just the title row; on →
-  // reveals the instructions field. Saves vertical space on the ~majority of
-  // members who don't need manual review.
+// they batch-process. Controlled by the parent so the same state also drives the
+// "Order Review Required" message under the header. Toggle in the header keeps
+// it compact: off → just the title row; on → reveals the instructions field.
+function OrderReviewCard({
+  required,
+  onRequiredChange,
+  instructions,
+  onInstructionsChange,
+}: {
+  required: boolean
+  onRequiredChange: (v: boolean) => void
+  instructions: string
+  onInstructionsChange: (v: string) => void
+}) {
   return (
     <RecordsCard
       title="Order Review"
       action={
         <Switch
           checked={required}
-          onChange={setRequired}
+          onChange={onRequiredChange}
           aria-label="Order review required"
         />
       }
@@ -579,7 +614,7 @@ function OrderReviewCard({ member }: { member: Member }) {
             rows={3}
             placeholder="Explain why this member's orders need review (e.g. always call to confirm the selection)."
             value={instructions}
-            onChange={(e) => setInstructions(e.target.value)}
+            onChange={(e) => onInstructionsChange(e.target.value)}
           />
         </div>
       ) : null}

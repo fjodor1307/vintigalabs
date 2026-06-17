@@ -6,6 +6,23 @@
 
 ---
 
+## 2026-06-17 — Fedja + Claude: Membership detail — copy spec pass
+
+Implemented the client's copy/structure spec for the membership detail:
+
+- **Breadcrumb** last crumb is now the **customer name** (Clubs / Memberships / {name}).
+- **Header** = club name + membership ID + status tag; the status tag is now bare (no date caption) — dates live in the messaging area.
+- **Hold messaging** rewritten to the exact date matrix in `holdStatus.ts` + a `holdMessage()` helper:
+  - start past, no end → **On Hold** / "Hold started on {start}"
+  - start past, end future → **On Hold until {end}** / "Hold started on {start}"
+  - start future, end future → **Hold scheduled for {start}** / "Hold ends on {end}"
+  - start future, no end → **Hold scheduled for {start}**
+  - start past, **end past** → hold has expired → membership is **Active** again (new derivation in `deriveMembershipState`; previously stayed "Hold Until"). "Hold Until" label retired in favour of **On Hold**.
+- **Menu options**: no hold → *Hold Membership · Cancel Membership*; has hold → *Remove Hold · Edit Hold · Cancel Membership*.
+- **Cancellation message**: "Membership Cancelled on {date}" / "{reason}" (added `cancelReason` to samples).
+- **Pending message**: "Pending Activation" / "Created on {created}. Requires information to activate: {info}" (added `activationInfo`).
+- **Order Review message** now surfaces under the header ("Order Review Required" + instructions) — order-review state lifted to the screen so the messaging and the body toggle stay in sync.
+
 ## 2026-06-16 — Fedja + Claude: Membership detail — hold as a top banner, not an always-on card
 
 Reworked the membership detail screen from the Jun 16 review:

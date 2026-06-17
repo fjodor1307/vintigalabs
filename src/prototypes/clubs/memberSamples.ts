@@ -35,6 +35,10 @@ export interface Member {
   hold?: MembershipHold
   /** Cancellation date — only set on `cancelled` rows. */
   statusDate?: string
+  /** Why the membership was cancelled — shown in the cancellation message. */
+  cancelReason?: string
+  /** What's outstanding before a `pending` membership can be activated. */
+  activationInfo?: string
   /** Flagged for manual admin review — auto processing will skip orders. */
   flagged?: boolean
   audienceTags: string[]
@@ -61,6 +65,7 @@ export const MEMBERS: Member[] = [
     avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=128&h=128&fit=crop&crop=faces',
     club: 'vintiga-signature', delivery: 'shipping', city: 'Oakland, CA', zip: '94607',
     email: 'lesliealex@gmail.com', phone: '(510) 555-0147', status: 'pending', flagged: true,
+    activationInfo: 'Payment method and signed waiver',
     audienceTags: ['New Member'], ageVerified: true,
     signupDate: 'January 18, 2026 at 02:15 PM', activatedDate: 'January 18, 2026 at 02:15 PM',
     salesAssociate: 'Donna Ataman', totalOrders: 1, lastVisit: 'Jan 18, 2026',
@@ -99,6 +104,7 @@ export const MEMBERS: Member[] = [
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=128&h=128&fit=crop&crop=faces',
     club: 'curators', delivery: 'shipping', city: 'Sonoma, CA', zip: '95476',
     email: 'jacobjones@gmail.com', phone: '(707) 555-0158', status: 'cancelled', flagged: true,
+    statusDate: 'Mar 13, 2025', cancelReason: 'Moved out of state — no longer near a pickup location.',
     audienceTags: [], ageVerified: false,
     signupDate: 'May 5, 2024 at 10:00 AM', activatedDate: 'May 5, 2024 at 10:00 AM',
     salesAssociate: 'Donna Ataman', totalOrders: 3, lastVisit: 'Dec 10, 2025',
@@ -118,6 +124,7 @@ export const MEMBERS: Member[] = [
     avatarUrl: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=128&h=128&fit=crop&crop=faces',
     club: 'curators', delivery: 'shipping', city: 'San Jose, CA', zip: '95113',
     email: 'guyhawkins@gmail.com', phone: '(408) 555-0164', status: 'pending',
+    activationInfo: 'ID verification',
     audienceTags: ['Newsletter'], ageVerified: false,
     signupDate: 'April 30, 2026 at 08:11 AM', activatedDate: 'April 30, 2026 at 08:11 AM',
     salesAssociate: 'Donna Ataman', totalOrders: 0, lastVisit: 'Apr 30, 2026',
@@ -127,6 +134,7 @@ export const MEMBERS: Member[] = [
     avatarUrl: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=128&h=128&fit=crop&crop=faces',
     club: 'vintiga-heritage', delivery: 'shipping', city: 'Sacramento, CA', zip: '95814',
     email: 'bessiecooper@gmail.com', phone: '(916) 555-0128', status: 'cancelled', statusDate: '22 Jan, 2026',
+    cancelReason: 'Member requested cancellation — switching to occasional purchases.',
     audienceTags: ['Long-term'], ageVerified: true,
     signupDate: 'July 14, 2023 at 12:30 PM', activatedDate: 'July 14, 2023 at 12:30 PM',
     salesAssociate: 'Jim Secord', totalOrders: 14, lastVisit: 'Jan 22, 2026',
