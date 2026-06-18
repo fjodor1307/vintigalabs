@@ -17,7 +17,7 @@ Before you can do useful prototype work in this repo:
 
 Rule of thumb: if your change only affects files inside your prototype folder, you can fast-merge. Everything else goes through a PR.
 
-**Ownership is enforced by [`.github/CODEOWNERS`](.github/CODEOWNERS).** When your PR touches someone else's folder or a shared file, GitHub automatically requests a review from the owner. If you need to change something in another designer's prototype, first try: **clone it instead.**
+**Ownership is a convention, not enforced tooling.** If you need to change something in another designer's prototype, first try: **clone it instead.**
 
 ## Iterating on someone else's prototype — clone, don't edit
 
@@ -27,7 +27,7 @@ If you want to try an alternative version of a prototype that someone else owns,
 npm run clone-prototype -- invited-director invited-director-ogi
 ```
 
-That copies the whole folder, rewrites the routes (`/web/invited-director-ogi/...`), and registers the clone on the home page automatically. You now own the new slug. Add it to `CODEOWNERS` so the review-request plumbing works. The original prototype and the clone live side-by-side and can be compared via review links.
+That copies the whole folder, rewrites the routes (`/web/invited-director-ogi/...`), and registers the clone on the home page automatically. You now own the new slug. The original prototype and the clone live side-by-side and can be compared via review links.
 
 Exceptions where in-place edits are still OK: you're pairing with the owner, or the owner is out and a tiny shared fix is needed — in both cases, open a PR and they'll rubber-stamp.
 
@@ -68,7 +68,7 @@ The [`PR hygiene`](.github/workflows/pr-hygiene.yml) GitHub Action nudges any PR
 npm run new-prototype my-feature
 ```
 
-That scaffolds the folder, copies all four templates, writes a starter screen, registers the prototype with the router, and appends to the root CHANGELOG. Then add yourself to [`CODEOWNERS`](.github/CODEOWNERS) for that folder so future PRs route to you.
+That scaffolds the folder, copies all four templates, writes a starter screen, registers the prototype with the router, and appends to the root CHANGELOG.
 
 ## When to PR vs push direct
 
@@ -114,9 +114,8 @@ If you need to do it by hand instead of `npm run new-prototype`:
    cp _templates/CHANGELOG.md  src/prototypes/{feature}/CHANGELOG.md
    ```
 3. Create `prototype.config.ts` (see any existing prototype for shape).
-4. Add yourself to [`CODEOWNERS`](.github/CODEOWNERS) for your folder.
-5. Build. Keep `JOURNEY.md` up to date as you go.
-6. PR when the first screen is reviewable — don't wait for the whole flow.
+4. Build. Keep `JOURNEY.md` up to date as you go.
+5. PR when the first screen is reviewable — don't wait for the whole flow.
 
 ## Reviewing PRs
 
@@ -135,6 +134,6 @@ If you need to do it by hand instead of `npm run new-prototype`:
 
 These aren't code — they're Settings → … clicks on GitHub:
 
-- **Branch protection on `main`:** Require a PR, require CI to pass, require review from a Code Owner, dismiss stale approvals on new commits.
+- **Branch protection on `main`:** Require a PR, require CI to pass, dismiss stale approvals on new commits.
 - **Enable auto-merge:** Settings → General → "Allow auto-merge" — lets PRs merge themselves when checks go green.
 - **Actions permissions:** Settings → Actions → "Allow all actions" (needed for `pr-hygiene.yml` + `deploy.yml`).
