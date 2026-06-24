@@ -143,7 +143,7 @@ export function deriveMembershipState(
     return {
       label: 'On Hold', tone: 'default', variant: 'neutral-light',
       kind: 'hold-until', filter: 'on-hold',
-      caption: formatHoldDate(hold.end),
+      caption: `Until ${formatHoldDate(hold.end)}`,
       activeHold: hold,
     }
   }
