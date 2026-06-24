@@ -59,7 +59,7 @@ const NAV_BOTTOM_GROUP: NavItemDef[] = [
   { icon: <UsersIcon />,        label: 'Customers', href: '#/web/customers' },
   { icon: <PackageIcon />,      label: 'Products',  href: '#/web/products/list' },
   { icon: <ShoppingCartIcon />, label: 'Orders' },
-  { icon: <CalendarIcon />,     label: 'Reservations' },
+  { icon: <CalendarIcon />,     label: 'Reservations', href: '#/web/reservations' },
   { icon: <BookmarkIcon />,     label: 'Clubs',     href: '#/web/clubs' },
 ]
 
