@@ -101,6 +101,19 @@ const BASE_HISTORY: HistoryEntry[] = [
 
 const CURRENT_USER = 'Tom Cook'
 
+// Card vaulted on the membership (mirrors PaymentMethodCard). Used in the
+// activation/charge confirmation + the resulting history note.
+const CARD_ON_FILE = 'Mastercard **** 0092'
+
+// First installment taken when a recurring-fee club activates. Member Flex
+// (account-credit) charges the member's chosen monthly contribution; the
+// Membership club charges its set fee. Curated / Traditional clubs charge per
+// release, so they have no activation charge and are absent here.
+const FIRST_INSTALLMENT: Partial<Record<ClubKey, string>> = {
+  'blind-enthusiasm':  '$75.00',
+  'vintiga-signature': '$45.00',
+}
+
 /** Today, formatted for a freshly-written history row. */
 function todayLabel(): string {
   return formatHoldDate(TODAY_ISO)
@@ -167,12 +180,32 @@ export function MembershipDetailScreen() {
   // pending note flips to "ready for activation" even if staff leave it pending.
   const readyForActivation = isPending && hasCard
 
+  // Recurring-fee clubs (Membership + Member Flex) take a charge the moment they
+  // activate — that's the first installment. Curated / Traditional clubs charge
+  // per release instead, so activation is just a status flip for them.
+  const clubInfo = CLUBS_CATALOG[member.club]
+  const recurring = clubInfo.kind === 'membership' || clubInfo.kind === 'account-credit'
+  const firstInstallment = FIRST_INSTALLMENT[member.club] ?? ''
+
   function activateNow() {
     setBaseStatus('active')
     setActivationModalOpen(false)
+    const charged = recurring && hasCard
+    setHistory((h) => [
+      {
+        date: todayLabel(),
+        by: CURRENT_USER,
+        change: 'Activated',
+        notes: charged
+          ? `First installment charged · ${firstInstallment} · ${CARD_ON_FILE}`
+          : '—',
+      },
+      ...h,
+    ])
   }
   // Adding the card supplies the missing info; on a pending membership that
-  // prompts the activate-now / leave-pending choice.
+  // prompts the activate-now / leave-pending (and, for recurring clubs, charge)
+  // choice.
   function addCard() {
     setHasCard(true)
     if (baseStatus === 'pending') setActivationModalOpen(true)
@@ -184,7 +217,7 @@ export function MembershipDetailScreen() {
     setHoldModalOpen(false)
   }
 
-  const club = CLUBS_CATALOG[member.club]
+  const club = clubInfo
   const onHold = !!hold
   const cancelled = state.kind === 'cancelled'
 
@@ -245,7 +278,7 @@ export function MembershipDetailScreen() {
                     ...(cancelled
                       ? []
                       : isPending
-                        ? [{ label: 'Activate membership', onClick: activateNow }]
+                        ? [{ label: 'Activate membership', onClick: () => setActivationModalOpen(true) }]
                         : onHold
                           ? [
                               { label: 'Remove Hold', onClick: () => commitHold(undefined) },
@@ -296,18 +329,50 @@ export function MembershipDetailScreen() {
         onRemove={() => commitHold(undefined)}
       />
 
-      {/* Prompted after the missing info is supplied on a pending membership. */}
+      {/* Prompted after the missing info is supplied on a pending membership,
+          or from the "Activate membership" menu item. Recurring-fee clubs
+          (Member Flex / Membership) confirm the first installment charge before
+          activating; per-release clubs just confirm activation. */}
       <Modal open={activationModalOpen} onClose={() => setActivationModalOpen(false)} size="sm">
-        <ModalAlertHeader
-          icon={<CheckCircleIcon />}
-          iconColor="green"
-          title="Would you like to activate this membership?"
-          description="The information needed to activate is now on file. You can activate it now, or leave it pending for later."
-        />
-        <ModalFooter shaded>
-          <Button variant="outline" onClick={() => setActivationModalOpen(false)}>No, leave as pending</Button>
-          <Button onClick={activateNow}>Yes, activate now</Button>
-        </ModalFooter>
+        {recurring && !hasCard ? (
+          <>
+            <ModalAlertHeader
+              icon={<CreditCardIcon />}
+              iconColor="orange"
+              title="Add a card to activate"
+              description={`${club.name} charges the first installment of ${firstInstallment} on activation. Add a card on file first, then activate.`}
+            />
+            <ModalFooter shaded>
+              <Button onClick={() => setActivationModalOpen(false)}>Got it</Button>
+            </ModalFooter>
+          </>
+        ) : recurring ? (
+          <>
+            <ModalAlertHeader
+              icon={<CreditCardIcon />}
+              iconColor="green"
+              title="Activate and charge the first installment?"
+              description={`Activating ${club.name} charges the first installment of ${firstInstallment} to ${CARD_ON_FILE} and starts the membership. You can also leave it pending and charge later.`}
+            />
+            <ModalFooter shaded>
+              <Button variant="outline" onClick={() => setActivationModalOpen(false)}>No, leave as pending</Button>
+              <Button onClick={activateNow}>Charge {firstInstallment} &amp; activate</Button>
+            </ModalFooter>
+          </>
+        ) : (
+          <>
+            <ModalAlertHeader
+              icon={<CheckCircleIcon />}
+              iconColor="green"
+              title="Would you like to activate this membership?"
+              description="The information needed to activate is now on file. You can activate it now, or leave it pending for later."
+            />
+            <ModalFooter shaded>
+              <Button variant="outline" onClick={() => setActivationModalOpen(false)}>No, leave as pending</Button>
+              <Button onClick={activateNow}>Yes, activate now</Button>
+            </ModalFooter>
+          </>
+        )}
       </Modal>
     </div>
   )

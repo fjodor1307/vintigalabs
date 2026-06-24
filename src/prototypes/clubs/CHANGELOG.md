@@ -6,6 +6,18 @@
 
 ---
 
+## 2026-06-24 — Fedja + Claude: First-installment charge on activation + "Member Flex Club" rename
+
+**First installment.** Activating a **recurring-fee** club (Member Flex / Membership) now takes the first payment as part of activation, so the charge is a deliberate, confirmed step rather than a silent side-effect of Save:
+
+- The activation modal is now charge-aware. For recurring clubs with a card on file it reads **"Activate and charge the first installment?"** and the CTA is **"Charge {amount} & activate"** (e.g. `$75.00`), naming the card (`Mastercard **** 0092`). On confirm → status flips to **Active** and a history row lands: **"Activated · First installment charged · $75.00 · Mastercard **** 0092"**.
+- No card yet on a recurring club → the modal blocks with **"Add a card to activate"** (add the card first, then charge).
+- Per-release clubs (Curated / Traditional) are unchanged — they keep the plain "Yes, activate now" copy and take no activation charge.
+- The kebab **Activate membership** item now routes through the same confirmation instead of activating instantly.
+- Amounts live in `FIRST_INSTALLMENT` (per club); Guy Hawkins (1008) moved to **Blind Enthusiasm** so there's a pending Member Flex membership to demo the charge on.
+
+**Rename.** "Tasting Credit" → **"Member Flex Club"** across the rendered UI (club catalog type, club rail tag, Add-Club type picker, kind→label map, Charges-log copy). The internal `account-credit` kind is unchanged.
+
 ## 2026-06-18 — Fedja + Claude: Membership list — declutter the hold text
 
 On the membership lists, a future hold now shows only **"Hold Starts {start}"** (start date only) instead of the full range — the end date lives on the membership detail. Current holds show **"Until {end}"**. Keeps the list less cluttered.
