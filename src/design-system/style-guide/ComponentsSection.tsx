@@ -1297,9 +1297,9 @@ function SelectSection() {
   const v = usePlayground(SELECT_CONTROLS)
   const stringOpts = ['Available', 'Not Available', 'Draft', 'Archived']
   const labelledOpts = [
-    { value: 'curated',    label: 'Curated Club' },
-    { value: 'tasting',    label: 'Tasting Credit' },
-    { value: 'membership', label: 'Membership' },
+    { value: 'curated',    label: 'Curated Bottle Club' },
+    { value: 'tasting',    label: 'Member Choice Club' },
+    { value: 'membership', label: 'Rewards Club' },
   ]
   return (
     <SubSection
@@ -2020,7 +2020,7 @@ function ClubCardSection() {
                 />
               }
               title="Vintiga Heritage"
-              tags={[<Tag tone="violet" size="sm">Curated Club</Tag>]}
+              tags={[<Tag tone="violet" size="sm">Curated Bottle Club</Tag>]}
               meta="10 Active | 2 On-hold | 2 New | 1 Canceled"
               action={
                 <button

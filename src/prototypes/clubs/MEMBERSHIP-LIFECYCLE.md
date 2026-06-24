@@ -48,6 +48,30 @@ what's blocking:
 go Active and get flagged for verification at first pickup? (Affects whether
 tasting-room signups are Active immediately.)
 
+### 2.1 Create-time behaviour by club type  *(decided Jun 24 review)*
+
+The active/pending decision and whether money moves *on create* depends on the
+club type:
+
+| Club type | Charges on create? | Active on create when… | Otherwise Pending |
+|-----------|--------------------|------------------------|-------------------|
+| **Member Choice** (account-credit) | **Yes** — first contribution charged immediately | card on file **and** charge succeeds | no card → Pending · card declined → Pending (card stays on file) |
+| **Curated Bottle** (curated) | No — charges per release | Pickup + card · Shipping + card + address | Pickup no card · Shipping missing card **or** address |
+| **Rewards** (membership) | No on create — fee taken on activation | same requirement rules as Curated | missing requirements |
+| **Traditional** (Commerce 7) | n/a | — excluded from the Vintiga enrolment picker | — |
+
+**Member Choice is the only club that charges the moment you hit Create.** The
+charge fires regardless of join date (past or future) — staff may pick a date
+purely to set the billing cycle, but we still verify the card works *now*. The
+create action therefore shows a confirmation modal naming the card + amount; a
+declined card still creates the membership in **Pending** (card on file) so the
+charge can be retried by saving.
+
+**Activation is Save-driven.** Adding a card to a pending membership doesn't
+activate it — it makes it "ready". Hitting **Save** prompts the charge-&-activate
+confirmation. This keeps charging a deliberate, top-level action rather than a
+side-effect of editing.
+
 ---
 
 ## 3. Future join date  *(Dejan's question)*

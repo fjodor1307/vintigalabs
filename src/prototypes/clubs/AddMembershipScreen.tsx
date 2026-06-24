@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { AppSidebar } from '@ds/shared/AppSidebar'
 import { Navbar } from '@ds/shared/Navbar'
 import { useResponsiveSidebar } from '@ds/shared/useResponsiveSidebar'
@@ -12,9 +12,9 @@ import { Select } from '@ds/shared/Select'
 import { Radio } from '@ds/shared/Radio'
 import { Button } from '@ds/shared/Button'
 import { Tag } from '@ds/shared/Tag'
-import { Modal, ModalHeader, ModalBody, ModalFooter } from '@ds/shared/Modal'
+import { Modal, ModalHeader, ModalBody, ModalFooter, ModalAlertHeader } from '@ds/shared/Modal'
 import { type CardBrand } from '@ds/shared/CardBrandLogo'
-import { InfoIcon, CalendarIcon, TruckIcon, StoreIcon, PlusIcon } from '@ds/icons/Icons'
+import { InfoIcon, CalendarIcon, TruckIcon, StoreIcon, PlusIcon, CreditCardIcon } from '@ds/icons/Icons'
 import { CLUBS_CATALOG, CLUB_KEYS, type ClubKey, type ClubKind } from './clubsCatalog'
 
 // ─── AddMembershipScreen ──────────────────────────────────────────────────────
@@ -55,7 +55,7 @@ const PICKUP_LOCATIONS = [
   { value: 'tasting-room', label: 'Tasting Room' },
 ]
 
-// Tasting Credit clubs expose their contribution levels as nested options in
+// Member Choice clubs expose their contribution levels as nested options in
 // the club select. Selecting a level resolves to a value like
 // `blind-enthusiasm:silver` so the membership row remembers which tier the
 // member picked.
@@ -81,21 +81,40 @@ function parseClubSelection(value: string): { clubKey: ClubKey; levelId: string 
   return { clubKey, levelId: levelId ?? null }
 }
 
-/** Saved cards a customer might pay with. Mocked — every customer sees the
- *  same two cards for the prototype. */
+/** Saved cards a customer might pay with. Mocked per customer so the operator
+ *  sees a realistic "cards on file" list that changes with the selected
+ *  customer — picking Marvin (no cards) exercises the no-card → pending path. */
 interface SavedCard {
   id: string
   brand: CardBrand
   last4: string
   expires: string
 }
-const INITIAL_SAVED_CARDS: SavedCard[] = [
-  { id: 'card-92', brand: 'mastercard', last4: '0092', expires: '07/27' },
-  { id: 'card-44', brand: 'mastercard', last4: '0044', expires: '08/28' },
-]
+const CUSTOMER_CARDS: Record<string, SavedCard[]> = {
+  'c-jane':    [
+    { id: 'jane-1',   brand: 'mastercard', last4: '0092', expires: '07/27' },
+    { id: 'jane-2',   brand: 'mastercard', last4: '0044', expires: '08/28' },
+  ],
+  'c-leslie':  [{ id: 'leslie-1',  brand: 'visa',       last4: '4242', expires: '05/27' }],
+  'c-phoenix': [{ id: 'phoenix-1', brand: 'mastercard', last4: '0044', expires: '08/28' }],
+  'c-marvin':  [],
+}
+
+// A declined-on-charge test card. Picking the ****0044 card and creating a
+// Member Choice membership demonstrates the card-declined → pending landing.
+const DECLINE_CARD_LAST4 = '0044'
+
+function cardsForCustomer(id: string): SavedCard[] {
+  return CUSTOMER_CARDS[id] ?? []
+}
 
 function formatCardLabel(c: SavedCard): string {
   return `${c.brand[0].toUpperCase() + c.brand.slice(1)} **** ${c.last4} — Expires ${c.expires}`
+}
+
+/** Short card label for confirmation copy — no expiry. */
+function shortCardLabel(c: SavedCard): string {
+  return `${c.brand[0].toUpperCase() + c.brand.slice(1)} **** ${c.last4}`
 }
 
 const MEMBERSHIPS_HASH = '#/web/clubs/memberships'
@@ -162,23 +181,33 @@ export function AddMembershipScreen() {
   const [newCity, setNewCity]         = useState('')
   const [newState, setNewState]       = useState('')
   const [newZip, setNewZip]           = useState('')
-  // Cards on file for the selected customer. Held in local state so the
-  // operator can add a card from the inline "Add Payment Method" affordance
-  // when the customer has nothing on record — newly-added cards become the
-  // default selection so they're charged on submit.
-  const [savedCards, setSavedCards] = useState<SavedCard[]>(INITIAL_SAVED_CARDS)
-  const [paymentCardId, setPaymentCardId] = useState<string>(INITIAL_SAVED_CARDS[0].id)
+  // Cards on file for the selected customer — reloaded whenever the customer
+  // changes. Held in local state so the operator can add a card from the inline
+  // "Add Payment Method" affordance when the customer has nothing on record;
+  // newly-added cards become the default selection so they're charged on submit.
+  const initialCards = cardsForCustomer(launchParams.customerId ?? '')
+  const [savedCards, setSavedCards] = useState<SavedCard[]>(initialCards)
+  const [paymentCardId, setPaymentCardId] = useState<string>(initialCards[0]?.id ?? '')
   const [addCardOpen, setAddCardOpen] = useState(false)
+  // Member Choice clubs charge the first contribution the moment you create the
+  // membership — this confirmation gates that charge (or warns when there's no
+  // card and the membership will land pending).
+  const [createModalOpen, setCreateModalOpen] = useState(false)
 
-  // Keep the customer / club in sync with hash query params so deep-linking
-  // from another tab (e.g. /customers/.../memberships → add) lands here with
-  // the right context pre-filled.
-  useEffect(() => {
-    if (launchParams.customerId)     setCustomer(launchParams.customerId)
-    if (launchParams.clubSelection)  setClubSelection(launchParams.clubSelection)
-    // We only want this to run for the params captured at mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // Reload the selected customer's cards on file when the customer changes —
+  // the render-time "adjust state on prop change" pattern (guarded by a stored
+  // previous value) rather than an effect. Adding a card via the modal doesn't
+  // change `customer`, so newly-added cards survive.
+  const [prevCustomer, setPrevCustomer] = useState(customer)
+  if (customer !== prevCustomer) {
+    setPrevCustomer(customer)
+    const cards = cardsForCustomer(customer)
+    setSavedCards(cards)
+    setPaymentCardId(cards[0]?.id ?? '')
+  }
+
+  // Customer / club deep-link context is read straight into the initial state
+  // above (useState initialisers), so no mount effect is needed to sync it.
 
   const selection = parseClubSelection(clubSelection)
   const clubKey = selection?.clubKey ?? null
@@ -186,19 +215,63 @@ export function AddMembershipScreen() {
     ? CLUB_LEVELS[selection.clubKey]?.find((l) => l.id === selection.levelId) ?? null
     : null
   const feeInfo = clubKey ? CLUB_FEES[clubKey] : undefined
-  // Tasting Credit: the first charge is the chosen level's contribution amount.
+  // Member Choice: the first charge is the chosen level's contribution amount.
   // Curated / Rewards: the static club fee from CLUB_FEES (or zero).
   const fee     = selectedLevel ? selectedLevel.amount : (feeInfo?.fee ?? 0)
   const taxRate = feeInfo?.taxRate ?? 0
 
   const total = useMemo(() => fee + (fee * taxRate) / 100, [fee, taxRate])
 
+  const clubKind = clubKey ? CLUBS_CATALOG[clubKey].kind : null
+  // Member Choice (account-credit) is the one club that charges on create.
+  const isMemberChoice = clubKind === 'account-credit'
+  const selectedCard = savedCards.find((c) => c.id === paymentCardId) ?? null
+  const hasCard = savedCards.length > 0
+  // Shipping needs an address; a "new" address counts only once its fields are
+  // filled in. Pickup never needs one.
+  const hasShippingAddress =
+    !isShipping ||
+    (shipAddress !== 'new') ||
+    !!(newStreet && newCity && newState && newZip)
+  // Non-charge clubs land Active only when every requirement is met.
+  const wouldBeActive = hasCard && hasShippingAddress
+
   function close() { window.location.hash = MEMBERSHIPS_HASH }
+
+  // Route to the freshly-created membership in edit mode. The detail screen
+  // synthesises the record from these params + shows a "just created" banner,
+  // so the operator lands on the real customer/club they just enrolled.
+  function goToCreated(outcome: 'active' | 'pending' | 'declined' | 'nocard') {
+    if (!clubKey) return
+    const name = CUSTOMERS.find((c) => c.id === customer)?.name ?? ''
+    const params = new URLSearchParams({
+      created:  outcome,
+      club:     clubKey,
+      customer: name,
+      delivery: isShipping ? 'shipping' : 'pickup',
+    })
+    if (selectedLevel) params.set('level', `${selectedLevel.name} · $${selectedLevel.amount}/${selectedLevel.cadence.toLowerCase()}`)
+    if (fee) params.set('fee', fee.toFixed(2))
+    if (selectedCard) params.set('card', shortCardLabel(selectedCard))
+    window.location.hash = `#/web/clubs/memberships/new?${params.toString()}`
+  }
+
   function createMembership() {
-    // In production: create the order (paid if there's a fee, $0 otherwise) +
-    // the membership, then route to the new membership in edit mode. Prototype
-    // just returns to the list.
-    close()
+    if (!clubKey) return
+    // Member Choice charges the first contribution immediately — confirm first.
+    if (isMemberChoice) { setCreateModalOpen(true); return }
+    // Curated / Rewards: no charge on create. Active or Pending by requirements.
+    goToCreated(wouldBeActive ? 'active' : 'pending')
+  }
+
+  // Confirmed the Member Choice charge. With a card we attempt it now — the
+  // ****0044 test card declines (→ pending) while any other card succeeds
+  // (→ active). With no card the membership lands pending.
+  function confirmMemberChoiceCreate() {
+    setCreateModalOpen(false)
+    if (!hasCard) { goToCreated('nocard'); return }
+    const declined = selectedCard?.last4 === DECLINE_CARD_LAST4
+    goToCreated(declined ? 'declined' : 'active')
   }
 
   return (
@@ -275,26 +348,29 @@ export function AddMembershipScreen() {
                         })()}
                       </LockedFieldValue>
                     ) : (
-                      /* Flat dropdown — Tasting Credit levels are listed as
+                      /* Flat dropdown — Member Choice levels are listed as
                          individual options ("Blind Enthusiasm — Silver
                          $50/month") so the operator picks the tier in one go
-                         without a second step. */
+                         without a second step. Every option names the club
+                         *type* so the operator knows what kind of club a fancy
+                         name is. Commerce 7 / traditional clubs are excluded —
+                         you can't enrol into a C7 store club through Vintiga. */
                       <Select
                         value={clubSelection}
                         onChange={(e) => setClubSelection(e.target.value)}
                       >
                         <option value="">Select a club</option>
-                        {CLUB_KEYS.flatMap((k) => {
+                        {CLUB_KEYS.filter((k) => CLUBS_CATALOG[k].kind !== 'traditional').flatMap((k) => {
                           const info = CLUBS_CATALOG[k]
                           const levels = CLUB_LEVELS[k]
                           if (levels && levels.length > 0) {
                             return levels.map((lvl) => (
                               <option key={`${k}:${lvl.id}`} value={`${k}:${lvl.id}`}>
-                                {info.name} — {lvl.name} (${lvl.amount}/{lvl.cadence.toLowerCase()})
+                                {info.name} ({info.type}) — {lvl.name} (${lvl.amount}/{lvl.cadence.toLowerCase()})
                               </option>
                             ))
                           }
-                          return [<option key={k} value={k}>{info.name}</option>]
+                          return [<option key={k} value={k}>{info.name} ({info.type})</option>]
                         })}
                       </Select>
                     )}
@@ -398,16 +474,28 @@ export function AddMembershipScreen() {
                     </Button>
                   }
                 >
-                  <Field label="Card on file" required>
-                    <Select
-                      value={paymentCardId}
-                      onChange={(e) => setPaymentCardId(e.target.value)}
-                      options={savedCards.map((c) => ({
-                        value: c.id,
-                        label: formatCardLabel(c),
-                      }))}
-                    />
-                  </Field>
+                  {hasCard ? (
+                    <Field label="Card on file" required>
+                      <Select
+                        value={paymentCardId}
+                        onChange={(e) => setPaymentCardId(e.target.value)}
+                        options={savedCards.map((c) => ({
+                          value: c.id,
+                          label: formatCardLabel(c),
+                        }))}
+                      />
+                    </Field>
+                  ) : (
+                    <div className="flex flex-col items-center text-center gap-vintiga-sm py-vintiga-sm">
+                      <div className="w-10 h-10 rounded-full bg-vintiga-slate-100 inline-flex items-center justify-center text-vintiga-slate-400">
+                        <CreditCardIcon className="w-5 h-5" />
+                      </div>
+                      <span className="typo-body-sm font-semibold text-vintiga-slate-900">No card on file</span>
+                      <span className="typo-caption text-vintiga-slate-500 max-w-xs">
+                        Add a card to charge the membership now, or create it in a pending state and add one later.
+                      </span>
+                    </div>
+                  )}
                 </RecordsCard>
               )}
 
@@ -444,6 +532,40 @@ export function AddMembershipScreen() {
           setAddCardOpen(false)
         }}
       />
+
+      {/* Member Choice charges the first contribution the instant the membership
+          is created — so creating it is a money-moving action and must be
+          confirmed. With a card we confirm the charge; with none we warn that
+          the membership lands pending. */}
+      <Modal open={createModalOpen} onClose={() => setCreateModalOpen(false)} size="sm">
+        {hasCard && selectedCard ? (
+          <>
+            <ModalAlertHeader
+              icon={<CreditCardIcon />}
+              iconColor="green"
+              title={`Charge ${shortCardLabel(selectedCard)} and create this membership?`}
+              description={`This charges the first contribution of $${fee.toFixed(2)} to ${shortCardLabel(selectedCard)} right now. If the card declines, the membership is still created — in a pending state.`}
+            />
+            <ModalFooter shaded>
+              <Button variant="outline" onClick={() => setCreateModalOpen(false)}>Cancel</Button>
+              <Button onClick={confirmMemberChoiceCreate}>Charge ${fee.toFixed(2)} &amp; create</Button>
+            </ModalFooter>
+          </>
+        ) : (
+          <>
+            <ModalAlertHeader
+              icon={<CreditCardIcon />}
+              iconColor="orange"
+              title="Create in a pending state?"
+              description="No card is on file for this customer, so the membership is created in a pending state. Add a card on the membership and save to charge the first contribution and activate."
+            />
+            <ModalFooter shaded>
+              <Button variant="outline" onClick={() => setCreateModalOpen(false)}>Cancel</Button>
+              <Button onClick={confirmMemberChoiceCreate}>Create pending membership</Button>
+            </ModalFooter>
+          </>
+        )}
+      </Modal>
     </div>
   )
 }

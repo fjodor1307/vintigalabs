@@ -14,7 +14,7 @@
 
 | Prototype | Last updated | Changelog |
 |-----------|--------------|-----------|
-| Clubs | 2026-06-17 | [src/prototypes/clubs/CHANGELOG.md](src/prototypes/clubs/CHANGELOG.md) |
+| Clubs | 2026-06-24 | [src/prototypes/clubs/CHANGELOG.md](src/prototypes/clubs/CHANGELOG.md) |
 | Customers | 2026-05-27 | [src/prototypes/customers/CHANGELOG.md](src/prototypes/customers/CHANGELOG.md) |
 | Onboarding | 2026-04-27 | [src/prototypes/onboarding/CHANGELOG.md](src/prototypes/onboarding/CHANGELOG.md) |
 | Products | 2026-06-17 | [src/prototypes/products/CHANGELOG.md](src/prototypes/products/CHANGELOG.md) |
