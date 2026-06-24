@@ -9,6 +9,9 @@ import { IconButton } from '@ds/shared/IconButton'
 import { Avatar } from '@ds/shared/Avatar'
 import { FilterDropdown } from '@ds/shared/FilterDropdown'
 import { PopoverMenu } from '@ds/shared/PopoverMenu'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@ds/shared/Modal'
+import { Field } from '@ds/shared/Field'
+import { Textarea } from '@ds/shared/Textarea'
 import {
   Table,
   TableHead,
@@ -114,6 +117,23 @@ export function ReservationsScreen() {
   const [guest, setGuest] = useState<Reservation | null>(null)
   const [holdOpen, setHoldOpen] = useState(false)
   const [blockOpen, setBlockOpen] = useState(false)
+  // Schedule / staff notes for the active day. Saved values back the popover;
+  // the editor modal works on a draft so Cancel discards.
+  const [scheduleNote, setScheduleNote] = useState('')
+  const [staffNote, setStaffNote] = useState('')
+  const [notesOpen, setNotesOpen] = useState(false)
+  const [draftSchedule, setDraftSchedule] = useState('')
+  const [draftStaff, setDraftStaff] = useState('')
+  function openNotes() {
+    setDraftSchedule(scheduleNote)
+    setDraftStaff(staffNote)
+    setNotesOpen(true)
+  }
+  function saveNotes() {
+    setScheduleNote(draftSchedule)
+    setStaffNote(draftStaff)
+    setNotesOpen(false)
+  }
 
   // Toolbar filters (search · experience · status), applied regardless of date.
   const matched = useMemo(() => {
@@ -231,21 +251,28 @@ export function ReservationsScreen() {
                     <IconButton variant="outline" size="md" icon={<MessageIcon />} aria-label="Notes" onClick={toggle} />
                   )}
                 >
-                  {() => (
-                    <div className="flex flex-col gap-vintiga-md">
-                      <div className="flex flex-col gap-vintiga-xs">
-                        <div className="flex items-center justify-between gap-vintiga-md">
-                          <h3 className="typo-body-lg font-semibold text-vintiga-slate-900">Schedule Notes</h3>
-                          <IconButton variant="outline" size="sm" icon={<PencilIcon />} aria-label="Edit schedule notes" onClick={() => {}} />
+                  {(close) => {
+                    const edit = () => { close(); openNotes() }
+                    return (
+                      <div className="flex flex-col gap-vintiga-md">
+                        <div className="flex flex-col gap-vintiga-xs">
+                          <div className="flex items-center justify-between gap-vintiga-md">
+                            <button type="button" onClick={edit} className="typo-body-lg font-semibold text-vintiga-slate-900 hover:text-vintiga-primary transition-colors text-left">Schedule Notes</button>
+                            <IconButton variant="outline" size="sm" icon={<PencilIcon />} aria-label="Edit notes" onClick={edit} />
+                          </div>
+                          {scheduleNote
+                            ? <p className="typo-body-sm text-vintiga-slate-700 whitespace-pre-wrap">{scheduleNote}</p>
+                            : <p className="typo-body-sm text-vintiga-slate-500">No notes entered.</p>}
                         </div>
-                        <p className="typo-body-sm text-vintiga-slate-500">No notes entered.</p>
+                        <div className="flex flex-col gap-vintiga-xs">
+                          <button type="button" onClick={edit} className="typo-body-lg font-semibold text-vintiga-slate-900 hover:text-vintiga-primary transition-colors text-left">Staff Notes</button>
+                          {staffNote
+                            ? <p className="typo-body-sm text-vintiga-slate-700 whitespace-pre-wrap">{staffNote}</p>
+                            : <p className="typo-body-sm text-vintiga-slate-500">No notes entered.</p>}
+                        </div>
                       </div>
-                      <div className="flex flex-col gap-vintiga-xs">
-                        <h3 className="typo-body-lg font-semibold text-vintiga-slate-900">Staff Notes</h3>
-                        <p className="typo-body-sm text-vintiga-slate-500">No notes entered.</p>
-                      </div>
-                    </div>
-                  )}
+                    )
+                  }}
                 </Popover>
 
                 <DropdownButton
@@ -262,7 +289,6 @@ export function ReservationsScreen() {
                   width="w-60"
                   items={[
                     { label: 'Ad Hoc Reservation', icon: <PlusIcon className="w-4 h-4" />, onClick: () => { window.location.hash = '#/web/reservations/add' } },
-                    { label: 'Search From All Reservations', icon: <SearchIcon className="w-4 h-4" />, onClick: () => {} },
                     { label: 'Hold Location', icon: <HandIcon className="w-4 h-4" />, onClick: () => setHoldOpen(true) },
                     { label: 'Block Time', icon: <CircleXIcon className="w-4 h-4" />, onClick: () => setBlockOpen(true) },
                     { label: 'Print List', icon: <FileTextIcon className="w-4 h-4" />, onClick: () => {} },
@@ -386,6 +412,26 @@ export function ReservationsScreen() {
       {guest && <GuestPanel guest={guest} onClose={() => setGuest(null)} />}
       <HoldLocationModal open={holdOpen} onClose={() => setHoldOpen(false)} />
       <BlockTimeModal open={blockOpen} onClose={() => setBlockOpen(false)} />
+
+      {/* Notes editor — opened from the Schedule / Staff Notes popover. */}
+      <Modal open={notesOpen} onClose={() => setNotesOpen(false)} size="md">
+        <ModalHeader
+          title={`Notes for ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+          onClose={() => setNotesOpen(false)}
+        />
+        <ModalBody>
+          <Field label="Schedule Notes">
+            <Textarea rows={5} placeholder="Enter note" value={draftSchedule} onChange={(e) => setDraftSchedule(e.target.value)} />
+          </Field>
+          <Field label="Staff Notes">
+            <Textarea rows={5} placeholder="Enter note" value={draftStaff} onChange={(e) => setDraftStaff(e.target.value)} />
+          </Field>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => setNotesOpen(false)}>Cancel</Button>
+          <Button onClick={saveNotes}>Save Notes</Button>
+        </ModalFooter>
+      </Modal>
     </div>
   )
 }
