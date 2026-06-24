@@ -25,14 +25,31 @@ import {
   MessageIcon,
   SparklesIcon,
   MapPinIcon,
+  FileTextIcon,
+  HandIcon,
+  CircleXIcon,
+  CheckIcon,
+  PencilIcon,
 } from '@ds/icons/Icons'
+import { Popover } from './Popover'
+import { MiniCalendar } from './MiniCalendar'
 import {
   RESERVATIONS,
-  RESERVATION_DATE,
   STATUS_TONE,
   type Reservation,
   type ReservationStatus,
 } from './reservationSamples'
+
+// The day the sample bookings belong to (and the prototype's "today").
+const DATA_DATE = new Date(2026, 5, 23)
+type ViewMode = 'List View' | 'Day View' | 'Week View'
+const VIEWS: ViewMode[] = ['List View', 'Day View', 'Week View']
+
+const sameDay = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+
+const formatDate = (d: Date) =>
+  d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
 
 // ─── ReservationsScreen ──────────────────────────────────────────────────────
 // Day-view reservations list, rebuilt from the legacy Commerce 7 screen in
@@ -53,11 +70,19 @@ const STATUS_OPTIONS: { value: ReservationStatus; label: string }[] = [
 ]
 
 /** Outline pill that opens a menu — for "List View" and "More". */
-function DropdownButton({ label, items }: { label: string; items: { label: string; onClick?: () => void; danger?: boolean }[] }) {
+function DropdownButton({
+  label,
+  items,
+  width = 'w-44',
+}: {
+  label: string
+  items: { label: ReactNode; onClick?: () => void; danger?: boolean; icon?: ReactNode }[]
+  width?: string
+}) {
   return (
     <PopoverMenu
       align="right"
-      width="w-44"
+      width={width}
       trigger={(_open, toggle) => (
         <button
           type="button"
@@ -77,11 +102,16 @@ export function ReservationsScreen() {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
 
   const [rows, setRows] = useState<Reservation[]>(RESERVATIONS)
+  const [date, setDate] = useState<Date>(DATA_DATE)
+  const [view, setView] = useState<ViewMode>('List View')
   const [query, setQuery] = useState('')
   const [experience, setExperience] = useState<Set<string>>(new Set())
   const [status, setStatus] = useState<Set<ReservationStatus>>(new Set())
 
+  // The sample bookings belong to DATA_DATE only — other days read empty.
+  const onDataDate = sameDay(date, DATA_DATE)
   const filtered = useMemo(() => {
+    if (!onDataDate) return []
     const q = query.trim().toLowerCase()
     return rows.filter((r) => {
       if (q && !(r.name.toLowerCase().includes(q) || r.experience.toLowerCase().includes(q))) return false
@@ -89,9 +119,10 @@ export function ReservationsScreen() {
       if (status.size > 0 && !status.has(r.status)) return false
       return true
     })
-  }, [rows, query, experience, status])
+  }, [rows, query, experience, status, onDataDate])
 
   const guestCount = filtered.reduce((sum, r) => sum + r.guests, 0)
+  const hasFilters = query.trim() !== '' || experience.size > 0 || status.size > 0
 
   function checkIn(id: string) {
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, status: 'Checked In' } : r)))
@@ -127,35 +158,90 @@ export function ReservationsScreen() {
                   </span>
                 </div>
                 <div className="flex items-center gap-vintiga-sm">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-vintiga-sm h-10 px-3 rounded-vintiga-input border border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-medium text-vintiga-slate-900 hover:bg-vintiga-slate-50 transition-colors"
+                  <Popover
+                    align="left"
+                    width="w-72"
+                    trigger={(_open, toggle) => (
+                      <button
+                        type="button"
+                        onClick={toggle}
+                        className="inline-flex items-center gap-vintiga-sm h-10 px-3 rounded-vintiga-input border border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-medium text-vintiga-slate-900 hover:bg-vintiga-slate-50 transition-colors"
+                      >
+                        <CalendarIcon className="w-4 h-4 text-vintiga-slate-500" />
+                        {formatDate(date)}
+                      </button>
+                    )}
                   >
-                    <CalendarIcon className="w-4 h-4 text-vintiga-slate-500" />
-                    {RESERVATION_DATE}
-                  </button>
-                  <Button variant="outline" onClick={() => {}}>Today</Button>
+                    {(close) => (
+                      <MiniCalendar selected={date} onSelect={(d) => { setDate(d); close() }} />
+                    )}
+                  </Popover>
+                  <Button variant="outline" onClick={() => setDate(DATA_DATE)}>Today</Button>
                 </div>
               </div>
 
               <div className="flex items-center gap-vintiga-sm">
-                <IconButton variant="outline" size="md" icon={<SparklesIcon />} aria-label="Insights" onClick={() => {}} />
-                <IconButton variant="outline" size="md" icon={<MessageIcon />} aria-label="Messages" onClick={() => {}} />
+                {/* Tasks */}
+                <Popover
+                  align="left"
+                  width="w-96"
+                  trigger={(_open, toggle) => (
+                    <IconButton variant="outline" size="md" icon={<FileTextIcon />} aria-label="Tasks" onClick={toggle} />
+                  )}
+                >
+                  {() => (
+                    <div className="flex flex-col gap-vintiga-sm">
+                      <h3 className="typo-body-lg font-semibold text-vintiga-slate-900">Your Tasks</h3>
+                      <p className="typo-body-sm text-vintiga-slate-500">
+                        No tasks assigned. Tasks can be added on any reservation, order, customer, or club membership.
+                      </p>
+                    </div>
+                  )}
+                </Popover>
+
+                {/* Notes */}
+                <Popover
+                  align="left"
+                  width="w-96"
+                  trigger={(_open, toggle) => (
+                    <IconButton variant="outline" size="md" icon={<MessageIcon />} aria-label="Notes" onClick={toggle} />
+                  )}
+                >
+                  {() => (
+                    <div className="flex flex-col gap-vintiga-md">
+                      <div className="flex flex-col gap-vintiga-xs">
+                        <div className="flex items-center justify-between gap-vintiga-md">
+                          <h3 className="typo-body-lg font-semibold text-vintiga-slate-900">Schedule Notes</h3>
+                          <IconButton variant="outline" size="sm" icon={<PencilIcon />} aria-label="Edit schedule notes" onClick={() => {}} />
+                        </div>
+                        <p className="typo-body-sm text-vintiga-slate-500">No notes entered.</p>
+                      </div>
+                      <div className="flex flex-col gap-vintiga-xs">
+                        <h3 className="typo-body-lg font-semibold text-vintiga-slate-900">Staff Notes</h3>
+                        <p className="typo-body-sm text-vintiga-slate-500">No notes entered.</p>
+                      </div>
+                    </div>
+                  )}
+                </Popover>
+
                 <DropdownButton
-                  label="List View"
-                  items={[
-                    { label: 'List View' },
-                    { label: 'Timeline' },
-                    { label: 'Floor Plan' },
-                  ]}
+                  label={view}
+                  items={VIEWS.map((v) => ({
+                    label: v,
+                    icon: v === view ? <CheckIcon className="w-4 h-4 text-vintiga-primary" /> : undefined,
+                    onClick: () => setView(v),
+                  }))}
                 />
                 <Button leftIcon={<PlusIcon className="w-4 h-4" />} onClick={() => {}}>Add</Button>
                 <DropdownButton
                   label="More"
+                  width="w-60"
                   items={[
-                    { label: 'Print run sheet' },
-                    { label: 'Export CSV' },
-                    { label: 'Reservation settings' },
+                    { label: 'Ad Hoc Reservation', icon: <PlusIcon className="w-4 h-4" />, onClick: () => {} },
+                    { label: 'Search From All Reservations', icon: <SearchIcon className="w-4 h-4" />, onClick: () => {} },
+                    { label: 'Hold Location', icon: <HandIcon className="w-4 h-4" />, onClick: () => {} },
+                    { label: 'Block Time', icon: <CircleXIcon className="w-4 h-4" />, onClick: () => {} },
+                    { label: 'Print List', icon: <FileTextIcon className="w-4 h-4" />, onClick: () => {} },
                   ]}
                 />
               </div>
@@ -238,7 +324,7 @@ export function ReservationsScreen() {
                 {filtered.length === 0 && (
                   <tr>
                     <td colSpan={7} className="typo-body-sm text-vintiga-slate-500 px-vintiga-lg py-vintiga-2xl text-center">
-                      No reservations match your search.
+                      {hasFilters ? 'No reservations match your search.' : `No reservations on ${formatDate(date)}.`}
                     </td>
                   </tr>
                 )}
