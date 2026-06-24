@@ -10,7 +10,6 @@ import { Avatar } from '@ds/shared/Avatar'
 import { Tag } from '@ds/shared/Tag'
 import { Field } from '@ds/shared/Field'
 import { Textarea } from '@ds/shared/Textarea'
-import { CustomerCard } from '@ds/shared/CustomerCard'
 import { SectionCard } from '@ds/shared/SectionCard'
 import { AlertSoft } from '@ds/shared/AlertSoft'
 import { PopoverMenu } from '@ds/shared/PopoverMenu'
@@ -181,31 +180,36 @@ function SummaryLine({ label, value }: { label: string; value: string }) {
   )
 }
 
+// Vertical stacked layout — fits the narrow rail far better than the wide
+// horizontal CustomerCard (responsive ask).
 function CustomerRail() {
   return (
-    <CustomerCard
-      avatar={<Avatar name="Ms Dorothy Ladner" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=128&h=128&fit=crop&crop=faces" size="lg" />}
-      name="Ms Dorothy Ladner"
-      subtitle={
-        <a href="#/web/clubs" className="inline-flex items-center gap-1.5 typo-body font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 no-underline w-fit">
-          <IdCardIcon className="w-5 h-5 shrink-0" />Curators Club
+    <section className="border border-vintiga-slate-200 rounded-vintiga-xl bg-vintiga-white p-vintiga-lg flex flex-col gap-vintiga-md">
+      <div className="relative w-fit">
+        <Avatar name="Ms Dorothy Ladner" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=128&h=128&fit=crop&crop=faces" size="xl" />
+        <span className="absolute -bottom-1 right-0 w-6 h-6 rounded-vintiga-sm bg-vintiga-white border border-vintiga-slate-200 inline-flex items-center justify-center text-vintiga-slate-500">
+          <IdCardIcon className="w-3.5 h-3.5" />
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-vintiga-sm">
+        <h3 className="typo-title-subsection font-semibold text-vintiga-slate-900">Ms Dorothy Ladner</h3>
+        <a href="#/web/clubs" className="inline-flex items-center gap-1.5 typo-body-sm font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 no-underline w-fit">
+          <IdCardIcon className="w-4 h-4 shrink-0" />Curators Club
         </a>
-      }
-      tags={
         <div className="flex flex-wrap items-center gap-1.5">
           <Tag variant="outline" tone="default" size="sm">Dog Owner</Tag>
           <Tag variant="outline" tone="default" size="sm">Investor</Tag>
         </div>
-      }
-      details={
-        <>
+        <div className="flex flex-col gap-1 typo-body-sm text-vintiga-slate-700">
           <span>dorothyladner@gmail.com <span className="text-vintiga-slate-500">| Preferred</span></span>
           <span>Seattle, WA, 98107</span>
           <span className="text-vintiga-slate-500">Anniversary: Mar 15, 2025</span>
           <span className="text-vintiga-slate-500">Birthday: Jul 13, 1955</span>
-        </>
-      }
-      actions={<Button variant="outline" onClick={() => {}}>Customer Details</Button>}
-    />
+        </div>
+      </div>
+
+      <Button variant="outline" fullWidth onClick={() => {}}>Customer Details</Button>
+    </section>
   )
 }
