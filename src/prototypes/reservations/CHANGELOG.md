@@ -6,6 +6,11 @@
 
 ---
 
+## 2026-06-24 — Fedja + Claude: Notes editor modal + trim the More menu
+
+- **Notes are now editable.** Clicking **Schedule Notes** / **Staff Notes** (or the pencil) in the Notes popover opens a **"Notes for {date}"** modal with both note fields + **Cancel / Save Notes**. Saved text shows back in the popover; the modal edits a draft so Cancel discards.
+- **Removed "Search From All Reservations"** from the More menu (now: Ad Hoc Reservation · Hold Location · Block Time · Print List).
+
 ## 2026-06-24 — Fedja + Claude: Day View + Week View calendar
 
 The **List View / Day View / Week View** toggle is now live — the first two were stubs, now they render a time-grid calendar (`ReservationCalendar.tsx`):
