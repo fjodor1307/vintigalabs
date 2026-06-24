@@ -186,7 +186,7 @@ export function ReservationsScreen() {
               <div className="flex items-center gap-vintiga-sm">
                 {/* Tasks */}
                 <Popover
-                  align="left"
+                  align="right"
                   width="w-96"
                   trigger={(_open, toggle) => (
                     <IconButton variant="outline" size="md" icon={<FileTextIcon />} aria-label="Tasks" onClick={toggle} />
@@ -204,7 +204,7 @@ export function ReservationsScreen() {
 
                 {/* Notes */}
                 <Popover
-                  align="left"
+                  align="right"
                   width="w-96"
                   trigger={(_open, toggle) => (
                     <IconButton variant="outline" size="md" icon={<MessageIcon />} aria-label="Notes" onClick={toggle} />
