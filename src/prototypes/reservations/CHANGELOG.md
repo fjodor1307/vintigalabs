@@ -6,6 +6,11 @@
 
 ---
 
+## 2026-06-17 — Fedja + Claude: Guest panel + header polish
+
+- **Bulb → "Get To Know" side panel.** Each row's bulb opens a right slide-in `GuestPanel` (identity + loyalty/orders/LTV, four preference cards, Most Purchased + Notes empty states), rebuilt from the legacy panel. Added guest contact + loyalty fields to `reservationSamples`.
+- **Header polish** (feedback): the List View / More dropdown triggers now use `rounded-vintiga-md` (not a full pill), and the date pill / Today / Add / dropdown triggers are all a uniform 40px tall.
+
 ## 2026-06-17 — Fedja + Claude: Header controls wired (from legacy screenshots)
 
 Built out the header controls to match the legacy behaviour:

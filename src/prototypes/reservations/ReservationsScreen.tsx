@@ -33,6 +33,7 @@ import {
 } from '@ds/icons/Icons'
 import { Popover } from './Popover'
 import { MiniCalendar } from './MiniCalendar'
+import { GuestPanel } from './GuestPanel'
 import {
   RESERVATIONS,
   STATUS_TONE,
@@ -87,7 +88,7 @@ function DropdownButton({
         <button
           type="button"
           onClick={toggle}
-          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-vintiga-button border border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors"
+          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm font-semibold text-vintiga-slate-700 hover:bg-vintiga-slate-50 transition-colors"
         >
           {label}
           <ChevronDownIcon className="w-4 h-4 text-vintiga-slate-400" />
@@ -107,6 +108,8 @@ export function ReservationsScreen() {
   const [query, setQuery] = useState('')
   const [experience, setExperience] = useState<Set<string>>(new Set())
   const [status, setStatus] = useState<Set<ReservationStatus>>(new Set())
+  // The reservation whose "Get To Know" guest panel is open (bulb action).
+  const [guest, setGuest] = useState<Reservation | null>(null)
 
   // The sample bookings belong to DATA_DATE only — other days read empty.
   const onDataDate = sameDay(date, DATA_DATE)
@@ -176,7 +179,7 @@ export function ReservationsScreen() {
                       <MiniCalendar selected={date} onSelect={(d) => { setDate(d); close() }} />
                     )}
                   </Popover>
-                  <Button variant="outline" onClick={() => setDate(DATA_DATE)}>Today</Button>
+                  <Button variant="outline" className="h-10" onClick={() => setDate(DATA_DATE)}>Today</Button>
                 </div>
               </div>
 
@@ -232,7 +235,7 @@ export function ReservationsScreen() {
                     onClick: () => setView(v),
                   }))}
                 />
-                <Button leftIcon={<PlusIcon className="w-4 h-4" />} onClick={() => {}}>Add</Button>
+                <Button className="h-10" leftIcon={<PlusIcon className="w-4 h-4" />} onClick={() => {}}>Add</Button>
                 <DropdownButton
                   label="More"
                   width="w-60"
@@ -311,7 +314,7 @@ export function ReservationsScreen() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="inline-flex items-center justify-end gap-vintiga-sm">
-                        <IconButton variant="outline" size="sm" icon={<SparklesIcon />} aria-label={`Insights for ${r.name}`} onClick={() => {}} />
+                        <IconButton variant="outline" size="sm" icon={<SparklesIcon />} aria-label={`Get to know ${r.name}`} onClick={() => setGuest(r)} />
                         {r.status === 'Checked In' ? (
                           <span className="typo-body-sm font-medium text-vintiga-success">Checked In</span>
                         ) : (
@@ -338,6 +341,8 @@ export function ReservationsScreen() {
           </div>
         </div>
       </div>
+
+      {guest && <GuestPanel guest={guest} onClose={() => setGuest(null)} />}
     </div>
   )
 }
