@@ -6,6 +6,10 @@
 
 ---
 
+## 2026-06-18 — Fedja + Claude: Membership list — declutter the hold text
+
+On the membership lists, a future hold now shows only **"Hold Starts {start}"** (start date only) instead of the full range — the end date lives on the membership detail. Current holds show **"Until {end}"**. Keeps the list less cluttered.
+
 ## 2026-06-17 — Fedja + Claude: Pending membership → activation prompt
 
 When a staff member supplies the missing info on a **pending** membership (adding the card via Payment Method → "Add Card"), a modal now asks **"Would you like to activate this membership?"** with **Yes, activate now** / **No, leave as pending**:
