@@ -33,6 +33,7 @@ import {
 } from '@ds/icons/Icons'
 import { Popover } from './Popover'
 import { MiniCalendar } from './MiniCalendar'
+import { ReservationCalendar } from './ReservationCalendar'
 import { GuestPanel } from './GuestPanel'
 import { HoldLocationModal, BlockTimeModal } from './ReservationModals'
 import {
@@ -114,10 +115,8 @@ export function ReservationsScreen() {
   const [holdOpen, setHoldOpen] = useState(false)
   const [blockOpen, setBlockOpen] = useState(false)
 
-  // The sample bookings belong to DATA_DATE only — other days read empty.
-  const onDataDate = sameDay(date, DATA_DATE)
-  const filtered = useMemo(() => {
-    if (!onDataDate) return []
+  // Toolbar filters (search · experience · status), applied regardless of date.
+  const matched = useMemo(() => {
     const q = query.trim().toLowerCase()
     return rows.filter((r) => {
       if (q && !(r.name.toLowerCase().includes(q) || r.experience.toLowerCase().includes(q))) return false
@@ -125,9 +124,28 @@ export function ReservationsScreen() {
       if (status.size > 0 && !status.has(r.status)) return false
       return true
     })
-  }, [rows, query, experience, status, onDataDate])
+  }, [rows, query, experience, status])
 
-  const guestCount = filtered.reduce((sum, r) => sum + r.guests, 0)
+  // The sample bookings belong to DATA_DATE only — other days read empty.
+  const onDataDate = sameDay(date, DATA_DATE)
+  // The Sun–Sat week containing the active date (for Week View).
+  const weekDays = useMemo(() => {
+    const start = new Date(date)
+    start.setDate(start.getDate() - start.getDay())
+    start.setHours(0, 0, 0, 0)
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(start)
+      d.setDate(d.getDate() + i)
+      return d
+    })
+  }, [date])
+  const weekHasData = weekDays.some((d) => sameDay(d, DATA_DATE))
+
+  // What's visible depends on the view's date scope: a single day (List / Day)
+  // or the whole week (Week).
+  const visible = view === 'Week View' ? (weekHasData ? matched : []) : onDataDate ? matched : []
+
+  const guestCount = visible.reduce((sum, r) => sum + r.guests, 0)
   const hasFilters = query.trim() !== '' || experience.size > 0 || status.size > 0
 
   function checkIn(id: string) {
@@ -160,7 +178,7 @@ export function ReservationsScreen() {
                 <div className="flex flex-col">
                   <h1 className="typo-title-screen font-semibold text-vintiga-slate-900">Reservations</h1>
                   <span className="typo-body-sm text-vintiga-slate-500">
-                    {filtered.length} reservation{filtered.length === 1 ? '' : 's'}, {guestCount} guest{guestCount === 1 ? '' : 's'}
+                    {visible.length} reservation{visible.length === 1 ? '' : 's'}, {guestCount} guest{guestCount === 1 ? '' : 's'}
                   </span>
                 </div>
                 <div className="flex items-center gap-vintiga-sm">
@@ -279,7 +297,20 @@ export function ReservationsScreen() {
               </div>
             </div>
 
-            {/* Table */}
+            {/* Calendar views — Day (single column) / Week (Sun–Sat). */}
+            {view !== 'List View' && (
+              <ReservationCalendar
+                days={view === 'Week View' ? weekDays : [date]}
+                reservations={visible}
+                reservationDay={DATA_DATE}
+                selectedDate={date}
+                onOpen={() => { window.location.hash = '#/web/reservations/view' }}
+                onSelectDay={(d) => { setDate(d); setView('Day View') }}
+              />
+            )}
+
+            {/* List view — the reservation table + footer summary. */}
+            {view === 'List View' && (
             <Table>
               <TableHead>
                 <TableRow>
@@ -293,7 +324,7 @@ export function ReservationsScreen() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filtered.map((r) => (
+                {visible.map((r) => (
                   <TableRow
                     key={r.id}
                     className="cursor-pointer hover:bg-vintiga-slate-50 transition-colors"
@@ -331,7 +362,7 @@ export function ReservationsScreen() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {filtered.length === 0 && (
+                {visible.length === 0 && (
                   <tr>
                     <td colSpan={7} className="typo-body-sm text-vintiga-slate-500 px-vintiga-lg py-vintiga-2xl text-center">
                       {hasFilters ? 'No reservations match your search.' : `No reservations on ${formatDate(date)}.`}
@@ -340,11 +371,14 @@ export function ReservationsScreen() {
                 )}
               </TableBody>
             </Table>
+            )}
 
-            {/* Footer summary */}
-            <div className="rounded-vintiga-md bg-vintiga-slate-700 text-white px-vintiga-md py-vintiga-sm typo-body-sm font-medium">
-              Reservations: {filtered.length}, Guests: {guestCount}
-            </div>
+            {/* Footer summary — list view only */}
+            {view === 'List View' && (
+              <div className="rounded-vintiga-md bg-vintiga-slate-700 text-white px-vintiga-md py-vintiga-sm typo-body-sm font-medium">
+                Reservations: {visible.length}, Guests: {guestCount}
+              </div>
+            )}
           </div>
         </div>
       </div>

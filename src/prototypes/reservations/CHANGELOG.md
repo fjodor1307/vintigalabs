@@ -6,6 +6,16 @@
 
 ---
 
+## 2026-06-24 — Fedja + Claude: Day View + Week View calendar
+
+The **List View / Day View / Week View** toggle is now live — the first two were stubs, now they render a time-grid calendar (`ReservationCalendar.tsx`):
+
+- **Day View** — a single day column. **Week View** — Sun–Sat columns for the week containing the active date.
+- Fixed business-hours window (9am–6pm, 30-min slots) down a left time gutter; reservations render as blocks placed by start time + a 90-min default duration (the sample bookings carry no end time).
+- **Overlap layout** — concurrent reservations split into side-by-side lanes (classic calendar packing), so the 11:00 / 11:30 / 12:00 cluster reads clearly.
+- The header count + scope follow the view: a single day (List / Day) or the whole week (Week). The dark footer summary stays list-only.
+- Clicking a block opens the Reservation View page; clicking a day header in Week View drills into that day.
+
 ## 2026-06-17 — Fedja + Claude: Add Reservation + Reservation View + hold/block modals
 
 Built the rest of the reservations flow from the Figma designs:
