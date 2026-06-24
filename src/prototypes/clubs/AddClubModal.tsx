@@ -23,7 +23,7 @@ const CLUB_TYPES: {
   },
   {
     kind: 'account-credit',
-    title: 'Tasting Credit',
+    title: 'Member Flex Club',
     description: 'Members pick a monthly amount to add to their account, which they can spend on any purchase.',
     icon: <CreditCardIcon />,
   },

@@ -30,7 +30,7 @@ export const CLUBS_CATALOG: Record<ClubKey, ClubInfo> = {
   'curators':           { slug: 'curators',          name: 'Curators Club',     type: 'Curated Club',   kind: 'curated'        },
   'vintiga-signature':  { slug: 'vintiga-signature', name: 'Vintiga Signature', type: 'Membership',     kind: 'membership'     },
   'vintiga-heritage':   { slug: 'vintiga-heritage',  name: 'Vintiga Heritage',  type: 'Curated Club',   kind: 'curated'        },
-  'blind-enthusiasm':   { slug: 'blind-enthusiasm',  name: 'Blind Enthusiasm',  type: 'Tasting Credit', kind: 'account-credit' },
+  'blind-enthusiasm':   { slug: 'blind-enthusiasm',  name: 'Blind Enthusiasm',  type: 'Member Flex Club', kind: 'account-credit' },
   'c7':                 { slug: 'c7',                name: 'C7',                type: 'Traditional',    kind: 'traditional'    },
 }
 

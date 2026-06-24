@@ -122,9 +122,9 @@ export const MEMBERS: Member[] = [
   {
     id: '1008', name: 'Guy Hawkins', initials: 'GH',
     avatarUrl: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=128&h=128&fit=crop&crop=faces',
-    club: 'curators', delivery: 'shipping', city: 'San Jose, CA', zip: '95113',
+    club: 'blind-enthusiasm', delivery: 'shipping', city: 'San Jose, CA', zip: '95113',
     email: 'guyhawkins@gmail.com', phone: '(408) 555-0164', status: 'pending',
-    activationInfo: 'ID verification',
+    activationInfo: 'Payment method',
     audienceTags: ['Newsletter'], ageVerified: false,
     signupDate: 'April 30, 2026 at 08:11 AM', activatedDate: 'April 30, 2026 at 08:11 AM',
     salesAssociate: 'Donna Ataman', totalOrders: 0, lastVisit: 'Apr 30, 2026',
