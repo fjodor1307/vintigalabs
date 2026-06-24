@@ -36,7 +36,7 @@ import { Switch } from '@ds/shared/Switch'
 import { Textarea } from '@ds/shared/Textarea'
 import { AgeVerifiedBadge } from '@ds/shared/AgeVerifiedBadge'
 import { BlindEnthusiasmLogo } from './BlindEnthusiasmLogo'
-import { getMember, type Member } from './memberSamples'
+import { getMember, type Member, type Delivery } from './memberSamples'
 import { CLUBS_CATALOG, type ClubKey } from './clubsCatalog'
 import {
   deriveMembershipState,
@@ -105,13 +105,100 @@ const CURRENT_USER = 'Tom Cook'
 // activation/charge confirmation + the resulting history note.
 const CARD_ON_FILE = 'Mastercard **** 0092'
 
-// First installment taken when a recurring-fee club activates. Member Flex
+// First installment taken when a recurring-fee club activates. Member Choice
 // (account-credit) charges the member's chosen monthly contribution; the
-// Membership club charges its set fee. Curated / Traditional clubs charge per
+// Rewards club charges its set fee. Curated / Traditional clubs charge per
 // release, so they have no activation charge and are absent here.
 const FIRST_INSTALLMENT: Partial<Record<ClubKey, string>> = {
   'blind-enthusiasm':  '$75.00',
   'vintiga-signature': '$45.00',
+}
+
+// ─── Just-created context ────────────────────────────────────────────────────
+// Add Membership routes here with `?created=<outcome>` after enrolling a
+// customer, so the operator lands on the membership they just created with a
+// confirmation banner. The record is synthesised from the query params rather
+// than looked up — there's no backend to persist a brand-new membership.
+
+type CreatedOutcome = 'active' | 'pending' | 'declined' | 'nocard'
+
+interface CreatedContext {
+  outcome: CreatedOutcome
+  club: ClubKey
+  customer: string
+  delivery: Delivery
+  level?: string
+  fee?: string
+  card?: string
+}
+
+function parseCreatedContext(): CreatedContext | null {
+  if (typeof window === 'undefined') return null
+  const hash = window.location.hash
+  const qIdx = hash.indexOf('?')
+  if (qIdx === -1) return null
+  const sp = new URLSearchParams(hash.slice(qIdx + 1))
+  const outcome = sp.get('created') as CreatedOutcome | null
+  if (!outcome) return null
+  const club = sp.get('club') ?? ''
+  return {
+    outcome,
+    club: (club in CLUBS_CATALOG ? club : 'blind-enthusiasm') as ClubKey,
+    customer: sp.get('customer') || 'New Member',
+    delivery: sp.get('delivery') === 'shipping' ? 'shipping' : 'pickup',
+    level: sp.get('level') ?? undefined,
+    fee: sp.get('fee') ?? undefined,
+    card: sp.get('card') ?? undefined,
+  }
+}
+
+/** Build a believable membership record for a just-created enrolment. */
+function synthesizeMember(ctx: CreatedContext): Member {
+  const initials =
+    ctx.customer.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase() || 'NM'
+  const today = formatHoldDate(TODAY_ISO)
+  const active = ctx.outcome === 'active'
+  const club = CLUBS_CATALOG[ctx.club]
+  const recurring = club.kind === 'membership' || club.kind === 'account-credit'
+  return {
+    id: 'new',
+    name: ctx.customer,
+    initials,
+    club: ctx.club,
+    delivery: ctx.delivery,
+    city: '',
+    zip: '',
+    email: `${ctx.customer.split(/\s+/)[0].toLowerCase()}@email.com`,
+    phone: '—',
+    status: active ? 'active' : 'pending',
+    activationInfo: ctx.outcome === 'nocard' ? 'Payment method' : undefined,
+    // A just-activated recurring membership has collected exactly its first
+    // contribution. Next billing isn't scheduled yet in the prototype.
+    collectedToDate: active && recurring && ctx.fee ? `$${ctx.fee}` : undefined,
+    audienceTags: [],
+    ageVerified: true,
+    signupDate: today,
+    activatedDate: active ? today : '—',
+    salesAssociate: CURRENT_USER,
+    totalOrders: active ? 1 : 0,
+    lastVisit: today,
+  }
+}
+
+/** One-time confirmation banner shown after creating a membership. */
+function createdBanner(ctx: CreatedContext): { variant: 'success' | 'warning' | 'error'; title: string; subtitle: string } {
+  const card = ctx.card ?? CARD_ON_FILE
+  const amount = ctx.fee ? `$${ctx.fee}` : 'the first contribution'
+  switch (ctx.outcome) {
+    case 'active':
+      return { variant: 'success', title: 'Membership created', subtitle: `${amount} charged to ${card}. The membership is now active.` }
+    case 'declined':
+      return { variant: 'error', title: 'Card declined — membership created pending', subtitle: `We couldn't charge ${card}. Update the card below and save to charge ${amount} and activate.` }
+    case 'nocard':
+      return { variant: 'warning', title: 'Membership created pending', subtitle: 'No card on file. Add a card below and save to charge the first contribution and activate.' }
+    default:
+      return { variant: 'warning', title: 'Membership created pending', subtitle: 'Outstanding requirements — complete them and save to activate.' }
+  }
 }
 
 /** Today, formatted for a freshly-written history row. */
@@ -151,7 +238,11 @@ function getMemberFromHash(): Member {
 
 export function MembershipDetailScreen() {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
-  const member = getMemberFromHash()
+  // Arrived from Add Membership? Synthesise the just-created record from the
+  // query params and show a confirmation banner; otherwise look up a sample.
+  const created = parseCreatedContext()
+  const member = created ? synthesizeMember(created) : getMemberFromHash()
+  const [showCreatedBanner, setShowCreatedBanner] = useState(true)
 
   // Hold + history are local state so editing the hold updates the title tag,
   // the Hold card, and the history table live.
@@ -171,7 +262,13 @@ export function MembershipDetailScreen() {
   // once a staff member adds the missing info (the card) we prompt to activate.
   // `baseStatus` is local so "Activate" / "Yes, activate now" flips it live.
   const [baseStatus, setBaseStatus] = useState(member.status)
-  const [hasCard, setHasCard] = useState(member.status !== 'pending')
+  // A declined create still vaults the card (the charge failed, not the card
+  // capture), so it lands pending *with* a card — ready to retry on save.
+  const [hasCard, setHasCard] = useState(
+    created
+      ? created.outcome === 'active' || created.outcome === 'declined'
+      : member.status !== 'pending',
+  )
   const [activationModalOpen, setActivationModalOpen] = useState(false)
 
   const state = deriveMembershipState(baseStatus, hold, { cancelledDate: member.statusDate })
@@ -180,7 +277,7 @@ export function MembershipDetailScreen() {
   // pending note flips to "ready for activation" even if staff leave it pending.
   const readyForActivation = isPending && hasCard
 
-  // Recurring-fee clubs (Membership + Member Flex) take a charge the moment they
+  // Recurring-fee clubs (Rewards + Member Choice) take a charge the moment they
   // activate — that's the first installment. Curated / Traditional clubs charge
   // per release instead, so activation is just a status flip for them.
   const clubInfo = CLUBS_CATALOG[member.club]
@@ -203,12 +300,19 @@ export function MembershipDetailScreen() {
       ...h,
     ])
   }
-  // Adding the card supplies the missing info; on a pending membership that
-  // prompts the activate-now / leave-pending (and, for recurring clubs, charge)
-  // choice.
+  // Adding the card supplies the missing info but does NOT activate on its own
+  // — activation is driven by the top Save button (see `handleSave`), so staff
+  // can add a card and still leave the membership pending. A pending membership
+  // with a card now on file reads as "ready for activation".
   function addCard() {
     setHasCard(true)
-    if (baseStatus === 'pending') setActivationModalOpen(true)
+  }
+
+  // Save is the single money-moving action. On a pending membership that's now
+  // ready (card on file), saving prompts to charge + activate (or keep
+  // pending). Otherwise saving is a no-op in the prototype.
+  function handleSave() {
+    if (isPending && hasCard) setActivationModalOpen(true)
   }
 
   function commitHold(next: MembershipHold | undefined) {
@@ -259,7 +363,7 @@ export function MembershipDetailScreen() {
             title={titleNode}
             actions={
               <>
-                <Button onClick={() => {}}>Save</Button>
+                <Button onClick={handleSave}>Save</Button>
                 <PopoverMenu
                   align="right"
                   width="w-44"
@@ -293,6 +397,17 @@ export function MembershipDetailScreen() {
             rail={<ClubOverviewRail member={member} />}
           >
             <div className="flex flex-col gap-vintiga-lg">
+              {created && showCreatedBanner && (() => {
+                const b = createdBanner(created)
+                return (
+                  <AlertSoft
+                    variant={b.variant}
+                    title={b.title}
+                    subtitle={b.subtitle}
+                    onClose={() => setShowCreatedBanner(false)}
+                  />
+                )
+              })()}
               <MembershipAlerts
                 state={state}
                 hold={hold}
@@ -331,7 +446,7 @@ export function MembershipDetailScreen() {
 
       {/* Prompted after the missing info is supplied on a pending membership,
           or from the "Activate membership" menu item. Recurring-fee clubs
-          (Member Flex / Membership) confirm the first installment charge before
+          (Member Choice / Rewards) confirm the first installment charge before
           activating; per-release clubs just confirm activation. */}
       <Modal open={activationModalOpen} onClose={() => setActivationModalOpen(false)} size="sm">
         {recurring && !hasCard ? (
@@ -842,6 +957,10 @@ function ClubOverviewRail({ member }: { member: Member }) {
 
         <RailRow label="Signup Date">{member.signupDate}</RailRow>
         <RailRow label="Activated Date">{member.activatedDate}</RailRow>
+        {/* Recurring clubs (Member Choice / Rewards) bill on a cycle — surface
+            the next charge date + how much this membership has collected. */}
+        {member.nextBillingDate && <RailRow label="Next Billing Date">{member.nextBillingDate}</RailRow>}
+        {member.collectedToDate && <RailRow label="Collected to Date">{member.collectedToDate}</RailRow>}
         <RailRow label="Sales Associate">{member.salesAssociate}</RailRow>
         <RailRow label="Membership ID">#{member.id}</RailRow>
         <RailRow label="Delivery Method">{DELIVERY_LABEL[member.delivery]}</RailRow>

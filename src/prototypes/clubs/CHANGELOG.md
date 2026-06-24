@@ -6,6 +6,40 @@
 
 ---
 
+## 2026-06-24 — Fedja + Claude: Design-review follow-ups — club renames, create-time charge, save-driven activation
+
+From the Jun 24 design review (Fedja, Donna, Jim, Geoff). Six changes:
+
+**1. Club type renames.** Settled the naming, dropping "Flex"/"Tasting Credit" and deliberately avoiding "subscription" (collides with Commerce 7's bottle-subscription):
+- **Member Flex Club / Tasting Credit → Member Choice Club**
+- **Membership Club → Rewards Club**
+- **Curated Club → Curated Bottle Club**
+
+Updated everywhere user-facing: [AddClubModal.tsx](AddClubModal.tsx), [clubsCatalog.ts](clubsCatalog.ts), [clubStore.ts](clubStore.ts), [ClubsScreen.tsx](ClubsScreen.tsx), [ClubViewChargesScreen.tsx](ClubViewChargesScreen.tsx), plus customer balance source names, the sales-chat tag, and the style-guide demo. Internal `kind` keys (`account-credit` / `membership` / `curated`) are unchanged.
+
+**2. Member Choice charges on create.** Member Choice is the one club that charges the moment you create the membership ([AddMembershipScreen.tsx](AddMembershipScreen.tsx)). **Create Membership** now opens a confirmation modal:
+- **Card on file →** "Charge {card} {amount} and create this membership?" On confirm, the charge is attempted and you land on the new membership.
+- **No card →** "Create in a pending state?" — creates the membership Pending.
+
+Commerce 7 / traditional clubs are now excluded from the club picker (you can't enrol into a C7 store club through Vintiga), and every club option names its **type** in parentheses so operators know what kind a fancy club name is.
+
+**3. Create → landing states.** After create you land on the membership detail with a one-time confirmation banner ([MembershipDetailScreen.tsx](MembershipDetailScreen.tsx)):
+- charge succeeded → **Active** (success banner)
+- card declined → **Pending** with the card still on file, "update the card and save to activate" (error banner)
+- no card → **Pending**, "add a card and save to activate" (warning banner)
+
+The just-created record is synthesised from query params (real customer + club + outcome) since there's no backend. Decline is demoable via the **`****0044`** test card; no-card via customer **Marvin McKinney** (no cards on file). Cards on file now vary by selected customer.
+
+**4. Activation is driven by Save.** On a pending membership, adding a card no longer auto-prompts activation — it just makes the membership "ready". Hitting **Save** opens the charge-&-activate confirmation ("Charge {amount} & activate" / "No, leave as pending"), keeping the money-moving action on the top Save button, consistent with every other flow.
+
+**5. Add vs View stay distinct.** Confirmed the membership detail is a view (no club-type dropdown) — flagged for dev, whose first build still allowed changing the club in edit.
+
+**6. Billing visibility.** Recurring memberships (Member Choice / Rewards) now show **Next Billing Date** and **Collected to Date** in the Club Overview rail.
+
+Deferred to a later pass: club income **forecasting** and surfacing Member Choice contributions in the customer's account-balance transactions (see [NOTES.md](NOTES.md)).
+
+---
+
 ## 2026-06-24 — Fedja + Claude: First-installment charge on activation + "Member Flex Club" rename
 
 **First installment.** Activating a **recurring-fee** club (Member Flex / Membership) now takes the first payment as part of activation, so the charge is a deliberate, confirmed step rather than a silent side-effect of Save:

@@ -39,6 +39,11 @@ export interface Member {
   cancelReason?: string
   /** What's outstanding before a `pending` membership can be activated. */
   activationInfo?: string
+  /** Recurring clubs (Member Choice / Rewards) only — when the next
+   *  contribution / fee is charged. Absent for per-release & pending members. */
+  nextBillingDate?: string
+  /** Recurring clubs only — total collected through this membership to date. */
+  collectedToDate?: string
   /** Flagged for manual admin review — auto processing will skip orders. */
   flagged?: boolean
   audienceTags: string[]
@@ -87,6 +92,7 @@ export const MEMBERS: Member[] = [
     avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=128&h=128&fit=crop&crop=faces',
     club: 'blind-enthusiasm', delivery: 'pickup', city: 'Seattle, WA', zip: '98107',
     email: 'dorothyladner@gmail.com', phone: '(206) 555-0173', status: 'active', hold: { start: '2026-08-01', end: '2026-10-01' },
+    nextBillingDate: 'Jul 3, 2026', collectedToDate: '$375.00',
     audienceTags: ['Dog Owner', 'Investor'], ageVerified: true,
     signupDate: 'February 3, 2026 at 09:41 PM', activatedDate: 'February 3, 2026 at 09:41 PM',
     salesAssociate: 'Geoff Spears', totalOrders: 6, lastVisit: 'Mar 15, 2025',
@@ -115,6 +121,7 @@ export const MEMBERS: Member[] = [
     avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=128&h=128&fit=crop&crop=faces',
     club: 'vintiga-signature', delivery: 'pickup', city: 'Berkeley, CA', zip: '94704',
     email: 'albertf@gmail.com', phone: '(510) 555-0192', status: 'active', hold: { start: '2026-04-15', end: '2026-07-15' },
+    nextBillingDate: 'Jul 15, 2026', collectedToDate: '$540.00',
     audienceTags: ['Sommelier'], ageVerified: true,
     signupDate: 'June 22, 2025 at 06:45 PM', activatedDate: 'June 22, 2025 at 06:45 PM',
     salesAssociate: 'Jim Secord', totalOrders: 7, lastVisit: 'Jan 22, 2026',
@@ -146,6 +153,7 @@ export const MEMBERS: Member[] = [
     avatarUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=128&h=128&fit=crop&crop=faces',
     club: 'vintiga-signature', delivery: 'shipping', city: 'Santa Rosa, CA', zip: '95401',
     email: 'jeromebell@gmail.com', phone: '(707) 555-0145', status: 'active', hold: { start: '2026-09-15' },
+    nextBillingDate: 'Jul 8, 2026', collectedToDate: '$405.00',
     audienceTags: ['Repeat Buyer'], ageVerified: true,
     signupDate: 'October 8, 2025 at 05:00 PM', activatedDate: 'October 8, 2025 at 05:00 PM',
     salesAssociate: 'Geoff Spears', totalOrders: 9, lastVisit: 'Mar 28, 2026',

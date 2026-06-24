@@ -119,7 +119,7 @@ const SOFIA: ChatContact = {
   ordersCount: 6,
   segment: 'Member',
   city: 'Seattle, WA',
-  tags: ['Tasting Credit'],
+  tags: ['Member Choice'],
 }
 
 const ETHAN: ChatContact = {
