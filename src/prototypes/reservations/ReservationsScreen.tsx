@@ -34,6 +34,7 @@ import {
 import { Popover } from './Popover'
 import { MiniCalendar } from './MiniCalendar'
 import { GuestPanel } from './GuestPanel'
+import { HoldLocationModal, BlockTimeModal } from './ReservationModals'
 import {
   RESERVATIONS,
   STATUS_TONE,
@@ -110,6 +111,8 @@ export function ReservationsScreen() {
   const [status, setStatus] = useState<Set<ReservationStatus>>(new Set())
   // The reservation whose "Get To Know" guest panel is open (bulb action).
   const [guest, setGuest] = useState<Reservation | null>(null)
+  const [holdOpen, setHoldOpen] = useState(false)
+  const [blockOpen, setBlockOpen] = useState(false)
 
   // The sample bookings belong to DATA_DATE only — other days read empty.
   const onDataDate = sameDay(date, DATA_DATE)
@@ -235,15 +238,15 @@ export function ReservationsScreen() {
                     onClick: () => setView(v),
                   }))}
                 />
-                <Button className="h-10" leftIcon={<PlusIcon className="w-4 h-4" />} onClick={() => {}}>Add</Button>
+                <Button className="h-10" leftIcon={<PlusIcon className="w-4 h-4" />} onClick={() => { window.location.hash = '#/web/reservations/add' }}>Add</Button>
                 <DropdownButton
                   label="More"
                   width="w-60"
                   items={[
-                    { label: 'Ad Hoc Reservation', icon: <PlusIcon className="w-4 h-4" />, onClick: () => {} },
+                    { label: 'Ad Hoc Reservation', icon: <PlusIcon className="w-4 h-4" />, onClick: () => { window.location.hash = '#/web/reservations/add' } },
                     { label: 'Search From All Reservations', icon: <SearchIcon className="w-4 h-4" />, onClick: () => {} },
-                    { label: 'Hold Location', icon: <HandIcon className="w-4 h-4" />, onClick: () => {} },
-                    { label: 'Block Time', icon: <CircleXIcon className="w-4 h-4" />, onClick: () => {} },
+                    { label: 'Hold Location', icon: <HandIcon className="w-4 h-4" />, onClick: () => setHoldOpen(true) },
+                    { label: 'Block Time', icon: <CircleXIcon className="w-4 h-4" />, onClick: () => setBlockOpen(true) },
                     { label: 'Print List', icon: <FileTextIcon className="w-4 h-4" />, onClick: () => {} },
                   ]}
                 />
@@ -291,7 +294,11 @@ export function ReservationsScreen() {
               </TableHead>
               <TableBody>
                 {filtered.map((r) => (
-                  <TableRow key={r.id} className="hover:bg-vintiga-slate-50 transition-colors">
+                  <TableRow
+                    key={r.id}
+                    className="cursor-pointer hover:bg-vintiga-slate-50 transition-colors"
+                    onClick={() => { window.location.hash = '#/web/reservations/view' }}
+                  >
                     <TableCell className="font-medium text-vintiga-slate-900 whitespace-nowrap">{r.time}</TableCell>
                     <TableCell className="text-vintiga-slate-700">{r.guests}</TableCell>
                     <TableCell>
@@ -313,7 +320,7 @@ export function ReservationsScreen() {
                       <Tag variant="filled" tone={STATUS_TONE[r.status]} size="sm">{r.status}</Tag>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="inline-flex items-center justify-end gap-vintiga-sm">
+                      <div className="inline-flex items-center justify-end gap-vintiga-sm" onClick={(e) => e.stopPropagation()}>
                         <IconButton variant="outline" size="sm" icon={<SparklesIcon />} aria-label={`Get to know ${r.name}`} onClick={() => setGuest(r)} />
                         {r.status === 'Checked In' ? (
                           <span className="typo-body-sm font-medium text-vintiga-success">Checked In</span>
@@ -343,6 +350,8 @@ export function ReservationsScreen() {
       </div>
 
       {guest && <GuestPanel guest={guest} onClose={() => setGuest(null)} />}
+      <HoldLocationModal open={holdOpen} onClose={() => setHoldOpen(false)} />
+      <BlockTimeModal open={blockOpen} onClose={() => setBlockOpen(false)} />
     </div>
   )
 }

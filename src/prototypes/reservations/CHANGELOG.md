@@ -6,6 +6,16 @@
 
 ---
 
+## 2026-06-17 — Fedja + Claude: Add Reservation + Reservation View + hold/block modals
+
+Built the rest of the reservations flow from the Figma designs:
+
+- **Add Reservation page** (`#/web/reservations/add`, Figma 4783-39358/40812) — customer search/select (or walk-in) → reservation details (experience · option · date · time · guests · host · table · location · occasion · notes) with a **live Reservation Summary** rail (customer, experience, date/time, guests, location, total, guest-capacity bar, Reserve/Cancel).
+- **Reservation View page** (`#/web/reservations/view`, Figma 4781-28789) — Reservation Details + Order Items table + Order Summary in the main column, a customer card in the rail, Check In + actions menu in the header.
+- **Hold Location** (4781-19418) + **Block a Reservation Time** (4781-19163) modals, wired to the More menu.
+- New `ResControls` (Select / Stepper / TimeField / TextInput) shared by these.
+- Wiring: list **Add** → add page, **row click** → view page, **More → Hold Location / Block Time** → modals. Also `overflow-x-hidden` on the scroll areas as a horizontal-scroll guard.
+
 ## 2026-06-17 — Fedja + Claude: Guest panel + header polish
 
 - **Bulb → "Get To Know" side panel.** Each row's bulb opens a right slide-in `GuestPanel` (identity + loyalty/orders/LTV, four preference cards, Most Purchased + Notes empty states), rebuilt from the legacy panel. Added guest contact + loyalty fields to `reservationSamples`.
