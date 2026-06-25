@@ -120,6 +120,7 @@ export {
   Upload         as UploadIcon,
   PackagePlus    as PackagePlusIcon,
   ListPlus       as ListPlusIcon,
+  List           as ListIcon,
   GripVertical   as GripVerticalIcon,
   Download       as DownloadIcon,
   LogOut         as LogOutIcon,
