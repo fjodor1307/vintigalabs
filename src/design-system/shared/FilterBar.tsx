@@ -1,20 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-
-type Contributor = {
-  name: string
-  email: string
-  initials: string
-  colour: string
-}
+import { SegmentedControl } from './SegmentedControl'
 
 export type SegmentOption = { value: string; label: string }
 
 type Props = {
   query: string
   onQueryChange: (q: string) => void
-  authors: Contributor[]
-  selectedAuthors: Set<string>
-  onToggleAuthor: (email: string) => void
   tags: string[]
   selectedTags: Set<string>
   onToggleTag: (tag: string) => void
@@ -25,7 +16,7 @@ type Props = {
   onClear: () => void
 }
 
-type PopoverKey = 'author' | 'tags' | 'status' | null
+type PopoverKey = 'tags' | null
 
 function ChevronIcon() {
   return (
@@ -88,9 +79,6 @@ function FilterButton({
 export function FilterBar({
   query,
   onQueryChange,
-  authors,
-  selectedAuthors,
-  onToggleAuthor,
   tags,
   selectedTags,
   onToggleTag,
@@ -121,7 +109,6 @@ export function FilterBar({
   const resetSegment = segments[0]?.value
   const totalActive =
     (query ? 1 : 0) +
-    selectedAuthors.size +
     selectedTags.size +
     (activeSegment !== resetSegment ? 1 : 0)
 
@@ -139,49 +126,6 @@ export function FilterBar({
           className="w-full bg-vintiga-surface-element rounded-vintiga-input border border-transparent focus:border-vintiga-primary focus:outline-none pl-9 pr-3 py-2 typo-body-sm"
         />
       </div>
-
-      {authors.length > 0 && (
-        <div className="relative">
-          <FilterButton
-            label="Author"
-            count={selectedAuthors.size}
-            open={open === 'author'}
-            onClick={() => setOpen(open === 'author' ? null : 'author')}
-          />
-          {open === 'author' && (
-            <div className="absolute left-0 top-full mt-1 z-30 min-w-[220px] bg-vintiga-surface border border-vintiga-border rounded-vintiga-card shadow-vintiga-lg p-vintiga-sm flex flex-col gap-1">
-              {authors.map((a) => {
-                const active = selectedAuthors.has(a.email)
-                return (
-                  <button
-                    key={a.email}
-                    type="button"
-                    onClick={() => onToggleAuthor(a.email)}
-                    className={`flex items-center gap-2 px-2 py-1.5 rounded-vintiga-input text-left transition-colors ${
-                      active ? 'bg-vintiga-primary/10' : 'hover:bg-vintiga-surface-element'
-                    }`}
-                  >
-                    <span
-                      className="w-6 h-6 rounded-full flex items-center justify-center font-semibold text-white"
-                      style={{ backgroundColor: a.colour }}
-                    >
-                      <span className="text-[10px]">{a.initials}</span>
-                    </span>
-                    <span className="typo-body-sm font-semibold text-vintiga-foreground flex-1">
-                      {a.name}
-                    </span>
-                    {active && (
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="text-vintiga-primary">
-                        <path d="M3 8.5L6.5 12L13 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
 
       {tags.length > 0 && (
         <div className="relative">
@@ -215,26 +159,13 @@ export function FilterBar({
         </div>
       )}
 
-      <div className="inline-flex items-center p-0.5 rounded-vintiga-input border border-vintiga-border bg-vintiga-surface">
-        {segments.map((opt) => {
-          const active = activeSegment === opt.value
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onSelectSegment(opt.value)}
-              aria-pressed={active}
-              className={`px-3 py-1.5 rounded-vintiga-input typo-body-sm font-semibold transition-colors ${
-                active
-                  ? 'bg-vintiga-primary text-vintiga-primary-foreground'
-                  : 'text-vintiga-foreground-muted hover:text-vintiga-foreground'
-              }`}
-            >
-              {opt.label}
-            </button>
-          )
-        })}
-      </div>
+      <SegmentedControl
+        size="md"
+        aria-label="Category"
+        value={activeSegment}
+        onChange={onSelectSegment}
+        options={segments}
+      />
 
       {totalActive > 0 && (
         <button

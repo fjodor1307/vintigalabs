@@ -63,7 +63,7 @@ function authorsFor(slug: string): Contributor[] {
 // Prototypes are categorised by the surface they target: web → CRM (dashboard),
 // mobile → POS. The Design System is a separate tool, not a prototype.
 type Category = 'CRM' | 'POS'
-const CATEGORY_OPTIONS = ['CRM', 'POS', 'Design System'] as const
+const CATEGORY_OPTIONS = ['CRM', 'POS', 'Design System', 'Presentations'] as const
 type Segment = 'all' | (typeof CATEGORY_OPTIONS)[number]
 
 function categoryForFrame(frame: PrototypeFrame): Category {
@@ -124,20 +124,9 @@ function matchesQuery(entry: EnrichedEntry, query: string): boolean {
 }
 
 function IndexPage() {
-  const [selectedAuthors, setSelectedAuthors] = useState<Set<string>>(new Set())
   const [segment, setSegment] = useState<Segment>('all')
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
   const [query, setQuery] = useState('')
-
-  const allAuthors = useMemo<Contributor[]>(() => {
-    const byEmail = new Map<string, Contributor>()
-    for (const p of allEntries) {
-      for (const c of authorsFor(p.slug)) {
-        if (!byEmail.has(c.email)) byEmail.set(c.email, c)
-      }
-    }
-    return [...byEmail.values()].sort((a, b) => a.name.localeCompare(b.name))
-  }, [])
 
   const allTags = useMemo<string[]>(() => {
     const set = new Set<string>()
@@ -145,25 +134,22 @@ function IndexPage() {
     return [...set].sort()
   }, [])
 
-  // "Design System" is a tool, not a prototype — when it's selected the
-  // prototype grid is empty by design and only the Design System card shows.
+  // "Design System" and "Presentations" aren't prototypes — selecting them
+  // empties the prototype grid (Design System then shows only the DS card;
+  // Presentations is a placeholder for now).
   const filteredPrototypes =
-    segment === 'Design System'
+    segment === 'Design System' || segment === 'Presentations'
       ? []
       : allEntries.filter((p) => {
-          const authorMatch =
-            selectedAuthors.size === 0 ||
-            authorsFor(p.slug).some((a) => selectedAuthors.has(a.email))
           const categoryMatch = segment === 'all' || categoryForFrame(p.frame) === segment
           const tagMatch =
             selectedTags.size === 0 || p.tags.some((t) => selectedTags.has(t))
-          return authorMatch && categoryMatch && tagMatch && matchesQuery(p, query)
+          return categoryMatch && tagMatch && matchesQuery(p, query)
         })
 
   const showDesignSystem = segment === 'all' || segment === 'Design System'
 
   const hasFilters =
-    selectedAuthors.size > 0 ||
     segment !== 'all' ||
     selectedTags.size > 0 ||
     query.length > 0
@@ -178,7 +164,6 @@ function IndexPage() {
   }
 
   function clearFilters() {
-    setSelectedAuthors(new Set())
     setSegment('all')
     setSelectedTags(new Set())
     setQuery('')
@@ -213,9 +198,6 @@ function IndexPage() {
       <FilterBar
         query={query}
         onQueryChange={setQuery}
-        authors={allAuthors}
-        selectedAuthors={selectedAuthors}
-        onToggleAuthor={(email) => toggleFrom(setSelectedAuthors, email)}
         tags={allTags}
         selectedTags={selectedTags}
         onToggleTag={(tag) => toggleFrom(setSelectedTags, tag)}
