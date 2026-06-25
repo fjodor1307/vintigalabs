@@ -40,6 +40,8 @@ Two home-page tweaks:
 
 **Category tabs.** The filter now uses the DS `SegmentedControl` (white-pill style) with **All · CRM · POS · Design System · Presentations** (Presentations is a placeholder category for now). The **Author filter is removed**. `FilterBar` no longer takes author props.
 
+**Card trim.** Dropped the "Review →" text label and the contributor avatar stack from the card — the review link is now just a **→ arrow icon**. Removed the unused `AvatarStack` + contributor-data plumbing from `App.tsx`.
+
 ## 2026-06-25 — Fedja + Claude: POS components in the Design System (Mobile Patterns)
 
 Added the three POS chrome components from Figma [06. POS App › Components](https://www.figma.com/design/V8VUTuLgW2cCCUnJh2xJkN/06.-POS-App?node-id=2955-6116) to the **Design System → Mobile Patterns** group (alongside Screen Header / Screen Footer) — as reusable DS components, not a prototype:

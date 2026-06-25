@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Agentation } from 'agentation'
-import contributorsData from './generated/contributors.json'
 import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { FilterBar } from './design-system/shared/FilterBar'
-import { BackArrowIcon, DownloadIcon } from './design-system/icons/Icons'
+import { BackArrowIcon, DownloadIcon, ArrowRightIcon } from './design-system/icons/Icons'
 import {
   allRoutes,
   allEntries,
@@ -37,28 +36,6 @@ const webScreens: Record<string, React.ComponentType> = {
   ...allRoutes,
 }
 
-type Status = 'in-progress' | 'approved'
-
-type Contributor = {
-  name: string
-  email: string
-  initials: string
-  colour: string
-  commits: number
-  firstCommit: string
-  lastCommit: string
-}
-
-type GeneratedData = {
-  generatedAt: string
-  prototypes: Record<string, { status: Status; contributors: Contributor[] }>
-}
-
-const generated = contributorsData as GeneratedData
-
-function authorsFor(slug: string): Contributor[] {
-  return generated.prototypes[slug]?.contributors ?? []
-}
 
 // Prototypes are categorised by the surface they target: web → CRM (dashboard),
 // mobile → POS. The Design System is a separate tool, not a prototype.
@@ -84,31 +61,6 @@ function CategoryBadge({ category }: { category: Category }) {
       <span className="w-1.5 h-1.5 rounded-full bg-vintiga-indigo-500" aria-hidden="true" />
       CRM
     </span>
-  )
-}
-
-function AvatarStack({ contributors }: { contributors: Contributor[] }) {
-  if (contributors.length === 0) return null
-  const shown = contributors.slice(0, 3)
-  const remaining = contributors.length - shown.length
-  return (
-    <div className="flex items-center">
-      {shown.map((c, idx) => (
-        <div
-          key={c.email}
-          className={`w-6 h-6 ${idx > 0 ? '-ml-1.5' : ''} rounded-full flex items-center justify-center font-semibold text-white ring-2 ring-vintiga-surface`}
-          style={{ backgroundColor: c.colour }}
-          title={`${c.name} · ${c.commits} commit${c.commits === 1 ? '' : 's'}`}
-        >
-          <span className="text-[10px]">{c.initials}</span>
-        </div>
-      ))}
-      {remaining > 0 && (
-        <div className="w-6 h-6 -ml-1.5 rounded-full flex items-center justify-center font-semibold bg-vintiga-surface-element text-vintiga-foreground-muted ring-2 ring-vintiga-surface">
-          <span className="text-[10px]">+{remaining}</span>
-        </div>
-      )}
-    </div>
   )
 }
 
@@ -216,7 +168,6 @@ function IndexPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
           {filteredPrototypes.map((entry) => {
             const category = categoryForFrame(entry.frame)
-            const authors = authorsFor(entry.slug)
             // Derive the flow segment from the path — e.g. `#/web/subscription-v2/a/choose-plan` → `a`
             const pathParts = entry.path.split('/')
             const flowSegment = pathParts.length >= 5 ? pathParts[3] : undefined
@@ -260,16 +211,14 @@ function IndexPage() {
                       Designs ({entry.screens} screens)
                     </a>
                   </div>
-                  <div className="flex items-center gap-vintiga-sm">
-                    <a
-                      href={reviewHash}
-                      className="typo-caption font-semibold text-vintiga-foreground-muted hover:text-vintiga-primary no-underline"
-                      title="Open shareable review view"
-                    >
-                      Review →
-                    </a>
-                    <AvatarStack contributors={authors} />
-                  </div>
+                  <a
+                    href={reviewHash}
+                    aria-label="Open shareable review view"
+                    title="Open shareable review view"
+                    className="text-vintiga-foreground-muted hover:text-vintiga-primary no-underline"
+                  >
+                    <ArrowRightIcon className="w-4 h-4" />
+                  </a>
                 </div>
               </div>
             )
