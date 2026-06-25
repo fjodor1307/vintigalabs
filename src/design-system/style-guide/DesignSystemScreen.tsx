@@ -172,6 +172,7 @@ const NAV: NavGroup[] = [
           { id: 'ds-pos-tab-bar', label: 'POS Tab Bar' },
           { id: 'ds-pos-navbar', label: 'POS Navbar' },
           { id: 'ds-pos-cart', label: 'POS Cart Button' },
+          { id: 'ds-pos-product-card', label: 'POS Product Card' },
         ],
       },
       {

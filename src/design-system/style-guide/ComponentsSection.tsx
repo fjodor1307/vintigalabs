@@ -19,6 +19,7 @@ import { ScreenFooter } from '@ds/shared/ScreenFooter'
 import { PosTabBar } from '@ds/shared/PosTabBar'
 import { PosNavbar } from '@ds/shared/PosNavbar'
 import { PosCartButton } from '@ds/shared/PosCartButton'
+import { PosProductCard } from '@ds/shared/PosProductCard'
 import { Tabs } from '@base-ui/react/tabs'
 import { Progress } from '@base-ui/react/progress'
 import { Separator } from '@base-ui/react/separator'
@@ -965,6 +966,23 @@ function PosCartSection() {
   )
 }
 
+function PosProductCardSection() {
+  return (
+    <SubSection id="ds-pos-product-card" title="POS Product Card" description="Square product tile with a frosted name · price · volume panel. Tap to add to cart.">
+      <div className="border border-vintiga-border rounded-vintiga-card bg-vintiga-surface-secondary p-vintiga-lg">
+        <div className="w-44">
+          <PosProductCard
+            name="2020 Rosé"
+            price="29.00 $"
+            volume="750ml"
+            image="https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=400&h=400&fit=crop"
+          />
+        </div>
+      </div>
+    </SubSection>
+  )
+}
+
 // ── New component sections ──────────────────────────────────────────────────
 
 function AvatarsSection() {
@@ -1118,7 +1136,8 @@ function InteractiveTagShowcase() {
           pressed={selected.has(label)}
           onToggle={() => {
             const next = new Set(selected)
-            next.has(label) ? next.delete(label) : next.add(label)
+            if (next.has(label)) next.delete(label)
+            else next.add(label)
             setSelected(next)
           }}
         >
@@ -2598,6 +2617,7 @@ export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-pos-tab-bar':    PosTabBarSection,
   'ds-pos-navbar':     PosNavbarSection,
   'ds-pos-cart':       PosCartSection,
+  'ds-pos-product-card': PosProductCardSection,
   'ds-avatars':        AvatarsSection,
   'ds-tags':           TagsSection,
   'ds-kpi-card':       KpiCardsSection,
