@@ -169,6 +169,9 @@ const NAV: NavGroup[] = [
         items: [
           { id: 'ds-screen-header', label: 'Screen Header' },
           { id: 'ds-screen-footer', label: 'Screen Footer' },
+          { id: 'ds-pos-tab-bar', label: 'POS Tab Bar' },
+          { id: 'ds-pos-navbar', label: 'POS Navbar' },
+          { id: 'ds-pos-cart', label: 'POS Cart Button' },
         ],
       },
       {

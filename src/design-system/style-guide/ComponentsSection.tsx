@@ -16,6 +16,9 @@ import { Skeleton, SkeletonText, SkeletonCard } from '../components/Skeleton'
 import { ErrorState } from '../components/ErrorState'
 import { ScreenHeader } from '@ds/shared/ScreenHeader'
 import { ScreenFooter } from '@ds/shared/ScreenFooter'
+import { PosTabBar } from '@ds/shared/PosTabBar'
+import { PosNavbar } from '@ds/shared/PosNavbar'
+import { PosCartButton } from '@ds/shared/PosCartButton'
 import { Tabs } from '@base-ui/react/tabs'
 import { Progress } from '@base-ui/react/progress'
 import { Separator } from '@base-ui/react/separator'
@@ -923,6 +926,40 @@ function ScreenFooterSection() {
     <SubSection id="ds-screen-footer" title="Screen Footer" description="Mobile fixed-bottom action area.">
       <div className="border border-vintiga-border rounded-vintiga-card overflow-hidden">
         <ScreenFooter primaryLabel="Continue" />
+      </div>
+    </SubSection>
+  )
+}
+
+function PosTabBarSection() {
+  return (
+    <SubSection id="ds-pos-tab-bar" title="POS Tab Bar" description="Floating glass tab bar for the POS app. Active tab floats in a white pill with the indigo accent.">
+      <div className="border border-vintiga-border rounded-vintiga-card bg-vintiga-surface-secondary p-vintiga-lg">
+        <div className="max-w-[393px] mx-auto">
+          <PosTabBar active={0} />
+        </div>
+      </div>
+    </SubSection>
+  )
+}
+
+function PosNavbarSection() {
+  return (
+    <SubSection id="ds-pos-navbar" title="POS Navbar" description="Product search navbar with a list-view toggle.">
+      <div className="border border-vintiga-border rounded-vintiga-card overflow-hidden">
+        <div className="max-w-[393px]">
+          <PosNavbar />
+        </div>
+      </div>
+    </SubSection>
+  )
+}
+
+function PosCartSection() {
+  return (
+    <SubSection id="ds-pos-cart" title="POS Cart Button" description="Floating cart button with a red live-count badge.">
+      <div className="border border-vintiga-border rounded-vintiga-card bg-vintiga-surface-secondary p-vintiga-2xl flex justify-center">
+        <PosCartButton count={12} />
       </div>
     </SubSection>
   )
@@ -2558,6 +2595,9 @@ export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-otp-input':      OtpInputSection,
   'ds-screen-header':  ScreenHeaderSection,
   'ds-screen-footer':  ScreenFooterSection,
+  'ds-pos-tab-bar':    PosTabBarSection,
+  'ds-pos-navbar':     PosNavbarSection,
+  'ds-pos-cart':       PosCartSection,
   'ds-avatars':        AvatarsSection,
   'ds-tags':           TagsSection,
   'ds-kpi-card':       KpiCardsSection,
