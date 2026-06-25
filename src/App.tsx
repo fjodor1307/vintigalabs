@@ -5,7 +5,6 @@ import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScre
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { FilterBar } from './design-system/shared/FilterBar'
 import { BackArrowIcon, DownloadIcon } from './design-system/icons/Icons'
-import { SegmentedControl } from './design-system/shared/SegmentedControl'
 import {
   allRoutes,
   allEntries,
@@ -271,9 +270,14 @@ function IndexPage() {
                   )}
                 </a>
                 <div className="mt-vintiga-sm flex items-center justify-between gap-vintiga-sm">
-                  <a href={entry.path} className="typo-body-sm font-semibold text-vintiga-primary no-underline">
-                    Open flow ({entry.screens} screens) →
-                  </a>
+                  <div className="flex items-center gap-vintiga-md">
+                    <a href={entry.path} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">
+                      Prototype
+                    </a>
+                    <a href={`${entry.path}?view=overview`} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">
+                      Designs ({entry.screens} screens)
+                    </a>
+                  </div>
                   <div className="flex items-center gap-vintiga-sm">
                     <a
                       href={reviewHash}
@@ -362,33 +366,19 @@ function prettyScreenName(path: string, prefix: string): string {
 
 type View = 'prototype' | 'overview'
 
-// Floating Prototype/Design control. Replaces the old full-width dark top bar —
-// it sits over the prototype ("inside the card") as a compact pill at the
-// bottom so it never overlaps the prototype's own header.
-function FrameToolbar({ hashPath, view }: { hashPath: string; view: View }) {
-  const setView = (next: View) => {
-    window.location.hash = next === 'prototype' ? hashPath : `${hashPath}?view=overview`
-  }
+// The live prototype renders with no builder chrome — the Prototype / Designs
+// choice lives on the home-page card. This minimal "Prototypes" back link is
+// only used on the builder's own Designs (overview) page.
+function BackButton() {
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 bg-vintiga-surface/95 backdrop-blur border border-vintiga-border rounded-full shadow-vintiga-lg px-1.5 py-1.5">
-      <a
-        href="#/"
-        aria-label="Back to prototypes"
-        className="w-8 h-8 rounded-full flex items-center justify-center text-vintiga-foreground-muted hover:bg-vintiga-surface-element hover:text-vintiga-foreground transition-colors no-underline"
-      >
-        <BackArrowIcon className="w-4 h-4" />
-      </a>
-      <SegmentedControl<View>
-        size="sm"
-        value={view}
-        onChange={setView}
-        options={[
-          { value: 'prototype', label: 'Prototype' },
-          { value: 'overview', label: 'Design' },
-        ]}
-        aria-label="Prototype view"
-      />
-    </div>
+    <a
+      href="#/"
+      aria-label="Back to prototypes"
+      className="fixed top-4 left-4 z-50 inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-vintiga-surface border border-vintiga-border shadow-vintiga-sm typo-body-sm font-semibold text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors no-underline"
+    >
+      <BackArrowIcon className="w-4 h-4" />
+      Prototypes
+    </a>
   )
 }
 
@@ -488,24 +478,24 @@ function App() {
   }
 
   const flow = flowForPath(hashPath)
-  const canToggle = !!flow && !hashPath.startsWith('#/web/design-system')
 
   if (Screen) {
+    // Designs (overview) — a builder page, so it keeps the "Prototypes" back link.
     if (view === 'overview' && flow) {
       return (
         <>
           <OverviewGrid flow={flow} inPhoneFrame={showInPhoneFrame} />
-          <FrameToolbar hashPath={hashPath} view="overview" />
+          <BackButton />
         </>
       )
     }
+    // The live prototype renders with no builder chrome.
     if (showInPhoneFrame) {
       return (
         <div className="min-h-screen bg-vintiga-surface-secondary flex items-center justify-center py-vintiga-xl">
           <div className="w-[390px] h-[844px] rounded-[40px] shadow-vintiga-lg overflow-hidden bg-vintiga-surface flex flex-col">
             <Screen />
           </div>
-          {canToggle && <FrameToolbar hashPath={hashPath} view="prototype" />}
           {import.meta.env.DEV && <Agentation />}
         </div>
       )
@@ -515,7 +505,6 @@ function App() {
         <div className="flex-1 min-h-0">
           <Screen />
         </div>
-        {canToggle && <FrameToolbar hashPath={hashPath} view="prototype" />}
         {import.meta.env.DEV && <Agentation />}
       </div>
     )
