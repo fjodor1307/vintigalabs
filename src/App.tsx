@@ -1,10 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Agentation } from 'agentation'
-import contributorsData from './generated/contributors.json'
 import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
-import { FilterBar } from './design-system/shared/FilterBar'
-import { BackArrowIcon, DownloadIcon } from './design-system/icons/Icons'
+import { VintigaLogo } from './design-system/shared/VintigaLogo'
+import { BackArrowIcon, DownloadIcon, SearchIcon, ArrowRightIcon } from './design-system/icons/Icons'
 import {
   allRoutes,
   allEntries,
@@ -37,29 +36,6 @@ const webScreens: Record<string, React.ComponentType> = {
   ...allRoutes,
 }
 
-type Status = 'in-progress' | 'approved'
-
-type Contributor = {
-  name: string
-  email: string
-  initials: string
-  colour: string
-  commits: number
-  firstCommit: string
-  lastCommit: string
-}
-
-type GeneratedData = {
-  generatedAt: string
-  prototypes: Record<string, { status: Status; contributors: Contributor[] }>
-}
-
-const generated = contributorsData as GeneratedData
-
-function authorsFor(slug: string): Contributor[] {
-  return generated.prototypes[slug]?.contributors ?? []
-}
-
 // Prototypes are categorised by the surface they target: web → CRM (dashboard),
 // mobile → POS. The Design System is a separate tool, not a prototype.
 type Category = 'CRM' | 'POS'
@@ -87,31 +63,6 @@ function CategoryBadge({ category }: { category: Category }) {
   )
 }
 
-function AvatarStack({ contributors }: { contributors: Contributor[] }) {
-  if (contributors.length === 0) return null
-  const shown = contributors.slice(0, 3)
-  const remaining = contributors.length - shown.length
-  return (
-    <div className="flex items-center">
-      {shown.map((c, idx) => (
-        <div
-          key={c.email}
-          className={`w-6 h-6 ${idx > 0 ? '-ml-1.5' : ''} rounded-full flex items-center justify-center font-semibold text-white ring-2 ring-vintiga-surface`}
-          style={{ backgroundColor: c.colour }}
-          title={`${c.name} · ${c.commits} commit${c.commits === 1 ? '' : 's'}`}
-        >
-          <span className="text-[10px]">{c.initials}</span>
-        </div>
-      ))}
-      {remaining > 0 && (
-        <div className="w-6 h-6 -ml-1.5 rounded-full flex items-center justify-center font-semibold bg-vintiga-surface-element text-vintiga-foreground-muted ring-2 ring-vintiga-surface">
-          <span className="text-[10px]">+{remaining}</span>
-        </div>
-      )}
-    </div>
-  )
-}
-
 function matchesQuery(entry: EnrichedEntry, query: string): boolean {
   if (!query) return true
   const q = query.toLowerCase()
@@ -125,14 +76,12 @@ function matchesQuery(entry: EnrichedEntry, query: string): boolean {
 
 function IndexPage() {
   const [segment, setSegment] = useState<Segment>('all')
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
   const [query, setQuery] = useState('')
 
-  const allTags = useMemo<string[]>(() => {
-    const set = new Set<string>()
-    for (const e of allEntries) for (const t of e.tags) set.add(t)
-    return [...set].sort()
-  }, [])
+  const segments: { value: Segment; label: string }[] = [
+    { value: 'all', label: 'All' },
+    ...CATEGORY_OPTIONS.map((c) => ({ value: c as Segment, label: c })),
+  ]
 
   // "Design System" and "Presentations" aren't prototypes — selecting them
   // empties the prototype grid (Design System then shows only the DS card;
@@ -140,49 +89,64 @@ function IndexPage() {
   const filteredPrototypes =
     segment === 'Design System' || segment === 'Presentations'
       ? []
-      : allEntries.filter((p) => {
-          const categoryMatch = segment === 'all' || categoryForFrame(p.frame) === segment
-          const tagMatch =
-            selectedTags.size === 0 || p.tags.some((t) => selectedTags.has(t))
-          return categoryMatch && tagMatch && matchesQuery(p, query)
-        })
+      : allEntries.filter(
+          (p) =>
+            (segment === 'all' || categoryForFrame(p.frame) === segment) && matchesQuery(p, query),
+        )
 
   const showDesignSystem = segment === 'all' || segment === 'Design System'
-
-  const hasFilters =
-    segment !== 'all' ||
-    selectedTags.size > 0 ||
-    query.length > 0
-
-  function toggleFrom<T>(setFn: React.Dispatch<React.SetStateAction<Set<T>>>, value: T) {
-    setFn((prev) => {
-      const next = new Set(prev)
-      if (next.has(value)) next.delete(value)
-      else next.add(value)
-      return next
-    })
-  }
+  const hasFilters = segment !== 'all' || query.length > 0
 
   function clearFilters() {
     setSegment('all')
-    setSelectedTags(new Set())
     setQuery('')
   }
 
   return (
-    <div className="min-h-screen bg-vintiga-surface p-vintiga-lg sm:p-vintiga-2xl font-vintiga-body">
-      <header className="mb-vintiga-xl flex items-start justify-between gap-vintiga-md">
-        <div>
-          <h1 className="typo-display font-light text-vintiga-foreground">
-            Vintiga Prototypes
-          </h1>
-          <p className="typo-body-lg text-vintiga-foreground-muted mt-vintiga-sm">
-            Clickable prototypes for validating flows and user stories
-          </p>
+    // Own scroll container with a stable scrollbar gutter — keeps the content
+    // width constant whether or not a vertical scrollbar is showing, so nothing
+    // shifts horizontally when you switch tabs or scroll.
+    <div className="h-screen overflow-y-auto bg-vintiga-surface font-vintiga-body [scrollbar-gutter:stable]">
+      {/* Fixed, frosted-glass top navbar — mirrors the Design System header. */}
+      <header className="sticky top-0 z-30 flex items-center gap-vintiga-lg h-16 px-vintiga-lg sm:px-vintiga-2xl border-b border-vintiga-border bg-vintiga-surface/75 backdrop-blur-md">
+        <a href="#/" aria-label="Vintiga Prototypes" className="shrink-0 no-underline">
+          <VintigaLogo size={28} />
+        </a>
+
+        <nav aria-label="Categories" className="flex items-center gap-0.5 shrink-0">
+          {segments.map((s) => {
+            const active = segment === s.value
+            return (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => setSegment(s.value)}
+                aria-current={active ? 'page' : undefined}
+                className={[
+                  'px-3 py-1.5 rounded-vintiga-md typo-body-sm transition-colors',
+                  active
+                    ? 'font-semibold text-vintiga-foreground'
+                    : 'font-medium text-vintiga-foreground-muted hover:text-vintiga-foreground',
+                ].join(' ')}
+              >
+                {s.label}
+              </button>
+            )
+          })}
+        </nav>
+
+        <div className="relative flex-1 min-w-0 max-w-md ml-auto">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-vintiga-foreground-muted pointer-events-none" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search"
+            className="w-full bg-vintiga-surface-element rounded-vintiga-input border border-transparent focus:border-vintiga-primary focus:outline-none pl-9 pr-3 py-2 typo-body-sm"
+          />
         </div>
-        {/* Download repo as a ZIP — handy for dev handoff so the engineering
-            team can grab the latest main without cloning. GitHub's
-            archive URL works without auth on public repos. */}
+
+        {/* Download repo as a ZIP — handy for dev handoff. */}
         <a
           href="https://github.com/fjodor1307/vintigalabs/archive/refs/heads/main.zip"
           target="_blank"
@@ -195,20 +159,7 @@ function IndexPage() {
         </a>
       </header>
 
-      <FilterBar
-        query={query}
-        onQueryChange={setQuery}
-        tags={allTags}
-        selectedTags={selectedTags}
-        onToggleTag={(tag) => toggleFrom(setSelectedTags, tag)}
-        segments={[
-          { value: 'all', label: 'All' },
-          ...CATEGORY_OPTIONS.map((c) => ({ value: c, label: c })),
-        ]}
-        activeSegment={segment}
-        onSelectSegment={(v) => setSegment(v as Segment)}
-        onClear={clearFilters}
-      />
+      <div className="px-vintiga-lg sm:px-vintiga-2xl py-vintiga-xl">
 
       {/* Prototype grid — hidden when the Design System tab is active. */}
       {segment !== 'Design System' && (
@@ -216,7 +167,6 @@ function IndexPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
           {filteredPrototypes.map((entry) => {
             const category = categoryForFrame(entry.frame)
-            const authors = authorsFor(entry.slug)
             // Derive the flow segment from the path — e.g. `#/web/subscription-v2/a/choose-plan` → `a`
             const pathParts = entry.path.split('/')
             const flowSegment = pathParts.length >= 5 ? pathParts[3] : undefined
@@ -235,7 +185,7 @@ function IndexPage() {
                   <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">
                     {entry.name}
                   </h2>
-                  <p className="typo-body-sm text-vintiga-foreground-muted">
+                  <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-3">
                     {entry.description}
                   </p>
                   {entry.tags.length > 0 && (
@@ -260,16 +210,14 @@ function IndexPage() {
                       Designs ({entry.screens} screens)
                     </a>
                   </div>
-                  <div className="flex items-center gap-vintiga-sm">
-                    <a
-                      href={reviewHash}
-                      className="typo-caption font-semibold text-vintiga-foreground-muted hover:text-vintiga-primary no-underline"
-                      title="Open shareable review view"
-                    >
-                      Review →
-                    </a>
-                    <AvatarStack contributors={authors} />
-                  </div>
+                  <a
+                    href={reviewHash}
+                    aria-label="Open shareable review view"
+                    title="Open shareable review view"
+                    className="text-vintiga-foreground-muted hover:text-vintiga-primary no-underline"
+                  >
+                    <ArrowRightIcon className="w-4 h-4" />
+                  </a>
                 </div>
               </div>
             )
@@ -321,6 +269,7 @@ function IndexPage() {
           </div>
         </section>
       )}
+      </div>
     </div>
   )
 }
