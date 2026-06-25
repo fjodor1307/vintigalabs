@@ -7,7 +7,7 @@ type Contributor = {
   colour: string
 }
 
-export type Status = 'in-progress' | 'approved'
+export type SegmentOption = { value: string; label: string }
 
 type Props = {
   query: string
@@ -18,8 +18,10 @@ type Props = {
   tags: string[]
   selectedTags: Set<string>
   onToggleTag: (tag: string) => void
-  selectedStatuses: Set<Status>
-  onToggleStatus: (s: Status) => void
+  /** Single-select category segmented control. The first option is the "show all" reset. */
+  segments: SegmentOption[]
+  activeSegment: string
+  onSelectSegment: (value: string) => void
   onClear: () => void
 }
 
@@ -92,8 +94,9 @@ export function FilterBar({
   tags,
   selectedTags,
   onToggleTag,
-  selectedStatuses,
-  onToggleStatus,
+  segments,
+  activeSegment,
+  onSelectSegment,
   onClear,
 }: Props) {
   const [open, setOpen] = useState<PopoverKey>(null)
@@ -115,8 +118,12 @@ export function FilterBar({
     }
   }, [open])
 
+  const resetSegment = segments[0]?.value
   const totalActive =
-    (query ? 1 : 0) + selectedAuthors.size + selectedTags.size + selectedStatuses.size
+    (query ? 1 : 0) +
+    selectedAuthors.size +
+    selectedTags.size +
+    (activeSegment !== resetSegment ? 1 : 0)
 
   return (
     <div ref={rootRef} className="relative mb-vintiga-xl flex flex-wrap items-center gap-vintiga-sm">
@@ -209,30 +216,13 @@ export function FilterBar({
       )}
 
       <div className="inline-flex items-center p-0.5 rounded-vintiga-input border border-vintiga-border bg-vintiga-surface">
-        {(
-          [
-            { value: null, label: 'All' },
-            { value: 'in-progress' as Status, label: 'In progress' },
-            { value: 'approved' as Status, label: 'Approved' },
-          ]
-        ).map((opt) => {
-          const active =
-            opt.value === null
-              ? selectedStatuses.size === 0
-              : selectedStatuses.size === 1 && selectedStatuses.has(opt.value)
+        {segments.map((opt) => {
+          const active = activeSegment === opt.value
           return (
             <button
-              key={opt.label}
+              key={opt.value}
               type="button"
-              onClick={() => {
-                // three-way single-select: clicking "All" clears; the others replace the selection
-                if (opt.value === null) {
-                  for (const s of Array.from(selectedStatuses)) onToggleStatus(s)
-                } else if (!active) {
-                  for (const s of Array.from(selectedStatuses)) onToggleStatus(s)
-                  onToggleStatus(opt.value)
-                }
-              }}
+              onClick={() => onSelectSegment(opt.value)}
               aria-pressed={active}
               className={`px-3 py-1.5 rounded-vintiga-input typo-body-sm font-semibold transition-colors ${
                 active

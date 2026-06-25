@@ -13,6 +13,7 @@ import {
   configForPath,
   frameForPath,
   type EnrichedEntry,
+  type PrototypeFrame,
 } from './prototypes/_registry'
 
 function useHashRoute() {
@@ -60,23 +61,29 @@ function authorsFor(slug: string): Contributor[] {
   return generated.prototypes[slug]?.contributors ?? []
 }
 
-function resolveStatus(slug: string): Status {
-  return generated.prototypes[slug]?.status ?? 'in-progress'
+// Prototypes are categorised by the surface they target: web → CRM (dashboard),
+// mobile → POS. The Design System is a separate tool, not a prototype.
+type Category = 'CRM' | 'POS'
+const CATEGORY_OPTIONS = ['CRM', 'POS', 'Design System'] as const
+type Segment = 'all' | (typeof CATEGORY_OPTIONS)[number]
+
+function categoryForFrame(frame: PrototypeFrame): Category {
+  return frame === 'mobile' ? 'POS' : 'CRM'
 }
 
-function StatusBadge({ status }: { status: Status }) {
-  if (status === 'approved') {
+function CategoryBadge({ category }: { category: Category }) {
+  if (category === 'POS') {
     return (
-      <span className="inline-flex items-center gap-1 typo-caption font-semibold bg-vintiga-success/15 text-vintiga-success px-2 py-0.5 rounded-full">
-        <span className="w-1.5 h-1.5 rounded-full bg-vintiga-success" aria-hidden="true" />
-        Approved
+      <span className="inline-flex items-center gap-1 typo-caption font-semibold bg-vintiga-teal-100 text-vintiga-teal-700 px-2 py-0.5 rounded-full">
+        <span className="w-1.5 h-1.5 rounded-full bg-vintiga-teal-500" aria-hidden="true" />
+        POS
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center gap-1 typo-caption font-semibold bg-vintiga-warning-soft text-vintiga-amber-800 px-2 py-0.5 rounded-full">
-      <span className="w-1.5 h-1.5 rounded-full bg-vintiga-warning" aria-hidden="true" />
-      In progress
+    <span className="inline-flex items-center gap-1 typo-caption font-semibold bg-vintiga-indigo-100 text-vintiga-indigo-700 px-2 py-0.5 rounded-full">
+      <span className="w-1.5 h-1.5 rounded-full bg-vintiga-indigo-500" aria-hidden="true" />
+      CRM
     </span>
   )
 }
@@ -119,7 +126,7 @@ function matchesQuery(entry: EnrichedEntry, query: string): boolean {
 
 function IndexPage() {
   const [selectedAuthors, setSelectedAuthors] = useState<Set<string>>(new Set())
-  const [selectedStatuses, setSelectedStatuses] = useState<Set<Status>>(new Set())
+  const [segment, setSegment] = useState<Segment>('all')
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
   const [query, setQuery] = useState('')
 
@@ -139,20 +146,26 @@ function IndexPage() {
     return [...set].sort()
   }, [])
 
-  const filteredPrototypes = allEntries.filter((p) => {
-    const authorMatch =
-      selectedAuthors.size === 0 ||
-      authorsFor(p.slug).some((a) => selectedAuthors.has(a.email))
-    const statusMatch =
-      selectedStatuses.size === 0 || selectedStatuses.has(resolveStatus(p.slug))
-    const tagMatch =
-      selectedTags.size === 0 || p.tags.some((t) => selectedTags.has(t))
-    return authorMatch && statusMatch && tagMatch && matchesQuery(p, query)
-  })
+  // "Design System" is a tool, not a prototype — when it's selected the
+  // prototype grid is empty by design and only the Design System card shows.
+  const filteredPrototypes =
+    segment === 'Design System'
+      ? []
+      : allEntries.filter((p) => {
+          const authorMatch =
+            selectedAuthors.size === 0 ||
+            authorsFor(p.slug).some((a) => selectedAuthors.has(a.email))
+          const categoryMatch = segment === 'all' || categoryForFrame(p.frame) === segment
+          const tagMatch =
+            selectedTags.size === 0 || p.tags.some((t) => selectedTags.has(t))
+          return authorMatch && categoryMatch && tagMatch && matchesQuery(p, query)
+        })
+
+  const showDesignSystem = segment === 'all' || segment === 'Design System'
 
   const hasFilters =
     selectedAuthors.size > 0 ||
-    selectedStatuses.size > 0 ||
+    segment !== 'all' ||
     selectedTags.size > 0 ||
     query.length > 0
 
@@ -167,7 +180,7 @@ function IndexPage() {
 
   function clearFilters() {
     setSelectedAuthors(new Set())
-    setSelectedStatuses(new Set())
+    setSegment('all')
     setSelectedTags(new Set())
     setQuery('')
   }
@@ -207,16 +220,21 @@ function IndexPage() {
         tags={allTags}
         selectedTags={selectedTags}
         onToggleTag={(tag) => toggleFrom(setSelectedTags, tag)}
-        selectedStatuses={selectedStatuses}
-        onToggleStatus={(s) => toggleFrom(setSelectedStatuses, s)}
+        segments={[
+          { value: 'all', label: 'All' },
+          ...CATEGORY_OPTIONS.map((c) => ({ value: c, label: c })),
+        ]}
+        activeSegment={segment}
+        onSelectSegment={(v) => setSegment(v as Segment)}
         onClear={clearFilters}
       />
 
-      {/* Prototype grid */}
-      {filteredPrototypes.length > 0 ? (
+      {/* Prototype grid — hidden when the Design System tab is active. */}
+      {segment !== 'Design System' && (
+        filteredPrototypes.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
           {filteredPrototypes.map((entry) => {
-            const status = resolveStatus(entry.slug)
+            const category = categoryForFrame(entry.frame)
             const authors = authorsFor(entry.slug)
             // Derive the flow segment from the path — e.g. `#/web/subscription-v2/a/choose-plan` → `a`
             const pathParts = entry.path.split('/')
@@ -231,7 +249,7 @@ function IndexPage() {
               >
                 <a href={entry.path} className="flex flex-col gap-vintiga-sm no-underline">
                   <div>
-                    <StatusBadge status={status} />
+                    <CategoryBadge category={category} />
                   </div>
                   <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">
                     {entry.name}
@@ -290,30 +308,33 @@ function IndexPage() {
             </p>
           )}
         </div>
+      )
       )}
 
-      {/* Tools (unfiltered) */}
-      <section className="mt-vintiga-2xl">
-        <h2 className="typo-caption font-semibold text-vintiga-foreground-muted uppercase tracking-wide mb-vintiga-md">
-          Tools
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
-          <a
-            href="#/web/design-system"
-            className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-primary transition-colors no-underline"
-          >
-            <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">
-              Design System
-            </h3>
-            <p className="typo-body-sm text-vintiga-foreground-muted">
-              Tokens, typography, colours, components
-            </p>
-            <span className="typo-body-sm font-semibold text-vintiga-primary mt-vintiga-sm">
-              Open →
-            </span>
-          </a>
-        </div>
-      </section>
+      {/* Design System (its own category). */}
+      {showDesignSystem && (
+        <section className="mt-vintiga-2xl">
+          <h2 className="typo-caption font-semibold text-vintiga-foreground-muted uppercase tracking-wide mb-vintiga-md">
+            Design System
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
+            <a
+              href="#/web/design-system"
+              className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-primary transition-colors no-underline"
+            >
+              <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">
+                Design System
+              </h3>
+              <p className="typo-body-sm text-vintiga-foreground-muted">
+                Tokens, typography, colours, components
+              </p>
+              <span className="typo-body-sm font-semibold text-vintiga-primary mt-vintiga-sm">
+                Open →
+              </span>
+            </a>
+          </div>
+        </section>
+      )}
     </div>
   )
 }
@@ -339,41 +360,37 @@ function prettyScreenName(path: string, prefix: string): string {
     .join(' ')
 }
 
-type View = 'prototype' | 'overview' | 'flow'
+type View = 'prototype' | 'overview'
 
-function ViewToggle({ hashPath, view, showFlow }: { hashPath: string; view: View; showFlow: boolean }) {
+// Floating Prototype/Design control. Replaces the old full-width dark top bar —
+// it sits over the prototype ("inside the card") as a compact pill at the
+// bottom so it never overlaps the prototype's own header.
+function FrameToolbar({ hashPath, view }: { hashPath: string; view: View }) {
   const setView = (next: View) => {
-    if (next === 'prototype') window.location.hash = hashPath
-    else window.location.hash = `${hashPath}?view=${next === 'overview' ? 'overview' : 'flow'}`
+    window.location.hash = next === 'prototype' ? hashPath : `${hashPath}?view=overview`
   }
-  const options: { value: View; label: string }[] = [
-    { value: 'prototype', label: 'Prototype' },
-    { value: 'overview',  label: 'Design' },
-    ...(showFlow ? [{ value: 'flow' as const, label: 'Flow' }] : []),
-  ]
-
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-14 bg-vintiga-slate-800 px-4 flex items-center justify-between">
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 bg-vintiga-surface/95 backdrop-blur border border-vintiga-border rounded-full shadow-vintiga-lg px-1.5 py-1.5">
       <a
         href="#/"
         aria-label="Back to prototypes"
-        className="w-10 h-10 rounded-vintiga-md flex items-center justify-center text-vintiga-white hover:bg-vintiga-slate-700 transition-colors no-underline"
+        className="w-8 h-8 rounded-full flex items-center justify-center text-vintiga-foreground-muted hover:bg-vintiga-surface-element hover:text-vintiga-foreground transition-colors no-underline"
       >
-        <BackArrowIcon className="w-5 h-5" />
+        <BackArrowIcon className="w-4 h-4" />
       </a>
       <SegmentedControl<View>
         size="sm"
         value={view}
         onChange={setView}
-        options={options}
+        options={[
+          { value: 'prototype', label: 'Prototype' },
+          { value: 'overview', label: 'Design' },
+        ]}
         aria-label="Prototype view"
       />
     </div>
   )
 }
-
-// Height of the top bar — used as top padding when a prototype screen is rendered underneath.
-const VIEW_TOGGLE_HEIGHT = 56 // h-14
 
 const PHONE_W = 390
 const PHONE_H = 844
@@ -381,73 +398,12 @@ const WEB_THUMB_W = 480
 const WEB_INNER_W = 1440
 const WEB_INNER_H = 900
 
-function FlowGrid({ flow }: { flow: { prefix: string; paths: string[] }; inPhoneFrame: boolean }) {
-  const total = flow.paths.length
-  return (
-    <div
-      className="min-h-screen bg-vintiga-surface-secondary pb-vintiga-2xl px-vintiga-xl overflow-x-auto"
-      style={{ paddingTop: VIEW_TOGGLE_HEIGHT + 64 }}
-    >
-      {/* Row of nodes + arrows */}
-      <div className="flex items-center gap-0 w-max mx-auto">
-        {flow.paths.map((p, idx) => {
-          const label = prettyScreenName(p, flow.prefix)
-          return (
-            <div key={p} className="flex items-center">
-              {/* Node */}
-              <a
-                href={p}
-                aria-label={`Open ${label}`}
-                className="group flex flex-col items-center gap-2 no-underline focus-visible:outline-none"
-              >
-                {/* Step number pill */}
-                <span className="typo-caption font-semibold text-vintiga-foreground-muted">
-                  {idx + 1} / {total}
-                </span>
-
-                {/* Card */}
-                <div className="w-40 bg-vintiga-surface border border-vintiga-border rounded-vintiga-card px-vintiga-md py-vintiga-md flex flex-col items-center gap-1 shadow-vintiga-sm group-hover:border-vintiga-primary group-hover:shadow-vintiga-md transition-all">
-                  {/* Icon circle */}
-                  <div className="w-8 h-8 rounded-full bg-vintiga-surface-element flex items-center justify-center mb-1">
-                    <span className="typo-caption font-semibold text-vintiga-foreground">
-                      {idx + 1}
-                    </span>
-                  </div>
-                  <span className="typo-body-sm font-semibold text-vintiga-foreground text-center group-hover:text-vintiga-primary transition-colors">
-                    {label}
-                  </span>
-                </div>
-              </a>
-
-              {/* Arrow connector */}
-              {idx < total - 1 && (
-                <div className="w-10 flex items-center justify-center shrink-0 mt-6" aria-hidden="true">
-                  <svg width="32" height="12" viewBox="0 0 32 12" fill="none">
-                    <path
-                      d="M0 6h26M20 1l6 5-6 5"
-                      stroke="var(--color-vintiga-slate-300)"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
 function OverviewGrid({ flow, inPhoneFrame }: { flow: { prefix: string; paths: string[] }; inPhoneFrame: boolean }) {
   const webScale = WEB_THUMB_W / WEB_INNER_W
   const webThumbH = Math.round(WEB_INNER_H * webScale)
   return (
     <div
-      className="min-h-screen bg-vintiga-surface-secondary pb-vintiga-2xl px-vintiga-lg"
-      style={{ paddingTop: VIEW_TOGGLE_HEIGHT + 48 }}
+      className="min-h-screen bg-vintiga-surface-secondary pt-vintiga-2xl px-vintiga-lg pb-28"
     >
       <div className="mx-auto">
         <div className="flex flex-wrap gap-vintiga-2xl justify-start">
@@ -516,7 +472,7 @@ function App() {
   }
 
   const viewParam = params.get('view')
-  const view: View = viewParam === 'overview' ? 'overview' : viewParam === 'flow' ? 'flow' : 'prototype'
+  const view: View = viewParam === 'overview' ? 'overview' : 'prototype'
   const isThumbnail = params.get('thumbnail') === '1'
   const Screen = webScreens[hashPath]
 
@@ -533,42 +489,33 @@ function App() {
 
   const flow = flowForPath(hashPath)
   const canToggle = !!flow && !hashPath.startsWith('#/web/design-system')
-  const showFlow = !!flow && flow.paths.length > 1
 
   if (Screen) {
     if (view === 'overview' && flow) {
       return (
         <>
-          <ViewToggle hashPath={hashPath} view="overview" showFlow={showFlow} />
           <OverviewGrid flow={flow} inPhoneFrame={showInPhoneFrame} />
-        </>
-      )
-    }
-    if (view === 'flow' && flow) {
-      return (
-        <>
-          <ViewToggle hashPath={hashPath} view="flow" showFlow={showFlow} />
-          <FlowGrid flow={flow} inPhoneFrame={showInPhoneFrame} />
+          <FrameToolbar hashPath={hashPath} view="overview" />
         </>
       )
     }
     if (showInPhoneFrame) {
       return (
         <div className="min-h-screen bg-vintiga-surface-secondary flex items-center justify-center py-vintiga-xl">
-          {canToggle && <ViewToggle hashPath={hashPath} view="prototype" showFlow={showFlow} />}
           <div className="w-[390px] h-[844px] rounded-[40px] shadow-vintiga-lg overflow-hidden bg-vintiga-surface flex flex-col">
             <Screen />
           </div>
+          {canToggle && <FrameToolbar hashPath={hashPath} view="prototype" />}
           {import.meta.env.DEV && <Agentation />}
         </div>
       )
     }
     return (
       <div className="h-screen flex flex-col">
-        {canToggle && <ViewToggle hashPath={hashPath} view="prototype" showFlow={showFlow} />}
-        <div className="flex-1 min-h-0" style={canToggle ? { paddingTop: VIEW_TOGGLE_HEIGHT } : undefined}>
+        <div className="flex-1 min-h-0">
           <Screen />
         </div>
+        {canToggle && <FrameToolbar hashPath={hashPath} view="prototype" />}
         {import.meta.env.DEV && <Agentation />}
       </div>
     )
