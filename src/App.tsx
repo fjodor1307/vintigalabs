@@ -182,7 +182,7 @@ function IndexPage() {
                   <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">
                     {entry.name}
                   </h2>
-                  <p className="typo-body-sm text-vintiga-foreground-muted">
+                  <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-3">
                     {entry.description}
                   </p>
                   {entry.tags.length > 0 && (
