@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { Agentation } from 'agentation'
 import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
-import { VintigaLogo } from './design-system/shared/VintigaLogo'
-import { BackArrowIcon, DownloadIcon, SearchIcon, ArrowRightIcon } from './design-system/icons/Icons'
+import { VintigaLogo, VintigaIconNeutral } from './design-system/shared/VintigaLogo'
+import { BackArrowIcon, DownloadIcon, SearchIcon, ArrowRightIcon, SunIcon, MoonIcon } from './design-system/icons/Icons'
 import {
   allRoutes,
   allEntries,
@@ -77,6 +77,11 @@ function matchesQuery(entry: EnrichedEntry, query: string): boolean {
 function IndexPage() {
   const [segment, setSegment] = useState<Segment>('all')
   const [query, setQuery] = useState('')
+  // Hub-only dark mode (neutral palette). Persisted so it survives navigation.
+  const [dark, setDark] = useState(() => localStorage.getItem('vintiga-hub-dark') === '1')
+  useEffect(() => {
+    localStorage.setItem('vintiga-hub-dark', dark ? '1' : '0')
+  }, [dark])
 
   const segments: { value: Segment; label: string }[] = [
     { value: 'all', label: 'All' },
@@ -106,11 +111,11 @@ function IndexPage() {
     // Own scroll container with a stable scrollbar gutter — keeps the content
     // width constant whether or not a vertical scrollbar is showing, so nothing
     // shifts horizontally when you switch tabs or scroll.
-    <div className="h-screen overflow-y-auto bg-vintiga-surface font-vintiga-body [scrollbar-gutter:stable]">
+    <div className={`${dark ? 'dark ' : ''}h-screen overflow-y-auto bg-vintiga-surface font-vintiga-body [scrollbar-gutter:stable]`}>
       {/* Fixed, frosted-glass top navbar — mirrors the Design System header. */}
       <header className="sticky top-0 z-30 flex items-center gap-vintiga-lg h-16 px-vintiga-lg sm:px-vintiga-2xl border-b border-vintiga-border bg-vintiga-surface/75 backdrop-blur-md">
         <a href="#/" aria-label="Vintiga Prototypes" className="shrink-0 no-underline">
-          <VintigaLogo size={28} />
+          {dark ? <VintigaIconNeutral size={28} /> : <VintigaLogo size={28} />}
         </a>
 
         <nav aria-label="Categories" className="flex items-center gap-0.5 shrink-0">
@@ -146,6 +151,28 @@ function IndexPage() {
           />
         </div>
 
+        {/* Dark-mode switch (hub only, neutral palette). */}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={dark}
+          aria-label="Toggle dark mode"
+          onClick={() => setDark((d) => !d)}
+          className={[
+            'shrink-0 relative w-14 h-8 rounded-full transition-colors',
+            dark ? 'bg-[#404040]' : 'bg-[#e5e5e5]',
+          ].join(' ')}
+        >
+          <span
+            className={[
+              'absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-vintiga-sm flex items-center justify-center text-[#404040] transition-transform',
+              dark ? 'translate-x-6' : '',
+            ].join(' ')}
+          >
+            {dark ? <SunIcon className="w-3.5 h-3.5" /> : <MoonIcon className="w-3.5 h-3.5" />}
+          </span>
+        </button>
+
         {/* Download repo as a ZIP — handy for dev handoff. */}
         <a
           href="https://github.com/fjodor1307/vintigalabs/archive/refs/heads/main.zip"
@@ -153,7 +180,7 @@ function IndexPage() {
           rel="noreferrer"
           aria-label="Download repository as ZIP"
           title="Download repository as ZIP"
-          className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white text-vintiga-slate-600 hover:text-vintiga-slate-900 hover:border-vintiga-slate-300 transition-colors no-underline"
+          className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-vintiga-md border border-vintiga-border bg-vintiga-surface text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors no-underline"
         >
           <DownloadIcon className="w-4 h-4" />
         </a>

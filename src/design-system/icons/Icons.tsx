@@ -121,6 +121,8 @@ export {
   PackagePlus    as PackagePlusIcon,
   ListPlus       as ListPlusIcon,
   List           as ListIcon,
+  Sun            as SunIcon,
+  Moon           as MoonIcon,
   GripVertical   as GripVerticalIcon,
   Download       as DownloadIcon,
   LogOut         as LogOutIcon,
