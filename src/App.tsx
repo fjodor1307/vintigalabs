@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Agentation } from 'agentation'
 import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
-import { VintigaLogo } from './design-system/shared/VintigaLogo'
+import { VintigaLogo, VintigaIconNeutral } from './design-system/shared/VintigaLogo'
 import { BackArrowIcon, DownloadIcon, SearchIcon, ArrowRightIcon, SunIcon, MoonIcon } from './design-system/icons/Icons'
 import {
   allRoutes,
@@ -115,7 +115,7 @@ function IndexPage() {
       {/* Fixed, frosted-glass top navbar — mirrors the Design System header. */}
       <header className="sticky top-0 z-30 flex items-center gap-vintiga-lg h-16 px-vintiga-lg sm:px-vintiga-2xl border-b border-vintiga-border bg-vintiga-surface/75 backdrop-blur-md">
         <a href="#/" aria-label="Vintiga Prototypes" className="shrink-0 no-underline">
-          <VintigaLogo size={28} />
+          {dark ? <VintigaIconNeutral size={28} /> : <VintigaLogo size={28} />}
         </a>
 
         <nav aria-label="Categories" className="flex items-center gap-0.5 shrink-0">
