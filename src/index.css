@@ -21,6 +21,30 @@ body {
   min-height: 100svh;
 }
 
+/* Hub dark mode — neutral only. Scoped to elements under `.dark` (the prototype
+   hub container), so prototype screens stay light. Remaps the semantic tokens
+   to a slate palette and strips brand accents (primary / CRM-indigo / POS-teal)
+   down to neutral slate. */
+.dark {
+  --color-vintiga-foreground:         var(--color-vintiga-slate-100);
+  --color-vintiga-foreground-muted:   var(--color-vintiga-slate-400);
+  --color-vintiga-surface:            var(--color-vintiga-slate-900);
+  --color-vintiga-surface-element:    var(--color-vintiga-slate-800);
+  --color-vintiga-surface-secondary:  var(--color-vintiga-slate-800);
+  --color-vintiga-surface-muted:      var(--color-vintiga-slate-700);
+  --color-vintiga-border:             var(--color-vintiga-slate-700);
+
+  /* Neutralise accents */
+  --color-vintiga-primary:            var(--color-vintiga-slate-100);
+  --color-vintiga-primary-hover:      var(--color-vintiga-white);
+  --color-vintiga-indigo-100:         var(--color-vintiga-slate-700);
+  --color-vintiga-indigo-500:         var(--color-vintiga-slate-400);
+  --color-vintiga-indigo-700:         var(--color-vintiga-slate-200);
+  --color-vintiga-teal-100:           var(--color-vintiga-slate-700);
+  --color-vintiga-teal-500:           var(--color-vintiga-slate-400);
+  --color-vintiga-teal-700:           var(--color-vintiga-slate-200);
+}
+
 @keyframes slide-in-left {
   from { transform: translateX(-100%); }
   to { transform: translateX(0); }
