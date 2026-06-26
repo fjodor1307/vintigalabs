@@ -113,7 +113,7 @@ function IndexPage() {
     // shifts horizontally when you switch tabs or scroll.
     <div className={`${dark ? 'dark ' : ''}h-screen overflow-y-auto bg-vintiga-surface font-vintiga-body [scrollbar-gutter:stable]`}>
       {/* Fixed, frosted-glass top navbar — mirrors the Design System header. */}
-      <header className="sticky top-0 z-30 flex items-center gap-vintiga-lg h-16 px-vintiga-lg sm:px-vintiga-2xl border-b border-vintiga-border bg-vintiga-surface/75 backdrop-blur-md">
+      <header className="sticky top-0 z-30 flex items-center gap-vintiga-lg h-16 px-vintiga-lg sm:px-vintiga-2xl bg-vintiga-surface/75 backdrop-blur-md">
         <a href="#/" aria-label="Vintiga Prototypes" className="shrink-0 no-underline">
           {dark ? <VintigaIconNeutral size={28} /> : <VintigaLogo size={28} />}
         </a>
