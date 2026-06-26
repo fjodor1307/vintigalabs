@@ -160,12 +160,12 @@ function IndexPage() {
           onClick={() => setDark((d) => !d)}
           className={[
             'shrink-0 relative w-14 h-8 rounded-full transition-colors',
-            dark ? 'bg-vintiga-slate-900' : 'bg-vintiga-slate-200',
+            dark ? 'bg-[#404040]' : 'bg-[#e5e5e5]',
           ].join(' ')}
         >
           <span
             className={[
-              'absolute top-1 left-1 w-6 h-6 rounded-full bg-vintiga-white shadow-vintiga-sm flex items-center justify-center text-vintiga-slate-700 transition-transform',
+              'absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-vintiga-sm flex items-center justify-center text-[#404040] transition-transform',
               dark ? 'translate-x-6' : '',
             ].join(' ')}
           >
