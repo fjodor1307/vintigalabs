@@ -21,7 +21,7 @@ export function PosProductCard({
       type="button"
       onClick={onClick}
       aria-label={`Add ${name}`}
-      className="relative aspect-square w-full overflow-hidden rounded-vintiga-card border border-vintiga-slate-200 bg-vintiga-white text-left transition-transform active:scale-[0.98]"
+      className="relative aspect-square w-full overflow-hidden rounded-vintiga-lg border border-vintiga-slate-200 bg-vintiga-white text-left transition-transform active:scale-[0.98]"
     >
       {image && (
         <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
