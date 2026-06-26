@@ -36,6 +36,7 @@ Rebuilt the hub home page around a **sticky, frosted-glass top navbar** (mirrors
 
 - **Card footer trimmed:** dropped the "Review →" text + contributor avatars — the review link is now a bare **→ arrow icon**. (This is the change that was lost when #117 merged before it landed.)
 - Removed the dead `AvatarStack` + contributor-data plumbing and the now-unused `FilterBar` usage from `App.tsx`.
+- **Dark mode switch** in the navbar — a **neutral-only** dark theme (slate surfaces/text/borders; brand accents desaturated to slate, so CRM/POS badges and links go neutral). Scoped to the hub via a `.dark` class on the hub container, so **prototype screens stay light**. Preference persists in `localStorage`. New `SunIcon`/`MoonIcon` aliases.
 
 ## 2026-06-25 — Fedja + Claude: Home-page card links + category tabs
 
