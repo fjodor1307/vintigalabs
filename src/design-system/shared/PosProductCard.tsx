@@ -26,7 +26,7 @@ export function PosProductCard({
       {image && (
         <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
       )}
-      <div className="absolute inset-x-2 bottom-2 rounded-vintiga-md bg-white/60 backdrop-blur-md px-2 py-2 flex flex-col gap-1.5">
+      <div className="absolute inset-x-0.5 bottom-0.5 rounded-vintiga-md bg-white/60 backdrop-blur-md px-2 py-2 flex flex-col gap-1.5">
         <span className="block typo-body-sm text-vintiga-slate-900 truncate">{name}</span>
         <div className="flex items-center justify-between typo-body-sm text-vintiga-slate-900">
           <span>{price}</span>
