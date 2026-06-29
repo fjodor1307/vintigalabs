@@ -208,12 +208,12 @@ function IndexPage() {
                 className="relative bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors"
               >
                 <a href={entry.path} className="flex flex-col gap-vintiga-sm no-underline">
-                  <div className="flex items-start gap-vintiga-sm">
-                    <h2 className="flex-1 min-w-0 typo-title-subsection font-semibold text-vintiga-foreground">
-                      {entry.name}
-                    </h2>
+                  <div>
                     <CategoryBadge category={category} />
                   </div>
+                  <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">
+                    {entry.name}
+                  </h2>
                   <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-3">
                     {entry.description}
                   </p>
