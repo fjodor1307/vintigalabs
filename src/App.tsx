@@ -205,7 +205,7 @@ function IndexPage() {
             return (
               <div
                 key={entry.path}
-                className="relative bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-primary transition-colors"
+                className="relative bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors"
               >
                 <a href={entry.path} className="flex flex-col gap-vintiga-sm no-underline">
                   <div className="flex items-start gap-vintiga-sm">
@@ -283,7 +283,7 @@ function IndexPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
             <a
               href="#/web/design-system"
-              className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-primary transition-colors no-underline"
+              className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors no-underline"
             >
               <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">
                 Design System
