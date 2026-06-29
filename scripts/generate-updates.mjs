@@ -54,6 +54,12 @@ const prFrom = (s) => {
   return m ? Number(m[1]) : null
 }
 
+// Conventional-commit type (feat / fix / chore / …), or 'other'.
+const typeFrom = (s) => {
+  const m = s.match(/^(\w+)(\([^)]*\))?!?:/)
+  return m ? m[1].toLowerCase() : 'other'
+}
+
 // Strip the "(#123)" suffix and the conventional-commit "type(scope): " prefix
 // so the bullet reads like a plain accomplishment.
 const cleanLabel = (s) =>
@@ -73,7 +79,8 @@ const flush = (c) => {
   if (!c || !cleanLabel(c.subject)) return
   const pr = prFrom(c.subject)
   const label = cleanLabel(c.subject)
-  for (const area of areasFor(c.files)) items.push({ date: c.date, label, pr, area })
+  const type = typeFrom(c.subject)
+  for (const area of areasFor(c.files)) items.push({ date: c.date, label, pr, area, type })
 }
 for (const line of raw.split('\n')) {
   if (line.startsWith('@@@')) {

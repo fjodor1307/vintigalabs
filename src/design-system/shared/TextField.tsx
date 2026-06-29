@@ -32,11 +32,12 @@ export interface TextFieldProps {
 // ─── Style maps (Figma-accurate) ─────────────────────────────────────────────
 
 const WRAPPER_BASE =
-  'flex items-center gap-2 h-10 px-3 rounded-vintiga-md border transition-colors bg-vintiga-white'
+  'flex items-center gap-2 h-10 px-3 rounded-vintiga-md border transition-colors bg-vintiga-white dark:bg-vintiga-surface-element'
 
 const WRAPPER_STATE: Record<TextFieldState, string> = {
   default:
-    'border-vintiga-slate-200 hover:border-vintiga-slate-300 focus-within:border-vintiga-indigo-600 focus-within:ring-2 focus-within:ring-vintiga-indigo-100',
+    'border-vintiga-slate-200 hover:border-vintiga-slate-300 focus-within:border-vintiga-indigo-600 focus-within:ring-2 focus-within:ring-vintiga-indigo-100 ' +
+    'dark:border-transparent dark:hover:border-vintiga-surface-muted dark:focus-within:border-vintiga-primary dark:focus-within:ring-0',
   focus:
     'border-vintiga-indigo-600 ring-2 ring-vintiga-indigo-100',
   success:
@@ -56,7 +57,7 @@ const LABEL_STATE: Record<TextFieldState, string> = {
 }
 
 const ICON_COLOR: Record<TextFieldState, string> = {
-  default:     'text-vintiga-slate-400',
+  default:     'text-vintiga-slate-400 dark:text-vintiga-foreground-muted',
   focus:       'text-vintiga-slate-500',
   success:     'text-vintiga-green-600',
   destructive: 'text-vintiga-red-600',
@@ -126,7 +127,7 @@ export function TextField({
           placeholder={placeholder}
           disabled={resolvedState === 'disabled'}
           autoFocus={autoFocus}
-          className="flex-1 bg-transparent typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:text-vintiga-slate-400 min-w-0 border-none"
+          className="flex-1 bg-transparent typo-body-sm text-vintiga-slate-900 placeholder:text-vintiga-slate-400 dark:text-vintiga-foreground dark:placeholder:text-vintiga-foreground-muted focus:outline-none disabled:cursor-not-allowed disabled:text-vintiga-slate-400 min-w-0 border-none"
         />
 
         {resolvedRightIcon && (

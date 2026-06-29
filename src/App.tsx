@@ -4,7 +4,16 @@ import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScre
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { VintigaLogo, VintigaIconNeutral } from './design-system/shared/VintigaLogo'
 import { BackArrowIcon, DownloadIcon, SearchIcon, ArrowRightIcon, SunIcon, MoonIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon, HistoryIcon, XIcon, ExternalLinkIcon } from './design-system/icons/Icons'
+import { Button } from './design-system/shared/Button'
+import { IconButton } from './design-system/shared/IconButton'
+import { TextField } from './design-system/shared/TextField'
 import updatesData from './generated/updates.json'
+
+// Shared dark-mode overrides for DS outline buttons used in the hub chrome —
+// the DS components are light-only (white/slate), so retint them under `.dark`.
+const HUB_OUTLINE_DARK =
+  'dark:bg-transparent dark:border-vintiga-border dark:text-vintiga-foreground-muted ' +
+  'dark:hover:bg-vintiga-surface-element dark:hover:text-vintiga-foreground'
 import {
   allRoutes,
   allEntries,
@@ -96,23 +105,20 @@ function CardTags({ tags }: { tags: string[] }) {
   )
 }
 
-// The arrow affordance — a filled indigo square on the featured card, an
-// outlined square elsewhere. Opens the shareable review view.
+// The arrow affordance — DS IconButton: filled (solid) on the featured card,
+// outlined elsewhere. Opens the shareable review view.
 function CardArrow({ entry, featured }: { entry: EnrichedEntry; featured?: boolean }) {
   return (
-    <a
-      href={reviewHashFor(entry)}
+    <IconButton
+      variant={featured ? 'solid' : 'outline'}
+      size="lg"
+      icon={<ArrowRightIcon />}
+      onClick={() => {
+        window.location.hash = reviewHashFor(entry)
+      }}
       aria-label="Open shareable review view"
-      title="Open shareable review view"
-      className={[
-        'shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-vintiga-md transition-colors no-underline',
-        featured
-          ? 'bg-vintiga-indigo-600 text-white hover:bg-vintiga-indigo-700'
-          : 'border border-vintiga-border text-vintiga-foreground-muted hover:text-vintiga-foreground',
-      ].join(' ')}
-    >
-      <ArrowRightIcon className="w-5 h-5" />
-    </a>
+      className={featured ? '' : HUB_OUTLINE_DARK}
+    />
   )
 }
 
@@ -197,7 +203,7 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
           <ScreenThumb key={p} path={p} frame={entry.frame} height={244} />
         ))}
       </div>
-      <div className="flex items-end justify-between gap-vintiga-md">
+      <div className="flex items-center justify-between gap-vintiga-md">
         <CardTags tags={entry.tags} />
         <div className="flex items-center gap-vintiga-md shrink-0">
           <PrototypeLinks entry={entry} />
@@ -235,16 +241,17 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (v: SortK
   const current = SORT_OPTIONS.find((o) => o.key === value) ?? SORT_OPTIONS[0]
   return (
     <div className="relative">
-      <button
-        type="button"
+      <Button
+        variant="outline"
+        size="lg"
+        rightIcon={<ChevronDownIcon />}
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-vintiga-md border border-vintiga-border bg-vintiga-surface typo-body-sm font-medium text-vintiga-foreground hover:border-vintiga-surface-muted transition-colors"
+        className={HUB_OUTLINE_DARK}
       >
         {current.label}
-        <ChevronDownIcon className="w-4 h-4 text-vintiga-foreground-muted" />
-      </button>
+      </Button>
       {open && (
         <>
           <button
@@ -283,8 +290,14 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (v: SortK
 // ── Latest updates modal ───────────────────────────────────────────────────
 // A lightweight "what got done" feed for end-of-day reports. Data is generated
 // from git history at build time (scripts/generate-updates.mjs → updates.json).
-type UpdateItem = { date: string; label: string; pr: number | null; area: string }
+type UpdateItem = { date: string; label: string; pr: number | null; area: string; type: string }
 const UPDATES = updatesData as { generatedAt: string; repoUrl: string; items: UpdateItem[] }
+
+// Only surface user-facing change types in the feed — keeps it readable for
+// non-engineers (no chore/refactor/docs/test/build noise).
+const USER_FACING_TYPES = new Set(['feat', 'fix', 'perf'])
+const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s)
+const MAX_PER_AREA = 6
 
 const AREA_FALLBACK: Record<string, { name: string; category: string }> = {
   builder: { name: 'Builder', category: 'Hub' },
@@ -331,7 +344,7 @@ function LatestUpdatesModal({ onClose }: { onClose: () => void }) {
     { key: 'lastweek', label: 'Last Week' },
   ]
 
-  const rangeItems = UPDATES.items.filter((i) => inRange(i.date))
+  const rangeItems = UPDATES.items.filter((i) => inRange(i.date) && USER_FACING_TYPES.has(i.type))
   const areasInRange = Array.from(new Set(rangeItems.map((i) => i.area))).sort((a, b) =>
     areaMeta(a).name.localeCompare(areaMeta(b).name),
   )
@@ -339,6 +352,20 @@ function LatestUpdatesModal({ onClose }: { onClose: () => void }) {
   const activeArea = area !== 'all' && !areasInRange.includes(area) ? 'all' : area
   const shown = activeArea === 'all' ? rangeItems : rangeItems.filter((i) => i.area === activeArea)
   const groupAreas = activeArea === 'all' ? areasInRange : [activeArea]
+
+  // De-duplicated, capitalised, capped bullet list for one area.
+  const bulletsFor = (a: string) => {
+    const seen = new Set<string>()
+    const unique: UpdateItem[] = []
+    for (const i of rangeItems) {
+      if (i.area !== a) continue
+      const key = i.label.toLowerCase()
+      if (seen.has(key)) continue
+      seen.add(key)
+      unique.push(i)
+    }
+    return { visible: unique.slice(0, MAX_PER_AREA), extra: Math.max(0, unique.length - MAX_PER_AREA) }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-vintiga-lg">
@@ -425,21 +452,28 @@ function LatestUpdatesModal({ onClose }: { onClose: () => void }) {
           ) : (
             <div className="flex flex-col gap-vintiga-xl">
               {groupAreas.map((a) => {
-                const items = rangeItems.filter((i) => i.area === a)
-                if (items.length === 0) return null
+                const { visible, extra } = bulletsFor(a)
+                if (visible.length === 0) return null
                 const meta = areaMeta(a)
-                const latestPr = items.reduce<number | null>((max, i) => (i.pr && (!max || i.pr > max) ? i.pr : max), null)
+                const latestPr = rangeItems
+                  .filter((i) => i.area === a)
+                  .reduce<number | null>((max, i) => (i.pr && (!max || i.pr > max) ? i.pr : max), null)
                 return (
                   <section key={a}>
                     <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">
                       {meta.name} {meta.category && <span className="text-vintiga-foreground-muted">{`{${meta.category}}`}</span>}
                     </h3>
                     <ul className="mt-vintiga-sm flex flex-col gap-1.5 list-disc pl-5">
-                      {items.map((i, idx) => (
+                      {visible.map((i, idx) => (
                         <li key={`${a}-${idx}`} className="typo-body-sm text-vintiga-foreground-muted">
-                          {i.label}
+                          {capitalize(i.label)}
                         </li>
                       ))}
+                      {extra > 0 && (
+                        <li className="typo-body-sm text-vintiga-foreground-muted/70 list-none -ml-5">
+                          +{extra} more
+                        </li>
+                      )}
                     </ul>
                     {latestPr && (
                       <a
@@ -460,22 +494,20 @@ function LatestUpdatesModal({ onClose }: { onClose: () => void }) {
 
         {/* Footer */}
         <div className="mt-vintiga-lg flex items-center justify-end gap-vintiga-md">
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-10 px-4 rounded-vintiga-button border border-vintiga-border bg-vintiga-surface typo-body-sm font-semibold text-vintiga-foreground hover:border-vintiga-surface-muted transition-colors"
-          >
+          <Button variant="outline" size="xl" onClick={onClose} className={HUB_OUTLINE_DARK}>
             Close
-          </button>
-          <a
+          </Button>
+          <Button
+            as="a"
             href={`${UPDATES.repoUrl}/pulls?q=is%3Apr`}
             target="_blank"
             rel="noreferrer"
-            className="h-10 px-4 inline-flex items-center gap-1.5 rounded-vintiga-button bg-vintiga-primary text-vintiga-primary-foreground typo-body-sm font-semibold hover:bg-vintiga-primary-hover transition-colors no-underline"
+            variant="solid"
+            size="xl"
+            leftIcon={<ExternalLinkIcon />}
           >
-            <ExternalLinkIcon className="w-4 h-4" />
             Open Github
-          </a>
+          </Button>
         </div>
       </div>
     </div>
@@ -559,7 +591,7 @@ function IndexPage() {
       {/* Fixed, frosted-glass top navbar — mirrors the Design System header. */}
       <header className="sticky top-0 z-30 flex items-center gap-vintiga-lg h-16 px-vintiga-lg sm:px-vintiga-2xl bg-vintiga-surface/75 backdrop-blur-md">
         <a href="#/" aria-label="Vintiga Prototypes" className="shrink-0 no-underline">
-          {dark ? <VintigaIconNeutral size={28} /> : <VintigaLogo size={28} />}
+          {dark ? <VintigaIconNeutral size={36} /> : <VintigaLogo size={36} />}
         </a>
 
         <nav aria-label="Categories" className="flex items-center gap-0.5 shrink-0">
@@ -588,18 +620,18 @@ function IndexPage() {
           })}
         </nav>
 
-        <div className="relative flex-1 min-w-0 max-w-md ml-auto">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-vintiga-foreground-muted pointer-events-none" />
-          <input
+        <div className="flex-1 min-w-0 max-w-md ml-auto">
+          <TextField
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search"
-            className="w-full bg-vintiga-surface-element rounded-vintiga-input border border-transparent focus:border-vintiga-primary focus:outline-none pl-9 pr-3 py-2 typo-body-sm text-vintiga-foreground placeholder:text-vintiga-foreground-muted"
+            leftIcon={<SearchIcon className="w-4 h-4" />}
           />
         </div>
 
-        {/* Dark-mode switch (hub only, neutral palette). */}
+        {/* Dark-mode switch (hub only, neutral palette) — 40px tall to match the
+            search field and the icon buttons. */}
         <button
           type="button"
           role="switch"
@@ -607,42 +639,39 @@ function IndexPage() {
           aria-label="Toggle dark mode"
           onClick={() => setDark((d) => !d)}
           className={[
-            'shrink-0 relative w-[46px] h-6 rounded-full p-0.5 flex items-center transition-colors',
+            'shrink-0 relative w-[64px] h-10 rounded-full p-1 flex items-center transition-colors',
             dark ? 'bg-[#262626]' : 'bg-vintiga-slate-900',
           ].join(' ')}
         >
           <span
             className={[
-              'w-5 h-5 rounded-full bg-white shadow-vintiga-sm flex items-center justify-center text-vintiga-slate-700 transition-transform',
-              dark ? 'translate-x-0' : 'translate-x-[22px]',
+              'w-8 h-8 rounded-full bg-white shadow-vintiga-sm flex items-center justify-center text-vintiga-slate-700 transition-transform',
+              dark ? 'translate-x-0' : 'translate-x-[24px]',
             ].join(' ')}
           >
-            {dark ? <MoonIcon className="w-3 h-3" /> : <SunIcon className="w-3 h-3" />}
+            {dark ? <MoonIcon className="w-4 h-4" /> : <SunIcon className="w-4 h-4" />}
           </span>
         </button>
 
         {/* Latest updates — end-of-day summary of what shipped. */}
-        <button
-          type="button"
+        <IconButton
+          variant="outline"
+          size="xl"
+          icon={<HistoryIcon />}
           onClick={() => setUpdatesOpen(true)}
           aria-label="Latest updates"
-          title="Latest updates"
-          className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-vintiga-md border border-vintiga-border bg-vintiga-surface text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors"
-        >
-          <HistoryIcon className="w-4 h-4" />
-        </button>
+          className={`h-10 w-10 ${HUB_OUTLINE_DARK}`}
+        />
 
         {/* Download repo as a ZIP — handy for dev handoff. */}
-        <a
-          href="https://github.com/fjodor1307/vintigalabs/archive/refs/heads/main.zip"
-          target="_blank"
-          rel="noreferrer"
+        <IconButton
+          variant="outline"
+          size="xl"
+          icon={<DownloadIcon />}
+          onClick={() => window.open('https://github.com/fjodor1307/vintigalabs/archive/refs/heads/main.zip', '_blank')}
           aria-label="Download repository as ZIP"
-          title="Download repository as ZIP"
-          className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-vintiga-md border border-vintiga-border bg-vintiga-surface text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors no-underline"
-        >
-          <DownloadIcon className="w-4 h-4" />
-        </a>
+          className={`h-10 w-10 ${HUB_OUTLINE_DARK}`}
+        />
       </header>
 
       <div className="px-vintiga-lg sm:px-vintiga-2xl py-vintiga-xl">
@@ -653,15 +682,14 @@ function IndexPage() {
           <h1 className="typo-title-subsection font-semibold text-vintiga-foreground">{segmentTitle}</h1>
           <div className="flex items-center gap-vintiga-sm">
             <SortDropdown value={sort} onChange={setSort} />
-            <button
-              type="button"
+            <IconButton
+              variant="outline"
+              size="lg"
+              icon={view === 'grid' ? <LayoutListIcon /> : <Grid2x2Icon />}
               onClick={() => setView((v) => (v === 'grid' ? 'list' : 'grid'))}
               aria-label={view === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
-              title={view === 'grid' ? 'List view' : 'Grid view'}
-              className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-vintiga-md border border-vintiga-border bg-vintiga-surface text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors"
-            >
-              {view === 'grid' ? <LayoutListIcon className="w-4 h-4" /> : <Grid2x2Icon className="w-4 h-4" />}
-            </button>
+              className={HUB_OUTLINE_DARK}
+            />
           </div>
         </div>
       )}
