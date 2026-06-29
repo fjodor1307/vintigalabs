@@ -49,15 +49,13 @@ function categoryForFrame(frame: PrototypeFrame): Category {
 function CategoryBadge({ category }: { category: Category }) {
   if (category === 'POS') {
     return (
-      <span className="inline-flex items-center gap-1 typo-caption font-semibold bg-vintiga-teal-100 text-vintiga-teal-700 px-2 py-0.5 rounded-full">
-        <span className="w-1.5 h-1.5 rounded-full bg-vintiga-teal-500" aria-hidden="true" />
+      <span className="shrink-0 inline-flex items-center typo-caption font-medium bg-vintiga-indigo-100 text-vintiga-indigo-700 px-2.5 py-1 rounded-vintiga-2xl">
         POS
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center gap-1 typo-caption font-semibold bg-vintiga-indigo-100 text-vintiga-indigo-700 px-2 py-0.5 rounded-full">
-      <span className="w-1.5 h-1.5 rounded-full bg-vintiga-indigo-500" aria-hidden="true" />
+    <span className="shrink-0 inline-flex items-center typo-caption font-medium bg-vintiga-lime-100 text-vintiga-green-700 px-2.5 py-1 rounded-vintiga-2xl">
       CRM
     </span>
   )
@@ -111,7 +109,7 @@ function IndexPage() {
     // Own scroll container with a stable scrollbar gutter — keeps the content
     // width constant whether or not a vertical scrollbar is showing, so nothing
     // shifts horizontally when you switch tabs or scroll.
-    <div className={`${dark ? 'dark ' : ''}h-screen overflow-y-auto bg-vintiga-surface font-vintiga-body [scrollbar-gutter:stable]`}>
+    <div className={`${dark ? 'dark bg-[#0a0a0a] ' : 'bg-vintiga-surface '}h-screen overflow-y-auto font-vintiga-body [scrollbar-gutter:stable]`}>
       {/* Fixed, frosted-glass top navbar — mirrors the Design System header. */}
       <header className="sticky top-0 z-30 flex items-center gap-vintiga-lg h-16 px-vintiga-lg sm:px-vintiga-2xl bg-vintiga-surface/75 backdrop-blur-md">
         <a href="#/" aria-label="Vintiga Prototypes" className="shrink-0 no-underline">
@@ -125,7 +123,11 @@ function IndexPage() {
               <button
                 key={s.value}
                 type="button"
-                onClick={() => setSegment(s.value)}
+                onClick={() => {
+                  // Design System isn't a prototype category — open it directly.
+                  if (s.value === 'Design System') window.location.hash = '#/web/design-system'
+                  else setSegment(s.value)
+                }}
                 aria-current={active ? 'page' : undefined}
                 className={[
                   'px-3 py-1.5 rounded-vintiga-md typo-body-sm transition-colors',
@@ -147,7 +149,7 @@ function IndexPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search"
-            className="w-full bg-vintiga-surface-element rounded-vintiga-input border border-transparent focus:border-vintiga-primary focus:outline-none pl-9 pr-3 py-2 typo-body-sm"
+            className="w-full bg-vintiga-surface-element rounded-vintiga-input border border-transparent focus:border-vintiga-primary focus:outline-none pl-9 pr-3 py-2 typo-body-sm text-vintiga-foreground placeholder:text-vintiga-foreground-muted"
           />
         </div>
 
@@ -159,17 +161,17 @@ function IndexPage() {
           aria-label="Toggle dark mode"
           onClick={() => setDark((d) => !d)}
           className={[
-            'shrink-0 relative w-14 h-8 rounded-full transition-colors',
-            dark ? 'bg-[#404040]' : 'bg-[#e5e5e5]',
+            'shrink-0 relative w-[46px] h-6 rounded-full p-0.5 flex items-center transition-colors',
+            dark ? 'bg-[#262626]' : 'bg-vintiga-slate-900',
           ].join(' ')}
         >
           <span
             className={[
-              'absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-vintiga-sm flex items-center justify-center text-[#404040] transition-transform',
-              dark ? 'translate-x-6' : '',
+              'w-5 h-5 rounded-full bg-white shadow-vintiga-sm flex items-center justify-center text-vintiga-slate-700 transition-transform',
+              dark ? 'translate-x-0' : 'translate-x-[22px]',
             ].join(' ')}
           >
-            {dark ? <SunIcon className="w-3.5 h-3.5" /> : <MoonIcon className="w-3.5 h-3.5" />}
+            {dark ? <MoonIcon className="w-3 h-3" /> : <SunIcon className="w-3 h-3" />}
           </span>
         </button>
 
@@ -206,12 +208,12 @@ function IndexPage() {
                 className="relative bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-primary transition-colors"
               >
                 <a href={entry.path} className="flex flex-col gap-vintiga-sm no-underline">
-                  <div>
+                  <div className="flex items-start gap-vintiga-sm">
+                    <h2 className="flex-1 min-w-0 typo-title-subsection font-semibold text-vintiga-foreground">
+                      {entry.name}
+                    </h2>
                     <CategoryBadge category={category} />
                   </div>
-                  <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">
-                    {entry.name}
-                  </h2>
                   <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-3">
                     {entry.description}
                   </p>
@@ -234,7 +236,7 @@ function IndexPage() {
                       Prototype
                     </a>
                     <a href={`${entry.path}?view=overview`} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">
-                      Designs ({entry.screens} screens)
+                      Designs
                     </a>
                   </div>
                   <a
