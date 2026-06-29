@@ -82,16 +82,12 @@ function CardBadgeRow({ category, featured }: { category: Category; featured?: b
   )
 }
 
-function CardTags({ tags, variant = 'default' }: { tags: string[]; variant?: 'default' | 'indigo' }) {
+function CardTags({ tags }: { tags: string[] }) {
   if (tags.length === 0) return null
-  const tagClass =
-    variant === 'indigo'
-      ? 'bg-vintiga-indigo-100 text-vintiga-indigo-800'
-      : 'bg-vintiga-surface-element text-vintiga-foreground-muted'
   return (
     <div className="flex flex-wrap gap-1">
       {tags.slice(0, 4).map((t) => (
-        <span key={t} className={`typo-caption px-2 py-0.5 rounded-full ${tagClass}`}>
+        <span key={t} className="typo-caption px-2 py-0.5 rounded-full bg-vintiga-surface-element text-vintiga-foreground-muted">
           #{t}
         </span>
       ))}
@@ -110,7 +106,7 @@ function CardArrow({ entry, featured }: { entry: EnrichedEntry; featured?: boole
       className={[
         'shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-vintiga-md transition-colors no-underline',
         featured
-          ? 'bg-vintiga-primary text-white hover:bg-vintiga-primary-hover'
+          ? 'bg-vintiga-indigo-600 text-white hover:bg-vintiga-indigo-700'
           : 'border border-vintiga-border text-vintiga-foreground-muted hover:text-vintiga-foreground',
       ].join(' ')}
     >
@@ -138,7 +134,7 @@ function CardMeta({ entry, category, featured }: { entry: EnrichedEntry; categor
         <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">{entry.name}</h2>
         <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-3">{entry.description}</p>
         <div className="mt-vintiga-xs">
-          <CardTags tags={entry.tags} variant={featured ? 'indigo' : 'default'} />
+          <CardTags tags={entry.tags} />
         </div>
       </a>
       <div className="mt-vintiga-sm flex items-center justify-between gap-vintiga-sm">
@@ -185,7 +181,7 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
     <div
       className={[
         spanFull ? 'lg:col-span-3' : 'lg:col-span-2',
-        'bg-vintiga-indigo-50 border border-vintiga-indigo-200 rounded-vintiga-card p-vintiga-xl flex flex-col gap-5 overflow-hidden',
+        'bg-vintiga-indigo-50 dark:bg-vintiga-surface border border-vintiga-indigo-200 dark:border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-5 overflow-hidden',
       ].join(' ')}
     >
       <a href={entry.path} className="flex flex-col gap-6 no-underline">
@@ -201,7 +197,7 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
         ))}
       </div>
       <div className="flex items-end justify-between gap-vintiga-md">
-        <CardTags tags={entry.tags} variant="indigo" />
+        <CardTags tags={entry.tags} />
         <div className="flex items-center gap-vintiga-md shrink-0">
           <PrototypeLinks entry={entry} />
           <CardArrow entry={entry} featured />
@@ -215,23 +211,32 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
 function PrototypeCard({ entry, className = '' }: { entry: EnrichedEntry; className?: string }) {
   return (
     <div
-      className={`bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-md flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors ${className}`}
+      className={`bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors ${className}`}
     >
       <CardMeta entry={entry} category={categoryForFrame(entry.frame)} />
     </div>
   )
 }
 
-type SortKey = 'latest' | 'name'
-
-// "Latest" sort dropdown shown in the catalog sub-header.
-function SortDropdown({ value, onChange }: { value: SortKey; onChange: (s: SortKey) => void }) {
+// Catalog filter — "Latest" (everything, newest first) or a single tag.
+// `value` is 'latest' or a tag name (without the leading #).
+function FilterDropdown({
+  value,
+  onChange,
+  tags,
+}: {
+  value: string
+  onChange: (v: string) => void
+  tags: string[]
+}) {
   const [open, setOpen] = useState(false)
-  const options: { key: SortKey; label: string }[] = [
-    { key: 'latest', label: 'Latest' },
-    { key: 'name', label: 'Name' },
-  ]
-  const current = options.find((o) => o.key === value) ?? options[0]
+  const itemClass = (active: boolean) =>
+    [
+      'w-full text-left px-3 py-2 rounded-vintiga-input typo-body-sm transition-colors',
+      active
+        ? 'font-semibold text-vintiga-foreground bg-vintiga-surface-element'
+        : 'text-vintiga-foreground-muted hover:bg-vintiga-surface-element',
+    ].join(' ')
   return (
     <div className="relative">
       <button
@@ -241,7 +246,7 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (s: SortK
         aria-expanded={open}
         className="inline-flex items-center gap-1.5 h-9 px-3 rounded-vintiga-md border border-vintiga-border bg-vintiga-surface typo-body-sm font-medium text-vintiga-foreground hover:border-vintiga-surface-muted transition-colors"
       >
-        {current.label}
+        {value === 'latest' ? 'Latest' : `#${value}`}
         <ChevronDownIcon className="w-4 h-4 text-vintiga-foreground-muted" />
       </button>
       {open && (
@@ -253,25 +258,37 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (s: SortK
             onClick={() => setOpen(false)}
             className="fixed inset-0 z-10 cursor-default"
           />
-          <div className="absolute right-0 mt-1 z-20 min-w-[140px] rounded-vintiga-md border border-vintiga-border bg-vintiga-surface shadow-vintiga-md p-1">
-            {options.map((o) => (
-              <button
-                key={o.key}
-                type="button"
-                onClick={() => {
-                  onChange(o.key)
-                  setOpen(false)
-                }}
-                className={[
-                  'w-full text-left px-3 py-2 rounded-vintiga-input typo-body-sm transition-colors',
-                  o.key === value
-                    ? 'font-semibold text-vintiga-foreground bg-vintiga-surface-element'
-                    : 'text-vintiga-foreground-muted hover:bg-vintiga-surface-element',
-                ].join(' ')}
-              >
-                {o.label}
-              </button>
-            ))}
+          <div className="absolute right-0 mt-1 z-20 min-w-[160px] max-h-[60vh] overflow-y-auto rounded-vintiga-md border border-vintiga-border bg-vintiga-surface shadow-vintiga-md p-1">
+            <button
+              type="button"
+              onClick={() => {
+                onChange('latest')
+                setOpen(false)
+              }}
+              className={itemClass(value === 'latest')}
+            >
+              Latest
+            </button>
+            {tags.length > 0 && (
+              <>
+                <p className="px-3 pt-2 pb-1 typo-caption font-semibold uppercase tracking-wide text-vintiga-foreground-muted">
+                  Tags
+                </p>
+                {tags.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => {
+                      onChange(t)
+                      setOpen(false)
+                    }}
+                    className={itemClass(value === t)}
+                  >
+                    #{t}
+                  </button>
+                ))}
+              </>
+            )}
           </div>
         </>
       )}
@@ -305,13 +322,13 @@ function IndexPage() {
   useEffect(() => {
     localStorage.setItem('vintiga-hub-view', view)
   }, [view])
-  // Sort order for the catalog.
-  const [sort, setSort] = useState<SortKey>(
-    () => (localStorage.getItem('vintiga-hub-sort') === 'name' ? 'name' : 'latest'),
+  // Catalog filter — 'latest' (everything) or a single tag. Persisted.
+  const [filter, setFilter] = useState<string>(
+    () => localStorage.getItem('vintiga-hub-filter') || 'latest',
   )
   useEffect(() => {
-    localStorage.setItem('vintiga-hub-sort', sort)
-  }, [sort])
+    localStorage.setItem('vintiga-hub-filter', filter)
+  }, [filter])
 
   const segments: { value: Segment; label: string }[] = [
     { value: 'all', label: 'All' },
@@ -321,7 +338,7 @@ function IndexPage() {
   // "Design System" and "Presentations" aren't prototypes — selecting them
   // empties the prototype grid (Design System then shows only the DS card;
   // Presentations is a placeholder for now).
-  const filteredPrototypes =
+  const segmentPrototypes =
     segment === 'Design System' || segment === 'Presentations'
       ? []
       : allEntries.filter(
@@ -329,10 +346,18 @@ function IndexPage() {
             (segment === 'all' || categoryForFrame(p.frame) === segment) && matchesQuery(p, query),
         )
 
+  // Tags available within the current segment (powers the filter dropdown).
+  const availableTags = Array.from(
+    new Set(segmentPrototypes.flatMap((p) => p.tags)),
+  ).sort((a, b) => a.localeCompare(b))
+
+  // If the active tag isn't present in this segment, fall back to "latest".
+  const activeFilter = filter !== 'latest' && !availableTags.includes(filter) ? 'latest' : filter
+
   const sortedPrototypes =
-    sort === 'name'
-      ? [...filteredPrototypes].sort((a, b) => a.name.localeCompare(b.name))
-      : filteredPrototypes
+    activeFilter === 'latest'
+      ? segmentPrototypes
+      : segmentPrototypes.filter((p) => p.tags.includes(activeFilter))
 
   const showDesignSystem = segment === 'all' || segment === 'Design System'
   const hasFilters = segment !== 'all' || query.length > 0
@@ -433,7 +458,7 @@ function IndexPage() {
         <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-lg">
           <h1 className="typo-title-subsection font-semibold text-vintiga-foreground">{segmentTitle}</h1>
           <div className="flex items-center gap-vintiga-sm">
-            <SortDropdown value={sort} onChange={setSort} />
+            <FilterDropdown value={activeFilter} onChange={setFilter} tags={availableTags} />
             <button
               type="button"
               onClick={() => setView((v) => (v === 'grid' ? 'list' : 'grid'))}
@@ -460,9 +485,9 @@ function IndexPage() {
               <div
                 key={entry.path}
                 className={[
-                  'border rounded-vintiga-card p-vintiga-xl flex gap-vintiga-2xl transition-colors',
+                  'border rounded-vintiga-card p-vintiga-lg flex gap-vintiga-2xl transition-colors',
                   featured
-                    ? 'bg-vintiga-indigo-50 border-vintiga-indigo-100'
+                    ? 'bg-vintiga-indigo-50 dark:bg-vintiga-surface border-vintiga-indigo-100 dark:border-vintiga-border'
                     : 'bg-vintiga-surface border-vintiga-border hover:border-vintiga-surface-muted',
                 ].join(' ')}
               >
@@ -532,7 +557,7 @@ function IndexPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
             <a
               href="#/web/design-system"
-              className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors no-underline"
+              className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors no-underline"
             >
               <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">
                 Design System
