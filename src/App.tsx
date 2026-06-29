@@ -123,7 +123,11 @@ function IndexPage() {
               <button
                 key={s.value}
                 type="button"
-                onClick={() => setSegment(s.value)}
+                onClick={() => {
+                  // Design System isn't a prototype category — open it directly.
+                  if (s.value === 'Design System') window.location.hash = '#/web/design-system'
+                  else setSegment(s.value)
+                }}
                 aria-current={active ? 'page' : undefined}
                 className={[
                   'px-3 py-1.5 rounded-vintiga-md typo-body-sm transition-colors',
