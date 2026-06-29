@@ -36,9 +36,10 @@ Brought the hub catalog up to the latest Figma for both grid and list:
 
 - **Featured "Latest" card.** The first prototype is now highlighted — indigo-tinted background, a "Latest" label beside the badge, and a filled indigo arrow. In **grid view** it becomes a large card spanning two columns with a row of live screen thumbnails inside; the two next prototypes stack beside it, and the rest fall into a uniform grid. In **list view** the first row gets the same indigo treatment.
 - **Catalog sub-header.** Added a header row above the catalog: the active category title on the left, a **"Latest" sort dropdown** (Latest / Name) + the **grid/list switch** on the right. The view switch moved out of the navbar to live here.
-- **Arrow affordance** is now a square button on every card — filled indigo on the featured card, outlined elsewhere.
+- **Arrow affordance** is now a square button on every card — filled indigo on the featured card, outlined elsewhere (20px icon, per design).
 - **Toggle icons** use lucide **`grid-2x2`** and **`layout-list`**.
 - Sort preference persists in `localStorage`.
+- **Design tune-up** (matching Figma 6414-2689): featured card border → `indigo-200`, gaps 20/24/4px, medium-weight title, indigo `#tag` pills, thumbnails 244px tall; standard prototype cards drop to **16px padding**.
 
 ## 2026-06-26 — Fedja + Claude: Hub redesign — cards + dark mode (Figma 6401-2361 / 6407-936)
 
