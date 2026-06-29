@@ -3,7 +3,19 @@ import { Agentation } from 'agentation'
 import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { VintigaLogo, VintigaIconNeutral } from './design-system/shared/VintigaLogo'
-import { BackArrowIcon, DownloadIcon, SearchIcon, ArrowRightIcon, SunIcon, MoonIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon } from './design-system/icons/Icons'
+import { BackArrowIcon, DownloadIcon, SearchIcon, ArrowRightIcon, SunIcon, MoonIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon, HistoryIcon, ExternalLinkIcon } from './design-system/icons/Icons'
+import { Button } from './design-system/shared/Button'
+import { IconButton } from './design-system/shared/IconButton'
+import { TextField } from './design-system/shared/TextField'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from './design-system/shared/Modal'
+import { SegmentedControl } from './design-system/shared/SegmentedControl'
+import updatesData from './generated/updates.json'
+
+// Shared dark-mode overrides for DS outline buttons used in the hub chrome —
+// the DS components are light-only (white/slate), so retint them under `.dark`.
+const HUB_OUTLINE_DARK =
+  'dark:bg-transparent dark:border-vintiga-border dark:text-vintiga-foreground-muted ' +
+  'dark:hover:bg-vintiga-surface-element dark:hover:text-vintiga-foreground'
 import {
   allRoutes,
   allEntries,
@@ -95,23 +107,20 @@ function CardTags({ tags }: { tags: string[] }) {
   )
 }
 
-// The arrow affordance — a filled indigo square on the featured card, an
-// outlined square elsewhere. Opens the shareable review view.
+// The arrow affordance — DS IconButton: filled (solid) on the featured card,
+// outlined elsewhere. Opens the shareable review view.
 function CardArrow({ entry, featured }: { entry: EnrichedEntry; featured?: boolean }) {
   return (
-    <a
-      href={reviewHashFor(entry)}
+    <IconButton
+      variant={featured ? 'solid' : 'outline'}
+      size="lg"
+      icon={<ArrowRightIcon />}
+      onClick={() => {
+        window.location.hash = reviewHashFor(entry)
+      }}
       aria-label="Open shareable review view"
-      title="Open shareable review view"
-      className={[
-        'shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-vintiga-md transition-colors no-underline',
-        featured
-          ? 'bg-vintiga-indigo-600 text-white hover:bg-vintiga-indigo-700'
-          : 'border border-vintiga-border text-vintiga-foreground-muted hover:text-vintiga-foreground',
-      ].join(' ')}
-    >
-      <ArrowRightIcon className="w-5 h-5" />
-    </a>
+      className={featured ? '' : HUB_OUTLINE_DARK}
+    />
   )
 }
 
@@ -181,7 +190,7 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
     <div
       className={[
         spanFull ? 'lg:col-span-3' : 'lg:col-span-2',
-        'bg-vintiga-indigo-50 dark:bg-vintiga-surface border border-vintiga-indigo-200 dark:border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-5 overflow-hidden',
+        'bg-vintiga-indigo-50 dark:bg-vintiga-surface border border-vintiga-indigo-200 dark:border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-5 overflow-hidden transition-colors hover:border-vintiga-indigo-300 dark:hover:border-vintiga-surface-muted',
       ].join(' ')}
     >
       <a href={entry.path} className="flex flex-col gap-6 no-underline">
@@ -196,7 +205,7 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
           <ScreenThumb key={p} path={p} frame={entry.frame} height={244} />
         ))}
       </div>
-      <div className="flex items-end justify-between gap-vintiga-md">
+      <div className="flex items-center justify-between gap-vintiga-md">
         <CardTags tags={entry.tags} />
         <div className="flex items-center gap-vintiga-md shrink-0">
           <PrototypeLinks entry={entry} />
@@ -234,16 +243,17 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (v: SortK
   const current = SORT_OPTIONS.find((o) => o.key === value) ?? SORT_OPTIONS[0]
   return (
     <div className="relative">
-      <button
-        type="button"
+      <Button
+        variant="outline"
+        size="lg"
+        rightIcon={<ChevronDownIcon />}
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-vintiga-md border border-vintiga-border bg-vintiga-surface typo-body-sm font-medium text-vintiga-foreground hover:border-vintiga-surface-muted transition-colors"
+        className={HUB_OUTLINE_DARK}
       >
         {current.label}
-        <ChevronDownIcon className="w-4 h-4 text-vintiga-foreground-muted" />
-      </button>
+      </Button>
       {open && (
         <>
           <button
@@ -276,6 +286,203 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (v: SortK
         </>
       )}
     </div>
+  )
+}
+
+// ── Latest updates modal ───────────────────────────────────────────────────
+// A lightweight "what got done" feed for end-of-day reports. Data is generated
+// from git history at build time (scripts/generate-updates.mjs → updates.json).
+type UpdateItem = { date: string; label: string; pr: number | null; area: string; type: string }
+const UPDATES = updatesData as { generatedAt: string; repoUrl: string; items: UpdateItem[] }
+
+// Only surface user-facing change types in the feed — keeps it readable for
+// non-engineers (no chore/refactor/docs/test/build noise).
+const USER_FACING_TYPES = new Set(['feat', 'fix', 'perf'])
+const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s)
+const MAX_PER_AREA = 6
+
+const AREA_FALLBACK: Record<string, { name: string; category: string }> = {
+  builder: { name: 'Builder', category: 'Hub' },
+  'design-system': { name: 'Design System', category: 'DS' },
+}
+
+function areaMeta(area: string): { name: string; category: string } {
+  const entry = allEntries.find((e) => e.slug === area)
+  if (entry) return { name: entry.name, category: categoryForFrame(entry.frame) }
+  return AREA_FALLBACK[area] ?? { name: area, category: '' }
+}
+
+type UpdateRange = 'today' | 'week' | 'lastweek'
+
+function ymd(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+function LatestUpdatesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [range, setRange] = useState<UpdateRange>('today')
+  const [area, setArea] = useState<string>('all')
+  const [areaOpen, setAreaOpen] = useState(false)
+
+  // Date boundaries (calendar weeks, Monday-start), computed from "now".
+  const now = new Date()
+  const todayStr = ymd(now)
+  const monday = new Date(now)
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
+  const weekStart = ymd(monday)
+  const lastMon = new Date(monday)
+  lastMon.setDate(monday.getDate() - 7)
+  const lastSun = new Date(monday)
+  lastSun.setDate(monday.getDate() - 1)
+  const lastStart = ymd(lastMon)
+  const lastEnd = ymd(lastSun)
+
+  const inRange = (d: string) =>
+    range === 'today' ? d === todayStr : range === 'week' ? d >= weekStart && d <= todayStr : d >= lastStart && d <= lastEnd
+
+  const rangeOptions = [
+    { value: 'today', label: 'Today' },
+    { value: 'week', label: 'This Week' },
+    { value: 'lastweek', label: 'Last Week' },
+  ]
+
+  const rangeItems = UPDATES.items.filter((i) => inRange(i.date) && USER_FACING_TYPES.has(i.type))
+  const areasInRange = Array.from(new Set(rangeItems.map((i) => i.area))).sort((a, b) =>
+    areaMeta(a).name.localeCompare(areaMeta(b).name),
+  )
+  // Keep the selected area only while it has items in the current range.
+  const activeArea = area !== 'all' && !areasInRange.includes(area) ? 'all' : area
+  const groupAreas = activeArea === 'all' ? areasInRange : [activeArea]
+
+  // De-duplicated, capitalised, capped bullet list for one area.
+  const bulletsFor = (a: string) => {
+    const seen = new Set<string>()
+    const unique: UpdateItem[] = []
+    for (const i of rangeItems) {
+      if (i.area !== a) continue
+      const key = i.label.toLowerCase()
+      if (seen.has(key)) continue
+      seen.add(key)
+      unique.push(i)
+    }
+    return { visible: unique.slice(0, MAX_PER_AREA), extra: Math.max(0, unique.length - MAX_PER_AREA) }
+  }
+
+  const visibleAreas = groupAreas.filter((a) => bulletsFor(a).visible.length > 0)
+
+  return (
+    <Modal open={open} onClose={onClose} size="lg">
+      <ModalHeader title="Latest updates" onClose={onClose} />
+      <ModalBody className="max-h-[60vh] overflow-y-auto">
+        {/* Range tabs + area dropdown */}
+        <div className="flex items-center justify-between gap-3">
+          <SegmentedControl
+            size="sm"
+            value={range}
+            onChange={(v) => setRange(v as UpdateRange)}
+            options={rangeOptions}
+            aria-label="Time range"
+          />
+          <div className="relative shrink-0">
+            <Button
+              variant="outline"
+              size="md"
+              rightIcon={<ChevronDownIcon />}
+              onClick={() => setAreaOpen((o) => !o)}
+              aria-haspopup="listbox"
+              aria-expanded={areaOpen}
+            >
+              {activeArea === 'all' ? 'All' : areaMeta(activeArea).name}
+            </Button>
+            {areaOpen && (
+              <>
+                <button type="button" aria-hidden="true" tabIndex={-1} onClick={() => setAreaOpen(false)} className="fixed inset-0 z-10 cursor-default" />
+                <div className="absolute right-0 mt-1 z-20 min-w-[180px] max-h-[50vh] overflow-y-auto rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white shadow-vintiga-md p-1">
+                  {['all', ...areasInRange].map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => {
+                        setArea(a)
+                        setAreaOpen(false)
+                      }}
+                      className={[
+                        'w-full text-left px-3 py-2 rounded-vintiga-input typo-body-sm transition-colors',
+                        a === activeArea
+                          ? 'font-semibold text-vintiga-slate-900 bg-vintiga-slate-100'
+                          : 'text-vintiga-slate-500 hover:bg-vintiga-slate-50',
+                      ].join(' ')}
+                    >
+                      {a === 'all' ? 'All' : areaMeta(a).name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Grouped accomplishments */}
+        {visibleAreas.length === 0 ? (
+          <p className="typo-body-sm text-vintiga-slate-500 py-vintiga-xl text-center">
+            Nothing shipped in this window.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-vintiga-lg">
+            {visibleAreas.map((a) => {
+              const { visible, extra } = bulletsFor(a)
+              const meta = areaMeta(a)
+              const latestPr = rangeItems
+                .filter((i) => i.area === a)
+                .reduce<number | null>((max, i) => (i.pr && (!max || i.pr > max) ? i.pr : max), null)
+              return (
+                <section key={a}>
+                  <h3 className="typo-body font-semibold text-vintiga-slate-900">
+                    {meta.name} {meta.category && <span className="text-vintiga-slate-400">{`{${meta.category}}`}</span>}
+                  </h3>
+                  <ul className="mt-vintiga-sm flex flex-col gap-1.5 list-disc pl-5">
+                    {visible.map((i, idx) => (
+                      <li key={`${a}-${idx}`} className="typo-body-sm text-vintiga-slate-600">
+                        {capitalize(i.label)}
+                      </li>
+                    ))}
+                    {extra > 0 && (
+                      <li className="typo-body-sm text-vintiga-slate-400 list-none -ml-5">+{extra} more</li>
+                    )}
+                  </ul>
+                  {latestPr && (
+                    <a
+                      href={`${UPDATES.repoUrl}/pull/${latestPr}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-vintiga-sm inline-block typo-body-sm font-semibold text-vintiga-indigo-600 no-underline hover:underline"
+                    >
+                      Latest PR
+                    </a>
+                  )}
+                </section>
+              )
+            })}
+          </div>
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="outline" size="lg" onClick={onClose}>
+          Close
+        </Button>
+        <Button
+          as="a"
+          href={`${UPDATES.repoUrl}/pulls?q=is%3Apr`}
+          target="_blank"
+          rel="noreferrer"
+          variant="solid"
+          size="lg"
+          leftIcon={<ExternalLinkIcon />}
+        >
+          Open Github
+        </Button>
+      </ModalFooter>
+    </Modal>
   )
 }
 
@@ -313,6 +520,8 @@ function IndexPage() {
   useEffect(() => {
     localStorage.setItem('vintiga-hub-sort', sort)
   }, [sort])
+  // "Latest updates" modal (end-of-day summary).
+  const [updatesOpen, setUpdatesOpen] = useState(false)
 
   const segments: { value: Segment; label: string }[] = [
     { value: 'all', label: 'All' },
@@ -352,9 +561,9 @@ function IndexPage() {
     // shifts horizontally when you switch tabs or scroll.
     <div className={`${dark ? 'dark bg-[#0a0a0a] ' : 'bg-vintiga-surface '}h-screen overflow-y-auto font-vintiga-body [scrollbar-gutter:stable]`}>
       {/* Fixed, frosted-glass top navbar — mirrors the Design System header. */}
-      <header className="sticky top-0 z-30 flex items-center gap-vintiga-lg h-16 px-vintiga-lg sm:px-vintiga-2xl bg-vintiga-surface/75 backdrop-blur-md">
+      <header className="sticky top-0 z-30 flex items-center gap-3 h-16 px-vintiga-lg sm:px-vintiga-2xl bg-vintiga-surface/75 backdrop-blur-md">
         <a href="#/" aria-label="Vintiga Prototypes" className="shrink-0 no-underline">
-          {dark ? <VintigaIconNeutral size={28} /> : <VintigaLogo size={28} />}
+          {dark ? <VintigaIconNeutral size={36} /> : <VintigaLogo size={36} />}
         </a>
 
         <nav aria-label="Categories" className="flex items-center gap-0.5 shrink-0">
@@ -383,18 +592,18 @@ function IndexPage() {
           })}
         </nav>
 
-        <div className="relative flex-1 min-w-0 max-w-md ml-auto">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-vintiga-foreground-muted pointer-events-none" />
-          <input
+        <div className="flex-1 min-w-0 max-w-md ml-auto">
+          <TextField
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search"
-            className="w-full bg-vintiga-surface-element rounded-vintiga-input border border-transparent focus:border-vintiga-primary focus:outline-none pl-9 pr-3 py-2 typo-body-sm text-vintiga-foreground placeholder:text-vintiga-foreground-muted"
+            leftIcon={<SearchIcon className="w-4 h-4" />}
           />
         </div>
 
-        {/* Dark-mode switch (hub only, neutral palette). */}
+        {/* Dark-mode switch (hub only, neutral palette) — 40px tall to match the
+            search field and the icon buttons. */}
         <button
           type="button"
           role="switch"
@@ -402,31 +611,39 @@ function IndexPage() {
           aria-label="Toggle dark mode"
           onClick={() => setDark((d) => !d)}
           className={[
-            'shrink-0 relative w-[46px] h-6 rounded-full p-0.5 flex items-center transition-colors',
+            'shrink-0 relative w-[64px] h-10 rounded-full p-1 flex items-center transition-colors',
             dark ? 'bg-[#262626]' : 'bg-vintiga-slate-900',
           ].join(' ')}
         >
           <span
             className={[
-              'w-5 h-5 rounded-full bg-white shadow-vintiga-sm flex items-center justify-center text-vintiga-slate-700 transition-transform',
-              dark ? 'translate-x-0' : 'translate-x-[22px]',
+              'w-8 h-8 rounded-full bg-white shadow-vintiga-sm flex items-center justify-center text-vintiga-slate-700 transition-transform',
+              dark ? 'translate-x-0' : 'translate-x-[24px]',
             ].join(' ')}
           >
-            {dark ? <MoonIcon className="w-3 h-3" /> : <SunIcon className="w-3 h-3" />}
+            {dark ? <MoonIcon className="w-4 h-4" /> : <SunIcon className="w-4 h-4" />}
           </span>
         </button>
 
+        {/* Latest updates — end-of-day summary of what shipped. */}
+        <IconButton
+          variant="outline"
+          size="xl"
+          icon={<HistoryIcon />}
+          onClick={() => setUpdatesOpen(true)}
+          aria-label="Latest updates"
+          className={`h-10 w-10 ${HUB_OUTLINE_DARK}`}
+        />
+
         {/* Download repo as a ZIP — handy for dev handoff. */}
-        <a
-          href="https://github.com/fjodor1307/vintigalabs/archive/refs/heads/main.zip"
-          target="_blank"
-          rel="noreferrer"
+        <IconButton
+          variant="outline"
+          size="xl"
+          icon={<DownloadIcon />}
+          onClick={() => window.open('https://github.com/fjodor1307/vintigalabs/archive/refs/heads/main.zip', '_blank')}
           aria-label="Download repository as ZIP"
-          title="Download repository as ZIP"
-          className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-vintiga-md border border-vintiga-border bg-vintiga-surface text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors no-underline"
-        >
-          <DownloadIcon className="w-4 h-4" />
-        </a>
+          className={`h-10 w-10 ${HUB_OUTLINE_DARK}`}
+        />
       </header>
 
       <div className="px-vintiga-lg sm:px-vintiga-2xl py-vintiga-xl">
@@ -435,17 +652,16 @@ function IndexPage() {
       {segment !== 'Design System' && (
         <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-lg">
           <h1 className="typo-title-subsection font-semibold text-vintiga-foreground">{segmentTitle}</h1>
-          <div className="flex items-center gap-vintiga-sm">
+          <div className="flex items-center gap-3">
             <SortDropdown value={sort} onChange={setSort} />
-            <button
-              type="button"
+            <IconButton
+              variant="outline"
+              size="lg"
+              icon={view === 'grid' ? <LayoutListIcon /> : <Grid2x2Icon />}
               onClick={() => setView((v) => (v === 'grid' ? 'list' : 'grid'))}
               aria-label={view === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
-              title={view === 'grid' ? 'List view' : 'Grid view'}
-              className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-vintiga-md border border-vintiga-border bg-vintiga-surface text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors"
-            >
-              {view === 'grid' ? <LayoutListIcon className="w-4 h-4" /> : <Grid2x2Icon className="w-4 h-4" />}
-            </button>
+              className={HUB_OUTLINE_DARK}
+            />
           </div>
         </div>
       )}
@@ -465,7 +681,7 @@ function IndexPage() {
                 className={[
                   'border rounded-vintiga-card p-vintiga-lg flex gap-vintiga-2xl transition-colors',
                   featured
-                    ? 'bg-vintiga-indigo-50 dark:bg-vintiga-surface border-vintiga-indigo-100 dark:border-vintiga-border'
+                    ? 'bg-vintiga-indigo-50 dark:bg-vintiga-surface border-vintiga-indigo-100 dark:border-vintiga-border hover:border-vintiga-indigo-300 dark:hover:border-vintiga-surface-muted'
                     : 'bg-vintiga-surface border-vintiga-border hover:border-vintiga-surface-muted',
                 ].join(' ')}
               >
@@ -551,6 +767,8 @@ function IndexPage() {
         </section>
       )}
       </div>
+
+      <LatestUpdatesModal open={updatesOpen} onClose={() => setUpdatesOpen(false)} />
     </div>
   )
 }

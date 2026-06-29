@@ -124,6 +124,7 @@ export {
   LayoutGrid     as LayoutGridIcon,
   LayoutList     as LayoutListIcon,
   Grid2x2        as Grid2x2Icon,
+  History        as HistoryIcon,
   Sun            as SunIcon,
   Moon           as MoonIcon,
   GripVertical   as GripVerticalIcon,
