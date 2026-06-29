@@ -82,16 +82,12 @@ function CardBadgeRow({ category, featured }: { category: Category; featured?: b
   )
 }
 
-function CardTags({ tags, variant = 'default' }: { tags: string[]; variant?: 'default' | 'indigo' }) {
+function CardTags({ tags }: { tags: string[] }) {
   if (tags.length === 0) return null
-  const tagClass =
-    variant === 'indigo'
-      ? 'bg-vintiga-indigo-100 text-vintiga-indigo-800'
-      : 'bg-vintiga-surface-element text-vintiga-foreground-muted'
   return (
     <div className="flex flex-wrap gap-1">
       {tags.slice(0, 4).map((t) => (
-        <span key={t} className={`typo-caption px-2 py-0.5 rounded-full ${tagClass}`}>
+        <span key={t} className="typo-caption px-2 py-0.5 rounded-full bg-vintiga-surface-element text-vintiga-foreground-muted">
           #{t}
         </span>
       ))}
@@ -138,7 +134,7 @@ function CardMeta({ entry, category, featured }: { entry: EnrichedEntry; categor
         <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">{entry.name}</h2>
         <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-3">{entry.description}</p>
         <div className="mt-vintiga-xs">
-          <CardTags tags={entry.tags} variant={featured ? 'indigo' : 'default'} />
+          <CardTags tags={entry.tags} />
         </div>
       </a>
       <div className="mt-vintiga-sm flex items-center justify-between gap-vintiga-sm">
@@ -201,7 +197,7 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
         ))}
       </div>
       <div className="flex items-end justify-between gap-vintiga-md">
-        <CardTags tags={entry.tags} variant="indigo" />
+        <CardTags tags={entry.tags} />
         <div className="flex items-center gap-vintiga-md shrink-0">
           <PrototypeLinks entry={entry} />
           <CardArrow entry={entry} featured />
