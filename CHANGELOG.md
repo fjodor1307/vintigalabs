@@ -36,7 +36,7 @@ Polished the hub to use the design-system components consistently:
 
 - **Logo** bumped to **36×36px**.
 - **Navbar controls use DS components at a uniform 40px height** — search is now the DS `TextField`, and the dark toggle, Latest-updates, and download are all 40px (download/Latest-updates are DS `IconButton`s). Sub-header sort + grid/list switch use the DS `Button` / `IconButton`.
-- **Card arrow** is now a DS `IconButton` (solid on the featured card, outline elsewhere); the footer (tags · Prototype · Designs · arrow) is center-aligned in one line.
+- **Card footer links:** **Prototype · Designs · Review**, with the **arrow** (DS `IconButton`, solid on the featured card, outline elsewhere) opening the **live prototype**. Center-aligned in one line.
 - **DS `TextField` gained dark-mode support** (only active under the hub's `.dark`, so prototypes are unaffected).
 - **Latest updates feed is now PM/CEO-friendly:** only user-facing changes (features / fixes), capitalised, de-duplicated, and capped at 6 per area with a "+N more". Modal buttons use DS `Button`.
 

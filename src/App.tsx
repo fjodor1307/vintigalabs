@@ -108,7 +108,7 @@ function CardTags({ tags }: { tags: string[] }) {
 }
 
 // The arrow affordance — DS IconButton: filled (solid) on the featured card,
-// outlined elsewhere. Opens the shareable review view.
+// outlined elsewhere. Opens the live prototype.
 function CardArrow({ entry, featured }: { entry: EnrichedEntry; featured?: boolean }) {
   return (
     <IconButton
@@ -116,9 +116,9 @@ function CardArrow({ entry, featured }: { entry: EnrichedEntry; featured?: boole
       size="lg"
       icon={<ArrowRightIcon />}
       onClick={() => {
-        window.location.hash = reviewHashFor(entry)
+        window.location.hash = entry.path
       }}
-      aria-label="Open shareable review view"
+      aria-label="Open prototype"
       className={featured ? '' : HUB_OUTLINE_DARK}
     />
   )
@@ -129,6 +129,7 @@ function PrototypeLinks({ entry }: { entry: EnrichedEntry }) {
     <div className="flex items-center gap-vintiga-md">
       <a href={entry.path} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Prototype</a>
       <a href={`${entry.path}?view=overview`} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Designs</a>
+      <a href={reviewHashFor(entry)} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Review</a>
     </div>
   )
 }
