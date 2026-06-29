@@ -68,10 +68,18 @@ const cleanLabel = (s) =>
     .replace(/^\w+(\([^)]*\))?!?:\s*/, '')
     .trim()
 
-const raw = execSync(
-  `git log --since="${SINCE}" --no-merges --date=short --name-only --pretty=format:"@@@%h|%ad|%s"`,
-  { cwd: repoRoot, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 },
-)
+// Git history may be unavailable in some CI/build environments (shallow or
+// git-less checkouts). Fail soft to an empty feed so the build never breaks —
+// same defensive posture as generate-contributors.mjs.
+let raw = ''
+try {
+  raw = execSync(
+    `git log --since="${SINCE}" --no-merges --date=short --name-only --pretty=format:"@@@%h|%ad|%s"`,
+    { cwd: repoRoot, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 },
+  )
+} catch (err) {
+  console.warn(`generate-updates: git log unavailable, writing empty feed (${err.message})`)
+}
 
 const items = []
 let cur = null
