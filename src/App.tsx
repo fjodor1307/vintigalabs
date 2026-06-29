@@ -147,7 +147,7 @@ function CardMeta({ entry, category, featured }: { entry: EnrichedEntry; categor
           <CardTags tags={entry.tags} />
         </div>
       </a>
-      <div className="mt-vintiga-sm flex items-center justify-between gap-vintiga-sm">
+      <div className="mt-auto pt-vintiga-md flex items-center justify-between gap-vintiga-sm">
         <PrototypeLinks entry={entry} />
         <CardArrow entry={entry} featured={featured} />
       </div>
@@ -206,7 +206,7 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
           <ScreenThumb key={p} path={p} frame={entry.frame} height={244} />
         ))}
       </div>
-      <div className="flex items-center justify-between gap-vintiga-md">
+      <div className="mt-auto pt-vintiga-md flex items-center justify-between gap-vintiga-md">
         <CardTags tags={entry.tags} />
         <div className="flex items-center gap-vintiga-md shrink-0">
           <PrototypeLinks entry={entry} />
