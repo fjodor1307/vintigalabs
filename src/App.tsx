@@ -3,10 +3,12 @@ import { Agentation } from 'agentation'
 import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { VintigaLogo, VintigaIconNeutral } from './design-system/shared/VintigaLogo'
-import { BackArrowIcon, DownloadIcon, SearchIcon, ArrowRightIcon, SunIcon, MoonIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon, HistoryIcon, XIcon, ExternalLinkIcon } from './design-system/icons/Icons'
+import { BackArrowIcon, DownloadIcon, SearchIcon, ArrowRightIcon, SunIcon, MoonIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon, HistoryIcon, ExternalLinkIcon } from './design-system/icons/Icons'
 import { Button } from './design-system/shared/Button'
 import { IconButton } from './design-system/shared/IconButton'
 import { TextField } from './design-system/shared/TextField'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from './design-system/shared/Modal'
+import { SegmentedControl } from './design-system/shared/SegmentedControl'
 import updatesData from './generated/updates.json'
 
 // Shared dark-mode overrides for DS outline buttons used in the hub chrome —
@@ -188,7 +190,7 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
     <div
       className={[
         spanFull ? 'lg:col-span-3' : 'lg:col-span-2',
-        'bg-vintiga-indigo-50 dark:bg-vintiga-surface border border-vintiga-indigo-200 dark:border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-5 overflow-hidden',
+        'bg-vintiga-indigo-50 dark:bg-vintiga-surface border border-vintiga-indigo-200 dark:border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-5 overflow-hidden transition-colors hover:border-vintiga-indigo-300 dark:hover:border-vintiga-surface-muted',
       ].join(' ')}
     >
       <a href={entry.path} className="flex flex-col gap-6 no-underline">
@@ -317,7 +319,7 @@ function ymd(d: Date): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
-function LatestUpdatesModal({ onClose }: { onClose: () => void }) {
+function LatestUpdatesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [range, setRange] = useState<UpdateRange>('today')
   const [area, setArea] = useState<string>('all')
   const [areaOpen, setAreaOpen] = useState(false)
@@ -338,10 +340,10 @@ function LatestUpdatesModal({ onClose }: { onClose: () => void }) {
   const inRange = (d: string) =>
     range === 'today' ? d === todayStr : range === 'week' ? d >= weekStart && d <= todayStr : d >= lastStart && d <= lastEnd
 
-  const ranges: { key: UpdateRange; label: string }[] = [
-    { key: 'today', label: 'Today' },
-    { key: 'week', label: 'This Week' },
-    { key: 'lastweek', label: 'Last Week' },
+  const rangeOptions = [
+    { value: 'today', label: 'Today' },
+    { value: 'week', label: 'This Week' },
+    { value: 'lastweek', label: 'Last Week' },
   ]
 
   const rangeItems = UPDATES.items.filter((i) => inRange(i.date) && USER_FACING_TYPES.has(i.type))
@@ -350,7 +352,6 @@ function LatestUpdatesModal({ onClose }: { onClose: () => void }) {
   )
   // Keep the selected area only while it has items in the current range.
   const activeArea = area !== 'all' && !areasInRange.includes(area) ? 'all' : area
-  const shown = activeArea === 'all' ? rangeItems : rangeItems.filter((i) => i.area === activeArea)
   const groupAreas = activeArea === 'all' ? areasInRange : [activeArea]
 
   // De-duplicated, capitalised, capped bullet list for one area.
@@ -367,58 +368,36 @@ function LatestUpdatesModal({ onClose }: { onClose: () => void }) {
     return { visible: unique.slice(0, MAX_PER_AREA), extra: Math.max(0, unique.length - MAX_PER_AREA) }
   }
 
+  const visibleAreas = groupAreas.filter((a) => bulletsFor(a).visible.length > 0)
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-vintiga-lg">
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/40 cursor-default" />
-      <div className="relative z-10 w-full max-w-2xl max-h-[85vh] flex flex-col rounded-vintiga-card bg-vintiga-surface border border-vintiga-border shadow-vintiga-lg p-vintiga-xl">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-vintiga-md">
-          <h2 className="typo-title-section font-semibold text-vintiga-foreground">Latest updates</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="shrink-0 -mr-1 -mt-1 p-1 rounded-vintiga-md text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors"
-          >
-            <XIcon className="w-5 h-5" />
-          </button>
-        </div>
-
+    <Modal open={open} onClose={onClose} size="lg">
+      <ModalHeader title="Latest updates" onClose={onClose} />
+      <ModalBody className="max-h-[60vh] overflow-y-auto">
         {/* Range tabs + area dropdown */}
-        <div className="mt-vintiga-lg flex items-center justify-between gap-vintiga-md">
-          <div className="inline-flex bg-vintiga-surface-element rounded-vintiga-md p-0.5">
-            {ranges.map((r) => (
-              <button
-                key={r.key}
-                type="button"
-                onClick={() => setRange(r.key)}
-                className={[
-                  'px-3 py-1.5 rounded-vintiga-input typo-body-sm transition-colors',
-                  range === r.key
-                    ? 'bg-vintiga-surface shadow-vintiga-sm font-semibold text-vintiga-foreground'
-                    : 'font-medium text-vintiga-foreground-muted hover:text-vintiga-foreground',
-                ].join(' ')}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="relative">
-            <button
-              type="button"
+        <div className="flex items-center justify-between gap-3">
+          <SegmentedControl
+            size="sm"
+            value={range}
+            onChange={(v) => setRange(v as UpdateRange)}
+            options={rangeOptions}
+            aria-label="Time range"
+          />
+          <div className="relative shrink-0">
+            <Button
+              variant="outline"
+              size="md"
+              rightIcon={<ChevronDownIcon />}
               onClick={() => setAreaOpen((o) => !o)}
               aria-haspopup="listbox"
               aria-expanded={areaOpen}
-              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-vintiga-md border border-vintiga-border bg-vintiga-surface typo-body-sm font-medium text-vintiga-foreground hover:border-vintiga-surface-muted transition-colors"
             >
               {activeArea === 'all' ? 'All' : areaMeta(activeArea).name}
-              <ChevronDownIcon className="w-4 h-4 text-vintiga-foreground-muted" />
-            </button>
+            </Button>
             {areaOpen && (
               <>
                 <button type="button" aria-hidden="true" tabIndex={-1} onClick={() => setAreaOpen(false)} className="fixed inset-0 z-10 cursor-default" />
-                <div className="absolute right-0 mt-1 z-20 min-w-[180px] max-h-[50vh] overflow-y-auto rounded-vintiga-md border border-vintiga-border bg-vintiga-surface shadow-vintiga-md p-1">
+                <div className="absolute right-0 mt-1 z-20 min-w-[180px] max-h-[50vh] overflow-y-auto rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white shadow-vintiga-md p-1">
                   {['all', ...areasInRange].map((a) => (
                     <button
                       key={a}
@@ -430,8 +409,8 @@ function LatestUpdatesModal({ onClose }: { onClose: () => void }) {
                       className={[
                         'w-full text-left px-3 py-2 rounded-vintiga-input typo-body-sm transition-colors',
                         a === activeArea
-                          ? 'font-semibold text-vintiga-foreground bg-vintiga-surface-element'
-                          : 'text-vintiga-foreground-muted hover:bg-vintiga-surface-element',
+                          ? 'font-semibold text-vintiga-slate-900 bg-vintiga-slate-100'
+                          : 'text-vintiga-slate-500 hover:bg-vintiga-slate-50',
                       ].join(' ')}
                     >
                       {a === 'all' ? 'All' : areaMeta(a).name}
@@ -443,74 +422,67 @@ function LatestUpdatesModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* Body */}
-        <div className="mt-vintiga-lg flex-1 min-h-0 overflow-y-auto">
-          {shown.length === 0 ? (
-            <p className="typo-body-sm text-vintiga-foreground-muted py-vintiga-xl text-center">
-              Nothing shipped in this window.
-            </p>
-          ) : (
-            <div className="flex flex-col gap-vintiga-xl">
-              {groupAreas.map((a) => {
-                const { visible, extra } = bulletsFor(a)
-                if (visible.length === 0) return null
-                const meta = areaMeta(a)
-                const latestPr = rangeItems
-                  .filter((i) => i.area === a)
-                  .reduce<number | null>((max, i) => (i.pr && (!max || i.pr > max) ? i.pr : max), null)
-                return (
-                  <section key={a}>
-                    <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">
-                      {meta.name} {meta.category && <span className="text-vintiga-foreground-muted">{`{${meta.category}}`}</span>}
-                    </h3>
-                    <ul className="mt-vintiga-sm flex flex-col gap-1.5 list-disc pl-5">
-                      {visible.map((i, idx) => (
-                        <li key={`${a}-${idx}`} className="typo-body-sm text-vintiga-foreground-muted">
-                          {capitalize(i.label)}
-                        </li>
-                      ))}
-                      {extra > 0 && (
-                        <li className="typo-body-sm text-vintiga-foreground-muted/70 list-none -ml-5">
-                          +{extra} more
-                        </li>
-                      )}
-                    </ul>
-                    {latestPr && (
-                      <a
-                        href={`${UPDATES.repoUrl}/pull/${latestPr}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-vintiga-md inline-block typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline"
-                      >
-                        Latest PR
-                      </a>
+        {/* Grouped accomplishments */}
+        {visibleAreas.length === 0 ? (
+          <p className="typo-body-sm text-vintiga-slate-500 py-vintiga-xl text-center">
+            Nothing shipped in this window.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-vintiga-lg">
+            {visibleAreas.map((a) => {
+              const { visible, extra } = bulletsFor(a)
+              const meta = areaMeta(a)
+              const latestPr = rangeItems
+                .filter((i) => i.area === a)
+                .reduce<number | null>((max, i) => (i.pr && (!max || i.pr > max) ? i.pr : max), null)
+              return (
+                <section key={a}>
+                  <h3 className="typo-body font-semibold text-vintiga-slate-900">
+                    {meta.name} {meta.category && <span className="text-vintiga-slate-400">{`{${meta.category}}`}</span>}
+                  </h3>
+                  <ul className="mt-vintiga-sm flex flex-col gap-1.5 list-disc pl-5">
+                    {visible.map((i, idx) => (
+                      <li key={`${a}-${idx}`} className="typo-body-sm text-vintiga-slate-600">
+                        {capitalize(i.label)}
+                      </li>
+                    ))}
+                    {extra > 0 && (
+                      <li className="typo-body-sm text-vintiga-slate-400 list-none -ml-5">+{extra} more</li>
                     )}
-                  </section>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-vintiga-lg flex items-center justify-end gap-vintiga-md">
-          <Button variant="outline" size="xl" onClick={onClose} className={HUB_OUTLINE_DARK}>
-            Close
-          </Button>
-          <Button
-            as="a"
-            href={`${UPDATES.repoUrl}/pulls?q=is%3Apr`}
-            target="_blank"
-            rel="noreferrer"
-            variant="solid"
-            size="xl"
-            leftIcon={<ExternalLinkIcon />}
-          >
-            Open Github
-          </Button>
-        </div>
-      </div>
-    </div>
+                  </ul>
+                  {latestPr && (
+                    <a
+                      href={`${UPDATES.repoUrl}/pull/${latestPr}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-vintiga-sm inline-block typo-body-sm font-semibold text-vintiga-indigo-600 no-underline hover:underline"
+                    >
+                      Latest PR
+                    </a>
+                  )}
+                </section>
+              )
+            })}
+          </div>
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="outline" size="lg" onClick={onClose}>
+          Close
+        </Button>
+        <Button
+          as="a"
+          href={`${UPDATES.repoUrl}/pulls?q=is%3Apr`}
+          target="_blank"
+          rel="noreferrer"
+          variant="solid"
+          size="lg"
+          leftIcon={<ExternalLinkIcon />}
+        >
+          Open Github
+        </Button>
+      </ModalFooter>
+    </Modal>
   )
 }
 
@@ -589,7 +561,7 @@ function IndexPage() {
     // shifts horizontally when you switch tabs or scroll.
     <div className={`${dark ? 'dark bg-[#0a0a0a] ' : 'bg-vintiga-surface '}h-screen overflow-y-auto font-vintiga-body [scrollbar-gutter:stable]`}>
       {/* Fixed, frosted-glass top navbar — mirrors the Design System header. */}
-      <header className="sticky top-0 z-30 flex items-center gap-vintiga-lg h-16 px-vintiga-lg sm:px-vintiga-2xl bg-vintiga-surface/75 backdrop-blur-md">
+      <header className="sticky top-0 z-30 flex items-center gap-3 h-16 px-vintiga-lg sm:px-vintiga-2xl bg-vintiga-surface/75 backdrop-blur-md">
         <a href="#/" aria-label="Vintiga Prototypes" className="shrink-0 no-underline">
           {dark ? <VintigaIconNeutral size={36} /> : <VintigaLogo size={36} />}
         </a>
@@ -680,7 +652,7 @@ function IndexPage() {
       {segment !== 'Design System' && (
         <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-lg">
           <h1 className="typo-title-subsection font-semibold text-vintiga-foreground">{segmentTitle}</h1>
-          <div className="flex items-center gap-vintiga-sm">
+          <div className="flex items-center gap-3">
             <SortDropdown value={sort} onChange={setSort} />
             <IconButton
               variant="outline"
@@ -709,7 +681,7 @@ function IndexPage() {
                 className={[
                   'border rounded-vintiga-card p-vintiga-lg flex gap-vintiga-2xl transition-colors',
                   featured
-                    ? 'bg-vintiga-indigo-50 dark:bg-vintiga-surface border-vintiga-indigo-100 dark:border-vintiga-border'
+                    ? 'bg-vintiga-indigo-50 dark:bg-vintiga-surface border-vintiga-indigo-100 dark:border-vintiga-border hover:border-vintiga-indigo-300 dark:hover:border-vintiga-surface-muted'
                     : 'bg-vintiga-surface border-vintiga-border hover:border-vintiga-surface-muted',
                 ].join(' ')}
               >
@@ -796,7 +768,7 @@ function IndexPage() {
       )}
       </div>
 
-      {updatesOpen && <LatestUpdatesModal onClose={() => setUpdatesOpen(false)} />}
+      <LatestUpdatesModal open={updatesOpen} onClose={() => setUpdatesOpen(false)} />
     </div>
   )
 }
