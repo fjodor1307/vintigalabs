@@ -82,12 +82,16 @@ function CardBadgeRow({ category, featured }: { category: Category; featured?: b
   )
 }
 
-function CardTags({ tags }: { tags: string[] }) {
+function CardTags({ tags, variant = 'default' }: { tags: string[]; variant?: 'default' | 'indigo' }) {
   if (tags.length === 0) return null
+  const tagClass =
+    variant === 'indigo'
+      ? 'bg-vintiga-indigo-100 text-vintiga-indigo-800'
+      : 'bg-vintiga-surface-element text-vintiga-foreground-muted'
   return (
     <div className="flex flex-wrap gap-1">
       {tags.slice(0, 4).map((t) => (
-        <span key={t} className="typo-caption text-vintiga-foreground-muted bg-vintiga-surface-element px-2 py-0.5 rounded-full">
+        <span key={t} className={`typo-caption px-2 py-0.5 rounded-full ${tagClass}`}>
           #{t}
         </span>
       ))}
@@ -110,7 +114,7 @@ function CardArrow({ entry, featured }: { entry: EnrichedEntry; featured?: boole
           : 'border border-vintiga-border text-vintiga-foreground-muted hover:text-vintiga-foreground',
       ].join(' ')}
     >
-      <ArrowRightIcon className="w-4 h-4" />
+      <ArrowRightIcon className="w-5 h-5" />
     </a>
   )
 }
@@ -134,7 +138,7 @@ function CardMeta({ entry, category, featured }: { entry: EnrichedEntry; categor
         <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">{entry.name}</h2>
         <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-3">{entry.description}</p>
         <div className="mt-vintiga-xs">
-          <CardTags tags={entry.tags} />
+          <CardTags tags={entry.tags} variant={featured ? 'indigo' : 'default'} />
         </div>
       </a>
       <div className="mt-vintiga-sm flex items-center justify-between gap-vintiga-sm">
@@ -181,21 +185,23 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
     <div
       className={[
         spanFull ? 'lg:col-span-3' : 'lg:col-span-2',
-        'bg-vintiga-indigo-50 border border-vintiga-indigo-100 rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-md',
+        'bg-vintiga-indigo-50 border border-vintiga-indigo-200 rounded-vintiga-card p-vintiga-xl flex flex-col gap-5 overflow-hidden',
       ].join(' ')}
     >
-      <a href={entry.path} className="flex flex-col gap-vintiga-sm no-underline">
-        <CardBadgeRow category={category} featured />
-        <h2 className="text-[30px] leading-9 font-semibold text-vintiga-foreground">{entry.name}</h2>
+      <a href={entry.path} className="flex flex-col gap-6 no-underline">
+        <div className="flex flex-col gap-1">
+          <CardBadgeRow category={category} featured />
+          <h2 className="text-[30px] leading-9 font-medium text-vintiga-foreground">{entry.name}</h2>
+        </div>
         <p className="typo-body text-vintiga-foreground-muted line-clamp-2">{entry.description}</p>
       </a>
-      <div className="overflow-x-auto flex items-center gap-vintiga-md py-vintiga-xs">
+      <div className="overflow-x-auto flex items-start gap-5">
         {screens.slice(0, 6).map((p) => (
-          <ScreenThumb key={p} path={p} frame={entry.frame} height={220} />
+          <ScreenThumb key={p} path={p} frame={entry.frame} height={244} />
         ))}
       </div>
       <div className="flex items-end justify-between gap-vintiga-md">
-        <CardTags tags={entry.tags} />
+        <CardTags tags={entry.tags} variant="indigo" />
         <div className="flex items-center gap-vintiga-md shrink-0">
           <PrototypeLinks entry={entry} />
           <CardArrow entry={entry} featured />
@@ -209,7 +215,7 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
 function PrototypeCard({ entry, className = '' }: { entry: EnrichedEntry; className?: string }) {
   return (
     <div
-      className={`bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors ${className}`}
+      className={`bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-md flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors ${className}`}
     >
       <CardMeta entry={entry} category={categoryForFrame(entry.frame)} />
     </div>
