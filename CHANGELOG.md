@@ -44,7 +44,7 @@ Added a **Latest updates** modal to the hub, opened by a clock icon in the navba
 Brought the hub catalog up to the latest Figma for both grid and list:
 
 - **Featured "Latest" card.** The first prototype is now highlighted — indigo-tinted background, a "Latest" label beside the badge, and a filled indigo arrow. In **grid view** it becomes a large card spanning two columns with a row of live screen thumbnails inside; the two next prototypes stack beside it, and the rest fall into a uniform grid. In **list view** the first row gets the same indigo treatment.
-- **Catalog sub-header.** Added a header row above the catalog: the active category title on the left, a **filter dropdown** + the **grid/list switch** on the right. The view switch moved out of the navbar to live here. The dropdown offers **Latest** plus a **Tags** section listing every tag in the current category — picking one filters the catalog to that tag. Selection persists in `localStorage`.
+- **Catalog sub-header.** Added a header row above the catalog: the active category title on the left, a **sort menu** + the **grid/list switch** on the right. The view switch moved out of the navbar to live here. The sort menu offers **Last updated** (real recency from git history, default), **Name (A–Z)**, and **Most screens**; the featured card is whichever prototype sorts first. Selection persists in `localStorage`.
 - **Arrow affordance** is now a square button on every card — filled indigo on the featured card, outlined elsewhere (20px icon, per design).
 - **Toggle icons** use lucide **`grid-2x2`** and **`layout-list`**.
 - Sort preference persists in `localStorage`.
