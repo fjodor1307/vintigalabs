@@ -10,3 +10,6 @@ src/generated/
 !.dev.vars.example
 .env*
 !.env.example
+
+# Agent worktrees (spawned tasks)
+.claude/worktrees/
