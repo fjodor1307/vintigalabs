@@ -147,7 +147,7 @@ function CardMeta({ entry, category, featured }: { entry: EnrichedEntry; categor
           <CardTags tags={entry.tags} />
         </div>
       </a>
-      <div className="mt-vintiga-sm flex items-center justify-between gap-vintiga-sm">
+      <div className="mt-auto pt-vintiga-md flex items-center justify-between gap-vintiga-sm">
         <PrototypeLinks entry={entry} />
         <CardArrow entry={entry} featured={featured} />
       </div>
