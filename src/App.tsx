@@ -109,7 +109,7 @@ function IndexPage() {
     // Own scroll container with a stable scrollbar gutter — keeps the content
     // width constant whether or not a vertical scrollbar is showing, so nothing
     // shifts horizontally when you switch tabs or scroll.
-    <div className={`${dark ? 'dark ' : ''}h-screen overflow-y-auto bg-vintiga-surface font-vintiga-body [scrollbar-gutter:stable]`}>
+    <div className={`${dark ? 'dark bg-[#0a0a0a] ' : 'bg-vintiga-surface '}h-screen overflow-y-auto font-vintiga-body [scrollbar-gutter:stable]`}>
       {/* Fixed, frosted-glass top navbar — mirrors the Design System header. */}
       <header className="sticky top-0 z-30 flex items-center gap-vintiga-lg h-16 px-vintiga-lg sm:px-vintiga-2xl bg-vintiga-surface/75 backdrop-blur-md">
         <a href="#/" aria-label="Vintiga Prototypes" className="shrink-0 no-underline">
@@ -157,17 +157,17 @@ function IndexPage() {
           aria-label="Toggle dark mode"
           onClick={() => setDark((d) => !d)}
           className={[
-            'shrink-0 relative w-14 h-8 rounded-full transition-colors',
-            dark ? 'bg-[#404040]' : 'bg-[#e5e5e5]',
+            'shrink-0 relative w-[46px] h-6 rounded-full p-0.5 flex items-center transition-colors',
+            dark ? 'bg-[#262626]' : 'bg-vintiga-slate-900',
           ].join(' ')}
         >
           <span
             className={[
-              'absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-vintiga-sm flex items-center justify-center text-[#404040] transition-transform',
-              dark ? 'translate-x-6' : '',
+              'w-5 h-5 rounded-full bg-white shadow-vintiga-sm flex items-center justify-center text-vintiga-slate-700 transition-transform',
+              dark ? 'translate-x-0' : 'translate-x-[22px]',
             ].join(' ')}
           >
-            {dark ? <SunIcon className="w-3.5 h-3.5" /> : <MoonIcon className="w-3.5 h-3.5" />}
+            {dark ? <MoonIcon className="w-3 h-3" /> : <SunIcon className="w-3 h-3" />}
           </span>
         </button>
 
