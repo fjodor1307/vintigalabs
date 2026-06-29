@@ -3,7 +3,7 @@ import { Agentation } from 'agentation'
 import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { VintigaLogo, VintigaIconNeutral } from './design-system/shared/VintigaLogo'
-import { BackArrowIcon, DownloadIcon, SearchIcon, ArrowRightIcon, SunIcon, MoonIcon, ListIcon, LayoutGridIcon } from './design-system/icons/Icons'
+import { BackArrowIcon, DownloadIcon, SearchIcon, ArrowRightIcon, SunIcon, MoonIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon } from './design-system/icons/Icons'
 import {
   allRoutes,
   allEntries,
@@ -70,60 +70,95 @@ function reviewHashFor(entry: EnrichedEntry): string {
     : `#/review/${entry.slug}`
 }
 
+// Badge (+ "Latest" label on the featured card).
+function CardBadgeRow({ category, featured }: { category: Category; featured?: boolean }) {
+  return (
+    <div className="flex items-center gap-vintiga-sm">
+      <CategoryBadge category={category} />
+      {featured && (
+        <span className="typo-body-sm font-medium text-vintiga-foreground-muted">Latest</span>
+      )}
+    </div>
+  )
+}
+
+function CardTags({ tags }: { tags: string[] }) {
+  if (tags.length === 0) return null
+  return (
+    <div className="flex flex-wrap gap-1">
+      {tags.slice(0, 4).map((t) => (
+        <span key={t} className="typo-caption text-vintiga-foreground-muted bg-vintiga-surface-element px-2 py-0.5 rounded-full">
+          #{t}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+// The arrow affordance — a filled indigo square on the featured card, an
+// outlined square elsewhere. Opens the shareable review view.
+function CardArrow({ entry, featured }: { entry: EnrichedEntry; featured?: boolean }) {
+  return (
+    <a
+      href={reviewHashFor(entry)}
+      aria-label="Open shareable review view"
+      title="Open shareable review view"
+      className={[
+        'shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-vintiga-md transition-colors no-underline',
+        featured
+          ? 'bg-vintiga-primary text-white hover:bg-vintiga-primary-hover'
+          : 'border border-vintiga-border text-vintiga-foreground-muted hover:text-vintiga-foreground',
+      ].join(' ')}
+    >
+      <ArrowRightIcon className="w-4 h-4" />
+    </a>
+  )
+}
+
+function PrototypeLinks({ entry }: { entry: EnrichedEntry }) {
+  return (
+    <div className="flex items-center gap-vintiga-md">
+      <a href={entry.path} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Prototype</a>
+      <a href={`${entry.path}?view=overview`} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Designs</a>
+    </div>
+  )
+}
+
 // Shared card body — badge, title, description, tags, and the
-// Prototype / Designs links + arrow. Used by both grid cards and list rows.
-function CardMeta({ entry, category }: { entry: EnrichedEntry; category: Category }) {
+// Prototype / Designs links + arrow. Used by grid cards and list rows.
+function CardMeta({ entry, category, featured }: { entry: EnrichedEntry; category: Category; featured?: boolean }) {
   return (
     <>
       <a href={entry.path} className="flex flex-col gap-vintiga-sm no-underline">
-        <div>
-          <CategoryBadge category={category} />
-        </div>
+        <CardBadgeRow category={category} featured={featured} />
         <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">{entry.name}</h2>
         <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-3">{entry.description}</p>
-        {entry.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-vintiga-xs">
-            {entry.tags.slice(0, 4).map((t) => (
-              <span key={t} className="typo-caption text-vintiga-foreground-muted bg-vintiga-surface-element px-2 py-0.5 rounded-full">
-                #{t}
-              </span>
-            ))}
-          </div>
-        )}
+        <div className="mt-vintiga-xs">
+          <CardTags tags={entry.tags} />
+        </div>
       </a>
       <div className="mt-vintiga-sm flex items-center justify-between gap-vintiga-sm">
-        <div className="flex items-center gap-vintiga-md">
-          <a href={entry.path} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Prototype</a>
-          <a href={`${entry.path}?view=overview`} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Designs</a>
-        </div>
-        <a
-          href={reviewHashFor(entry)}
-          aria-label="Open shareable review view"
-          title="Open shareable review view"
-          className="text-vintiga-foreground-muted hover:text-vintiga-primary no-underline"
-        >
-          <ArrowRightIcon className="w-4 h-4" />
-        </a>
+        <PrototypeLinks entry={entry} />
+        <CardArrow entry={entry} featured={featured} />
       </div>
     </>
   )
 }
 
-// A live, click-through thumbnail of one prototype screen (for the list view).
-// Clicking launches the prototype at that screen.
-function ScreenThumb({ path, frame }: { path: string; frame: PrototypeFrame }) {
-  const THUMB_H = 168
+// A live, click-through thumbnail of one prototype screen (list view + featured
+// card). Clicking launches the prototype at that screen.
+function ScreenThumb({ path, frame, height = 168 }: { path: string; frame: PrototypeFrame; height?: number }) {
   const isPhone = frame === 'mobile'
   const innerW = isPhone ? 390 : 1440
   const innerH = isPhone ? 844 : 900
-  const scale = THUMB_H / innerH
+  const scale = height / innerH
   const outerW = Math.round(innerW * scale)
   return (
     <a
       href={path}
       aria-label="Open screen"
       className="shrink-0 block overflow-hidden rounded-vintiga-md border border-vintiga-border bg-vintiga-surface hover:border-vintiga-surface-muted transition-colors"
-      style={{ width: outerW, height: THUMB_H }}
+      style={{ width: outerW, height }}
     >
       <iframe
         src={`${window.location.pathname}${path}?thumbnail=1`}
@@ -133,6 +168,108 @@ function ScreenThumb({ path, frame }: { path: string; frame: PrototypeFrame }) {
         style={{ width: innerW, height: innerH, transform: `scale(${scale})`, transformOrigin: '0 0', border: 0, pointerEvents: 'none' }}
       />
     </a>
+  )
+}
+
+// Large featured "Latest" card for the grid view — indigo-tinted, with a big
+// title and a row of live screen thumbnails. Spans two columns (or the full
+// width when there are no side cards).
+function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull: boolean }) {
+  const category = categoryForFrame(entry.frame)
+  const screens = flowForPath(entry.path)?.paths ?? [entry.path]
+  return (
+    <div
+      className={[
+        spanFull ? 'lg:col-span-3' : 'lg:col-span-2',
+        'bg-vintiga-indigo-50 border border-vintiga-indigo-100 rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-md',
+      ].join(' ')}
+    >
+      <a href={entry.path} className="flex flex-col gap-vintiga-sm no-underline">
+        <CardBadgeRow category={category} featured />
+        <h2 className="text-[30px] leading-9 font-semibold text-vintiga-foreground">{entry.name}</h2>
+        <p className="typo-body text-vintiga-foreground-muted line-clamp-2">{entry.description}</p>
+      </a>
+      <div className="overflow-x-auto flex items-center gap-vintiga-md py-vintiga-xs">
+        {screens.slice(0, 6).map((p) => (
+          <ScreenThumb key={p} path={p} frame={entry.frame} height={220} />
+        ))}
+      </div>
+      <div className="flex items-end justify-between gap-vintiga-md">
+        <CardTags tags={entry.tags} />
+        <div className="flex items-center gap-vintiga-md shrink-0">
+          <PrototypeLinks entry={entry} />
+          <CardArrow entry={entry} featured />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Plain prototype card (grid side/bottom cards).
+function PrototypeCard({ entry, className = '' }: { entry: EnrichedEntry; className?: string }) {
+  return (
+    <div
+      className={`bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors ${className}`}
+    >
+      <CardMeta entry={entry} category={categoryForFrame(entry.frame)} />
+    </div>
+  )
+}
+
+type SortKey = 'latest' | 'name'
+
+// "Latest" sort dropdown shown in the catalog sub-header.
+function SortDropdown({ value, onChange }: { value: SortKey; onChange: (s: SortKey) => void }) {
+  const [open, setOpen] = useState(false)
+  const options: { key: SortKey; label: string }[] = [
+    { key: 'latest', label: 'Latest' },
+    { key: 'name', label: 'Name' },
+  ]
+  const current = options.find((o) => o.key === value) ?? options[0]
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-vintiga-md border border-vintiga-border bg-vintiga-surface typo-body-sm font-medium text-vintiga-foreground hover:border-vintiga-surface-muted transition-colors"
+      >
+        {current.label}
+        <ChevronDownIcon className="w-4 h-4 text-vintiga-foreground-muted" />
+      </button>
+      {open && (
+        <>
+          <button
+            type="button"
+            aria-hidden="true"
+            tabIndex={-1}
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-10 cursor-default"
+          />
+          <div className="absolute right-0 mt-1 z-20 min-w-[140px] rounded-vintiga-md border border-vintiga-border bg-vintiga-surface shadow-vintiga-md p-1">
+            {options.map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                onClick={() => {
+                  onChange(o.key)
+                  setOpen(false)
+                }}
+                className={[
+                  'w-full text-left px-3 py-2 rounded-vintiga-input typo-body-sm transition-colors',
+                  o.key === value
+                    ? 'font-semibold text-vintiga-foreground bg-vintiga-surface-element'
+                    : 'text-vintiga-foreground-muted hover:bg-vintiga-surface-element',
+                ].join(' ')}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   )
 }
 
@@ -162,6 +299,13 @@ function IndexPage() {
   useEffect(() => {
     localStorage.setItem('vintiga-hub-view', view)
   }, [view])
+  // Sort order for the catalog.
+  const [sort, setSort] = useState<SortKey>(
+    () => (localStorage.getItem('vintiga-hub-sort') === 'name' ? 'name' : 'latest'),
+  )
+  useEffect(() => {
+    localStorage.setItem('vintiga-hub-sort', sort)
+  }, [sort])
 
   const segments: { value: Segment; label: string }[] = [
     { value: 'all', label: 'All' },
@@ -179,8 +323,14 @@ function IndexPage() {
             (segment === 'all' || categoryForFrame(p.frame) === segment) && matchesQuery(p, query),
         )
 
+  const sortedPrototypes =
+    sort === 'name'
+      ? [...filteredPrototypes].sort((a, b) => a.name.localeCompare(b.name))
+      : filteredPrototypes
+
   const showDesignSystem = segment === 'all' || segment === 'Design System'
   const hasFilters = segment !== 'all' || query.length > 0
+  const segmentTitle = segment === 'all' ? 'All' : segment
 
   function clearFilters() {
     setSegment('all')
@@ -257,17 +407,6 @@ function IndexPage() {
           </span>
         </button>
 
-        {/* Grid / list layout switch. */}
-        <button
-          type="button"
-          onClick={() => setView((v) => (v === 'grid' ? 'list' : 'grid'))}
-          aria-label={view === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
-          title={view === 'grid' ? 'List view' : 'Grid view'}
-          className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-vintiga-md border border-vintiga-border bg-vintiga-surface text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors"
-        >
-          {view === 'grid' ? <ListIcon className="w-4 h-4" /> : <LayoutGridIcon className="w-4 h-4" />}
-        </button>
-
         {/* Download repo as a ZIP — handy for dev handoff. */}
         <a
           href="https://github.com/fjodor1307/vintigalabs/archive/refs/heads/main.zip"
@@ -283,21 +422,46 @@ function IndexPage() {
 
       <div className="px-vintiga-lg sm:px-vintiga-2xl py-vintiga-xl">
 
+      {/* Catalog sub-header — title + sort + grid/list switch. */}
+      {segment !== 'Design System' && (
+        <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-lg">
+          <h1 className="typo-title-subsection font-semibold text-vintiga-foreground">{segmentTitle}</h1>
+          <div className="flex items-center gap-vintiga-sm">
+            <SortDropdown value={sort} onChange={setSort} />
+            <button
+              type="button"
+              onClick={() => setView((v) => (v === 'grid' ? 'list' : 'grid'))}
+              aria-label={view === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
+              title={view === 'grid' ? 'List view' : 'Grid view'}
+              className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-vintiga-md border border-vintiga-border bg-vintiga-surface text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors"
+            >
+              {view === 'grid' ? <LayoutListIcon className="w-4 h-4" /> : <Grid2x2Icon className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Prototype catalog — grid or list. Hidden when Design System tab is active. */}
       {segment !== 'Design System' && (
-        filteredPrototypes.length > 0 ? (
+        sortedPrototypes.length > 0 ? (
         view === 'list' ? (
         <div className="flex flex-col gap-vintiga-lg">
-          {filteredPrototypes.map((entry) => {
+          {sortedPrototypes.map((entry, i) => {
             const category = categoryForFrame(entry.frame)
+            const featured = i === 0
             const screens = flowForPath(entry.path)?.paths ?? [entry.path]
             return (
               <div
                 key={entry.path}
-                className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex gap-vintiga-2xl hover:border-vintiga-surface-muted transition-colors"
+                className={[
+                  'border rounded-vintiga-card p-vintiga-xl flex gap-vintiga-2xl transition-colors',
+                  featured
+                    ? 'bg-vintiga-indigo-50 border-vintiga-indigo-100'
+                    : 'bg-vintiga-surface border-vintiga-border hover:border-vintiga-surface-muted',
+                ].join(' ')}
               >
                 <div className="w-[280px] shrink-0 flex flex-col gap-vintiga-sm">
-                  <CardMeta entry={entry} category={category} />
+                  <CardMeta entry={entry} category={category} featured={featured} />
                 </div>
                 <div className="flex-1 min-w-0 overflow-x-auto flex items-center gap-vintiga-md">
                   {screens.slice(0, 8).map((p) => (
@@ -309,18 +473,26 @@ function IndexPage() {
           })}
         </div>
         ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
-          {filteredPrototypes.map((entry) => {
-            const category = categoryForFrame(entry.frame)
-            return (
-              <div
-                key={entry.path}
-                className="relative bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors"
-              >
-                <CardMeta entry={entry} category={category} />
+        <div className="flex flex-col gap-vintiga-lg">
+          {/* Featured "Latest" card + up to two side cards. */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-vintiga-lg">
+            <FeaturedGridCard entry={sortedPrototypes[0]} spanFull={sortedPrototypes.length <= 1} />
+            {sortedPrototypes.length > 1 && (
+              <div className="flex flex-col gap-vintiga-lg">
+                {sortedPrototypes.slice(1, 3).map((entry) => (
+                  <PrototypeCard key={entry.path} entry={entry} className="flex-1" />
+                ))}
               </div>
-            )
-          })}
+            )}
+          </div>
+          {/* The rest, in a uniform grid. */}
+          {sortedPrototypes.length > 3 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
+              {sortedPrototypes.slice(3).map((entry) => (
+                <PrototypeCard key={entry.path} entry={entry} />
+              ))}
+            </div>
+          )}
         </div>
         )
       ) : (
