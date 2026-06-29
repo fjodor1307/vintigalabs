@@ -49,15 +49,13 @@ function categoryForFrame(frame: PrototypeFrame): Category {
 function CategoryBadge({ category }: { category: Category }) {
   if (category === 'POS') {
     return (
-      <span className="inline-flex items-center gap-1 typo-caption font-semibold bg-vintiga-teal-100 text-vintiga-teal-700 px-2 py-0.5 rounded-full">
-        <span className="w-1.5 h-1.5 rounded-full bg-vintiga-teal-500" aria-hidden="true" />
+      <span className="shrink-0 inline-flex items-center typo-caption font-medium bg-vintiga-indigo-100 text-vintiga-indigo-700 px-2.5 py-1 rounded-vintiga-2xl">
         POS
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center gap-1 typo-caption font-semibold bg-vintiga-indigo-100 text-vintiga-indigo-700 px-2 py-0.5 rounded-full">
-      <span className="w-1.5 h-1.5 rounded-full bg-vintiga-indigo-500" aria-hidden="true" />
+    <span className="shrink-0 inline-flex items-center typo-caption font-medium bg-vintiga-lime-100 text-vintiga-green-700 px-2.5 py-1 rounded-vintiga-2xl">
       CRM
     </span>
   )
@@ -206,12 +204,12 @@ function IndexPage() {
                 className="relative bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-primary transition-colors"
               >
                 <a href={entry.path} className="flex flex-col gap-vintiga-sm no-underline">
-                  <div>
+                  <div className="flex items-start gap-vintiga-sm">
+                    <h2 className="flex-1 min-w-0 typo-title-subsection font-semibold text-vintiga-foreground">
+                      {entry.name}
+                    </h2>
                     <CategoryBadge category={category} />
                   </div>
-                  <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">
-                    {entry.name}
-                  </h2>
                   <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-3">
                     {entry.description}
                   </p>
@@ -234,7 +232,7 @@ function IndexPage() {
                       Prototype
                     </a>
                     <a href={`${entry.path}?view=overview`} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">
-                      Designs ({entry.screens} screens)
+                      Designs
                     </a>
                   </div>
                   <a

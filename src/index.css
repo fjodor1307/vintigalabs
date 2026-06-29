@@ -43,6 +43,8 @@ body {
   --color-vintiga-teal-100:           #404040; /* neutral-700 */
   --color-vintiga-teal-500:           #a3a3a3; /* neutral-400 */
   --color-vintiga-teal-700:           #e5e5e5; /* neutral-200 */
+  --color-vintiga-lime-100:           #404040; /* neutral-700 */
+  --color-vintiga-green-700:          #e5e5e5; /* neutral-200 */
 }
 
 @keyframes slide-in-left {
