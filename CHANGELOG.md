@@ -39,7 +39,7 @@ Brought the hub catalog up to the latest Figma for both grid and list:
 - **Arrow affordance** is now a square button on every card — filled indigo on the featured card, outlined elsewhere (20px icon, per design).
 - **Toggle icons** use lucide **`grid-2x2`** and **`layout-list`**.
 - Sort preference persists in `localStorage`.
-- **Design tune-up** (matching Figma 6414-2689): featured card border → `indigo-200`, gaps 20/24/4px, medium-weight title, indigo `#tag` pills, thumbnails 244px tall; standard prototype cards drop to **16px padding**.
+- **Design tune-up** (matching Figma 6414-2689): featured card border → `indigo-200`, gaps 20/24/4px, medium-weight title, indigo `#tag` pills, thumbnails 244px tall. All cards use **24px padding** (`p-vintiga-lg`).
 
 ## 2026-06-26 — Fedja + Claude: Hub redesign — cards + dark mode (Figma 6401-2361 / 6407-936)
 

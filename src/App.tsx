@@ -185,7 +185,7 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
     <div
       className={[
         spanFull ? 'lg:col-span-3' : 'lg:col-span-2',
-        'bg-vintiga-indigo-50 border border-vintiga-indigo-200 rounded-vintiga-card p-vintiga-xl flex flex-col gap-5 overflow-hidden',
+        'bg-vintiga-indigo-50 border border-vintiga-indigo-200 rounded-vintiga-card p-vintiga-lg flex flex-col gap-5 overflow-hidden',
       ].join(' ')}
     >
       <a href={entry.path} className="flex flex-col gap-6 no-underline">
@@ -215,7 +215,7 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
 function PrototypeCard({ entry, className = '' }: { entry: EnrichedEntry; className?: string }) {
   return (
     <div
-      className={`bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-md flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors ${className}`}
+      className={`bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors ${className}`}
     >
       <CardMeta entry={entry} category={categoryForFrame(entry.frame)} />
     </div>
@@ -489,7 +489,7 @@ function IndexPage() {
               <div
                 key={entry.path}
                 className={[
-                  'border rounded-vintiga-card p-vintiga-xl flex gap-vintiga-2xl transition-colors',
+                  'border rounded-vintiga-card p-vintiga-lg flex gap-vintiga-2xl transition-colors',
                   featured
                     ? 'bg-vintiga-indigo-50 border-vintiga-indigo-100'
                     : 'bg-vintiga-surface border-vintiga-border hover:border-vintiga-surface-muted',
@@ -561,7 +561,7 @@ function IndexPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
             <a
               href="#/web/design-system"
-              className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors no-underline"
+              className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-vintiga-sm hover:border-vintiga-surface-muted transition-colors no-underline"
             >
               <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">
                 Design System
