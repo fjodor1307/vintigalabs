@@ -40,6 +40,7 @@ Brought the hub catalog up to the latest Figma for both grid and list:
 - **Toggle icons** use lucide **`grid-2x2`** and **`layout-list`**.
 - Sort preference persists in `localStorage`.
 - **Design tune-up** (matching Figma 6414-2689): featured card border → `indigo-200`, gaps 20/24/4px, medium-weight title, indigo `#tag` pills, thumbnails 244px tall. All cards use **24px padding** (`p-vintiga-lg`).
+- **Dark mode fix:** the featured card's indigo tint stayed light in dark mode (washing out the text). Enabled class-based `dark:` utilities (`@custom-variant dark`) and gave the featured card (grid + list) the same dark surface/border as the other cards in dark mode; its arrow stays indigo.
 
 ## 2026-06-26 — Fedja + Claude: Hub redesign — cards + dark mode (Figma 6401-2361 / 6407-936)
 

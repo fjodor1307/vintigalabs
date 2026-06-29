@@ -110,7 +110,7 @@ function CardArrow({ entry, featured }: { entry: EnrichedEntry; featured?: boole
       className={[
         'shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-vintiga-md transition-colors no-underline',
         featured
-          ? 'bg-vintiga-primary text-white hover:bg-vintiga-primary-hover'
+          ? 'bg-vintiga-indigo-600 text-white hover:bg-vintiga-indigo-700'
           : 'border border-vintiga-border text-vintiga-foreground-muted hover:text-vintiga-foreground',
       ].join(' ')}
     >
@@ -185,7 +185,7 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
     <div
       className={[
         spanFull ? 'lg:col-span-3' : 'lg:col-span-2',
-        'bg-vintiga-indigo-50 border border-vintiga-indigo-200 rounded-vintiga-card p-vintiga-lg flex flex-col gap-5 overflow-hidden',
+        'bg-vintiga-indigo-50 dark:bg-vintiga-surface border border-vintiga-indigo-200 dark:border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-5 overflow-hidden',
       ].join(' ')}
     >
       <a href={entry.path} className="flex flex-col gap-6 no-underline">
@@ -491,7 +491,7 @@ function IndexPage() {
                 className={[
                   'border rounded-vintiga-card p-vintiga-lg flex gap-vintiga-2xl transition-colors',
                   featured
-                    ? 'bg-vintiga-indigo-50 border-vintiga-indigo-100'
+                    ? 'bg-vintiga-indigo-50 dark:bg-vintiga-surface border-vintiga-indigo-100 dark:border-vintiga-border'
                     : 'bg-vintiga-surface border-vintiga-border hover:border-vintiga-surface-muted',
                 ].join(' ')}
               >
