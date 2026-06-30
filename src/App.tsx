@@ -315,7 +315,7 @@ function areaMeta(area: string): { name: string; category: string } {
   return AREA_FALLBACK[area] ?? { name: area, category: '' }
 }
 
-type UpdateRange = 'today' | 'week' | 'lastweek'
+type UpdateRange = 'week' | 'lastweek'
 
 function ymd(d: Date): string {
   const p = (n: number) => String(n).padStart(2, '0')
@@ -323,7 +323,7 @@ function ymd(d: Date): string {
 }
 
 function LatestUpdatesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [range, setRange] = useState<UpdateRange>('today')
+  const [range, setRange] = useState<UpdateRange>('week')
   const [area, setArea] = useState<string>('all')
   const [areaOpen, setAreaOpen] = useState(false)
 
@@ -341,10 +341,9 @@ function LatestUpdatesModal({ open, onClose }: { open: boolean; onClose: () => v
   const lastEnd = ymd(lastSun)
 
   const inRange = (d: string) =>
-    range === 'today' ? d === todayStr : range === 'week' ? d >= weekStart && d <= todayStr : d >= lastStart && d <= lastEnd
+    range === 'week' ? d >= weekStart && d <= todayStr : d >= lastStart && d <= lastEnd
 
   const rangeOptions = [
-    { value: 'today', label: 'Today' },
     { value: 'week', label: 'This Week' },
     { value: 'lastweek', label: 'Last Week' },
   ]
