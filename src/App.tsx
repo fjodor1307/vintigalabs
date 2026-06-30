@@ -498,6 +498,32 @@ function matchesQuery(entry: EnrichedEntry, query: string): boolean {
   )
 }
 
+// The Design System split into its three top-level areas. Each card deep-links
+// into the DS at that section's first page (?p=<pageId>).
+const DS_SECTIONS: { label: string; desc: string; page: string }[] = [
+  { label: 'Foundation', desc: 'Colours, typography, spacing, radius, shadows & motion.', page: 'colors' },
+  { label: 'Assets', desc: 'Logo and the full icon library.', page: 'logo' },
+  { label: 'Components', desc: 'Buttons, inputs, cards, overlays, navigation & mobile patterns.', page: 'ds-buttons' },
+]
+
+function DesignSystemSectionCards() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
+      {DS_SECTIONS.map((s) => (
+        <a
+          key={s.label}
+          href={`#/web/design-system?p=${s.page}`}
+          className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-vintiga-sm hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted transition-colors no-underline"
+        >
+          <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">{s.label}</h3>
+          <p className="typo-body-sm text-vintiga-foreground-muted">{s.desc}</p>
+          <span className="mt-auto pt-vintiga-md typo-body-sm font-semibold text-vintiga-primary">Open →</span>
+        </a>
+      ))}
+    </div>
+  )
+}
+
 function IndexPage() {
   const [segment, setSegment] = useState<Segment>('all')
   const [query, setQuery] = useState('')
@@ -530,7 +556,7 @@ function IndexPage() {
   ]
 
   // "Design System" and "Presentations" aren't prototypes — selecting them
-  // empties the prototype grid (Design System then shows only the DS card;
+  // empties the prototype grid (Design System shows its section cards instead;
   // Presentations is a placeholder for now).
   const segmentPrototypes =
     segment === 'Design System' || segment === 'Presentations'
@@ -547,7 +573,9 @@ function IndexPage() {
     return (b.lastUpdated || '').localeCompare(a.lastUpdated || '')
   })
 
-  const showDesignSystem = segment === 'all' || segment === 'Design System'
+  // On the All tab the Design System gets a section row at the bottom; the
+  // Design System tab itself shows the section cards as its main content.
+  const showDesignSystem = segment === 'all'
   const hasFilters = segment !== 'all' || query.length > 0
   const segmentTitle = segment === 'all' ? 'All' : segment
 
@@ -574,11 +602,7 @@ function IndexPage() {
               <button
                 key={s.value}
                 type="button"
-                onClick={() => {
-                  // Design System isn't a prototype category — open it directly.
-                  if (s.value === 'Design System') window.location.hash = '#/web/design-system'
-                  else setSegment(s.value)
-                }}
+                onClick={() => setSegment(s.value)}
                 aria-current={active ? 'page' : undefined}
                 className={[
                   'px-3 py-1.5 rounded-vintiga-md typo-body-sm transition-colors',
@@ -649,10 +673,10 @@ function IndexPage() {
 
       <div className="px-vintiga-lg sm:px-vintiga-2xl py-vintiga-xl">
 
-      {/* Catalog sub-header — title + sort + grid/list switch. */}
-      {segment !== 'Design System' && (
-        <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-lg">
-          <h1 className="typo-title-subsection font-semibold text-vintiga-foreground">{segmentTitle}</h1>
+      {/* Catalog sub-header — title + (for prototype tabs) sort + grid/list switch. */}
+      <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-lg">
+        <h1 className="typo-title-subsection font-semibold text-vintiga-foreground">{segmentTitle}</h1>
+        {segment !== 'Design System' && segment !== 'Presentations' && (
           <div className="flex items-center gap-3">
             <SortDropdown value={sort} onChange={setSort} />
             <IconButton
@@ -664,12 +688,13 @@ function IndexPage() {
               className={HUB_OUTLINE_DARK}
             />
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Prototype catalog — grid or list. Hidden when Design System tab is active. */}
-      {segment !== 'Design System' && (
-        sortedPrototypes.length > 0 ? (
+      {/* Catalog — Design System section cards, or the prototype grid/list. */}
+      {segment === 'Design System' ? (
+        <DesignSystemSectionCards />
+      ) : sortedPrototypes.length > 0 ? (
         view === 'list' ? (
         <div className="flex flex-col gap-vintiga-lg">
           {sortedPrototypes.map((entry, i) => {
@@ -740,31 +765,15 @@ function IndexPage() {
             </p>
           )}
         </div>
-      )
       )}
 
-      {/* Design System (its own category). */}
+      {/* Design System section — shown on the All tab. */}
       {showDesignSystem && (
         <section className="mt-vintiga-2xl">
           <h2 className="typo-caption font-semibold text-vintiga-foreground-muted uppercase tracking-wide mb-vintiga-md">
             Design System
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
-            <a
-              href="#/web/design-system"
-              className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-vintiga-sm hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted transition-colors no-underline"
-            >
-              <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">
-                Design System
-              </h3>
-              <p className="typo-body-sm text-vintiga-foreground-muted">
-                Tokens, typography, colours, components
-              </p>
-              <span className="typo-body-sm font-semibold text-vintiga-primary mt-vintiga-sm">
-                Open →
-              </span>
-            </a>
-          </div>
+          <DesignSystemSectionCards />
         </section>
       )}
       </div>
