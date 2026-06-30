@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Agentation } from 'agentation'
 import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
+import { ToneOfVoiceScreen } from './brand/ToneOfVoiceScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { VintigaLogo, VintigaIconNeutral } from './design-system/shared/VintigaLogo'
 import { BackArrowIcon, DownloadIcon, SearchIcon, ArrowRightIcon, SunIcon, MoonIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon, HistoryIcon, ExternalLinkIcon } from './design-system/icons/Icons'
@@ -42,16 +43,17 @@ function useHashRoute() {
   return hash
 }
 
-// Design System is a tool, not a prototype — registered directly.
+// Design System and Brand are tools, not prototypes — registered directly.
 const webScreens: Record<string, React.ComponentType> = {
   '#/web/design-system': DesignSystemScreen,
+  '#/brand/tone-of-voice': ToneOfVoiceScreen,
   ...allRoutes,
 }
 
 // Prototypes are categorised by the surface they target: web → CRM (dashboard),
 // mobile → POS. The Design System is a separate tool, not a prototype.
 type Category = 'CRM' | 'POS'
-const CATEGORY_OPTIONS = ['CRM', 'POS', 'Design System', 'Presentations'] as const
+const CATEGORY_OPTIONS = ['CRM', 'POS', 'Brand', 'Design System', 'Presentations'] as const
 type Segment = 'all' | (typeof CATEGORY_OPTIONS)[number]
 
 function categoryForFrame(frame: PrototypeFrame): Category {
@@ -524,6 +526,43 @@ function DesignSystemSectionCards() {
   )
 }
 
+// Brand — the identity layer. Logo / Colour / Typography deep-link into the
+// Design System; Tone of voice is brand-specific; Imagery is not written yet.
+const BRAND_SECTIONS: { label: string; desc: string; href: string | null }[] = [
+  { label: 'Logo', desc: 'The Vintiga mark and how to use it.', href: '#/web/design-system?p=logo' },
+  { label: 'Colour', desc: 'The brand palette and where it applies.', href: '#/web/design-system?p=colors' },
+  { label: 'Typography', desc: 'Type personality and the type scale.', href: '#/web/design-system?p=typography' },
+  { label: 'Tone of voice', desc: 'How Vintiga sounds — principles, rules, samples.', href: '#/brand/tone-of-voice' },
+  { label: 'Imagery', desc: 'Photography and illustration direction.', href: null },
+]
+
+function BrandSectionCards() {
+  const base = 'bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-vintiga-sm transition-colors'
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
+      {BRAND_SECTIONS.map((s) =>
+        s.href ? (
+          <a
+            key={s.label}
+            href={s.href}
+            className={`${base} hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted no-underline`}
+          >
+            <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">{s.label}</h3>
+            <p className="typo-body-sm text-vintiga-foreground-muted">{s.desc}</p>
+            <span className="mt-auto pt-vintiga-md typo-body-sm font-semibold text-vintiga-primary">Open →</span>
+          </a>
+        ) : (
+          <div key={s.label} className={`${base} opacity-70`}>
+            <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">{s.label}</h3>
+            <p className="typo-body-sm text-vintiga-foreground-muted">{s.desc}</p>
+            <span className="mt-auto pt-vintiga-md typo-caption font-semibold uppercase tracking-wide text-vintiga-foreground-muted">Coming soon</span>
+          </div>
+        ),
+      )}
+    </div>
+  )
+}
+
 function IndexPage() {
   const [segment, setSegment] = useState<Segment>('all')
   const [query, setQuery] = useState('')
@@ -555,11 +594,11 @@ function IndexPage() {
     ...CATEGORY_OPTIONS.map((c) => ({ value: c as Segment, label: c })),
   ]
 
-  // "Design System" and "Presentations" aren't prototypes — selecting them
-  // empties the prototype grid (Design System shows its section cards instead;
-  // Presentations is a placeholder for now).
+  // "Brand", "Design System" and "Presentations" aren't prototypes — selecting
+  // them empties the prototype grid (Brand and Design System show their section
+  // cards instead; Presentations is a placeholder for now).
   const segmentPrototypes =
-    segment === 'Design System' || segment === 'Presentations'
+    segment === 'Brand' || segment === 'Design System' || segment === 'Presentations'
       ? []
       : allEntries.filter(
           (p) =>
@@ -676,7 +715,7 @@ function IndexPage() {
       {/* Catalog sub-header — title + (for prototype tabs) sort + grid/list switch. */}
       <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-lg">
         <h1 className="typo-title-subsection font-semibold text-vintiga-foreground">{segmentTitle}</h1>
-        {segment !== 'Design System' && segment !== 'Presentations' && (
+        {segment !== 'Brand' && segment !== 'Design System' && segment !== 'Presentations' && (
           <div className="flex items-center gap-3">
             <SortDropdown value={sort} onChange={setSort} />
             <IconButton
@@ -691,8 +730,10 @@ function IndexPage() {
         )}
       </div>
 
-      {/* Catalog — Design System section cards, or the prototype grid/list. */}
-      {segment === 'Design System' ? (
+      {/* Catalog — Brand / Design System section cards, or the prototype grid/list. */}
+      {segment === 'Brand' ? (
+        <BrandSectionCards />
+      ) : segment === 'Design System' ? (
         <DesignSystemSectionCards />
       ) : sortedPrototypes.length > 0 ? (
         view === 'list' ? (
