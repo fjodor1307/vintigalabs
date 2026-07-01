@@ -30,6 +30,9 @@ export const IMAGE_COLLECTIONS: ImageCollection[] = [
     images: [
       { src: `${dir}/compositions/lifestyle-terrace.jpg`, alt: 'Two guests laughing over drinks on a sunlit terrace' },
       { src: `${dir}/compositions/vineyard-portrait.jpg`, alt: 'Woman with a glass of white wine at a vineyard table at golden hour' },
+      { src: `${dir}/compositions/model-smiley-terrace.jpg`, alt: 'Woman in a smiley-face tee with white wine at a vineyard terrace, golden hour' },
+      { src: `${dir}/compositions/model-sweater-terrace.jpg`, alt: 'Woman in a cream sweater with white wine at a vineyard terrace, golden hour' },
+      { src: `${dir}/compositions/model-cafe.jpg`, alt: 'Woman with coffee at a rustic café table' },
     ],
   },
   {
