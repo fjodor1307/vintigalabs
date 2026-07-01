@@ -18,7 +18,7 @@ Collections and the files they expect (matching the current manifest):
 | Collection | Folder | Files |
 |---|---|---|
 | Compositions | `compositions/` | `lifestyle-terrace.jpg`, `vineyard-portrait.jpg`, `model-smiley-terrace.jpg`, `model-sweater-terrace.jpg`, `model-cafe.jpg` |
-| Character Sheets | `character-sheets/` | `model-contact-sheet.jpg` |
+| Character Sheets | `character-sheets/` | `model-contact-sheet.jpg`, `model-contact-sheet-dark.jpg` |
 | Locations | `locations/` | `vineyard-moodboard.jpg` |
 | iPhone & iPad Mockups | `mockups/` | _(none yet)_ |
 

@@ -43,6 +43,7 @@ export const IMAGE_COLLECTIONS: ImageCollection[] = [
     tags: ['models', 'reference', 'consistency'],
     images: [
       { src: `${dir}/character-sheets/model-contact-sheet.jpg`, alt: 'Contact sheet of a model in a white tank top across multiple angles' },
+      { src: `${dir}/character-sheets/model-contact-sheet-dark.jpg`, alt: 'Contact sheet of a dark-haired model in a cream sweater and jeans across multiple angles' },
     ],
   },
   {
