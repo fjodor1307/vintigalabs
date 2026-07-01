@@ -3,11 +3,10 @@
 // lightbox carousel and downloads (per-image + zip). Data from `imageryData.ts`;
 // files live in `public/brand/imagery/`.
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import {
   BackArrowIcon,
   DownloadIcon,
-  UploadIcon,
   Grid2x2Icon,
   LayoutListIcon,
   XIcon,
@@ -169,25 +168,12 @@ function Lightbox({
 function GalleryView({ collection, onBack }: { collection: ImageCollection; onBack: () => void }) {
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [lightbox, setLightbox] = useState<number | null>(null)
-  // Session uploads — added via the Upload button (object URLs). Not persisted;
-  // to keep them, drop the files into public/brand/imagery/<collection>/.
-  const [uploaded, setUploaded] = useState<GalleryImage[]>([])
-  const fileInput = useRef<HTMLInputElement>(null)
 
-  const images = [...collection.images, ...uploaded]
+  const images = collection.images
   const hasImages = images.length > 0
-
-  const onFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const picked = Array.from(e.target.files ?? [])
-      .filter((f) => f.type.startsWith('image/'))
-      .map((f) => ({ src: URL.createObjectURL(f), alt: f.name }))
-    if (picked.length) setUploaded((u) => [...u, ...picked])
-    e.target.value = ''
-  }
 
   return (
     <>
-      <input ref={fileInput} type="file" accept="image/*" multiple className="hidden" onChange={onFiles} />
       <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-lg">
         <div className="flex items-center gap-1.5 min-w-0">
           <button type="button" onClick={onBack} className="typo-title-subsection font-semibold text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors">
@@ -197,16 +183,6 @@ function GalleryView({ collection, onBack }: { collection: ImageCollection; onBa
           <h1 className="typo-title-subsection font-semibold text-vintiga-foreground truncate">{collection.title}</h1>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <Button
-            variant="outline"
-            size="lg"
-            leftIcon={<UploadIcon />}
-            onClick={() => fileInput.current?.click()}
-            title="Add images to this session"
-            className={HUB_OUTLINE_DARK}
-          >
-            Upload
-          </Button>
           <Button variant="outline" size="lg" leftIcon={<DownloadIcon />} onClick={() => downloadImagesZip(images, collection.slug)} disabled={!hasImages} className={HUB_OUTLINE_DARK}>
             Download zip
           </Button>
