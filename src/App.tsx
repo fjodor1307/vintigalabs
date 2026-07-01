@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Agentation } from 'agentation'
 import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
 import { ToneOfVoiceScreen } from './brand/ToneOfVoiceScreen'
+import { ImageryScreen } from './brand/ImageryScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { VintigaLogo, VintigaIconNeutral } from './design-system/shared/VintigaLogo'
 import { BackArrowIcon, DownloadIcon, SearchIcon, ArrowRightIcon, SunIcon, MoonIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon, HistoryIcon, ExternalLinkIcon } from './design-system/icons/Icons'
@@ -47,6 +48,7 @@ function useHashRoute() {
 const webScreens: Record<string, React.ComponentType> = {
   '#/web/design-system': DesignSystemScreen,
   '#/brand/tone-of-voice': ToneOfVoiceScreen,
+  '#/brand/imagery': ImageryScreen,
   ...allRoutes,
 }
 
@@ -532,7 +534,7 @@ const BRAND_SECTIONS: { label: string; desc: string; href: string | null }[] = [
   { label: 'Colour', desc: 'The brand palette and where it applies.', href: '#/web/design-system?p=colors' },
   { label: 'Typography', desc: 'Type personality and the type scale.', href: '#/web/design-system?p=typography' },
   { label: 'Tone of voice', desc: 'How Vintiga sounds — principles, rules, samples.', href: '#/brand/tone-of-voice' },
-  { label: 'Imagery', desc: 'Photography and illustration direction.', href: null },
+  { label: 'Imagery', desc: 'Marketing image library — browse and download photography.', href: '#/brand/imagery' },
 ]
 
 function BrandSectionCards() {
