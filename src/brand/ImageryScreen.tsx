@@ -348,9 +348,9 @@ function CollectionRow({ collection, featured, onOpen }: { collection: ImageColl
 
       <div className="flex-1 min-w-0 overflow-x-auto flex items-stretch gap-vintiga-md">
         {thumbs.length > 0 ? (
-          thumbs.map((img) => <ImageTile key={img.src} img={img} onClick={onOpen} className="h-[244px] w-[330px] shrink-0" />)
+          thumbs.map((img) => <ImageTile key={img.src} img={img} onClick={onOpen} className="h-[218px] w-[300px] shrink-0" />)
         ) : (
-          <div className="w-full min-h-[244px] rounded-vintiga-lg bg-vintiga-surface-element border border-vintiga-border" />
+          <div className="w-full min-h-[218px] rounded-vintiga-lg bg-vintiga-surface-element border border-vintiga-border" />
         )}
       </div>
     </div>

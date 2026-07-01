@@ -41,7 +41,7 @@ Built a marketing image library at **Brand → Imagery** (`#/brand/imagery`) so 
 - Images are plain files under `public/brand/imagery/<collection>/`, listed in `src/brand/imageryData.ts`; missing files render as neutral placeholder tiles. See `public/brand/imagery/README.md` to add photos. Seeded the first four brand photos (Compositions ×2, Character Sheets, Locations).
 - **Hub chrome:** the Imagery pages now render inside the real **hub navbar** (extracted to `src/hub/HubNavbar.tsx` and shared with the home page) — logo · tabs · search · dark toggle · Latest updates · download. Breadcrumbs: **Brand › Imagery** on the index, **Imagery › <collection>** in a gallery.
 - **Upload** button in each gallery — adds images for the current session (object URLs, viewable / downloadable / zippable). Not persisted; to keep them, drop the files into `public/brand/imagery/<collection>/`.
-- Collection thumbnails set to **244px** (consistent with the prototype cards).
+- Collection thumbnails sized so the Imagery cards match the **prototype card height** (~266px), rather than forcing the card taller.
 
 ## 2026-06-30 — Fedja + Claude: Latest updates — drop the Today range
 
