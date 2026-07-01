@@ -2,21 +2,17 @@ import { useState, useEffect } from 'react'
 import { Agentation } from 'agentation'
 import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
 import { ToneOfVoiceScreen } from './brand/ToneOfVoiceScreen'
+import { ImageryScreen } from './brand/ImageryScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
-import { VintigaLogo, VintigaIconNeutral } from './design-system/shared/VintigaLogo'
-import { BackArrowIcon, DownloadIcon, SearchIcon, ArrowRightIcon, SunIcon, MoonIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon, HistoryIcon, ExternalLinkIcon } from './design-system/icons/Icons'
+import { BackArrowIcon, SearchIcon, ArrowRightIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon, ExternalLinkIcon } from './design-system/icons/Icons'
 import { Button } from './design-system/shared/Button'
 import { IconButton } from './design-system/shared/IconButton'
 import { TextField } from './design-system/shared/TextField'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from './design-system/shared/Modal'
 import { SegmentedControl } from './design-system/shared/SegmentedControl'
 import updatesData from './generated/updates.json'
-
-// Shared dark-mode overrides for DS outline buttons used in the hub chrome —
-// the DS components are light-only (white/slate), so retint them under `.dark`.
-const HUB_OUTLINE_DARK =
-  'dark:bg-transparent dark:border-vintiga-border dark:text-vintiga-foreground-muted ' +
-  'dark:hover:bg-vintiga-surface-element dark:hover:text-vintiga-foreground'
+import { HubNavbar, HUB_OUTLINE_DARK } from './hub/HubNavbar'
+import { CATEGORY_OPTIONS, type Category, type Segment } from './hub/segments'
 import {
   allRoutes,
   allEntries,
@@ -47,14 +43,13 @@ function useHashRoute() {
 const webScreens: Record<string, React.ComponentType> = {
   '#/web/design-system': DesignSystemScreen,
   '#/brand/tone-of-voice': ToneOfVoiceScreen,
+  '#/brand/imagery': ImageryScreen,
   ...allRoutes,
 }
 
 // Prototypes are categorised by the surface they target: web → CRM (dashboard),
 // mobile → POS. The Design System is a separate tool, not a prototype.
-type Category = 'CRM' | 'POS'
-const CATEGORY_OPTIONS = ['CRM', 'POS', 'Brand', 'Design System', 'Presentations'] as const
-type Segment = 'all' | (typeof CATEGORY_OPTIONS)[number]
+// `Category` / `CATEGORY_OPTIONS` / `Segment` live in ./hub/segments.
 
 function categoryForFrame(frame: PrototypeFrame): Category {
   return frame === 'mobile' ? 'POS' : 'CRM'
@@ -532,7 +527,7 @@ const BRAND_SECTIONS: { label: string; desc: string; href: string | null }[] = [
   { label: 'Colour', desc: 'The brand palette and where it applies.', href: '#/web/design-system?p=colors' },
   { label: 'Typography', desc: 'Type personality and the type scale.', href: '#/web/design-system?p=typography' },
   { label: 'Tone of voice', desc: 'How Vintiga sounds — principles, rules, samples.', href: '#/brand/tone-of-voice' },
-  { label: 'Imagery', desc: 'Photography and illustration direction.', href: null },
+  { label: 'Imagery', desc: 'Marketing image library — browse and download photography.', href: '#/brand/imagery' },
 ]
 
 function BrandSectionCards() {
@@ -562,8 +557,17 @@ function BrandSectionCards() {
   )
 }
 
+const ALL_SEGMENTS: string[] = ['all', ...CATEGORY_OPTIONS]
+
 function IndexPage() {
-  const [segment, setSegment] = useState<Segment>('all')
+  // Persisted so navigating in from a sub-page (Imagery, etc.) lands on the tab.
+  const [segment, setSegment] = useState<Segment>(() => {
+    const saved = localStorage.getItem('vintiga-hub-segment')
+    return saved && ALL_SEGMENTS.includes(saved) ? (saved as Segment) : 'all'
+  })
+  useEffect(() => {
+    localStorage.setItem('vintiga-hub-segment', segment)
+  }, [segment])
   const [query, setQuery] = useState('')
   // Hub-only dark mode (neutral palette). Persisted so it survives navigation.
   const [dark, setDark] = useState(() => localStorage.getItem('vintiga-hub-dark') === '1')
@@ -587,11 +591,6 @@ function IndexPage() {
   }, [sort])
   // "Latest updates" modal (end-of-day summary).
   const [updatesOpen, setUpdatesOpen] = useState(false)
-
-  const segments: { value: Segment; label: string }[] = [
-    { value: 'all', label: 'All' },
-    ...CATEGORY_OPTIONS.map((c) => ({ value: c as Segment, label: c })),
-  ]
 
   // "Brand", "Design System" and "Presentations" aren't prototypes — selecting
   // them empties the prototype grid (Brand and Design System show their section
@@ -627,35 +626,13 @@ function IndexPage() {
     // width constant whether or not a vertical scrollbar is showing, so nothing
     // shifts horizontally when you switch tabs or scroll.
     <div className={`${dark ? 'dark bg-[#0a0a0a] ' : 'bg-vintiga-surface '}h-screen overflow-y-auto font-vintiga-body [scrollbar-gutter:stable]`}>
-      {/* Fixed, frosted-glass top navbar — mirrors the Design System header. */}
-      <header className="sticky top-0 z-30 flex items-center gap-3 h-16 px-vintiga-lg sm:px-vintiga-2xl bg-vintiga-surface/75 backdrop-blur-md">
-        <a href="#/" aria-label="Vintiga Prototypes" className="shrink-0 no-underline">
-          {dark ? <VintigaIconNeutral size={36} /> : <VintigaLogo size={36} />}
-        </a>
-
-        <nav aria-label="Categories" className="flex items-center gap-0.5 shrink-0">
-          {segments.map((s) => {
-            const active = segment === s.value
-            return (
-              <button
-                key={s.value}
-                type="button"
-                onClick={() => setSegment(s.value)}
-                aria-current={active ? 'page' : undefined}
-                className={[
-                  'px-3 py-1.5 rounded-vintiga-md typo-body-sm transition-colors',
-                  active
-                    ? 'font-semibold text-vintiga-foreground'
-                    : 'font-medium text-vintiga-foreground-muted hover:text-vintiga-foreground',
-                ].join(' ')}
-              >
-                {s.label}
-              </button>
-            )
-          })}
-        </nav>
-
-        <div className="flex-1 min-w-0 max-w-md ml-auto">
+      <HubNavbar
+        dark={dark}
+        onToggleDark={() => setDark((d) => !d)}
+        segment={segment}
+        onSelectSegment={setSegment}
+        onOpenUpdates={() => setUpdatesOpen(true)}
+        search={
           <TextField
             type="search"
             value={query}
@@ -663,51 +640,8 @@ function IndexPage() {
             placeholder="Search"
             leftIcon={<SearchIcon className="w-4 h-4" />}
           />
-        </div>
-
-        {/* Dark-mode switch (hub only, neutral palette) — 40px tall to match the
-            search field and the icon buttons. */}
-        <button
-          type="button"
-          role="switch"
-          aria-checked={dark}
-          aria-label="Toggle dark mode"
-          onClick={() => setDark((d) => !d)}
-          className={[
-            'shrink-0 relative w-[64px] h-10 rounded-full p-1 flex items-center transition-colors',
-            dark ? 'bg-[#262626]' : 'bg-vintiga-slate-900',
-          ].join(' ')}
-        >
-          <span
-            className={[
-              'w-8 h-8 rounded-full bg-white shadow-vintiga-sm flex items-center justify-center text-vintiga-slate-700 transition-transform',
-              dark ? 'translate-x-0' : 'translate-x-[24px]',
-            ].join(' ')}
-          >
-            {dark ? <MoonIcon className="w-4 h-4" /> : <SunIcon className="w-4 h-4" />}
-          </span>
-        </button>
-
-        {/* Latest updates — end-of-day summary of what shipped. */}
-        <IconButton
-          variant="outline"
-          size="xl"
-          icon={<HistoryIcon />}
-          onClick={() => setUpdatesOpen(true)}
-          aria-label="Latest updates"
-          className={`h-10 w-10 ${HUB_OUTLINE_DARK}`}
-        />
-
-        {/* Download repo as a ZIP — handy for dev handoff. */}
-        <IconButton
-          variant="outline"
-          size="xl"
-          icon={<DownloadIcon />}
-          onClick={() => window.open('https://github.com/fjodor1307/vintigalabs/archive/refs/heads/main.zip', '_blank')}
-          aria-label="Download repository as ZIP"
-          className={`h-10 w-10 ${HUB_OUTLINE_DARK}`}
-        />
-      </header>
+        }
+      />
 
       <div className="px-vintiga-lg sm:px-vintiga-2xl py-vintiga-xl">
 
