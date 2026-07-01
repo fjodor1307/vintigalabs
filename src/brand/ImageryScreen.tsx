@@ -340,7 +340,20 @@ function IndexView({ onOpen }: { onOpen: (slug: string) => void }) {
   return (
     <>
       <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-lg">
-        <h1 className="typo-title-subsection font-semibold text-vintiga-foreground">Imagery</h1>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.setItem('vintiga-hub-segment', 'Brand')
+              window.location.hash = '#/'
+            }}
+            className="typo-title-subsection font-semibold text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors"
+          >
+            Brand
+          </button>
+          <ChevronRightIcon className="w-4 h-4 text-vintiga-foreground-muted shrink-0" />
+          <h1 className="typo-title-subsection font-semibold text-vintiga-foreground">Imagery</h1>
+        </div>
         <div className="flex items-center gap-3">
           <IndexSortMenu value={sort} onChange={setSort} />
           <IconButton
