@@ -22,8 +22,11 @@ import type { Segment } from '../hub/segments'
 import {
   IMAGE_COLLECTIONS,
   collectionBySlug,
+  setBySlug,
+  collectionImages,
   fileNameOf,
   type ImageCollection,
+  type ImageSet,
   type GalleryImage,
 } from './imageryData'
 
@@ -77,22 +80,62 @@ function SurfaceBadge({ surface }: { surface: 'CRM' | 'POS' }) {
 // Sizing is controlled by the caller via `className`.
 function ImageTile({ img, onClick, className = '' }: { img: GalleryImage; onClick?: () => void; className?: string }) {
   const [failed, setFailed] = useState(false)
+  const inner = !failed && (
+    <img
+      src={img.src}
+      alt={img.alt}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+    />
+  )
+  const cls = `group relative block overflow-hidden rounded-vintiga-lg bg-vintiga-surface-element border border-vintiga-border ${className}`
+  // When there's no onClick the tile is decorative (e.g. inside a card <button>),
+  // so render a plain div to avoid nesting an interactive button inside another.
+  return onClick ? (
+    <button type="button" onClick={onClick} aria-label={img.alt} className={cls}>
+      {inner}
+    </button>
+  ) : (
+    <div className={cls}>{inner}</div>
+  )
+}
+
+// Shared clickable card: cover image on top, then badges + title + description.
+// Used for both the collections index and the sets inside a collection. Grids
+// that render these should use `items-start` so a short description doesn't get
+// stretched to a taller sibling's height, leaving trailing whitespace.
+function ImageryCard({
+  cover,
+  surfaces,
+  title,
+  description,
+  onClick,
+}: {
+  cover?: GalleryImage
+  surfaces: ('CRM' | 'POS')[]
+  title: string
+  description: string
+  onClick: () => void
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={img.alt}
-      className={`group relative block overflow-hidden rounded-vintiga-lg bg-vintiga-surface-element border border-vintiga-border ${className}`}
+      className="text-left bg-vintiga-surface border border-vintiga-border rounded-vintiga-card overflow-hidden hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted transition-colors"
     >
-      {!failed && (
-        <img
-          src={img.src}
-          alt={img.alt}
-          loading="lazy"
-          onError={() => setFailed(true)}
-          className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
-        />
-      )}
+      <div className="aspect-[16/10] bg-vintiga-surface-element">
+        {cover && <ImageTile img={cover} className="w-full h-full !rounded-none !border-0" />}
+      </div>
+      <div className="p-vintiga-lg flex flex-col gap-vintiga-xs">
+        <div className="flex items-center gap-vintiga-sm">
+          {surfaces.map((s) => (
+            <SurfaceBadge key={s} surface={s} />
+          ))}
+        </div>
+        <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">{title}</h2>
+        <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-2">{description}</p>
+      </div>
     </button>
   )
 }
@@ -163,27 +206,102 @@ function Lightbox({
   )
 }
 
-// ─── Gallery (one collection) ─────────────────────────────────────────────────
+// ─── Collection (level 2 — sets as cards) ─────────────────────────────────────
 
-function GalleryView({ collection, onBack }: { collection: ImageCollection; onBack: () => void }) {
+function CollectionView({
+  collection,
+  onOpenSet,
+  onBackToIndex,
+}: {
+  collection: ImageCollection
+  onOpenSet: (setSlug: string) => void
+  onBackToIndex: () => void
+}) {
+  const allImages = collectionImages(collection)
+
+  return (
+    <>
+      <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-lg">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <button type="button" onClick={onBackToIndex} className="typo-title-subsection font-semibold text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors">
+            Imagery
+          </button>
+          <ChevronRightIcon className="w-4 h-4 text-vintiga-foreground-muted shrink-0" />
+          <h1 className="typo-title-subsection font-semibold text-vintiga-foreground truncate">{collection.title}</h1>
+        </div>
+        <Button variant="outline" size="lg" leftIcon={<DownloadIcon />} onClick={() => downloadImagesZip(allImages, collection.slug)} disabled={allImages.length === 0} className={HUB_OUTLINE_DARK}>
+          Download zip
+        </Button>
+      </div>
+
+      {collection.sets.length === 0 ? (
+        <div className="border-2 border-dashed border-vintiga-border rounded-vintiga-card p-vintiga-3xl flex flex-col items-center justify-center text-center gap-vintiga-sm">
+          <p className="typo-title-subsection font-semibold text-vintiga-foreground">No images yet</p>
+          <p className="typo-body-sm text-vintiga-foreground-muted max-w-md">
+            Drop files into <code className="typo-body-sm bg-vintiga-surface-element px-1.5 py-0.5 rounded-vintiga-input">public/brand/imagery/{collection.slug}/</code> and list them in the manifest.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 items-start gap-vintiga-lg">
+          {collection.sets.map((set) => (
+            <ImageryCard
+              key={set.slug}
+              cover={set.images[0]}
+              surfaces={collection.surfaces}
+              title={set.title}
+              description={set.description ?? `${set.images.length} ${set.images.length === 1 ? 'image' : 'images'}`}
+              onClick={() => onOpenSet(set.slug)}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
+
+// ─── Set gallery (level 3 — images inside one set) ────────────────────────────
+
+function SetGalleryView({
+  collection,
+  set,
+  singleSet,
+  onBackToIndex,
+  onBackToCollection,
+}: {
+  collection: ImageCollection
+  set: ImageSet
+  singleSet: boolean
+  onBackToIndex: () => void
+  onBackToCollection: () => void
+}) {
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [lightbox, setLightbox] = useState<number | null>(null)
 
-  const images = collection.images
+  const images = set.images
   const hasImages = images.length > 0
 
   return (
     <>
       <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-lg">
         <div className="flex items-center gap-1.5 min-w-0">
-          <button type="button" onClick={onBack} className="typo-title-subsection font-semibold text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors">
+          <button type="button" onClick={onBackToIndex} className="typo-title-subsection font-semibold text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors">
             Imagery
           </button>
           <ChevronRightIcon className="w-4 h-4 text-vintiga-foreground-muted shrink-0" />
-          <h1 className="typo-title-subsection font-semibold text-vintiga-foreground truncate">{collection.title}</h1>
+          {singleSet ? (
+            <h1 className="typo-title-subsection font-semibold text-vintiga-foreground truncate">{collection.title}</h1>
+          ) : (
+            <>
+              <button type="button" onClick={onBackToCollection} className="typo-title-subsection font-semibold text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors truncate">
+                {collection.title}
+              </button>
+              <ChevronRightIcon className="w-4 h-4 text-vintiga-foreground-muted shrink-0" />
+              <h1 className="typo-title-subsection font-semibold text-vintiga-foreground truncate">{set.title}</h1>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <Button variant="outline" size="lg" leftIcon={<DownloadIcon />} onClick={() => downloadImagesZip(images, collection.slug)} disabled={!hasImages} className={HUB_OUTLINE_DARK}>
+          <Button variant="outline" size="lg" leftIcon={<DownloadIcon />} onClick={() => downloadImagesZip(images, `${collection.slug}-${set.slug}`)} disabled={!hasImages} className={HUB_OUTLINE_DARK}>
             Download zip
           </Button>
           <IconButton
@@ -283,7 +401,8 @@ function IndexSortMenu({ value, onChange }: { value: IndexSort; onChange: (v: In
 }
 
 function CollectionRow({ collection, featured, onOpen }: { collection: ImageCollection; featured: boolean; onOpen: () => void }) {
-  const thumbs = collection.images.slice(0, 4)
+  const allImages = collectionImages(collection)
+  const thumbs = allImages.slice(0, 4)
   return (
     <div
       className={[
@@ -311,8 +430,8 @@ function CollectionRow({ collection, featured, onOpen }: { collection: ImageColl
             <button type="button" onClick={onOpen} className="typo-body-sm font-semibold text-vintiga-primary hover:underline">View gallery</button>
             <button
               type="button"
-              onClick={() => downloadImagesZip(collection.images, collection.slug)}
-              disabled={collection.images.length === 0}
+              onClick={() => downloadImagesZip(allImages, collection.slug)}
+              disabled={allImages.length === 0}
               className="typo-body-sm font-semibold text-vintiga-primary hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
             >
               Download zip
@@ -335,7 +454,7 @@ function CollectionRow({ collection, featured, onOpen }: { collection: ImageColl
 
 function IndexView({ onOpen }: { onOpen: (slug: string) => void }) {
   const [sort, setSort] = useState<IndexSort>('latest')
-  const [view, setView] = useState<'list' | 'grid'>('list')
+  const [view, setView] = useState<'list' | 'grid'>('grid')
 
   const collections = sort === 'name' ? [...IMAGE_COLLECTIONS].sort((a, b) => a.title.localeCompare(b.title)) : IMAGE_COLLECTIONS
 
@@ -376,27 +495,16 @@ function IndexView({ onOpen }: { onOpen: (slug: string) => void }) {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 items-start gap-vintiga-lg">
           {collections.map((c) => (
-            <button
+            <ImageryCard
               key={c.slug}
-              type="button"
+              cover={collectionImages(c)[0]}
+              surfaces={c.surfaces}
+              title={c.title}
+              description={c.description}
               onClick={() => onOpen(c.slug)}
-              className="text-left bg-vintiga-surface border border-vintiga-border rounded-vintiga-card overflow-hidden hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted transition-colors"
-            >
-              <div className="aspect-[16/10] bg-vintiga-surface-element">
-                {c.images[0] && <ImageTile img={c.images[0]} className="w-full h-full !rounded-none !border-0" />}
-              </div>
-              <div className="p-vintiga-lg flex flex-col gap-vintiga-xs">
-                <div className="flex items-center gap-vintiga-sm">
-                  {c.surfaces.map((s) => (
-                    <SurfaceBadge key={s} surface={s} />
-                  ))}
-                </div>
-                <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">{c.title}</h2>
-                <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-2">{c.description}</p>
-              </div>
-            </button>
+            />
           ))}
         </div>
       )}
@@ -413,7 +521,17 @@ export function ImageryScreen() {
   }, [dark])
 
   const [openSlug, setOpenSlug] = useState<string | null>(null)
+  const [openSetSlug, setOpenSetSlug] = useState<string | null>(null)
   const collection = openSlug ? collectionBySlug(openSlug) : null
+  const set = collection && openSetSlug ? setBySlug(collection, openSetSlug) : null
+
+  // Open a collection. Collections with a single set skip the middle level and
+  // land straight in that set's gallery.
+  const openCollection = (slug: string) => {
+    const c = collectionBySlug(slug)
+    setOpenSlug(slug)
+    setOpenSetSlug(c && c.sets.length === 1 ? c.sets[0].slug : null)
+  }
 
   return (
     <div className={`${dark ? 'dark bg-[#0a0a0a] ' : 'bg-vintiga-surface '}h-screen overflow-y-auto font-vintiga-body [scrollbar-gutter:stable]`}>
@@ -440,7 +558,22 @@ export function ImageryScreen() {
       />
 
       <div className="px-vintiga-lg sm:px-vintiga-2xl py-vintiga-xl">
-        {collection ? <GalleryView collection={collection} onBack={() => setOpenSlug(null)} /> : <IndexView onOpen={setOpenSlug} />}
+        {collection && set ? (
+          <SetGalleryView
+            collection={collection}
+            set={set}
+            singleSet={collection.sets.length === 1}
+            onBackToIndex={() => {
+              setOpenSlug(null)
+              setOpenSetSlug(null)
+            }}
+            onBackToCollection={() => setOpenSetSlug(null)}
+          />
+        ) : collection ? (
+          <CollectionView collection={collection} onOpenSet={setOpenSetSlug} onBackToIndex={() => setOpenSlug(null)} />
+        ) : (
+          <IndexView onOpen={openCollection} />
+        )}
       </div>
     </div>
   )
