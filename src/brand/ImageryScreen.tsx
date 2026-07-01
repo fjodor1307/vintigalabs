@@ -353,7 +353,7 @@ export function ImageryScreen() {
 
   return (
     <div className="min-h-screen h-screen overflow-y-auto bg-vintiga-surface font-vintiga-body">
-      <header className="sticky top-0 z-30 flex items-center h-16 px-vintiga-lg sm:px-vintiga-2xl bg-vintiga-surface/75 backdrop-blur-md border-b border-vintiga-border">
+      <header className="sticky top-0 z-30 flex items-center h-16 px-vintiga-lg sm:px-vintiga-2xl bg-vintiga-surface/75 backdrop-blur-md">
         {collection ? (
           <button
             type="button"
@@ -374,7 +374,7 @@ export function ImageryScreen() {
         )}
       </header>
 
-      <div className="px-vintiga-lg sm:px-vintiga-2xl py-vintiga-xl max-w-[1400px] mx-auto">
+      <div className="px-vintiga-lg sm:px-vintiga-2xl py-vintiga-xl">
         {collection ? <GalleryView collection={collection} /> : <IndexView onOpen={setOpenSlug} />}
       </div>
     </div>
