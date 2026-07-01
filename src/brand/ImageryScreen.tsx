@@ -3,10 +3,11 @@
 // lightbox carousel and downloads (per-image + zip). Data from `imageryData.ts`;
 // files live in `public/brand/imagery/`.
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   BackArrowIcon,
   DownloadIcon,
+  UploadIcon,
   Grid2x2Icon,
   LayoutListIcon,
   XIcon,
@@ -38,11 +39,11 @@ function triggerDownload(href: string, filename: string) {
   a.remove()
 }
 
-async function downloadCollectionZip(collection: ImageCollection) {
+async function downloadImagesZip(images: GalleryImage[], name: string) {
   const { default: JSZip } = await import('jszip')
   const zip = new JSZip()
   let added = 0
-  for (const img of collection.images) {
+  for (const img of images) {
     try {
       const res = await fetch(img.src)
       if (!res.ok) continue
@@ -55,7 +56,7 @@ async function downloadCollectionZip(collection: ImageCollection) {
   if (added === 0) return
   const blob = await zip.generateAsync({ type: 'blob' })
   const url = URL.createObjectURL(blob)
-  triggerDownload(url, `${collection.slug}.zip`)
+  triggerDownload(url, `${name}.zip`)
   URL.revokeObjectURL(url)
 }
 
@@ -168,10 +169,25 @@ function Lightbox({
 function GalleryView({ collection, onBack }: { collection: ImageCollection; onBack: () => void }) {
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [lightbox, setLightbox] = useState<number | null>(null)
-  const hasImages = collection.images.length > 0
+  // Session uploads — added via the Upload button (object URLs). Not persisted;
+  // to keep them, drop the files into public/brand/imagery/<collection>/.
+  const [uploaded, setUploaded] = useState<GalleryImage[]>([])
+  const fileInput = useRef<HTMLInputElement>(null)
+
+  const images = [...collection.images, ...uploaded]
+  const hasImages = images.length > 0
+
+  const onFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files ?? [])
+      .filter((f) => f.type.startsWith('image/'))
+      .map((f) => ({ src: URL.createObjectURL(f), alt: f.name }))
+    if (picked.length) setUploaded((u) => [...u, ...picked])
+    e.target.value = ''
+  }
 
   return (
     <>
+      <input ref={fileInput} type="file" accept="image/*" multiple className="hidden" onChange={onFiles} />
       <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-lg">
         <div className="flex items-center gap-1.5 min-w-0">
           <button type="button" onClick={onBack} className="typo-title-subsection font-semibold text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors">
@@ -181,7 +197,17 @@ function GalleryView({ collection, onBack }: { collection: ImageCollection; onBa
           <h1 className="typo-title-subsection font-semibold text-vintiga-foreground truncate">{collection.title}</h1>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <Button variant="outline" size="lg" leftIcon={<DownloadIcon />} onClick={() => downloadCollectionZip(collection)} disabled={!hasImages} className={HUB_OUTLINE_DARK}>
+          <Button
+            variant="outline"
+            size="lg"
+            leftIcon={<UploadIcon />}
+            onClick={() => fileInput.current?.click()}
+            title="Add images to this session"
+            className={HUB_OUTLINE_DARK}
+          >
+            Upload
+          </Button>
+          <Button variant="outline" size="lg" leftIcon={<DownloadIcon />} onClick={() => downloadImagesZip(images, collection.slug)} disabled={!hasImages} className={HUB_OUTLINE_DARK}>
             Download zip
           </Button>
           <IconButton
@@ -204,13 +230,13 @@ function GalleryView({ collection, onBack }: { collection: ImageCollection; onBa
         </div>
       ) : view === 'grid' ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-vintiga-md">
-          {collection.images.map((img, i) => (
+          {images.map((img, i) => (
             <ImageTile key={img.src} img={img} onClick={() => setLightbox(i)} className="w-full aspect-[4/3]" />
           ))}
         </div>
       ) : (
         <div className="flex flex-col gap-vintiga-sm">
-          {collection.images.map((img, i) => (
+          {images.map((img, i) => (
             <div key={img.src} className="flex items-center gap-vintiga-md p-vintiga-sm border border-vintiga-border rounded-vintiga-card hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted transition-colors">
               <ImageTile img={img} onClick={() => setLightbox(i)} className="w-28 aspect-[4/3] shrink-0" />
               <div className="flex-1 min-w-0">
@@ -231,7 +257,7 @@ function GalleryView({ collection, onBack }: { collection: ImageCollection; onBa
       )}
 
       {lightbox !== null && hasImages && (
-        <Lightbox images={collection.images} index={lightbox} onIndex={setLightbox} onClose={() => setLightbox(null)} />
+        <Lightbox images={images} index={lightbox} onIndex={setLightbox} onClose={() => setLightbox(null)} />
       )}
     </>
   )
@@ -309,7 +335,7 @@ function CollectionRow({ collection, featured, onOpen }: { collection: ImageColl
             <button type="button" onClick={onOpen} className="typo-body-sm font-semibold text-vintiga-primary hover:underline">View gallery</button>
             <button
               type="button"
-              onClick={() => downloadCollectionZip(collection)}
+              onClick={() => downloadImagesZip(collection.images, collection.slug)}
               disabled={collection.images.length === 0}
               className="typo-body-sm font-semibold text-vintiga-primary hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
             >
@@ -322,9 +348,9 @@ function CollectionRow({ collection, featured, onOpen }: { collection: ImageColl
 
       <div className="flex-1 min-w-0 overflow-x-auto flex items-stretch gap-vintiga-md">
         {thumbs.length > 0 ? (
-          thumbs.map((img) => <ImageTile key={img.src} img={img} onClick={onOpen} className="h-[340px] w-[460px] shrink-0" />)
+          thumbs.map((img) => <ImageTile key={img.src} img={img} onClick={onOpen} className="h-[244px] w-[330px] shrink-0" />)
         ) : (
-          <div className="w-full min-h-[340px] rounded-vintiga-lg bg-vintiga-surface-element border border-vintiga-border" />
+          <div className="w-full min-h-[244px] rounded-vintiga-lg bg-vintiga-surface-element border border-vintiga-border" />
         )}
       </div>
     </div>
