@@ -3,9 +3,19 @@ import { useState, type FormEvent } from 'react'
 const PASSWORD = 'vintiga2026'
 const STORAGE_KEY = 'vintiga-proto-auth'
 
+// A fresh browser tab opened for a Figma capture has no session auth. Detect the
+// capture params (same convention as the ?figmaroute= router bypass in App.tsx)
+// and skip the gate so the actual screen — not the password prompt — is captured.
+function isFigmaCapture() {
+  return (
+    window.location.hash.includes('figmacapture') ||
+    new URLSearchParams(window.location.search).has('figmaroute')
+  )
+}
+
 export function PasswordGate({ children }: { children: React.ReactNode }) {
   const [unlocked, setUnlocked] = useState(
-    () => sessionStorage.getItem(STORAGE_KEY) === 'ok',
+    () => sessionStorage.getItem(STORAGE_KEY) === 'ok' || isFigmaCapture(),
   )
   const [value, setValue] = useState('')
   const [error, setError] = useState(false)
