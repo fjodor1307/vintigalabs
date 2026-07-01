@@ -38,7 +38,8 @@ Built a marketing image library at **Brand → Imagery** (`#/brand/imagery`) so 
 - **Gallery** — **grid** (default) / **list** toggle, plus a **Download zip** of the whole collection (zips client-side via `jszip`, dynamically imported so it stays out of the main bundle).
 - **Lightbox carousel** — click any image for a full-size view with **prev · download · next** and keyboard arrows / Esc.
 - **Downloads** — per-image (lightbox + list rows) and per-collection zip.
-- Images are plain files under `public/brand/imagery/<collection>/`, listed in `src/brand/imageryData.ts`; missing files render as neutral placeholder tiles. See `public/brand/imagery/README.md` to add photos.
+- Images are plain files under `public/brand/imagery/<collection>/`, listed in `src/brand/imageryData.ts`; missing files render as neutral placeholder tiles. See `public/brand/imagery/README.md` to add photos. Seeded the first four brand photos (Compositions ×2, Character Sheets, Locations).
+- **Hub chrome:** the Imagery pages now render inside the real **hub navbar** (extracted to `src/hub/HubNavbar.tsx` and shared with the home page) — logo · tabs · search · dark toggle · Latest updates · download. The index has a proper sub-header (title · sort · grid/list toggle), and the collection view uses an `Imagery › <name>` breadcrumb.
 
 ## 2026-06-30 — Fedja + Claude: Latest updates — drop the Today range
 
