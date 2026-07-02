@@ -1,11 +1,11 @@
 // Brand imagery manifest — collections shown at Brand → Imagery.
-// Structure is three levels: Collection → Set → Image.
-//   • A collection (e.g. "Compositions") groups related sets.
-//   • A set (e.g. "Character Composition 01") is one shoot/character and holds
-//     multiple images — opening it shows an image gallery.
-//   • Collections with a single set skip the middle level and open straight
-//     into that set's gallery.
-// Files live in `public/brand/imagery/<collection>/` and are served from
+// One consistent shape, three tiers:
+//   • Collection (the card) — Personas, Locations, Mockups…
+//   • Group / Subject (one item inside) — Sarah, Outdoor, iPhone…
+//   • Set (the two tabs every subject holds) — "Reference" (the clean,
+//     canonical asset) + "In context" (that asset living in a real scene).
+// A set holds the images; a subject page shows its sets as sections.
+// Files live in `public/brand/imagery/<folder>/` and are served from
 // `/brand/imagery/...`. See `public/brand/imagery/README.md` to add images.
 
 export type GalleryImage = {
@@ -17,63 +17,90 @@ export type GalleryImage = {
 export type ImageSet = {
   slug: string
   title: string
-  /** Optional card subtitle; falls back to the image count when absent. */
+  /** Optional caption shown under the section heading. */
   description?: string
   images: GalleryImage[]
+}
+
+// A subject bundles its two sets under one name — e.g. a persona: their
+// reference contact sheet plus their in-context lifestyle shots.
+export type ImageGroup = {
+  slug: string
+  title: string
+  description?: string
+  /** Optional classifier badge shown on the card (e.g. a location's Outdoor /
+   *  Indoor type). When set, it replaces the collection's surface badges. */
+  kind?: 'Outdoor' | 'Indoor'
+  sets: ImageSet[]
 }
 
 export type ImageCollection = {
   slug: string
   title: string
   description: string
-  /** Where the imagery is used — shows as badges. */
-  surfaces: ('CRM' | 'POS')[]
   tags: string[]
-  sets: ImageSet[]
+  groups: ImageGroup[]
 }
 
 const dir = '/brand/imagery'
 
+// The two sets every subject holds. `reference` / `inContext` builders keep the
+// slugs, titles and captions consistent across every collection.
+const reference = (images: GalleryImage[], description: string): ImageSet => ({
+  slug: 'reference',
+  title: 'Reference',
+  description,
+  images,
+})
+const inContext = (images: GalleryImage[], description: string): ImageSet => ({
+  slug: 'in-context',
+  title: 'In context',
+  description,
+  images,
+})
+
 export const IMAGE_COLLECTIONS: ImageCollection[] = [
   {
-    slug: 'compositions',
-    title: 'Compositions',
-    description: 'Lifestyle & on-location brand photography — guests, staff and the room, golden-hour warm.',
-    surfaces: ['CRM', 'POS'],
-    tags: ['lifestyle', 'guests', 'on-location'],
-    sets: [
+    slug: 'personas',
+    title: 'Personas',
+    description: 'The brand faces — each with a reference sheet and their own in-context shots, kept consistent for composition and AI work.',
+    tags: ['models', 'reference', 'lifestyle'],
+    groups: [
       {
-        slug: 'character-composition-01',
-        title: 'Character Composition 01',
-        images: [
-          { src: `${dir}/compositions/lifestyle-terrace.jpg`, alt: 'Two guests laughing over drinks on a sunlit terrace' },
-          { src: `${dir}/compositions/vineyard-portrait.jpg`, alt: 'Woman with a glass of white wine at a vineyard table at golden hour' },
+        slug: 'sarah',
+        title: 'Sarah',
+        description: 'Golden-hour blonde — warm, relaxed, vineyard-terrace energy.',
+        sets: [
+          reference(
+            [{ src: `${dir}/character-sheets/model-contact-sheet.jpg`, alt: 'Contact sheet of a blonde model in a white tank top across multiple angles' }],
+            'Angles and expressions for consistent composition and AI work.',
+          ),
+          inContext(
+            [
+              { src: `${dir}/compositions/lifestyle-terrace.jpg`, alt: 'Two guests laughing over drinks on a sunlit terrace' },
+              { src: `${dir}/compositions/vineyard-portrait.jpg`, alt: 'Woman with a glass of white wine at a vineyard table at golden hour' },
+            ],
+            'Lifestyle & on-location shots of this persona.',
+          ),
         ],
       },
       {
-        slug: 'character-composition-02',
-        title: 'Character Composition 02',
-        images: [
-          { src: `${dir}/compositions/model-cafe.jpg`, alt: 'Woman with coffee at a rustic café table' },
-          { src: `${dir}/compositions/model-smiley-terrace.jpg`, alt: 'Woman in a smiley-face tee with white wine at a vineyard terrace, golden hour' },
-          { src: `${dir}/compositions/model-sweater-terrace.jpg`, alt: 'Woman in a cream sweater with white wine at a vineyard terrace, golden hour' },
-        ],
-      },
-    ],
-  },
-  {
-    slug: 'character-sheets',
-    title: 'Character Sheets',
-    description: 'Consistent model reference sheets — angles and expressions for composition and AI work.',
-    surfaces: ['CRM', 'POS'],
-    tags: ['models', 'reference', 'consistency'],
-    sets: [
-      {
-        slug: 'character-sheets',
-        title: 'Character Sheets',
-        images: [
-          { src: `${dir}/character-sheets/model-contact-sheet.jpg`, alt: 'Contact sheet of a model in a white tank top across multiple angles' },
-          { src: `${dir}/character-sheets/model-contact-sheet-dark.jpg`, alt: 'Contact sheet of a dark-haired model in a cream sweater and jeans across multiple angles' },
+        slug: 'mika',
+        title: 'Mika',
+        description: 'Dark-haired, cream knit — soft café and golden-hour moments.',
+        sets: [
+          reference(
+            [{ src: `${dir}/character-sheets/model-contact-sheet-dark.jpg`, alt: 'Contact sheet of a dark-haired model in a cream sweater and jeans across multiple angles' }],
+            'Angles and expressions for consistent composition and AI work.',
+          ),
+          inContext(
+            [
+              { src: `${dir}/compositions/model-cafe.jpg`, alt: 'Woman with coffee at a rustic café table' },
+              { src: `${dir}/compositions/model-smiley-terrace.jpg`, alt: 'Woman in a smiley-face tee with white wine at a vineyard terrace, golden hour' },
+              { src: `${dir}/compositions/model-sweater-terrace.jpg`, alt: 'Woman in a cream sweater with white wine at a vineyard terrace, golden hour' },
+            ],
+            'Lifestyle & on-location shots of this persona.',
+          ),
         ],
       },
     ],
@@ -81,26 +108,72 @@ export const IMAGE_COLLECTIONS: ImageCollection[] = [
   {
     slug: 'locations',
     title: 'Locations',
-    description: 'Venue, vineyard and estate scenery — terraces, rows, barrels and tasting spaces.',
-    surfaces: ['CRM', 'POS'],
+    description: 'Venue, vineyard and estate scenery — outdoor and indoor spaces, from clean establishing shots to lived-in scenes.',
     tags: ['venue', 'vineyard', 'scenery'],
-    sets: [
+    groups: [
       {
-        slug: 'locations',
-        title: 'Locations',
-        images: [
-          { src: `${dir}/locations/vineyard-moodboard.jpg`, alt: 'Vineyard and estate mood board — terrace, rows, glasses and barrels' },
+        slug: 'maison-soleil',
+        title: 'Maison Soleil',
+        description: 'Sun-drenched stone estate — terrace, vineyard rows, pergola and barrels at golden hour.',
+        kind: 'Outdoor',
+        sets: [
+          reference(
+            [{ src: `${dir}/locations/vineyard-moodboard.jpg`, alt: 'Vineyard and estate mood board — terrace, rows, glasses and barrels' }],
+            'The estate at a glance — an establishing mood board.',
+          ),
+          inContext(
+            [
+              { src: `${dir}/locations/estate-terrace.jpg`, alt: 'Gravel terrace with wooden dining sets and a parasol under a tree, vineyard and hills beyond at golden hour' },
+              { src: `${dir}/locations/vineyard-rows.jpg`, alt: 'Rows of vines running toward the hills and a cypress at golden hour' },
+              { src: `${dir}/locations/pergola-bar.jpg`, alt: 'Rustic stone outdoor bar under a timber pergola with wine bottles and lavender' },
+              { src: `${dir}/locations/garden-path.jpg`, alt: 'Gravel garden path lined with white blooms and terracotta urns at golden hour' },
+              { src: `${dir}/locations/terrace-lounge.jpg`, alt: 'Reclaimed-wood table and cushioned bench on a vine-shaded veranda overlooking the vineyard' },
+              { src: `${dir}/locations/wine-barrels.jpg`, alt: 'Oak wine barrels stacked outdoors in warm evening light' },
+            ],
+            'The estate spaces — terrace, rows, pergola, garden and barrels.',
+          ),
+        ],
+      },
+      {
+        slug: 'la-cave',
+        title: 'La Cave',
+        description: 'Warm oak interiors — tasting tables, stone walls and vineyard-view windows at golden hour.',
+        kind: 'Indoor',
+        sets: [
+          reference(
+            [{ src: `${dir}/locations/indoor-moodboard.jpg`, alt: 'Interior tasting-room mood board — warm oak tables, stone walls, wine shelves and vineyard-view windows at golden hour' }],
+            'The interior at a glance — an establishing mood board.',
+          ),
+          inContext([], 'The indoor spaces with light, atmosphere and guests.'),
         ],
       },
     ],
   },
   {
     slug: 'mockups',
-    title: 'iPhone & iPad Mockups',
+    title: 'Mockups',
     description: 'Product screens dropped into device frames for decks and store listings.',
-    surfaces: ['POS'],
     tags: ['product', 'devices', 'mockups'],
-    sets: [],
+    groups: [
+      {
+        slug: 'iphone',
+        title: 'iPhone',
+        description: 'Product screens in iPhone frames.',
+        sets: [
+          reference([], 'Bare iPhone device frames.'),
+          inContext([], 'iPhone screens in decks, hands and store listings.'),
+        ],
+      },
+      {
+        slug: 'ipad',
+        title: 'iPad',
+        description: 'Product screens in iPad frames.',
+        sets: [
+          reference([], 'Bare iPad device frames.'),
+          inContext([], 'iPad screens in decks, hands and store listings.'),
+        ],
+      },
+    ],
   },
 ]
 
@@ -108,13 +181,18 @@ export function collectionBySlug(slug: string): ImageCollection | undefined {
   return IMAGE_COLLECTIONS.find((c) => c.slug === slug)
 }
 
-export function setBySlug(collection: ImageCollection, setSlug: string): ImageSet | undefined {
-  return collection.sets.find((s) => s.slug === setSlug)
+export function groupBySlug(collection: ImageCollection, groupSlug: string): ImageGroup | undefined {
+  return collection.groups.find((g) => g.slug === groupSlug)
 }
 
-/** Every image across a collection's sets, flattened — for covers, counts and zips. */
+/** Every image inside one subject's sets, flattened — for covers, counts and zips. */
+export function groupImages(group: ImageGroup): GalleryImage[] {
+  return group.sets.flatMap((s) => s.images)
+}
+
+/** Every image across a collection's subjects, flattened. */
 export function collectionImages(collection: ImageCollection): GalleryImage[] {
-  return collection.sets.flatMap((s) => s.images)
+  return collection.groups.flatMap((g) => groupImages(g))
 }
 
 export function fileNameOf(src: string): string {
