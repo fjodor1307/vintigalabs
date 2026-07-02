@@ -19,6 +19,7 @@ import {
 import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
 import { HubNavbar, HUB_OUTLINE_DARK } from '../hub/HubNavbar'
+import { LatestUpdatesModal } from '../hub/LatestUpdatesModal'
 import type { Segment } from '../hub/segments'
 import {
   IMAGE_COLLECTIONS,
@@ -518,6 +519,7 @@ export function ImageryScreen() {
 
   const [openSlug, setOpenSlug] = useState<string | null>(null)
   const [openGroupSlug, setOpenGroupSlug] = useState<string | null>(null)
+  const [updatesOpen, setUpdatesOpen] = useState(false)
   const collection = openSlug ? collectionBySlug(openSlug) : null
   const group = collection && openGroupSlug ? groupBySlug(collection, openGroupSlug) : null
 
@@ -538,9 +540,7 @@ export function ImageryScreen() {
           localStorage.setItem('vintiga-hub-segment', s)
           window.location.hash = '#/'
         }}
-        onOpenUpdates={() => {
-          window.location.hash = '#/'
-        }}
+        onOpenUpdates={() => setUpdatesOpen(true)}
         search={
           <a
             href="#/"
@@ -569,6 +569,8 @@ export function ImageryScreen() {
           <IndexView onOpen={openCollection} />
         )}
       </div>
+
+      <LatestUpdatesModal open={updatesOpen} onClose={() => setUpdatesOpen(false)} />
     </div>
   )
 }
