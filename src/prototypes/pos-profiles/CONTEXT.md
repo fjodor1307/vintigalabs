@@ -1,83 +1,57 @@
-# Pos Profiles — Context
+# POS Profiles — Context
 
 > The why and the what behind this prototype. Read this before opening a screen.
 
-**Source of truth:** {link to the requirements doc / ticket / epic}
-**Last synced:** YYYY-MM-DD by {your-name}
-**Owner:** {your-name} ({your-email})
+**Source of truth:** Vintiga ticket "Manage POS Profiles in Stand-Alone Store"
+**Figma:** [05. Dashboard](https://www.figma.com/design/3DnxyYDZqDGQqvknlD4aTu/05.-Dashboard?node-id=1626-5128) — list `1626-5128`, detail `1637-7618`, Details modal `5438-27366`, Collections modal `5438-27260`
+**Last synced:** 2026-07-02 by Fedja
+**Owner:** Fedja Djukic (djukicfedja@gmail.com)
 **Status:** in-progress  <!-- in-progress | approved -->
-
 
 ---
 
 ## Why this exists
 
-2–3 sentences on the feature's purpose and what it's trying to solve. What does success look like?
+Every stand-alone Vintiga store is created with a single POS profile that has no collections. Today there's no way to add more profiles or fully edit them in a stand-alone store. This feature lets stand-alone stores **add and fully edit POS profiles**, while Commerce7-connected stores keep most fields read-only (they're owned by C7).
 
 ## Who it's for
 
-- **Primary persona:** see [`_context/personas/{persona-slug}.md`](../../../_context/personas/)
-- Feature-specific persona notes (if any)
-
-## Pillars this advances
-
-Which of the Vintiga programme pillars does this feature serve? See [`_context/programme.md`](../../../_context/programme.md).
-
-- [ ] Pillar 1 — {fill in}
-- [ ] Pillar 2 — {fill in}
-- [ ] Pillar 3 — {fill in}
-- [ ] Pillar 4 — {fill in}
+- **Primary persona:** the store operator / manager configuring how the POS behaves per till/location.
 
 ## Key user stories
 
-Pull the actual stories from the requirements source. Story IDs link back to source.
-
-- **{ID}** — As a {role} I want {what} so that {why}
-- **{ID}** — …
+- **List** — As an operator I want to see all POS profiles configured in the store so I can pick one to manage.
+- **Add** (stand-alone only) — As an operator of a stand-alone store I want to add a new POS profile.
+- **Edit** — As an operator I want to edit a profile's details, collections, tips, PIN/order rules, printers, devices and inventory locations.
+- **C7 read-only** — As an operator of a C7-connected store I can only toggle collection **images on/off** and change **collection colors**; everything else is read-only.
 
 ## Requirements & constraints
 
-- {Hard requirement}
-- {Compliance / regulatory / brand constraint}
-- {Other hard requirement}
+**List**
+- Show all POS profiles: name (+ color dot), operational location, default-profile flag.
+- **Add Profile** button on stand-alone stores; **Get Profiles** button on C7-connected stores.
 
-## Open dependencies
+**Sync (Connected vs Stand-Alone)** — behavioural, not a screen:
+- Disconnecting C7 keeps the ingested profiles configured locally.
+- Re-connecting C7 to a store with profiles: same reference ID → C7 value wins (overwrite Vintiga); Vintiga profile with no C7 reference ID → create it in C7 and store the returned C7 Profile ID.
 
-Things blocking this work or in flight elsewhere — link to other prototypes, decisions, or PM threads.
+**Editing permissions**
+- **C7-connected:** only collection *images on/off* and *collection colors* are editable; all else read-only.
+- **Stand-alone:** every field editable.
 
-- {Blocker / dependency} — owner: {who}, status: {open / unblocked / in flight}
+**Editable POS Profile fields**
+- **General:** name/title · color (hex) · is-default (yes/no) · default sales attribute (default "POS").
+- **Tips:** on/off · type (percentage | amounts) · 4 options · display on EMV (yes/no).
+- **Finalizing orders & Employee PINs:** employee PIN on/off · require PIN before payment · require PIN after order · prompt "Additional Order Info" before payment · kitchen tickets on/off · prompt "Send Items to Kitchen" before payment · **printers** (title, ID, type, deletable).
+- **Chip & PIN devices:** list — title, terminal ID, type (supported types), deletable.
+- **Collections:** list — color (hex), show images on/off, sort order, deletable.
+- **Inventory** (structure borrowed from C7; Vintiga maps physical location → inventory location): carry-out location · shipping location · pickup location.
+
+## Notes / open questions
+
+Tracked in [`NOTES.md`](./NOTES.md). Key ones: inventory UI isn't designed yet (mapping physical → inventory locations is a proposal); the sync rules are backend behaviour with no dedicated screen — surfaced here only via the store-mode toggle used to demo read-only vs editable.
 
 ## Sources
 
-Where to look for more depth.
-
-- **Requirements:** {link}
-- **Cross-feature research:** [`_context/research/{file}.md`](../../../_context/research/), …
-- **Competitive teardowns:** [`_context/competitive/{file}.md`](../../../_context/competitive/)
-- **Decisions log:** {link if applicable}
-- **Internal docs / Slack threads:** {description — link lives outside the repo}
-
----
-
-## Deeper materials → `_context/` subfolder (optional)
-
-This file is the entry point — a tight summary that someone can read in 2 minutes. If you have richer materials specific to this prototype (requirements exports, your own user interviews, sketches, screenshots, competitor refs, anything else), drop them in a `_context/` subfolder next to this file:
-
-```
-src/prototypes/{your-feature}/
-├── CONTEXT.md       ← you are here (the entry point)
-├── _context/        ← optional: your raw materials
-│   ├── requirements.md        ← what you pulled from source
-│   ├── stories/               ← story details
-│   ├── research/              ← user interviews, surveys
-│   ├── refs/                  ← screenshots, competitor refs
-│   └── sketches/              ← early explorations
-├── JOURNEY.md
-├── NOTES.md
-├── CHANGELOG.md
-└── *.tsx
-```
-
-Organise it however makes sense for your feature — the convention is "context lives where the work lives." The shared root [`_context/`](../../../_context/) stays for genuinely cross-feature stuff (personas, programme pillars, brand essentials, research that applies to multiple prototypes).
-
-If something in your `_context/` ends up being useful across prototypes, promote it to the root `_context/` in a PR.
+- **Requirements:** Vintiga ticket (pasted into this file's history / NOTES).
+- **Figma:** file `3DnxyYDZqDGQqvknlD4aTu`, page "05. Dashboard".

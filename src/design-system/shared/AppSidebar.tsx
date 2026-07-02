@@ -64,7 +64,7 @@ const NAV_BOTTOM_GROUP: NavItemDef[] = [
 ]
 
 const NAV_FOOTER: NavItemDef[] = [
-  { icon: <UserIcon />,     label: 'POS Profiles' },
+  { icon: <UserIcon />,     label: 'POS Profiles', href: '#/web/pos-profiles/list' },
   { icon: <SettingsIcon />, label: 'Settings', href: '#/web/settings' },
 ]
 
@@ -133,6 +133,7 @@ function AppSidebarInner({
               key={item.label}
               icon={item.icon}
               label={item.label}
+              selected={activeNav === item.label}
               href={item.href}
               onClick={onItemClick}
             />

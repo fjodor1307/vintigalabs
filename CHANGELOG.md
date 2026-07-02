@@ -18,6 +18,7 @@
 | Customers | 2026-05-27 | [src/prototypes/customers/CHANGELOG.md](src/prototypes/customers/CHANGELOG.md) |
 | Onboarding | 2026-04-27 | [src/prototypes/onboarding/CHANGELOG.md](src/prototypes/onboarding/CHANGELOG.md) |
 | Pos | 2026-06-25 | [src/prototypes/pos/CHANGELOG.md](src/prototypes/pos/CHANGELOG.md) |
+| Pos Profiles | 2026-07-02 | [src/prototypes/pos-profiles/CHANGELOG.md](src/prototypes/pos-profiles/CHANGELOG.md) |
 | Products | 2026-06-17 | [src/prototypes/products/CHANGELOG.md](src/prototypes/products/CHANGELOG.md) |
 | Reservations | 2026-06-24 | [src/prototypes/reservations/CHANGELOG.md](src/prototypes/reservations/CHANGELOG.md) |
 | Sales Chat | 2026-05-28 | [src/prototypes/sales-chat/CHANGELOG.md](src/prototypes/sales-chat/CHANGELOG.md) |
@@ -335,3 +336,7 @@ Created `src/prototypes/experience-timeslots-matrix/` via `npm run new-prototype
 ## 2026-05-25 — Scaffolded `interactive-tasting-method` prototype
 
 Created `src/prototypes/interactive-tasting-method/` via `npm run new-prototype`.
+
+## 2026-07-02 — Scaffolded `pos-profiles` prototype
+
+Created `src/prototypes/pos-profiles/` via `npm run new-prototype`.
