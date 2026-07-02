@@ -197,34 +197,30 @@ function Lightbox({
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-vintiga-lg">
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/85 cursor-default" />
-      <button type="button" onClick={onClose} aria-label="Close" className={`absolute top-vintiga-lg right-vintiga-lg z-10 ${ctrl}`}>
-        <XIcon className="w-5 h-5" />
-      </button>
+      {/* Top-right: a pair of white, icon-only controls — download + close. */}
+      <div className="absolute top-vintiga-lg right-vintiga-lg z-10 flex items-center gap-vintiga-sm">
+        <button type="button" onClick={() => triggerDownload(current.src, fileNameOf(current.src))} aria-label="Download image" className={ctrl}>
+          <DownloadIcon className="w-5 h-5" />
+        </button>
+        <button type="button" onClick={onClose} aria-label="Close" className={ctrl}>
+          <XIcon className="w-5 h-5" />
+        </button>
+      </div>
 
       <img src={current.src} alt={current.alt} className="relative z-0 max-h-[72vh] max-w-full object-contain rounded-vintiga-md shadow-vintiga-lg" />
 
-      <div className="relative z-10 mt-vintiga-xl flex items-center gap-vintiga-md">
-        {images.length > 1 && (
+      {/* Bottom: prev · counter · next (only when the set has more than one image). */}
+      {images.length > 1 && (
+        <div className="relative z-10 mt-vintiga-xl flex items-center gap-vintiga-md">
           <button type="button" onClick={prev} aria-label="Previous image" className={ctrl}>
             <BackArrowIcon className="w-5 h-5" />
           </button>
-        )}
-        <button
-          type="button"
-          onClick={() => triggerDownload(current.src, fileNameOf(current.src))}
-          aria-label="Download image"
-          className={ctrl}
-        >
-          <DownloadIcon className="w-5 h-5" />
-        </button>
-        {images.length > 1 && (
+          <span className="typo-body-sm text-white/70 min-w-[3rem] text-center tabular-nums">{index + 1} / {images.length}</span>
           <button type="button" onClick={next} aria-label="Next image" className={ctrl}>
             <ArrowRightIcon className="w-5 h-5" />
           </button>
-        )}
-      </div>
-
-      {images.length > 1 && <p className="relative z-10 mt-vintiga-md typo-body-sm text-white/70">{index + 1} / {images.length}</p>}
+        </div>
+      )}
     </div>
   )
 }
