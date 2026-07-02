@@ -70,9 +70,9 @@ function ReadField({ label, children }: { label: string; children: ReactNode }) 
 const onOff = (b: boolean) => (b ? 'On' : 'Off')
 const yesNo = (b: boolean) => (b ? 'Yes' : 'No')
 
-function ToggleRow({ label, value }: { label: string; value: string }) {
+function ToggleRow({ label, value, indented }: { label: string; value: string; indented?: boolean }) {
   return (
-    <div className="flex flex-col gap-0.5 py-vintiga-xs">
+    <div className={`flex flex-col gap-0.5 py-vintiga-xs ${indented ? 'pl-vintiga-md' : ''}`}>
       <span className="typo-body-sm font-semibold text-vintiga-slate-900">{label}</span>
       <span className="typo-body-sm text-vintiga-slate-500">{value}</span>
     </div>
@@ -204,7 +204,7 @@ export function ProfileDetailScreen() {
                 <ToggleRow label="Require Pin After Order" value={yesNo(p.requirePinAfterOrder)} />
                 <ToggleRow label="Additional Order Info" value={yesNo(p.additionalOrderInfo)} />
                 <ToggleRow label="Kitchen Tickets" value={onOff(p.kitchenTickets)} />
-                <ToggleRow label="Send to Kitchen Window" value={yesNo(p.sendToKitchen)} />
+                <ToggleRow label="Send to Kitchen Window" value={p.kitchenTickets ? yesNo(p.sendToKitchen) : '—'} indented />
                 <ToggleRow label="Table Management" value={onOff(p.tableManagement)} />
               </div>
             </Card>

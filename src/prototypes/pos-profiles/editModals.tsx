@@ -13,7 +13,7 @@ import { TextField } from '@ds/shared/TextField'
 import { Select } from '@ds/shared/Select'
 import { Field } from '@ds/shared/Field'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
-import { TrashIcon, PlusIcon, SearchIcon, ArrowUpIcon, ArrowDownIcon, LockIcon } from '@ds/icons/Icons'
+import { TrashIcon, PlusIcon, SearchIcon, GripVerticalIcon, LockIcon } from '@ds/icons/Icons'
 import {
   COLOR_SWATCHES,
   OPERATIONAL_LOCATIONS,
@@ -134,16 +134,20 @@ const AVAILABLE_COLLECTIONS = ['Wine Selection', 'Appetizers', 'Tasting Experien
 export function CollectionsModal({ profile, open, onClose, readOnly }: ModalProps) {
   const [draft, setDraft] = useState<Profile>(profile)
   const [search, setSearch] = useState('')
+  const [dragId, setDragId] = useState<string | null>(null)
 
   const setCollections = (collections: Collection[]) => setDraft({ ...draft, collections })
   const patch = (id: string, p: Partial<Collection>) => setCollections(draft.collections.map((c) => (c.id === id ? { ...c, ...p } : c)))
   const remove = (id: string) => setCollections(draft.collections.filter((c) => c.id !== id).map((c, i) => ({ ...c, sortOrder: i + 1 })))
-  const move = (id: string, dir: -1 | 1) => {
+  // Hold-and-drag reorder — drop the dragged collection onto a target row.
+  const reorder = (targetId: string) => {
+    if (!dragId || dragId === targetId) return
     const arr = [...draft.collections]
-    const i = arr.findIndex((c) => c.id === id)
-    const j = i + dir
-    if (j < 0 || j >= arr.length) return
-    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    const from = arr.findIndex((c) => c.id === dragId)
+    const to = arr.findIndex((c) => c.id === targetId)
+    if (from < 0 || to < 0) return
+    const [moved] = arr.splice(from, 1)
+    arr.splice(to, 0, moved)
     setCollections(arr.map((c, k) => ({ ...c, sortOrder: k + 1 })))
   }
   const add = (name: string) => {
@@ -183,16 +187,31 @@ export function CollectionsModal({ profile, open, onClose, readOnly }: ModalProp
           <p className="typo-body-sm text-vintiga-slate-500 text-center py-vintiga-lg">No collections yet. Search above to add one.</p>
         ) : (
           <div className="flex flex-col gap-vintiga-sm">
-            {draft.collections.map((c, i) => (
-              <div key={c.id} className="rounded-vintiga-card border border-vintiga-border overflow-hidden">
-                <div className="bg-vintiga-slate-50 px-vintiga-md py-vintiga-sm flex items-center justify-between">
-                  <span className="typo-body-sm font-semibold text-vintiga-slate-900">{c.name}</span>
+            {!readOnly && <p className="typo-caption text-vintiga-slate-400">Drag the handle to reorder.</p>}
+            {draft.collections.map((c) => (
+              <div
+                key={c.id}
+                onDragOver={(e) => { if (!readOnly && dragId) e.preventDefault() }}
+                onDrop={() => reorder(c.id)}
+                className={[
+                  'rounded-vintiga-card border border-vintiga-border overflow-hidden transition-opacity',
+                  dragId === c.id ? 'opacity-50' : '',
+                  dragId && dragId !== c.id ? 'border-dashed' : '',
+                ].join(' ')}
+              >
+                <div className="bg-vintiga-slate-50 px-vintiga-md py-vintiga-sm flex items-center gap-vintiga-sm">
                   {!readOnly && (
-                    <div className="flex items-center">
-                      <IconButton size="xs" variant="outline" icon={<ArrowUpIcon />} aria-label="Move up" onClick={() => move(c.id, -1)} disabled={i === 0} />
-                      <IconButton size="xs" variant="outline" icon={<ArrowDownIcon />} aria-label="Move down" onClick={() => move(c.id, 1)} disabled={i === draft.collections.length - 1} />
-                    </div>
+                    <span
+                      draggable
+                      onDragStart={() => setDragId(c.id)}
+                      onDragEnd={() => setDragId(null)}
+                      aria-label={`Reorder ${c.name}`}
+                      className="text-vintiga-slate-400 hover:text-vintiga-slate-700 cursor-grab active:cursor-grabbing [&>svg]:w-4 [&>svg]:h-4"
+                    >
+                      <GripVerticalIcon />
+                    </span>
                   )}
+                  <span className="typo-body-sm font-semibold text-vintiga-slate-900">{c.name}</span>
                 </div>
                 <div className="px-vintiga-md py-vintiga-md flex items-center gap-vintiga-md flex-wrap">
                   <ColorField value={c.colorHex} onChange={(hex) => patch(c.id, { colorHex: hex })} />
@@ -267,30 +286,34 @@ export function TipsModal({ profile, open, onClose, readOnly }: ModalProps) {
 
 const ROW = 'flex items-center justify-between gap-vintiga-md py-vintiga-xs'
 
+function BoolRow({ label, checked, onChange, disabled, indented }: { label: string; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean; indented?: boolean }) {
+  return (
+    <div className={`${ROW} ${indented ? 'pl-vintiga-lg' : ''}`}>
+      <span className={`typo-body-sm ${disabled ? 'text-vintiga-slate-400' : 'text-vintiga-slate-900'}`}>{label}</span>
+      <Switch checked={checked} disabled={disabled} onChange={onChange} aria-label={label} />
+    </div>
+  )
+}
+
 export function AdvancedModal({ profile, open, onClose, readOnly }: ModalProps) {
   const [draft, setDraft] = useState<Profile>(profile)
   const commit = () => { saveProfile(draft); onClose() }
-  const toggles: { key: keyof Profile; label: string; desc?: string }[] = [
-    { key: 'employeePin', label: 'Employee PIN Login' },
-    { key: 'requirePinBeforePayment', label: 'Require PIN before payment' },
-    { key: 'requirePinAfterOrder', label: 'Require PIN after order' },
-    { key: 'additionalOrderInfo', label: 'Prompt “Additional Order Info” before payment' },
-    { key: 'kitchenTickets', label: 'Kitchen Tickets' },
-    { key: 'sendToKitchen', label: 'Prompt “Send Items to Kitchen” before payment' },
-    { key: 'tableManagement', label: 'Table Management' },
-  ]
+  const set = (patch: Partial<Profile>) => setDraft({ ...draft, ...patch })
   return (
     <Modal open={open} onClose={onClose} size="lg">
       <ModalHeader title="Advanced Settings" description="Finalizing orders & employee PINs" onClose={onClose} />
       <ModalBody>
         {readOnly && <ReadOnlyBanner />}
         <div className="flex flex-col divide-y divide-vintiga-slate-100">
-          {toggles.map((t) => (
-            <div key={t.key} className={ROW}>
-              <span className="typo-body-sm text-vintiga-slate-900">{t.label}</span>
-              <Switch checked={Boolean(draft[t.key])} disabled={readOnly} onChange={(v) => setDraft({ ...draft, [t.key]: v })} aria-label={t.label} />
-            </div>
-          ))}
+          <BoolRow label="Employee PIN Login" checked={draft.employeePin} disabled={readOnly} onChange={(v) => set({ employeePin: v })} />
+          <BoolRow label="Require PIN before payment" checked={draft.requirePinBeforePayment} disabled={readOnly} onChange={(v) => set({ requirePinBeforePayment: v })} />
+          <BoolRow label="Require PIN after order" checked={draft.requirePinAfterOrder} disabled={readOnly} onChange={(v) => set({ requirePinAfterOrder: v })} />
+          <BoolRow label="Prompt “Additional Order Info” before payment" checked={draft.additionalOrderInfo} disabled={readOnly} onChange={(v) => set({ additionalOrderInfo: v })} />
+          {/* Kitchen tickets gate the "send to kitchen" prompt — turning tickets
+              off disables and clears the dependent prompt. */}
+          <BoolRow label="Kitchen Tickets" checked={draft.kitchenTickets} disabled={readOnly} onChange={(v) => set({ kitchenTickets: v, sendToKitchen: v ? draft.sendToKitchen : false })} />
+          <BoolRow label="Prompt “Send Items to Kitchen” before payment" checked={draft.sendToKitchen} disabled={readOnly || !draft.kitchenTickets} onChange={(v) => set({ sendToKitchen: v })} indented />
+          <BoolRow label="Table Management" checked={draft.tableManagement} disabled={readOnly} onChange={(v) => set({ tableManagement: v })} />
         </div>
       </ModalBody>
       <EditFooter readOnly={readOnly} onClose={onClose} onSave={readOnly ? undefined : commit} />
