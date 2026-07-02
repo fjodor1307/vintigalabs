@@ -1,9 +1,10 @@
-// Brand → Imagery. A marketing image library rendered inside the hub chrome:
-// a list/grid of collections, each opening into a grid/list gallery with a
-// lightbox carousel and downloads (per-image + zip). Data from `imageryData.ts`;
-// files live in `public/brand/imagery/`.
+// Brand → Imagery. A marketing image library rendered inside the hub chrome,
+// three tiers deep: Collection (Personas, Locations, Mockups) → Subject
+// (Sarah, Outdoor, iPhone…) → Set sections (Reference + In context) shown as
+// image grids with a lightbox carousel and downloads (per-set + per-subject
+// zip). Data from `imageryData.ts`; files live in `public/brand/imagery/`.
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import {
   BackArrowIcon,
   DownloadIcon,
@@ -22,11 +23,12 @@ import type { Segment } from '../hub/segments'
 import {
   IMAGE_COLLECTIONS,
   collectionBySlug,
-  setBySlug,
+  groupBySlug,
   collectionImages,
+  groupImages,
   fileNameOf,
   type ImageCollection,
-  type ImageSet,
+  type ImageGroup,
   type GalleryImage,
 } from './imageryData'
 
@@ -64,16 +66,41 @@ async function downloadImagesZip(images: GalleryImage[], name: string) {
 
 // ─── Small pieces ─────────────────────────────────────────────────────────────
 
-function SurfaceBadge({ surface }: { surface: 'CRM' | 'POS' }) {
-  return surface === 'POS' ? (
-    <span className="shrink-0 inline-flex items-center typo-caption font-medium bg-vintiga-indigo-100 text-vintiga-indigo-700 px-2.5 py-1 rounded-vintiga-2xl">
-      POS
-    </span>
-  ) : (
-    <span className="shrink-0 inline-flex items-center typo-caption font-medium bg-vintiga-lime-100 text-vintiga-green-700 px-2.5 py-1 rounded-vintiga-2xl">
-      CRM
-    </span>
-  )
+const BADGE_BASE = 'shrink-0 inline-flex items-center typo-caption font-medium px-2.5 py-1 rounded-vintiga-2xl'
+
+// Location-type badge (Outdoor / Indoor) — shown on collections/subjects that
+// carry a `kind`.
+function KindBadge({ kind }: { kind: 'Outdoor' | 'Indoor' }) {
+  const tone = kind === 'Outdoor' ? 'bg-vintiga-lime-100 text-vintiga-green-700' : 'bg-vintiga-amber-100 text-vintiga-amber-700'
+  return <span className={`${BADGE_BASE} ${tone}`}>{kind}</span>
+}
+
+// Set-content badge — names a subject's sets (Reference / In context) so a
+// card shows what's inside it.
+function SetBadge({ label }: { label: string }) {
+  const tone = label === 'Reference' ? 'bg-vintiga-slate-100 text-vintiga-slate-700' : 'bg-vintiga-blue-100 text-vintiga-blue-700'
+  return <span className={`${BADGE_BASE} ${tone}`}>{label}</span>
+}
+
+// Distinct set names across a group of subjects (every subject holds the same
+// two sets — Reference + In context).
+function setTitlesOf(groups: ImageGroup[]): string[] {
+  return [...new Set(groups.flatMap((g) => g.sets.map((s) => s.title)))]
+}
+
+// A subject's kind badge when it has one (Locations → Outdoor/Indoor), else
+// the names of the sets it holds (Reference / In context).
+function subjectBadges(group: ImageGroup): ReactNode {
+  if (group.kind) return <KindBadge kind={group.kind} />
+  return group.sets.map((s) => <SetBadge key={s.slug} label={s.title} />)
+}
+
+// A collection's badges: the distinct kinds of its subjects (Locations →
+// Outdoor + Indoor), else the set names they share (Reference + In context).
+function collectionBadges(collection: ImageCollection): ReactNode {
+  const kinds = [...new Set(collection.groups.map((g) => g.kind).filter((k): k is 'Outdoor' | 'Indoor' => Boolean(k)))]
+  if (kinds.length) return kinds.map((k) => <KindBadge key={k} kind={k} />)
+  return setTitlesOf(collection.groups).map((t) => <SetBadge key={t} label={t} />)
 }
 
 // One image tile — falls back to a neutral placeholder if the file isn't there.
@@ -107,13 +134,13 @@ function ImageTile({ img, onClick, className = '' }: { img: GalleryImage; onClic
 // stretched to a taller sibling's height, leaving trailing whitespace.
 function ImageryCard({
   cover,
-  surfaces,
+  badges,
   title,
   description,
   onClick,
 }: {
   cover?: GalleryImage
-  surfaces: ('CRM' | 'POS')[]
+  badges: ReactNode
   title: string
   description: string
   onClick: () => void
@@ -128,11 +155,7 @@ function ImageryCard({
         {cover && <ImageTile img={cover} className="w-full h-full !rounded-none !border-0" />}
       </div>
       <div className="p-vintiga-lg flex flex-col gap-vintiga-xs">
-        <div className="flex items-center gap-vintiga-sm">
-          {surfaces.map((s) => (
-            <SurfaceBadge key={s} surface={s} />
-          ))}
-        </div>
+        <div className="flex items-center gap-vintiga-sm">{badges}</div>
         <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">{title}</h2>
         <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-2">{description}</p>
       </div>
@@ -206,18 +229,19 @@ function Lightbox({
   )
 }
 
-// ─── Collection (level 2 — sets as cards) ─────────────────────────────────────
+// ─── Collection (level 2 — subjects as cards) ─────────────────────────────────
 
 function CollectionView({
   collection,
-  onOpenSet,
+  onOpenGroup,
   onBackToIndex,
 }: {
   collection: ImageCollection
-  onOpenSet: (setSlug: string) => void
+  onOpenGroup: (groupSlug: string) => void
   onBackToIndex: () => void
 }) {
   const allImages = collectionImages(collection)
+  const groups = collection.groups
 
   return (
     <>
@@ -234,51 +258,42 @@ function CollectionView({
         </Button>
       </div>
 
-      {collection.sets.length === 0 ? (
-        <div className="border-2 border-dashed border-vintiga-border rounded-vintiga-card p-vintiga-3xl flex flex-col items-center justify-center text-center gap-vintiga-sm">
-          <p className="typo-title-subsection font-semibold text-vintiga-foreground">No images yet</p>
-          <p className="typo-body-sm text-vintiga-foreground-muted max-w-md">
-            Drop files into <code className="typo-body-sm bg-vintiga-surface-element px-1.5 py-0.5 rounded-vintiga-input">public/brand/imagery/{collection.slug}/</code> and list them in the manifest.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 items-start gap-vintiga-lg">
-          {collection.sets.map((set) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 items-start gap-vintiga-lg">
+        {groups.map((group) => {
+          const count = groupImages(group).length
+          return (
             <ImageryCard
-              key={set.slug}
-              cover={set.images[0]}
-              surfaces={collection.surfaces}
-              title={set.title}
-              description={set.description ?? `${set.images.length} ${set.images.length === 1 ? 'image' : 'images'}`}
-              onClick={() => onOpenSet(set.slug)}
+              key={group.slug}
+              cover={groupImages(group)[0]}
+              badges={subjectBadges(group)}
+              title={group.title}
+              description={group.description ?? `${count} ${count === 1 ? 'image' : 'images'}`}
+              onClick={() => onOpenGroup(group.slug)}
             />
-          ))}
-        </div>
-      )}
+          )
+        })}
+      </div>
     </>
   )
 }
 
-// ─── Set gallery (level 3 — images inside one set) ────────────────────────────
+// ─── Subject (level 3 — a subject's sets shown as gallery sections) ───────────
 
-function SetGalleryView({
+function SubjectView({
   collection,
-  set,
-  singleSet,
+  group,
   onBackToIndex,
   onBackToCollection,
 }: {
   collection: ImageCollection
-  set: ImageSet
-  singleSet: boolean
+  group: ImageGroup
   onBackToIndex: () => void
   onBackToCollection: () => void
 }) {
-  const [view, setView] = useState<'grid' | 'list'>('grid')
-  const [lightbox, setLightbox] = useState<number | null>(null)
-
-  const images = set.images
-  const hasImages = images.length > 0
+  // Lightbox is scoped to one set so prev/next stay within that group of images.
+  const [lightbox, setLightbox] = useState<{ setSlug: string; index: number } | null>(null)
+  const allImages = groupImages(group)
+  const activeSet = lightbox ? group.sets.find((s) => s.slug === lightbox.setSlug) : null
 
   return (
     <>
@@ -288,70 +303,58 @@ function SetGalleryView({
             Imagery
           </button>
           <ChevronRightIcon className="w-4 h-4 text-vintiga-foreground-muted shrink-0" />
-          {singleSet ? (
-            <h1 className="typo-title-subsection font-semibold text-vintiga-foreground truncate">{collection.title}</h1>
-          ) : (
-            <>
-              <button type="button" onClick={onBackToCollection} className="typo-title-subsection font-semibold text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors truncate">
-                {collection.title}
-              </button>
-              <ChevronRightIcon className="w-4 h-4 text-vintiga-foreground-muted shrink-0" />
-              <h1 className="typo-title-subsection font-semibold text-vintiga-foreground truncate">{set.title}</h1>
-            </>
-          )}
+          <button type="button" onClick={onBackToCollection} className="typo-title-subsection font-semibold text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors truncate">
+            {collection.title}
+          </button>
+          <ChevronRightIcon className="w-4 h-4 text-vintiga-foreground-muted shrink-0" />
+          <h1 className="typo-title-subsection font-semibold text-vintiga-foreground truncate">{group.title}</h1>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <Button variant="outline" size="lg" leftIcon={<DownloadIcon />} onClick={() => downloadImagesZip(images, `${collection.slug}-${set.slug}`)} disabled={!hasImages} className={HUB_OUTLINE_DARK}>
-            Download zip
-          </Button>
-          <IconButton
-            variant="outline"
-            size="lg"
-            icon={view === 'grid' ? <LayoutListIcon /> : <Grid2x2Icon />}
-            onClick={() => setView((v) => (v === 'grid' ? 'list' : 'grid'))}
-            aria-label={view === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
-            className={HUB_OUTLINE_DARK}
-          />
-        </div>
+        <Button variant="outline" size="lg" leftIcon={<DownloadIcon />} onClick={() => downloadImagesZip(allImages, `${collection.slug}-${group.slug}`)} disabled={allImages.length === 0} className={HUB_OUTLINE_DARK}>
+          Download zip
+        </Button>
       </div>
 
-      {!hasImages ? (
-        <div className="border-2 border-dashed border-vintiga-border rounded-vintiga-card p-vintiga-3xl flex flex-col items-center justify-center text-center gap-vintiga-sm">
-          <p className="typo-title-subsection font-semibold text-vintiga-foreground">No images yet</p>
-          <p className="typo-body-sm text-vintiga-foreground-muted max-w-md">
-            Drop files into <code className="typo-body-sm bg-vintiga-surface-element px-1.5 py-0.5 rounded-vintiga-input">public/brand/imagery/{collection.slug}/</code> and list them in the manifest.
-          </p>
-        </div>
-      ) : view === 'grid' ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-vintiga-md">
-          {images.map((img, i) => (
-            <ImageTile key={img.src} img={img} onClick={() => setLightbox(i)} className="w-full aspect-[4/3]" />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-vintiga-sm">
-          {images.map((img, i) => (
-            <div key={img.src} className="flex items-center gap-vintiga-md p-vintiga-sm border border-vintiga-border rounded-vintiga-card hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted transition-colors">
-              <ImageTile img={img} onClick={() => setLightbox(i)} className="w-28 aspect-[4/3] shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="typo-body-sm font-semibold text-vintiga-foreground truncate">{fileNameOf(img.src)}</p>
-                <p className="typo-caption text-vintiga-foreground-muted truncate">{img.alt}</p>
+      <div className="flex flex-col gap-vintiga-xl">
+        {group.sets.map((set) => (
+          <section key={set.slug}>
+            <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-md">
+              <div className="min-w-0">
+                <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">{set.title}</h2>
+                {set.description && <p className="typo-body-sm text-vintiga-foreground-muted">{set.description}</p>}
               </div>
               <IconButton
                 variant="outline"
-                size="md"
+                size="lg"
                 icon={<DownloadIcon />}
-                onClick={() => triggerDownload(img.src, fileNameOf(img.src))}
-                aria-label={`Download ${fileNameOf(img.src)}`}
+                onClick={() => downloadImagesZip(set.images, `${collection.slug}-${group.slug}-${set.slug}`)}
+                disabled={set.images.length === 0}
+                aria-label={`Download ${set.title}`}
                 className={HUB_OUTLINE_DARK}
               />
             </div>
-          ))}
-        </div>
-      )}
+            {set.images.length === 0 ? (
+              <div className="border-2 border-dashed border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col items-center justify-center text-center gap-vintiga-xs">
+                <p className="typo-body-sm font-semibold text-vintiga-foreground">No images yet</p>
+                <p className="typo-caption text-vintiga-foreground-muted max-w-md">Drop files into the imagery folder and list them under this set in the manifest.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-vintiga-md">
+                {set.images.map((img, i) => (
+                  <ImageTile key={img.src} img={img} onClick={() => setLightbox({ setSlug: set.slug, index: i })} className="w-full aspect-[4/3]" />
+                ))}
+              </div>
+            )}
+          </section>
+        ))}
+      </div>
 
-      {lightbox !== null && hasImages && (
-        <Lightbox images={images} index={lightbox} onIndex={setLightbox} onClose={() => setLightbox(null)} />
+      {lightbox && activeSet && (
+        <Lightbox
+          images={activeSet.images}
+          index={lightbox.index}
+          onIndex={(i) => setLightbox({ setSlug: lightbox.setSlug, index: i })}
+          onClose={() => setLightbox(null)}
+        />
       )}
     </>
   )
@@ -413,11 +416,7 @@ function CollectionRow({ collection, featured, onOpen }: { collection: ImageColl
       ].join(' ')}
     >
       <div className="w-[280px] shrink-0 flex flex-col gap-vintiga-sm">
-        <div className="flex items-center gap-vintiga-sm">
-          {collection.surfaces.map((s) => (
-            <SurfaceBadge key={s} surface={s} />
-          ))}
-        </div>
+        <div className="flex items-center gap-vintiga-sm">{collectionBadges(collection)}</div>
         <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">{collection.title}</h2>
         <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-3">{collection.description}</p>
         <div className="flex flex-wrap gap-1 mt-vintiga-xs">
@@ -500,7 +499,7 @@ function IndexView({ onOpen }: { onOpen: (slug: string) => void }) {
             <ImageryCard
               key={c.slug}
               cover={collectionImages(c)[0]}
-              surfaces={c.surfaces}
+              badges={collectionBadges(c)}
               title={c.title}
               description={c.description}
               onClick={() => onOpen(c.slug)}
@@ -521,16 +520,15 @@ export function ImageryScreen() {
   }, [dark])
 
   const [openSlug, setOpenSlug] = useState<string | null>(null)
-  const [openSetSlug, setOpenSetSlug] = useState<string | null>(null)
+  const [openGroupSlug, setOpenGroupSlug] = useState<string | null>(null)
   const collection = openSlug ? collectionBySlug(openSlug) : null
-  const set = collection && openSetSlug ? setBySlug(collection, openSetSlug) : null
+  const group = collection && openGroupSlug ? groupBySlug(collection, openGroupSlug) : null
 
-  // Open a collection. Collections with a single set skip the middle level and
-  // land straight in that set's gallery.
+  // Open a collection — always lands on its subject cards (Sarah/Mika,
+  // Outdoor/Indoor, iPhone/iPad…).
   const openCollection = (slug: string) => {
-    const c = collectionBySlug(slug)
     setOpenSlug(slug)
-    setOpenSetSlug(c && c.sets.length === 1 ? c.sets[0].slug : null)
+    setOpenGroupSlug(null)
   }
 
   return (
@@ -558,19 +556,18 @@ export function ImageryScreen() {
       />
 
       <div className="px-vintiga-lg sm:px-vintiga-2xl py-vintiga-xl">
-        {collection && set ? (
-          <SetGalleryView
+        {collection && group ? (
+          <SubjectView
             collection={collection}
-            set={set}
-            singleSet={collection.sets.length === 1}
+            group={group}
             onBackToIndex={() => {
               setOpenSlug(null)
-              setOpenSetSlug(null)
+              setOpenGroupSlug(null)
             }}
-            onBackToCollection={() => setOpenSetSlug(null)}
+            onBackToCollection={() => setOpenGroupSlug(null)}
           />
         ) : collection ? (
-          <CollectionView collection={collection} onOpenSet={setOpenSetSlug} onBackToIndex={() => setOpenSlug(null)} />
+          <CollectionView collection={collection} onOpenGroup={setOpenGroupSlug} onBackToIndex={() => setOpenSlug(null)} />
         ) : (
           <IndexView onOpen={openCollection} />
         )}
