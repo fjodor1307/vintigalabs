@@ -126,7 +126,7 @@ export const SEED_PROFILES: Profile[] = [
     requirePinBeforePayment: true,
     requirePinAfterOrder: true,
     additionalOrderInfo: true,
-    kitchenTickets: false,
+    kitchenTickets: true,
     sendToKitchen: true,
     tableManagement: false,
     printers: [
