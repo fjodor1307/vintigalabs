@@ -11,6 +11,8 @@ import {
   CheckIcon,
   SparklesIcon,
   TrendingUpIcon,
+  ChartIcon,
+  CreditCardIcon,
   UsersIcon,
   CalendarIcon,
   StarIcon,
@@ -20,6 +22,7 @@ import {
   BuildingIcon,
   MailIcon,
 } from '@ds/icons/Icons'
+import { VintigaIconBlack } from '@ds/shared/VintigaLogo'
 
 const img = (p: string) => `/brand/imagery/${p}`
 
@@ -410,19 +413,102 @@ const SLIDES: Slide[] = [
     ),
   },
 
-  // 10 — Section divider: The Opportunity
+  // 10 — Three revenue streams
   {
-    theme: 'dark',
-    render: () => (
-      <>
-        <PhotoBg src={img('locations/vineyard-rows.jpg')} alt="Rows of vines running toward the hills at golden hour" />
-        <div className="flex flex-col justify-center h-full max-w-4xl gap-vintiga-lg">
-          <Reveal><Kicker dark>The Opportunity</Kicker></Reveal>
-          <Reveal i={1}><Title dark className="!text-5xl md:!text-6xl lg:!text-7xl">A category-defining market, barely served</Title></Reveal>
-          <Reveal i={2}><p className="text-xl lg:text-2xl font-vintiga-display font-light text-vintiga-indigo-200">15,000+ wineries · 35–40 million visits every year</p></Reveal>
+    theme: 'light',
+    render: () => {
+      const streams = [
+        {
+          icon: <ChartIcon key="c" />,
+          n: '1',
+          title: 'Software Subscription',
+          sub: 'Recurring SaaS revenue',
+          stat: '$3.5K–$12K',
+          statLabel: 'Annual subscription revenue',
+          points: ['Predictable recurring revenue', 'High gross margins', 'Strong retention'],
+        },
+        {
+          icon: <CreditCardIcon key="p" />,
+          n: '2',
+          title: 'Payments Revenue',
+          sub: 'Variable revenue tied to growth',
+          stat: '0.5%–0.75%',
+          statLabel: 'of GMV',
+          points: ['Scales with winery growth', 'High retention', 'Low-churn revenue stream'],
+        },
+        {
+          icon: <TrendingUpIcon key="e" />,
+          n: '3',
+          title: 'Expansion Products',
+          sub: 'High-margin add-on solutions',
+          list: ['AI Guest Intelligence', 'Marketing Automation', 'SMS & Messaging', 'Premium Websites', 'API & MCP Access', 'AI Revenue Optimization'],
+          note: 'Expand wallet share over time',
+        },
+      ]
+      const tiers = [
+        ['Small Winery', '~$500K DTC sales', '~$9K'],
+        ['Growing Winery', '~$1M DTC sales', '~$15K'],
+        ['Enterprise Winery', '~$4M+ DTC sales', '~$37K+'],
+      ]
+      return (
+        <div className="flex flex-col justify-center h-full gap-vintiga-md">
+          <Reveal><Kicker>Three Revenue Streams</Kicker></Reveal>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-md">
+            {streams.map((s, k) => (
+              <Reveal key={s.title} i={1 + k} className="rounded-vintiga-2xl border border-vintiga-slate-200 bg-vintiga-white p-vintiga-md flex flex-col gap-vintiga-sm">
+                <div className="flex items-center gap-vintiga-sm">
+                  <IconChip icon={s.icon} />
+                  <div>
+                    <p className="typo-body font-semibold text-vintiga-slate-900"><span className="text-vintiga-indigo-600">{s.n}.</span> {s.title}</p>
+                    <p className="typo-caption text-vintiga-slate-500">{s.sub}</p>
+                  </div>
+                </div>
+                {s.stat ? (
+                  <div className="mt-1">
+                    <p className="font-vintiga-display font-light text-3xl text-vintiga-indigo-600 leading-none">{s.stat}</p>
+                    <p className="typo-caption text-vintiga-slate-500 mt-0.5">{s.statLabel}</p>
+                    <ul className="flex flex-col gap-1.5 mt-vintiga-sm">
+                      {s.points!.map((p) => <Check key={p}>{p}</Check>)}
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="mt-1">
+                    <ul className="grid grid-cols-1 gap-1.5">
+                      {s.list!.map((t) => (
+                        <li key={t} className="flex items-center gap-2 typo-body-sm text-vintiga-slate-700">
+                          <SparklesIcon className="w-3.5 h-3.5 text-vintiga-indigo-500 shrink-0" />{t}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="typo-caption font-semibold text-vintiga-indigo-600 mt-vintiga-sm">{s.note}</p>
+                  </div>
+                )}
+              </Reveal>
+            ))}
+          </div>
+          <Reveal i={4} className="rounded-vintiga-2xl bg-vintiga-slate-50 border border-vintiga-slate-200 p-vintiga-md grid grid-cols-2 lg:grid-cols-4 gap-vintiga-md items-center">
+            <div className="flex items-center gap-vintiga-sm">
+              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-vintiga-indigo-600 text-white [&>svg]:w-4 [&>svg]:h-4"><DollarIcon /></span>
+              <div>
+                <p className="typo-body-sm font-semibold text-vintiga-slate-900">Revenue per winery</p>
+                <p className="typo-caption text-vintiga-slate-500">Grows as wineries grow</p>
+              </div>
+            </div>
+            {tiers.map(([name, dtc, rev]) => (
+              <div key={name}>
+                <p className="typo-body-sm font-semibold text-vintiga-slate-900">{name}</p>
+                <p className="typo-caption text-vintiga-slate-500">{dtc}</p>
+                <p className="font-vintiga-display font-light text-2xl text-vintiga-indigo-600 mt-1 leading-none">{rev}</p>
+              </div>
+            ))}
+          </Reveal>
+          <Reveal i={5} className="rounded-vintiga-2xl border border-vintiga-slate-200 px-vintiga-lg py-vintiga-sm flex items-center gap-vintiga-sm">
+            <TrendingUpIcon className="w-4 h-4 text-vintiga-indigo-600 shrink-0" />
+            <p className="typo-body-sm text-vintiga-slate-700"><span className="font-semibold text-vintiga-indigo-600">Designed to scale.</span> More visitors. More members. More revenue. Year after year.</p>
+          </Reveal>
         </div>
-      </>
-    ),
+      )
+    },
   },
 
   // 11 — Target market
@@ -707,9 +793,8 @@ export function VintigaOverviewScreen() {
 
       {/* Top chrome — wordmark + exit */}
       <div className="absolute top-0 inset-x-0 h-16 px-8 sm:px-14 lg:px-20 flex items-center justify-between pointer-events-none">
-        <span className={`font-vintiga-display font-semibold tracking-[0.28em] text-sm pointer-events-auto ${dark ? 'text-white/70' : 'text-vintiga-slate-400'}`}>
-          VINTIGA
-        </span>
+        <VintigaIconBlack size={30} className="pointer-events-auto rounded-[9px]" aria-label="Vintiga" />
+        <span className="sr-only">Vintiga</span>
         <button type="button" onClick={exitToHub} aria-label="Exit presentation" className={`${ctrl} pointer-events-auto`}>
           <XIcon className="w-5 h-5" />
         </button>
