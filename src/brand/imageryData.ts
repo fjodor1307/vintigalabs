@@ -158,7 +158,7 @@ export const IMAGE_COLLECTIONS: ImageCollection[] = [
       {
         slug: 'desktop',
         title: 'Desktop',
-        description: 'Product screens on desktop monitors — clean frames and in-office scenes.',
+        description: 'Product screens on desktop monitors.',
         sets: [
           reference(
             [
