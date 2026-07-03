@@ -156,12 +156,49 @@ export const IMAGE_COLLECTIONS: ImageCollection[] = [
     tags: ['product', 'devices', 'mockups'],
     groups: [
       {
+        slug: 'desktop',
+        title: 'Desktop',
+        description: 'Product screens on desktop monitors.',
+        sets: [
+          reference(
+            [
+              { src: `${dir}/mockups/desktop-frames-01.jpg`, alt: 'Collage of blank desktop monitors on a wooden desk across six angles' },
+              { src: `${dir}/mockups/desktop-frames-02.jpg`, alt: 'Collage of blank desktop monitors by a bright window across four angles' },
+            ],
+            'Bare desktop monitor frames, ready for screens.',
+          ),
+          inContext(
+            [
+              { src: `${dir}/mockups/dashboard-over-shoulder.jpg`, alt: 'Woman at her desk with the Vintiga dashboard on the monitor behind her' },
+              { src: `${dir}/mockups/dashboard-screen-closeup.jpg`, alt: 'Close-up of an angled monitor showing the Vintiga dashboard' },
+              { src: `${dir}/mockups/dashboard-office-portrait.jpg`, alt: 'Woman in a home office with the Vintiga dashboard on the screen behind her' },
+              { src: `${dir}/mockups/dashboard-desk-front.jpg`, alt: 'Front-on desktop monitor with the Vintiga dashboard beside a plant and notebook' },
+              { src: `${dir}/mockups/dashboard-desk-window.jpg`, alt: 'Angled desktop monitor with the Vintiga dashboard on a wooden desk by a window' },
+            ],
+            'The Vintiga dashboard on desktop, at work and in the office.',
+          ),
+        ],
+      },
+      {
         slug: 'iphone',
         title: 'iPhone',
         description: 'Product screens in iPhone frames.',
         sets: [
-          reference([], 'Bare iPhone device frames.'),
-          inContext([], 'iPhone screens in decks, hands and store listings.'),
+          reference(
+            [
+              { src: `${dir}/mockups/iphone-hands-grid-01.jpg`, alt: 'Collage of hands holding a blank iPhone against a grey studio backdrop' },
+              { src: `${dir}/mockups/iphone-hands-grid-02.jpg`, alt: 'Second collage of hands holding a blank iPhone against a grey studio backdrop' },
+              { src: `${dir}/mockups/iphone-warm-collage.jpg`, alt: 'Collage of blank iPhones in warm amber-lit interior scenes' },
+            ],
+            'Blank iPhones in hand, ready for screens.',
+          ),
+          inContext(
+            [
+              { src: `${dir}/mockups/iphone-guest-profile-wine.jpg`, alt: 'Hands holding an iPhone showing a Vintiga guest profile at a wine-bar table' },
+              { src: `${dir}/mockups/iphone-wine-table.jpg`, alt: 'Hands holding an iPhone at a sunlit wine-bar table with a glass of red' },
+            ],
+            'The Vintiga app in hand at the tasting table.',
+          ),
         ],
       },
       {
@@ -169,8 +206,21 @@ export const IMAGE_COLLECTIONS: ImageCollection[] = [
         title: 'iPad',
         description: 'Product screens in iPad frames.',
         sets: [
-          reference([], 'Bare iPad device frames.'),
-          inContext([], 'iPad screens in decks, hands and store listings.'),
+          reference(
+            [
+              { src: `${dir}/mockups/ipad-wood-collage-01.jpg`, alt: 'Collage of blank iPads resting on warm wooden surfaces' },
+              { src: `${dir}/mockups/ipad-wood-collage-02.jpg`, alt: 'Second collage of blank iPads on warm wooden surfaces' },
+              { src: `${dir}/mockups/ipad-held-studio-grey.jpg`, alt: 'Collage of a woman holding a blank iPad against a grey studio backdrop' },
+              { src: `${dir}/mockups/ipad-wine-bar-collage-01.jpg`, alt: 'Collage of a woman holding a blank iPad in a dim wine bar' },
+              { src: `${dir}/mockups/ipad-wine-bar-collage-02.jpg`, alt: 'Second collage of a woman holding a blank iPad in a dim wine bar' },
+              { src: `${dir}/mockups/ipad-held-studio-light.jpg`, alt: 'Collage of a woman holding a blank iPad against a light studio backdrop' },
+            ],
+            'Blank iPads in hand and on the counter, ready for screens.',
+          ),
+          inContext(
+            [{ src: `${dir}/mockups/ipad-cellar.jpg`, alt: 'Woman holding an iPad beside the bottle shelves of a wine cellar' }],
+            'The iPad at work in the cellar and tasting room.',
+          ),
         ],
       },
     ],
