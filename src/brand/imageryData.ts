@@ -156,6 +156,30 @@ export const IMAGE_COLLECTIONS: ImageCollection[] = [
     tags: ['product', 'devices', 'mockups'],
     groups: [
       {
+        slug: 'desktop',
+        title: 'Desktop',
+        description: 'Product screens on desktop monitors — clean frames and in-office scenes.',
+        sets: [
+          reference(
+            [
+              { src: `${dir}/mockups/desktop-frames-01.jpg`, alt: 'Collage of blank desktop monitors on a wooden desk across six angles' },
+              { src: `${dir}/mockups/desktop-frames-02.jpg`, alt: 'Collage of blank desktop monitors by a bright window across four angles' },
+            ],
+            'Bare desktop monitor frames, ready for screens.',
+          ),
+          inContext(
+            [
+              { src: `${dir}/mockups/dashboard-over-shoulder.jpg`, alt: 'Woman at her desk with the Vintiga dashboard on the monitor behind her' },
+              { src: `${dir}/mockups/dashboard-screen-closeup.jpg`, alt: 'Close-up of an angled monitor showing the Vintiga dashboard' },
+              { src: `${dir}/mockups/dashboard-office-portrait.jpg`, alt: 'Woman in a home office with the Vintiga dashboard on the screen behind her' },
+              { src: `${dir}/mockups/dashboard-desk-front.jpg`, alt: 'Front-on desktop monitor with the Vintiga dashboard beside a plant and notebook' },
+              { src: `${dir}/mockups/dashboard-desk-window.jpg`, alt: 'Angled desktop monitor with the Vintiga dashboard on a wooden desk by a window' },
+            ],
+            'The Vintiga dashboard on desktop, at work and in the office.',
+          ),
+        ],
+      },
+      {
         slug: 'iphone',
         title: 'iPhone',
         description: 'Product screens in iPhone frames.',
