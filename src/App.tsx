@@ -3,6 +3,7 @@ import { Agentation } from 'agentation'
 import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
 import { ToneOfVoiceScreen } from './brand/ToneOfVoiceScreen'
 import { ImageryScreen } from './brand/ImageryScreen'
+import { VintigaOverviewScreen } from './presentations/VintigaOverviewScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { BackArrowIcon, SearchIcon, ArrowRightIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon, ExternalLinkIcon } from './design-system/icons/Icons'
 import { Button } from './design-system/shared/Button'
@@ -44,6 +45,7 @@ const webScreens: Record<string, React.ComponentType> = {
   '#/web/design-system': DesignSystemScreen,
   '#/brand/tone-of-voice': ToneOfVoiceScreen,
   '#/brand/imagery': ImageryScreen,
+  '#/presentations/vintiga-overview': VintigaOverviewScreen,
   ...allRoutes,
 }
 
@@ -557,6 +559,41 @@ function BrandSectionCards() {
   )
 }
 
+// Presentations — branded decks that open full-screen.
+const PRESENTATIONS: { title: string; desc: string; href: string; cover: string; meta: string }[] = [
+  {
+    title: 'Vintiga Overview',
+    desc: 'Investor overview — the winery guest-intelligence platform.',
+    href: '#/presentations/vintiga-overview',
+    cover: '/brand/imagery/locations/estate-terrace.jpg',
+    meta: 'July 2026 · 17 slides',
+  },
+]
+
+function PresentationsSectionCards() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg items-start">
+      {PRESENTATIONS.map((p) => (
+        <a
+          key={p.href}
+          href={p.href}
+          className="group bg-vintiga-surface border border-vintiga-border rounded-vintiga-card overflow-hidden flex flex-col hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted transition-colors no-underline"
+        >
+          <div className="aspect-[16/9] bg-vintiga-surface-element overflow-hidden">
+            <img src={p.cover} alt="" className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]" />
+          </div>
+          <div className="p-vintiga-lg flex flex-col gap-vintiga-xs">
+            <span className="typo-caption font-semibold uppercase tracking-wide text-vintiga-foreground-muted">{p.meta}</span>
+            <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">{p.title}</h3>
+            <p className="typo-body-sm text-vintiga-foreground-muted">{p.desc}</p>
+            <span className="mt-vintiga-sm typo-body-sm font-semibold text-vintiga-primary">Open →</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  )
+}
+
 const ALL_SEGMENTS: string[] = ['all', ...CATEGORY_OPTIONS]
 
 function IndexPage() {
@@ -668,6 +705,8 @@ function IndexPage() {
         <BrandSectionCards />
       ) : segment === 'Design System' ? (
         <DesignSystemSectionCards />
+      ) : segment === 'Presentations' ? (
+        <PresentationsSectionCards />
       ) : sortedPrototypes.length > 0 ? (
         view === 'list' ? (
         <div className="flex flex-col gap-vintiga-lg">
