@@ -22,6 +22,7 @@ import {
   BuildingIcon,
   MailIcon,
 } from '@ds/icons/Icons'
+import { VintigaIconBlack } from '@ds/shared/VintigaLogo'
 
 const img = (p: string) => `/brand/imagery/${p}`
 
@@ -792,9 +793,8 @@ export function VintigaOverviewScreen() {
 
       {/* Top chrome — wordmark + exit */}
       <div className="absolute top-0 inset-x-0 h-16 px-8 sm:px-14 lg:px-20 flex items-center justify-between pointer-events-none">
-        <span className={`font-vintiga-display font-semibold tracking-[0.28em] text-sm pointer-events-auto ${dark ? 'text-white/70' : 'text-vintiga-slate-400'}`}>
-          VINTIGA
-        </span>
+        <VintigaIconBlack size={30} className="pointer-events-auto rounded-[9px]" aria-label="Vintiga" />
+        <span className="sr-only">Vintiga</span>
         <button type="button" onClick={exitToHub} aria-label="Exit presentation" className={`${ctrl} pointer-events-auto`}>
           <XIcon className="w-5 h-5" />
         </button>
