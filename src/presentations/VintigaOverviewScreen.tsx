@@ -232,7 +232,7 @@ const SLIDES: Slide[] = [
     render: () => (
       <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-vintiga-2xl items-center h-full">
         <Reveal i={1} className="h-[70vh] max-h-[560px] order-last lg:order-first">
-          <Frame src={img('locations/pergola-bar.jpg')} alt="Rustic outdoor tasting bar under a timber pergola" className="h-full" />
+          <Frame src={img('mockups/iphone-guest-profile-wine.jpg')} alt="Hands holding an iPhone showing a Vintiga guest profile at a wine-bar table" className="h-full" />
         </Reveal>
         <div className="flex flex-col gap-vintiga-lg">
           <Reveal><Kicker>The Wedge</Kicker></Reveal>
@@ -312,7 +312,7 @@ const SLIDES: Slide[] = [
           </ul>
         </div>
         <Reveal i={2} className="h-[70vh] max-h-[560px]">
-          <Frame src={img('compositions/lifestyle-terrace.jpg')} alt="Guests enjoying wine on a sunlit terrace" className="h-full" />
+          <Frame src={img('mockups/dashboard-office-portrait.jpg')} alt="Woman in a home office with the Vintiga dashboard on the screen behind her" className="h-full" />
         </Reveal>
       </div>
     ),
@@ -377,8 +377,11 @@ const SLIDES: Slide[] = [
     render: () => (
       <div className="flex flex-col gap-vintiga-xl h-full justify-center">
         <Reveal><Kicker>Early Validation &amp; Differentiators</Kicker></Reveal>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-vintiga-2xl">
-          <Reveal i={1} className="flex flex-col gap-vintiga-lg">
+        <div className="grid grid-cols-1 lg:grid-cols-[0.7fr_1fr_1fr] gap-vintiga-2xl">
+          <Reveal i={1} className="hidden lg:block">
+            <Frame src={img('mockups/dashboard-screen-closeup.jpg')} alt="Close-up of an angled monitor showing the Vintiga dashboard" className="h-full" />
+          </Reveal>
+          <Reveal i={2} className="flex flex-col gap-vintiga-lg">
             <p className="typo-title-section font-semibold text-vintiga-slate-900">Market validation</p>
             <ul className="flex flex-col gap-vintiga-md">
               {['8 paid pilots (Q3 2026)', '24 wineries in active discussions', '3 agency partners & consultants recommending Vintiga', 'Participating in industry events across WA, OR & CA'].map((t) => (
@@ -386,7 +389,7 @@ const SLIDES: Slide[] = [
               ))}
             </ul>
           </Reveal>
-          <Reveal i={2} className="flex flex-col gap-vintiga-lg">
+          <Reveal i={3} className="flex flex-col gap-vintiga-lg">
             <p className="typo-title-section font-semibold text-vintiga-slate-900">Technology differentiators</p>
             <div className="flex flex-col gap-vintiga-md">
               {[
@@ -406,7 +409,7 @@ const SLIDES: Slide[] = [
             </div>
           </Reveal>
         </div>
-        <Reveal i={3} className="rounded-vintiga-2xl bg-vintiga-indigo-50 border border-vintiga-indigo-100 p-vintiga-lg">
+        <Reveal i={4} className="rounded-vintiga-2xl bg-vintiga-indigo-50 border border-vintiga-indigo-100 p-vintiga-lg">
           <p className="typo-body md:text-lg text-vintiga-slate-900"><span className="font-semibold text-vintiga-indigo-600">Every winery generates subscription + payment revenue</span> — predictable growth and expanding margins.</p>
         </Reveal>
       </div>
