@@ -90,7 +90,12 @@ export const IMAGE_COLLECTIONS: ImageCollection[] = [
         description: 'Dark-haired, cream knit — soft café and golden-hour moments.',
         sets: [
           reference(
-            [{ src: `${dir}/character-sheets/model-contact-sheet-dark.jpg`, alt: 'Contact sheet of a dark-haired model in a cream sweater and jeans across multiple angles' }],
+            [
+              { src: `${dir}/character-sheets/model-contact-sheet-dark.jpg`, alt: 'Contact sheet of a dark-haired model in a cream sweater and jeans across multiple angles' },
+              { src: `${dir}/character-sheets/mika-sheet-sweater.jpg`, alt: 'Second contact sheet of the dark-haired model in a cream sweater and jeans' },
+              { src: `${dir}/character-sheets/mika-sheet-hoodie.jpg`, alt: 'Contact sheet of the dark-haired model in a cream hoodie with a ponytail' },
+              { src: `${dir}/character-sheets/mika-sheet-apron.jpg`, alt: 'Contact sheet of the dark-haired model in a navy turtleneck and green service apron' },
+            ],
             'Angles and expressions for consistent composition and AI work.',
           ),
           inContext(
@@ -98,6 +103,49 @@ export const IMAGE_COLLECTIONS: ImageCollection[] = [
               { src: `${dir}/compositions/model-cafe.jpg`, alt: 'Woman with coffee at a rustic café table' },
               { src: `${dir}/compositions/model-smiley-terrace.jpg`, alt: 'Woman in a smiley-face tee with white wine at a vineyard terrace, golden hour' },
               { src: `${dir}/compositions/model-sweater-terrace.jpg`, alt: 'Woman in a cream sweater with white wine at a vineyard terrace, golden hour' },
+              { src: `${dir}/compositions/mika-apron-garden.jpg`, alt: 'Woman in a navy turtleneck and green service apron outdoors at golden hour' },
+              { src: `${dir}/compositions/mika-cellar-tablet.jpg`, alt: 'Woman holding a tablet beside the bottle shelves of a dark wine bar' },
+            ],
+            'Lifestyle & on-location shots of this persona.',
+          ),
+        ],
+      },
+      {
+        slug: 'emma',
+        title: 'Emma',
+        description: 'Wavy-haired brunette — easy whites, busy taproom energy.',
+        sets: [
+          reference(
+            [
+              { src: `${dir}/character-sheets/emma-sheet-cream.jpg`, alt: 'Contact sheet of a wavy-haired model in a white sweater and cream jeans across multiple angles' },
+              { src: `${dir}/character-sheets/emma-sheet-black.jpg`, alt: 'Contact sheet of the wavy-haired model in a white sweater and black jeans' },
+              { src: `${dir}/character-sheets/emma-sheet-tablet.jpg`, alt: 'Contact sheet of the wavy-haired model holding a tablet' },
+            ],
+            'Angles and expressions for consistent composition and AI work.',
+          ),
+          inContext(
+            [{ src: `${dir}/compositions/emma-taproom-pos.jpg`, alt: 'Woman taking a tap-to-pay payment at a busy taproom counter' }],
+            'Lifestyle & on-location shots of this persona.',
+          ),
+        ],
+      },
+      {
+        slug: 'mia',
+        title: 'Mia',
+        description: 'Curly-haired, denim jacket — taproom counters and golden-hour wine bars.',
+        sets: [
+          reference(
+            [
+              { src: `${dir}/character-sheets/mia-sheet-denim.jpg`, alt: 'Contact sheet of a curly-haired model in a denim jacket and mustard tee across multiple angles' },
+              { src: `${dir}/character-sheets/mia-sheet-phone-01.jpg`, alt: 'Collage of the curly-haired model holding a phone at a sunlit wooden table' },
+              { src: `${dir}/character-sheets/mia-sheet-phone-02.jpg`, alt: 'Second collage of the curly-haired model with a phone at a sunlit wooden table' },
+            ],
+            'Angles and expressions for consistent composition and AI work.',
+          ),
+          inContext(
+            [
+              { src: `${dir}/compositions/mia-taproom-payment.jpg`, alt: 'Woman in a denim jacket paying at a busy taproom counter' },
+              { src: `${dir}/compositions/mia-wine-bar.jpg`, alt: 'Woman with a glass of red at a wine bar counter, vineyard view behind' },
             ],
             'Lifestyle & on-location shots of this persona.',
           ),
