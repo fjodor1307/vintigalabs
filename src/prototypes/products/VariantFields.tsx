@@ -63,11 +63,14 @@ export function VariantFields({ v, patch, isExperience, isSpirits, showSortOrder
         </Field>
       </div>
 
+      {/* Cost Of Good pairs with Sort Order in the modal; without Sort Order
+          (inline form) Alcohol Percentage moves up beside it so neither field
+          sits on a half-empty row. */}
       <div className="grid grid-cols-2 gap-4">
         <Field label="Cost Of Good" required>
           <InputWithAdornment adornment="$" placeholder="0.00" value={v.costOfGood} onChange={(e) => patch('costOfGood', e.target.value)} />
         </Field>
-        {showSortOrder && (
+        {showSortOrder ? (
           <Field label="Sort Order" helper="Lower numbers appear first.">
             <input
               type="number"
@@ -77,14 +80,20 @@ export function VariantFields({ v, patch, isExperience, isSpirits, showSortOrder
               className="h-10 w-full px-3 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 focus:outline-none focus:border-vintiga-indigo-500 focus:ring-2 focus:ring-vintiga-indigo-100 transition-colors"
             />
           </Field>
-        )}
-      </div>
-
-      {!isExperience && (
-        <div className="grid grid-cols-2 gap-4">
+        ) : !isExperience && (
           <Field label="Alcohol Percentage" required>
             <InputWithAdornment adornment="%" placeholder="0.00" value={v.alcoholPercentage} onChange={(e) => patch('alcoholPercentage', e.target.value)} />
           </Field>
+        )}
+      </div>
+
+      {!isExperience && (showSortOrder || isSpirits) && (
+        <div className="grid grid-cols-2 gap-4">
+          {showSortOrder && (
+            <Field label="Alcohol Percentage" required>
+              <InputWithAdornment adornment="%" placeholder="0.00" value={v.alcoholPercentage} onChange={(e) => patch('alcoholPercentage', e.target.value)} />
+            </Field>
+          )}
           {isSpirits && (
             <Field label="Proof" helper="Calculated automatically as 2 × alcohol percentage.">
               <InputWithAdornment adornment="proof" placeholder="0" value={proofFromAbv(v.alcoholPercentage)} readOnly />

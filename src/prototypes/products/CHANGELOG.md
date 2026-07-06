@@ -6,6 +6,10 @@
 
 ---
 
+## 2026-07-06 — Fedja + Claude: Cost Of Good + Alcohol % share a row on the inline form
+
+Follow-up to the shared `VariantFields`: on the inline single-variant form (no Sort Order), Cost Of Good and Alcohol Percentage each sat on a half-empty row. Alcohol Percentage now moves up beside Cost Of Good when Sort Order is hidden; the modal keeps its [Cost Of Good, Sort Order] + [Alcohol %, Proof] layout, and spirits on the inline form get Proof on the following row.
+
 ## 2026-07-06 — Fedja + Claude: One shared `VariantFields` for modal + inline form
 
 Client feedback on the single-variant work: the Add Variant modal and the inline form had drifted — different title labels ("Variant Title" vs "Variant (Size / Unit)") and the modal-only Sort Order field made them feel like two different editors.
