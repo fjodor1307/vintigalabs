@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-07-06 — Fedja + Claude: One shared `VariantFields` for modal + inline form
+
+Client feedback on the single-variant work: the Add Variant modal and the inline form had drifted — different title labels ("Variant Title" vs "Variant (Size / Unit)") and the modal-only Sort Order field made them feel like two different editors.
+
+- **New `VariantFields.tsx`** — the single source of truth for a variant's fields. Both `VariantModal` and `SingleVariantForm` (General tab) render it, so the two surfaces can't drift again.
+- **Unified label: "Variant Title"** everywhere, with the example placeholders kept ("e.g. 750ml, Bottle, Medium, Glass" / "e.g. For 2, For 4, Private Tour" for experiences). The modal's bare "Enter title" placeholder is gone.
+- Intentional differences are now explicit props: the modal shows **Sort Order** (`showSortOrder`) since ordering only matters with multiple variants, and the inline form keeps its info banner.
+
 ## 2026-07-05 — Fedja + Claude: Experiences get the inline single-variant form
 
 Client feedback: an experience with one variant was still showing the variant *table*, while wines already switched to the inline form.
