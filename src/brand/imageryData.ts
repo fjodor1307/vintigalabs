@@ -164,11 +164,13 @@ export const IMAGE_COLLECTIONS: ImageCollection[] = [
             [
               { src: `${dir}/mockups/desktop-frames-01.jpg`, alt: 'Collage of blank desktop monitors on a wooden desk across six angles' },
               { src: `${dir}/mockups/desktop-frames-02.jpg`, alt: 'Collage of blank desktop monitors by a bright window across four angles' },
+              { src: `${dir}/mockups/desktop-frames-dark.jpg`, alt: 'Collage of switched-off desktop monitors beside a glass of red wine in warm evening light' },
             ],
             'Bare desktop monitor frames, ready for screens.',
           ),
           inContext(
             [
+              { src: `${dir}/mockups/dashboard-desk-collage.jpg`, alt: 'Collage of the Vintiga dashboard on desktop monitors across six angles' },
               { src: `${dir}/mockups/dashboard-over-shoulder.jpg`, alt: 'Woman at her desk with the Vintiga dashboard on the monitor behind her' },
               { src: `${dir}/mockups/dashboard-screen-closeup.jpg`, alt: 'Close-up of an angled monitor showing the Vintiga dashboard' },
               { src: `${dir}/mockups/dashboard-office-portrait.jpg`, alt: 'Woman in a home office with the Vintiga dashboard on the screen behind her' },
