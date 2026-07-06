@@ -6,6 +6,13 @@
 
 ---
 
+## 2026-07-05 — Fedja + Claude: Experiences get the inline single-variant form
+
+Client feedback: an experience with one variant was still showing the variant *table*, while wines already switched to the inline form.
+
+- **`GeneralScreen.tsx`** — dropped the `!isExperience` gate on `showInlineVariant`, so any product with exactly one variant gets the inline form. `SingleVariantForm` now takes `isExperience` and mirrors the `VariantModal` field rules: no UPC / Compare At / Alcohol % / Physical Product-Weight-Volume, experience tax types (Experience, Service, Tax-Exempt), and experience copy for the info banner + variant title field ("Variant (Package / Party Size)", placeholder "e.g. For 2, For 4, Private Tour"). Adding a second variant still flips back to the table.
+- **`productStore.ts`** — `loadFromCatalogue` treats the store's initial blank variant as "no variants", so opening a catalogue product now actually seeds the variant from the row (title / SKU / price / tax type). Before, the blank placeholder blocked the seed and experiences opened with an untitled wine-default variant.
+
 ## 2026-06-17 — Fedja + Claude: Global Properties — optional dropdowns + Brand / Vendor
 
 Beer/Spirits Details → **Global properties** updates from client feedback:
