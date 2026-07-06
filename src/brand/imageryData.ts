@@ -129,6 +129,28 @@ export const IMAGE_COLLECTIONS: ImageCollection[] = [
           ),
         ],
       },
+      {
+        slug: 'mia',
+        title: 'Mia',
+        description: 'Curly-haired, denim jacket — taproom counters and golden-hour wine bars.',
+        sets: [
+          reference(
+            [
+              { src: `${dir}/character-sheets/mia-sheet-denim.jpg`, alt: 'Contact sheet of a curly-haired model in a denim jacket and mustard tee across multiple angles' },
+              { src: `${dir}/character-sheets/mia-sheet-phone-01.jpg`, alt: 'Collage of the curly-haired model holding a phone at a sunlit wooden table' },
+              { src: `${dir}/character-sheets/mia-sheet-phone-02.jpg`, alt: 'Second collage of the curly-haired model with a phone at a sunlit wooden table' },
+            ],
+            'Angles and expressions for consistent composition and AI work.',
+          ),
+          inContext(
+            [
+              { src: `${dir}/compositions/mia-taproom-payment.jpg`, alt: 'Woman in a denim jacket paying at a busy taproom counter' },
+              { src: `${dir}/compositions/mia-wine-bar.jpg`, alt: 'Woman with a glass of red at a wine bar counter, vineyard view behind' },
+            ],
+            'Lifestyle & on-location shots of this persona.',
+          ),
+        ],
+      },
     ],
   },
   {
