@@ -312,7 +312,7 @@ const SLIDES: Slide[] = [
           </ul>
         </div>
         <Reveal i={2} className="h-[70vh] max-h-[560px]">
-          <Frame src={img('mockups/dashboard-office-portrait.jpg')} alt="Woman in a home office with the Vintiga dashboard on the screen behind her" className="h-full" />
+          <Frame src={img('compositions/sarah-desk-05.jpg')} alt="Winery owner smiling at her desk with the Vintiga dashboard on dual monitors" className="h-full" />
         </Reveal>
       </div>
     ),
@@ -379,7 +379,7 @@ const SLIDES: Slide[] = [
         <Reveal><Kicker>Early Validation &amp; Differentiators</Kicker></Reveal>
         <div className="grid grid-cols-1 lg:grid-cols-[0.7fr_1fr_1fr] gap-vintiga-2xl">
           <Reveal i={1} className="hidden lg:block">
-            <Frame src={img('mockups/dashboard-screen-closeup.jpg')} alt="Close-up of an angled monitor showing the Vintiga dashboard" className="h-full" />
+            <Frame src={img('compositions/emma-desk-03.jpg')} alt="Winery operator working at her desk with the Vintiga dashboard on dual monitors" className="h-full" />
           </Reveal>
           <Reveal i={2} className="flex flex-col gap-vintiga-lg">
             <p className="typo-title-section font-semibold text-vintiga-slate-900">Market validation</p>
