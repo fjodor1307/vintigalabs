@@ -312,7 +312,7 @@ const SLIDES: Slide[] = [
           </ul>
         </div>
         <Reveal i={2} className="h-[70vh] max-h-[560px]">
-          <Frame src={img('compositions/emma-desk-05.jpg')} alt="Winery owner smiling at her desk with the Vintiga dashboard on dual monitors" className="h-full" />
+          <Frame src={img('mockups/dashboard-screen-closeup.jpg')} alt="Close-up of an angled monitor showing the Vintiga dashboard" className="h-full" />
         </Reveal>
       </div>
     ),
