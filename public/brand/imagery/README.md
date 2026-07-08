@@ -15,12 +15,18 @@ gallery (individually or as a zip).
 
 Collections and the files they expect (matching the current manifest):
 
-| Collection | Folder | Files |
+Each persona bundles a **Reference** set (clean studio portraits and contact
+sheets, in `character-sheets/`) and an **In context** set (café, desk and
+on-location scenes, in `compositions/`). The authoritative list of files lives
+in [`src/brand/imageryData.ts`](../../../src/brand/imageryData.ts) — the table
+below is just an orientation of where each collection stores its files.
+
+| Collection | Folder | Holds |
 |---|---|---|
-| Compositions | `compositions/` | `lifestyle-terrace.jpg`, `vineyard-portrait.jpg`, `model-smiley-terrace.jpg`, `model-sweater-terrace.jpg`, `model-cafe.jpg` |
-| Character Sheets | `character-sheets/` | `model-contact-sheet.jpg`, `model-contact-sheet-dark.jpg` |
-| Locations | `locations/` | `vineyard-moodboard.jpg` |
-| iPhone & iPad Mockups | `mockups/` | _(none yet)_ |
+| Personas — Reference | `character-sheets/` | Contact sheets + studio portraits, e.g. `sarah-portrait-tank.jpg`, `emma-portrait-01.jpg`, `mika-portrait-cream.jpg` |
+| Personas — In context | `compositions/` | Café, terrace and desk scenes, e.g. `sarah-desk-01.jpg`, `emma-cafe-01.jpg`, `mika-desk-01.jpg` |
+| Locations | `locations/` | Mood boards + venue scenes, e.g. `vineyard-moodboard.jpg` |
+| Mockups | `mockups/` | Device frames + product-screen shots, e.g. `iphone-wine-table.jpg` |
 
 Any manifest entry whose file isn't present yet renders as a neutral
 placeholder tile in the gallery — so it's safe to list images before the file
