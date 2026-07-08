@@ -6,6 +6,17 @@
 
 ---
 
+## 2026-07-08 — Fedja + Claude: Add card modal with real number validation
+
+The Payment Methods `+ Add` button was a no-op. Wired it to a new `AddCardModal` (card number · expires · CVC · cardholder name) that saves through `customerActions.addPaymentMethod` — brand is detected from the number, and the row shows up immediately.
+
+- `AddCardModal.tsx` — new. Validates the card number client-side (Luhn checksum + 13–19 digit length) before the form can submit. An invalid number is caught here with an inline, actionable message — `Credit card number can't be validated. Check the number and re-enter.` — shown in the field's destructive state, instead of the opaque `Payment Method ID is required` the processor returns downstream. The number is grouped into 4s as you type; the error clears the moment you edit the field.
+- `CustomerBillingScreen.tsx` — `PaymentMethodsCard` now owns the modal open state and renders `<AddCardModal>`.
+
+Copy note: the ticket specified `Credit Card number entered can not be validated. Check the number and re-enter`; shipped house-styled per `vintiga-tov` (sentence case, contraction, filler trimmed) with the same meaning and recovery action.
+
+Verified in preview: invalid number keeps the modal open and shows the red message; a valid Luhn number (4242…) adds a Visa row and closes the modal. tsc clean, lint clean for these files.
+
 ## 2026-05-27 — Fedja + Claude: Surface Commerce 7-only cards (May 27 design review)
 
 `PaymentMethod` gained `source: 'vintiga' | 'commerce7'`. Commerce 7-vaulted cards render muted with a `Saved in Commerce 7` tag instead of the Vintiga `Default Card` flag — they can't be used by the POS or our clubs, so the row signals "look, don't touch". The row menu drops the "Set as default" item for those cards (Commerce 7 owns its own default).
@@ -48,7 +59,7 @@ Reworked Billing after the Figma `Customer - Payments` (1948:14816) was shared. 
 
 Why: the user pointed at the actual Figma design which is unambiguously a management page. Keeping the transactions UI as drill-ins under Billing satisfies the audit-trail requirement without bloating the page or adding a new top-level tab.
 
-Add Payment Method / Edit Address modals — Figma doesn't have designs for these yet. Header `+ Add` buttons are wired to no-ops; the delete / set-default actions on the kebab work. Will come back when designs land.
+Add Payment Method / Edit Address modals — Figma doesn't have designs for these yet. Header `+ Add` buttons are wired to no-ops; the delete / set-default actions on the kebab work. Will come back when designs land. _(Update 2026-07-08: the Payment Methods `+ Add` modal now exists — see the top entry. Edit Address is still a no-op.)_
 
 ## 2026-05-07 — Fedja + Claude: Billing tab — Account Balance + Loyalty Points ledgers
 
