@@ -74,6 +74,24 @@ export interface Membership {
   commitmentEnds?: string
 }
 
+// Clubs a staff member can enrol a customer into (Add Membership modal).
+export const CLUB_OPTIONS: { name: string; type: string; kind: MembershipKind }[] = [
+  { name: 'Curators Club',    type: 'Curated Bottle Club', kind: 'curated' },
+  { name: 'Vintiga Signature', type: 'Rewards Club',        kind: 'rewards' },
+  { name: 'Blind Enthusiasm',  type: 'Member Choice Club',  kind: 'member-choice' },
+  { name: 'Cellar Direct',     type: 'Traditional',         kind: 'traditional' },
+]
+
+export const CANCEL_REASONS = [
+  'Too much wine',
+  'Financial reasons',
+  'Health reasons',
+  'Pregnant',
+  'Moving',
+  'Switching to another club',
+  'Other',
+]
+
 const HOME_ADDRESS = '1210 Lakeview Street, Bellingham, WA 98229'
 
 export const DIGITAL_PASS: DigitalPass = {

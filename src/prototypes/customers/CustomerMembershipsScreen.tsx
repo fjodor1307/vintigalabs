@@ -19,19 +19,18 @@ import {
 import {
   DIGITAL_PASS,
   MEMBERSHIPS,
+  CLUB_OPTIONS,
   type Membership,
   type MembershipStatus,
   type NextShipment,
 } from './membershipsData'
+import { AddEditMembershipModal, CancelMembershipModal, type MembershipFormValue } from './membershipModals'
 
 // ─── CustomerMembershipsScreen ────────────────────────────────────────────────
 // Redesign of Figma 2015:6618 per the Jul 1 review. Digital Pass is its own
 // compact card; each club is an expandable card that combines the club with its
-// next shipment (mirrors the customer portal) — collapsed to a one-line summary
-// so the whole list stays scannable. Clubs that don't ship (Rewards, Member
-// Choice) expand to their type-specific detail instead.
-
-// ─── Status tag ───────────────────────────────────────────────────────────────
+// next shipment (mirrors the customer portal). Add / Edit / Cancel / Put-on-hold
+// mutate a local memberships list so the flow is clickable end-to-end.
 
 const STATUS_META: Record<MembershipStatus, { label: string; tone: 'success' | 'danger' | 'orange' }> = {
   active:      { label: 'Active',    tone: 'success' },
@@ -43,8 +42,6 @@ function StatusTag({ status }: { status: MembershipStatus }) {
   const m = STATUS_META[status]
   return <Tag variant="filled" tone={m.tone} size="sm">{m.label}</Tag>
 }
-
-// ─── Inline label/value pair ──────────────────────────────────────────────────
 
 function Pair({ label, value, edit }: { label: string; value: ReactNode; edit?: string }) {
   return (
@@ -82,7 +79,7 @@ function DigitalPassCard() {
   )
 }
 
-// ─── Membership summary line (collapsed) ──────────────────────────────────────
+// ─── Collapsed summary line ───────────────────────────────────────────────────
 
 function summaryLine(m: Membership): string {
   if (m.status === 'cancelled') return `Cancelled ${m.cancelledOn} · ${m.cancelReason}`
@@ -92,7 +89,7 @@ function summaryLine(m: Membership): string {
   }
   if (m.kind === 'member-choice' && m.level) return `${m.level.name} · $${m.level.monthly}/mo`
   if (m.kind === 'rewards' && m.renews) return `Renews ${m.renews}`
-  return m.clubType
+  return `${m.clubType} · Joined ${m.joined}`
 }
 
 // ─── Next-shipment block (shipment clubs) ─────────────────────────────────────
@@ -112,8 +109,7 @@ function deliveryValue(m: Membership): ReactNode {
 function NextShipmentBlock({ m, s }: { m: Membership; s: NextShipment }) {
   const [skipped, setSkipped] = useState(s.skipped)
   const total = s.wines.reduce((n, w) => n + w.qty, 0)
-  const shipTo =
-    m.delivery?.method === 'pickup' ? m.delivery.location : m.delivery?.address
+  const shipTo = m.delivery?.method === 'pickup' ? m.delivery.location : m.delivery?.address
 
   return (
     <div className="flex flex-col gap-vintiga-md">
@@ -135,7 +131,6 @@ function NextShipmentBlock({ m, s }: { m: Membership; s: NextShipment }) {
         </div>
       </div>
 
-      {/* In your box */}
       <div>
         <div className="flex items-center justify-between mb-vintiga-sm">
           <div className="flex items-center gap-vintiga-sm">
@@ -144,9 +139,7 @@ function NextShipmentBlock({ m, s }: { m: Membership; s: NextShipment }) {
           </div>
           <div className="flex items-center gap-vintiga-sm">
             <span className="typo-body-sm text-vintiga-slate-500 tabular-nums">{total} bottles · ${s.price.toFixed(2)}</span>
-            <Button variant="outline" size="sm" onClick={() => setSkipped((v) => !v)}>
-              {skipped ? 'Unskip' : 'Skip'}
-            </Button>
+            <Button variant="outline" size="sm" onClick={() => setSkipped((v) => !v)}>{skipped ? 'Unskip' : 'Skip'}</Button>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-sm">
@@ -165,9 +158,9 @@ function NextShipmentBlock({ m, s }: { m: Membership; s: NextShipment }) {
   )
 }
 
-// ─── Rewards / Member-Choice expanded detail (no shipment) ────────────────────
-
 function NonShipmentDetail({ m }: { m: Membership }) {
+  const hasRows = m.level || m.accountCredit !== undefined || m.commitmentEnds || m.payment || m.benefits
+  if (!hasRows) return <p className="typo-body-sm text-vintiga-slate-500">No additional details yet.</p>
   return (
     <div className="flex flex-col gap-vintiga-md">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-vintiga-md">
@@ -175,11 +168,7 @@ function NonShipmentDetail({ m }: { m: Membership }) {
         {m.accountCredit !== undefined && <Pair label="Account credit" value={`$${m.accountCredit.toFixed(2)}`} />}
         {m.commitmentEnds && <Pair label="Commitment ends" value={m.commitmentEnds} />}
         {m.payment && (
-          <Pair
-            label="Paid with"
-            value={<span className="inline-flex items-center gap-1.5"><CardBrandLogo brand={m.payment.brand} /> •••• {m.payment.last4}</span>}
-            edit="Change card"
-          />
+          <Pair label="Paid with" value={<span className="inline-flex items-center gap-1.5"><CardBrandLogo brand={m.payment.brand} /> •••• {m.payment.last4}</span>} edit="Change card" />
         )}
       </div>
       {m.benefits && (
@@ -200,13 +189,25 @@ function NonShipmentDetail({ m }: { m: Membership }) {
 
 // ─── Membership card (expandable) ─────────────────────────────────────────────
 
-function MembershipCard({ m, defaultOpen }: { m: Membership; defaultOpen?: boolean }) {
+function MembershipCard({
+  m,
+  defaultOpen,
+  onEdit,
+  onHold,
+  onCancel,
+}: {
+  m: Membership
+  defaultOpen?: boolean
+  onEdit: () => void
+  onHold: () => void
+  onCancel: () => void
+}) {
   const [open, setOpen] = useState(!!defaultOpen)
   const canExpand = m.status !== 'cancelled'
+  const isShipmentKind = m.kind === 'curated' || m.kind === 'traditional'
 
   return (
-    <div className="rounded-vintiga-card border border-vintiga-border overflow-hidden">
-      {/* Header — click to expand */}
+    <div className="rounded-vintiga-card border border-vintiga-border">
       <div className="flex items-center gap-vintiga-md p-vintiga-md">
         <button
           type="button"
@@ -236,24 +237,22 @@ function MembershipCard({ m, defaultOpen }: { m: Membership; defaultOpen?: boole
             <IconButton variant="outline" size="sm" icon={<EllipsisVerticalIcon />} onClick={toggle} aria-label={`More options for ${m.clubName}`} />
           )}
           items={[
-            { label: 'View membership', onClick: () => {} },
-            ...(m.status === 'active' ? [{ label: 'Put on hold', onClick: () => {} }] : []),
-            { label: 'Cancel membership', onClick: () => {}, danger: true },
+            { label: 'Edit membership', onClick: onEdit },
+            ...(m.status === 'active' ? [{ label: 'Put on hold', onClick: onHold }] : []),
+            ...(m.status !== 'cancelled' ? [{ label: 'Cancel membership', onClick: onCancel, danger: true }] : []),
           ]}
         />
       </div>
 
-      {/* Expanded body */}
       {open && canExpand && (
         <div className="border-t border-vintiga-border p-vintiga-md flex flex-col gap-vintiga-md">
           {m.status === 'on-hold' && (
-            <AlertSoft variant="warning" title="Membership on hold" subtitle={`On hold since ${m.onHoldSince}. Resumes ${m.holdExpires}.`} />
-          )}
-          {m.payment === undefined && m.nextShipment && (
-            <AlertSoft variant="warning" title="No card on file" subtitle="Add a card to keep the club active." actionLabel="Add a card" onAction={() => {}} />
+            <AlertSoft variant="warning" title="Membership on hold" subtitle={`On hold since ${m.onHoldSince}${m.holdExpires ? `. Resumes ${m.holdExpires}` : ''}.`} />
           )}
           {m.nextShipment ? (
             <NextShipmentBlock m={m} s={m.nextShipment} />
+          ) : isShipmentKind ? (
+            <p className="typo-body-sm text-vintiga-slate-500">No upcoming shipment scheduled yet.</p>
           ) : (
             <NonShipmentDetail m={m} />
           )}
@@ -274,7 +273,59 @@ function MembershipCard({ m, defaultOpen }: { m: Membership; defaultOpen?: boole
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
+function formatToday(): string {
+  return new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+}
+
+function addMonths(months: number): string {
+  const d = new Date()
+  d.setMonth(d.getMonth() + months)
+  return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+}
+
+type ModalState =
+  | { kind: 'add' }
+  | { kind: 'edit'; id: string }
+  | { kind: 'cancel'; id: string }
+  | null
+
+let seq = 0
+
 export function CustomerMembershipsScreen() {
+  const [memberships, setMemberships] = useState<Membership[]>(MEMBERSHIPS)
+  const [modal, setModal] = useState<ModalState>(null)
+
+  const editing = modal?.kind === 'edit' ? memberships.find((m) => m.id === modal.id) : undefined
+
+  function handleAdd(v: MembershipFormValue) {
+    const club = CLUB_OPTIONS.find((c) => c.name === v.club) ?? CLUB_OPTIONS[0]
+    setMemberships((prev) => [
+      ...prev,
+      {
+        id: `mbr-new-${++seq}`,
+        clubName: club.name,
+        clubType: club.type,
+        kind: club.kind,
+        source: 'vintiga',
+        status: 'active',
+        joined: v.signupDate,
+        salesAssociate: v.salesAssociate,
+      },
+    ])
+  }
+
+  function handleEdit(id: string, v: MembershipFormValue) {
+    setMemberships((prev) => prev.map((m) => (m.id === id ? { ...m, joined: v.signupDate, salesAssociate: v.salesAssociate } : m)))
+  }
+
+  function handleHold(id: string) {
+    setMemberships((prev) => prev.map((m) => (m.id === id ? { ...m, status: 'on-hold', onHoldSince: formatToday(), holdExpires: addMonths(3) } : m)))
+  }
+
+  function handleCancel(id: string, reason: string) {
+    setMemberships((prev) => prev.map((m) => (m.id === id ? { ...m, status: 'cancelled', cancelReason: reason, cancelledOn: formatToday() } : m)))
+  }
+
   return (
     <CustomerViewLayout activeTab="memberships" hideTitle actions={<></>}>
       <div className="flex flex-col gap-vintiga-lg">
@@ -283,15 +334,42 @@ export function CustomerMembershipsScreen() {
           title="Memberships"
           subtitle="Manage your customer memberships"
           action={
-            <Button variant="outline" size="md" leftIcon={<PlusIcon />} onClick={() => {}}>
+            <Button variant="outline" size="md" leftIcon={<PlusIcon />} onClick={() => setModal({ kind: 'add' })}>
               Add
             </Button>
           }
           divider={false}
         >
-          {MEMBERSHIPS.map((m, i) => <MembershipCard key={m.id} m={m} defaultOpen={i === 0} />)}
+          {memberships.map((m, i) => (
+            <MembershipCard
+              key={m.id}
+              m={m}
+              defaultOpen={i === 0}
+              onEdit={() => setModal({ kind: 'edit', id: m.id })}
+              onHold={() => handleHold(m.id)}
+              onCancel={() => setModal({ kind: 'cancel', id: m.id })}
+            />
+          ))}
         </RecordsCard>
       </div>
+
+      <AddEditMembershipModal
+        open={modal?.kind === 'add' || modal?.kind === 'edit'}
+        mode={modal?.kind === 'edit' ? 'edit' : 'add'}
+        initial={editing}
+        onClose={() => setModal(null)}
+        onSave={(v) => {
+          if (modal?.kind === 'edit') handleEdit(modal.id, v)
+          else handleAdd(v)
+        }}
+      />
+      <CancelMembershipModal
+        open={modal?.kind === 'cancel'}
+        onClose={() => setModal(null)}
+        onConfirm={(reason) => {
+          if (modal?.kind === 'cancel') handleCancel(modal.id, reason)
+        }}
+      />
     </CustomerViewLayout>
   )
 }

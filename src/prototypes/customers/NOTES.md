@@ -21,8 +21,8 @@ Designer scratchpad. Anything strange, unclear, or worth improving goes here. Ke
 - **🔴 Member Choice level not selectable at signup** — during Add Membership for a Member Choice club you can't pick the level. Fix lives in the clubs Add Membership flow, not here. · `clubs/AddMembershipScreen.tsx` · raised 2026-07-01 by Donna
 - **⚪ Segments on the customer record** — show which segments a customer belongs to on the profile. Blocked: PocketFlows has no API yet. · raised 2026-07-01 by Jim
 - **⚪ Multi-select customers → send email** — wherever there's a customer / member / filtered list, allow multi-select and send an email. Then surface campaign / email history on the individual customer view (currently shows nothing). Blocked on APIs. · raised 2026-07-01 by Jim
-- **🔴 Add membership from this tab** — the Memberships "+ Add" button is a no-op; wire it to the enrollment flow once the per-kind Add design is settled. · `CustomerMembershipsScreen.tsx` · raised 2026-07-09 by Fedja
-- **🔴 Membership edit affordances are placeholders** — the expanded card's "Change address / card / delivery / level" links and "Add a card" alert are visual only. Wire to modals (portal has shipping-address, delivery-method, card-on-file modals) — Skip/Unskip already works locally. · `CustomerMembershipsScreen.tsx` · raised 2026-07-09 by Fedja
+- **🟢 Add / Edit / Cancel / Put-on-hold** — wired to modals (Figma designs), mutate the local memberships list. Skip/Unskip works too. · `CustomerMembershipsScreen.tsx` · `membershipModals.tsx` · done 2026-07-09
+- **🔴 Inline "Change …" links are placeholders** — the expanded card's *Change address / card / delivery / level* links are still visual only. Wire to the portal-style shipping-address / delivery-method / card-on-file modals next. · `CustomerMembershipsScreen.tsx` · raised 2026-07-09 by Fedja
 
 ## Unclear / to investigate
 
