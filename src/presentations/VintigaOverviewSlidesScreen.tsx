@@ -182,23 +182,28 @@ function DashboardComposition() {
 
       {/* Total Revenue card — glassy overlay, reveals after the images */}
       <Reveal i={4} className="absolute left-[6%] top-[40%] w-[66%]">
-        <div className="rounded-2xl bg-vintiga-slate-900/35 backdrop-blur-2xl border border-white/25 p-3.5 shadow-[0_18px_40px_-16px_rgba(15,23,42,0.55)]">
-          <div className="flex items-center justify-between gap-2">
-            <span className="typo-caption text-white/80">Total Revenue</span>
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/20 text-white [&>svg]:w-3.5 [&>svg]:h-3.5"><DollarIcon /></span>
-          </div>
-          <p className="font-vintiga-display font-light text-white text-2xl md:text-[1.7rem] leading-none mt-1 tabular-nums">
-            ${revenue.toLocaleString('en-US')}
-          </p>
-          <div className="mt-2.5 h-1.5 rounded-full bg-white/15 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-vintiga-indigo-500 transition-[width] duration-[1200ms] ease-out"
-              style={{ width: filled ? '78%' : '0%' }}
-            />
-          </div>
-          <div className="flex items-center justify-between mt-1.5">
-            <span className="typo-caption text-white/60">Goal: $50,000.00</span>
-            <span className="typo-caption text-white/80 font-semibold tabular-nums">78%</span>
+        <div className="relative rounded-3xl overflow-hidden backdrop-blur-2xl bg-vintiga-slate-900/25 border border-white/30 shadow-[0_20px_46px_-16px_rgba(15,23,42,0.6)]">
+          {/* Figma glass: -45° light sheen + a bright top edge highlight */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/35 via-white/5 to-transparent" />
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/50" />
+          <div className="relative p-3.5 [text-shadow:0_1px_3px_rgba(15,23,42,0.35)]">
+            <div className="flex items-center justify-between gap-2">
+              <span className="typo-caption text-white/85">Total Revenue</span>
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/25 text-white [&>svg]:w-3.5 [&>svg]:h-3.5"><DollarIcon /></span>
+            </div>
+            <p className="font-vintiga-display font-light text-white text-2xl md:text-[1.7rem] leading-none mt-1 tabular-nums">
+              ${revenue.toLocaleString('en-US')}
+            </p>
+            <div className="mt-2.5 h-1.5 rounded-full bg-white/20 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-vintiga-indigo-500 transition-[width] duration-[1200ms] ease-out"
+                style={{ width: filled ? '78%' : '0%' }}
+              />
+            </div>
+            <div className="flex items-center justify-between mt-1.5">
+              <span className="typo-caption text-white/70">Goal: $50,000.00</span>
+              <span className="typo-caption text-white font-semibold tabular-nums">78%</span>
+            </div>
           </div>
         </div>
       </Reveal>
