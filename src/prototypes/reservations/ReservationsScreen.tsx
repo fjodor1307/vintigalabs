@@ -26,7 +26,6 @@ import {
   SparklesIcon,
   MapPinIcon,
   FileTextIcon,
-  HandIcon,
   CircleXIcon,
   CheckIcon,
   PencilIcon,
@@ -35,7 +34,7 @@ import { Popover } from './Popover'
 import { MiniCalendar } from './MiniCalendar'
 import { ReservationCalendar } from './ReservationCalendar'
 import { GuestPanel } from './GuestPanel'
-import { HoldLocationModal, BlockTimeModal } from './ReservationModals'
+import { BlockTimeModal } from './ReservationModals'
 import {
   RESERVATIONS,
   STATUS_TONE,
@@ -112,7 +111,6 @@ export function ReservationsScreen() {
   const [status, setStatus] = useState<Set<ReservationStatus>>(new Set())
   // The reservation whose "Get To Know" guest panel is open (bulb action).
   const [guest, setGuest] = useState<Reservation | null>(null)
-  const [holdOpen, setHoldOpen] = useState(false)
   const [blockOpen, setBlockOpen] = useState(false)
 
   // Toolbar filters (search · experience · status), applied regardless of date.
@@ -142,8 +140,12 @@ export function ReservationsScreen() {
   const weekHasData = weekDays.some((d) => sameDay(d, DATA_DATE))
 
   // What's visible depends on the view's date scope: a single day (List / Day)
-  // or the whole week (Week).
-  const visible = view === 'Week View' ? (weekHasData ? matched : []) : onDataDate ? matched : []
+  // or the whole week (Week). A text search overrides the date scope — searching
+  // spans every reservation, not just the day in view (Jul 9 review).
+  const searching = query.trim() !== ''
+  const visible = searching
+    ? matched
+    : view === 'Week View' ? (weekHasData ? matched : []) : onDataDate ? matched : []
 
   const guestCount = visible.reduce((sum, r) => sum + r.guests, 0)
   const hasFilters = query.trim() !== '' || experience.size > 0 || status.size > 0
@@ -205,24 +207,6 @@ export function ReservationsScreen() {
               </div>
 
               <div className="flex items-center gap-vintiga-sm">
-                {/* Tasks */}
-                <Popover
-                  align="right"
-                  width="w-96"
-                  trigger={(_open, toggle) => (
-                    <IconButton variant="outline" size="md" icon={<FileTextIcon />} aria-label="Tasks" onClick={toggle} />
-                  )}
-                >
-                  {() => (
-                    <div className="flex flex-col gap-vintiga-sm">
-                      <h3 className="typo-body-lg font-semibold text-vintiga-slate-900">Your Tasks</h3>
-                      <p className="typo-body-sm text-vintiga-slate-500">
-                        No tasks assigned. Tasks can be added on any reservation, order, customer, or club membership.
-                      </p>
-                    </div>
-                  )}
-                </Popover>
-
                 {/* Notes */}
                 <Popover
                   align="right"
@@ -261,9 +245,6 @@ export function ReservationsScreen() {
                   label="More"
                   width="w-60"
                   items={[
-                    { label: 'Ad Hoc Reservation', icon: <PlusIcon className="w-4 h-4" />, onClick: () => { window.location.hash = '#/web/reservations/add' } },
-                    { label: 'Search From All Reservations', icon: <SearchIcon className="w-4 h-4" />, onClick: () => {} },
-                    { label: 'Hold Location', icon: <HandIcon className="w-4 h-4" />, onClick: () => setHoldOpen(true) },
                     { label: 'Block Time', icon: <CircleXIcon className="w-4 h-4" />, onClick: () => setBlockOpen(true) },
                     { label: 'Print List', icon: <FileTextIcon className="w-4 h-4" />, onClick: () => {} },
                   ]}
@@ -384,7 +365,6 @@ export function ReservationsScreen() {
       </div>
 
       {guest && <GuestPanel guest={guest} onClose={() => setGuest(null)} />}
-      <HoldLocationModal open={holdOpen} onClose={() => setHoldOpen(false)} />
       <BlockTimeModal open={blockOpen} onClose={() => setBlockOpen(false)} />
     </div>
   )
