@@ -5,12 +5,14 @@
 // slide adds a small "living dashboard" composition — images ease in, then the
 // Total Revenue counts up and the goal progress bar fills.
 
-import { useEffect, useState, useRef, type ReactNode } from 'react'
+import { useEffect, useState, useRef, createContext, useContext, type ReactNode } from 'react'
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   XIcon,
   CheckIcon,
+  LinkIcon,
+  DownloadIcon,
   SparklesIcon,
   TrendingUpIcon,
   ChartIcon,
@@ -28,6 +30,10 @@ import {
 import { VintigaIconBlack } from '@ds/shared/VintigaLogo'
 
 const img = (p: string) => `/brand/imagery/${p}`
+
+// When true (print / export), animated figures render at their final value so
+// the exported PDF isn't captured mid-animation.
+const StaticContext = createContext(false)
 
 // ─── Reusable slide primitives (shared motion language) ───────────────────────
 
@@ -128,8 +134,10 @@ const AVATARS = [
 
 /** Count a number up to `end` once on mount, easing out over `duration` ms. */
 function useCountUp(end: number, duration = 1400, delay = 0) {
-  const [value, setValue] = useState(0)
+  const isStatic = useContext(StaticContext)
+  const [value, setValue] = useState(isStatic ? end : 0)
   useEffect(() => {
+    if (isStatic) return
     let raf = 0
     let start = 0
     const tick = (t: number) => {
@@ -143,18 +151,20 @@ function useCountUp(end: number, duration = 1400, delay = 0) {
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [end, duration, delay])
+  }, [end, duration, delay, isStatic])
   return value
 }
 
 function DashboardComposition() {
+  const isStatic = useContext(StaticContext)
   const revenue = useCountUp(38920, 1500, 650)
   // Progress bar fills after the cards settle in.
-  const [filled, setFilled] = useState(false)
+  const [filled, setFilled] = useState(isStatic)
   useEffect(() => {
+    if (isStatic) return
     const id = setTimeout(() => setFilled(true), 750)
     return () => clearTimeout(id)
-  }, [])
+  }, [isStatic])
 
   return (
     <div className="relative w-full max-w-[300px] sm:max-w-[440px] lg:max-w-[520px] mx-auto aspect-[47/58]">
@@ -842,8 +852,17 @@ export function VintigaOverviewSlidesScreen() {
   const startX = useRef<number | null>(null)
   const startY = useRef<number | null>(null)
 
+  const [copied, setCopied] = useState(false)
+
   const prev = () => setIndex((i) => Math.max(0, i - 1))
   const next = () => setIndex((i) => Math.min(total - 1, i + 1))
+
+  function handleShare() {
+    navigator.clipboard?.writeText(window.location.href)
+      .then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
+      .catch(() => {})
+  }
+  const handleDownload = () => window.print()
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -860,7 +879,8 @@ export function VintigaOverviewSlidesScreen() {
   const ctrl = 'inline-flex items-center justify-center w-9 h-9 rounded-full transition-colors text-vintiga-slate-500 hover:text-vintiga-slate-900 hover:bg-vintiga-slate-100'
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden font-vintiga-body bg-vintiga-white">
+    <>
+    <div className="fixed inset-0 z-50 overflow-hidden font-vintiga-body bg-vintiga-white print:hidden">
       <style>{`
         @keyframes compIn { from { opacity: 0; transform: translateY(18px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes deckIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
@@ -868,6 +888,25 @@ export function VintigaOverviewSlidesScreen() {
            fadeUp leaves) creates a backdrop root and stops backdrop-filter from
            blurring the photo behind. */
         @keyframes glassIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Download / Save-as-PDF — one slide per landscape page. */
+        @media print {
+          @page { size: 1280px 720px; margin: 0; }
+          html, body { background: #fff !important; }
+          .deck-print .print-slide {
+            box-sizing: border-box;
+            width: 1280px;
+            height: 720px;
+            padding: 44px 64px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #fff;
+            break-after: page;
+            page-break-after: always;
+          }
+          .deck-print .print-slide:last-child { break-after: auto; page-break-after: auto; }
+        }
       `}</style>
 
       {/* Slide stage — only the active slide is mounted, so it re-enters (and
@@ -895,14 +934,29 @@ export function VintigaOverviewSlidesScreen() {
         </div>
       </div>
 
-      {/* Top chrome — wordmark + exit */}
+      {/* Top chrome — wordmark + share / download / exit */}
       <div className="absolute top-0 inset-x-0 h-16 px-6 sm:px-14 lg:px-20 flex items-center justify-between pointer-events-none">
         <VintigaIconBlack size={30} className="pointer-events-auto rounded-[9px]" aria-label="Vintiga" />
         <span className="sr-only">Vintiga</span>
-        <button type="button" onClick={exitToHub} aria-label="Exit presentation" className={`${ctrl} pointer-events-auto`}>
-          <XIcon className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-1 pointer-events-auto">
+          <button type="button" onClick={handleShare} aria-label="Copy link to this deck" className={ctrl}>
+            {copied ? <CheckIcon className="w-5 h-5 text-vintiga-green-600" /> : <LinkIcon className="w-5 h-5" />}
+          </button>
+          <button type="button" onClick={handleDownload} aria-label="Download as PDF" className={ctrl}>
+            <DownloadIcon className="w-5 h-5" />
+          </button>
+          <button type="button" onClick={exitToHub} aria-label="Exit presentation" className={ctrl}>
+            <XIcon className="w-5 h-5" />
+          </button>
+        </div>
       </div>
+
+      {/* Copy-link confirmation */}
+      {copied && (
+        <div className="absolute top-16 right-6 sm:right-14 lg:right-20 z-10 rounded-full bg-vintiga-slate-900 text-white typo-caption font-medium px-3 py-1.5 shadow-lg animate-[glassIn_0.2s_ease-out]">
+          Link copied
+        </div>
+      )}
 
       {/* Bottom chrome — prev · counter · next + progress */}
       <div className="absolute bottom-0 inset-x-0">
@@ -922,5 +976,20 @@ export function VintigaOverviewSlidesScreen() {
         </div>
       </div>
     </div>
+
+    {/* Print / export layout — every slide, one per landscape page. Only shown
+        by the browser's print/Save-as-PDF path (@media print). */}
+    <div className="hidden print:block deck-print font-vintiga-body">
+      <StaticContext.Provider value={true}>
+        {SLIDES.map((s, i) => (
+          <section key={i} className="print-slide">
+            <div className="relative w-full h-full max-w-[1400px] mx-auto flex flex-col justify-center">
+              {s.render()}
+            </div>
+          </section>
+        ))}
+      </StaticContext.Provider>
+    </div>
+    </>
   )
 }
