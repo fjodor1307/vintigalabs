@@ -108,6 +108,18 @@ function Avatar({ initials }: { initials: string }) {
   )
 }
 
+// Team headshot with a graceful fallback to the initials avatar if the photo is
+// missing or fails to load, so the slide never shows a broken image.
+function PersonAvatar({ src, initials }: { src?: string; initials: string }) {
+  const [failed, setFailed] = useState(false)
+  if (!src || failed) return <Avatar initials={initials} />
+  return (
+    <span className="w-14 h-14 rounded-full overflow-hidden bg-vintiga-indigo-100 shrink-0">
+      <img src={src} alt="" className="w-full h-full object-cover" onError={() => setFailed(true)} />
+    </span>
+  )
+}
+
 // ─── Slides ───────────────────────────────────────────────────────────────────
 
 type Slide = { theme: 'dark' | 'light' | 'indigo'; render: () => ReactNode }
@@ -562,17 +574,17 @@ const SLIDES: Slide[] = [
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-lg">
           {[
-            ['JS', 'Jim Secord', 'Founder', 'Three-time founder and 25-year product veteran; previously led product at WineDirect, modernizing winery DTC. Founded Vintiga to turn tasting-room visitors into lifelong customers.'],
-            ['DA', 'Donna Ataman', 'Product & Customer Lead', 'Product leader formerly of WineDirect and Intuit (QuickBooks Online), with deep winery-operations experience across clubs, compliance, fulfillment and tasting-room workflows.'],
-            ['GS', 'Geoff Spears', 'Engineering Lead', 'Award-winning software architect; engineered an offline-first, iPhone-based commerce platform that replaces costly hardware with a reliable, high-performance system.'],
-          ].map(([ini, name, role, bio], k) => (
-            <Reveal key={name} i={2 + k} className="flex flex-col gap-vintiga-md rounded-vintiga-2xl border border-vintiga-slate-200 bg-vintiga-white p-vintiga-lg">
-              <Avatar initials={ini} />
+            { ini: 'JS', photo: img('team/jim-secord.jpg'),  name: 'Jim Secord',   role: 'Founder', bio: 'Three-time founder and 25-year product veteran; previously led product at WineDirect, modernizing winery DTC. Founded Vintiga to turn tasting-room visitors into lifelong customers.' },
+            { ini: 'DA', photo: img('team/donna-ataman.jpg'), name: 'Donna Ataman', role: 'Product & Customer Lead', bio: 'Product leader formerly of WineDirect and Intuit (QuickBooks Online), with deep winery-operations experience across clubs, compliance, fulfillment and tasting-room workflows.' },
+            { ini: 'GS', photo: img('team/geoff-spears.jpg'), name: 'Geoff Spears', role: 'Engineering Lead', bio: 'Award-winning software architect; engineered an offline-first, iPhone-based commerce platform that replaces costly hardware with a reliable, high-performance system.' },
+          ].map((m, k) => (
+            <Reveal key={m.name} i={2 + k} className="flex flex-col gap-vintiga-md rounded-vintiga-2xl border border-vintiga-slate-200 bg-vintiga-white p-vintiga-lg">
+              <PersonAvatar src={m.photo} initials={m.ini} />
               <div>
-                <p className="typo-title-subsection font-semibold text-vintiga-slate-900">{name}</p>
-                <p className="typo-body-sm text-vintiga-indigo-600 font-medium">{role}</p>
+                <p className="typo-title-subsection font-semibold text-vintiga-slate-900">{m.name}</p>
+                <p className="typo-body-sm text-vintiga-indigo-600 font-medium">{m.role}</p>
               </div>
-              <p className="typo-body-sm text-vintiga-slate-500 leading-relaxed">{bio}</p>
+              <p className="typo-body-sm text-vintiga-slate-500 leading-relaxed">{m.bio}</p>
             </Reveal>
           ))}
         </div>
