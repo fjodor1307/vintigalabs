@@ -61,6 +61,46 @@ export function HoldLocationModal({ open, onClose }: { open: boolean; onClose: (
   )
 }
 
+// "Notes for Today" — edits the day's Schedule + Staff notes shown in the
+// reservations header popover (Jul 9 review).
+export function NotesModal({
+  open,
+  scheduleNotes,
+  staffNotes,
+  onClose,
+  onSave,
+}: {
+  open: boolean
+  scheduleNotes: string
+  staffNotes: string
+  onClose: () => void
+  onSave: (schedule: string, staff: string) => void
+}) {
+  return (
+    <Modal open={open} onClose={onClose} size="md">
+      {open && <NotesForm scheduleNotes={scheduleNotes} staffNotes={staffNotes} onClose={onClose} onSave={onSave} />}
+    </Modal>
+  )
+}
+
+function NotesForm({ scheduleNotes, staffNotes, onClose, onSave }: { scheduleNotes: string; staffNotes: string; onClose: () => void; onSave: (s: string, st: string) => void }) {
+  const [schedule, setSchedule] = useState(scheduleNotes)
+  const [staff, setStaff] = useState(staffNotes)
+  return (
+    <>
+      <ModalHeader title="Notes for Today" onClose={onClose} />
+      <ModalBody>
+        <Field label="Schedule Notes"><Textarea rows={3} value={schedule} onChange={(e) => setSchedule(e.target.value)} placeholder="e.g. Vintiga is coming around 12." /></Field>
+        <Field label="Staff Notes"><Textarea rows={3} value={staff} onChange={(e) => setStaff(e.target.value)} placeholder="e.g. Slushy machine is broken; Sam is out sick." /></Field>
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button onClick={() => { onSave(schedule.trim(), staff.trim()); onClose() }}>Save Notes</Button>
+      </ModalFooter>
+    </>
+  )
+}
+
 export function BlockTimeModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [exp, setExp] = useState('lunch')
   const [date, setDate] = useState('Jan 15, 2025')
