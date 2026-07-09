@@ -26,6 +26,8 @@ import {
   type NextShipment,
 } from './membershipsData'
 import { AddEditMembershipModal, CancelMembershipModal, type MembershipFormValue } from './membershipModals'
+import { ShippingAddressModal, CardOnFileModal, DeliveryMethodModal, type CardRef } from './membershipEditModals'
+import { useAddresses } from './customerStore'
 
 // ─── CustomerMembershipsScreen ────────────────────────────────────────────────
 // Redesign of Figma 2015:6618 per the Jul 1 review. Digital Pass is its own
@@ -44,14 +46,14 @@ function StatusTag({ status }: { status: MembershipStatus }) {
   return <Tag variant="filled" tone={m.tone} size="sm">{m.label}</Tag>
 }
 
-function Pair({ label, value, edit }: { label: string; value: ReactNode; edit?: string }) {
+function Pair({ label, value, edit }: { label: string; value: ReactNode; edit?: { label: string; onClick: () => void } }) {
   return (
     <div className="flex flex-col gap-0.5 min-w-0">
       <span className="typo-caption uppercase tracking-wide text-vintiga-slate-400">{label}</span>
       <span className="typo-body-sm text-vintiga-slate-900">{value}</span>
       {edit && (
-        <button type="button" onClick={() => {}} className="typo-caption font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 bg-transparent border-none p-0 cursor-pointer text-left w-fit">
-          {edit}
+        <button type="button" onClick={edit.onClick} className="typo-caption font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 bg-transparent border-none p-0 cursor-pointer text-left w-fit">
+          {edit.label}
         </button>
       )}
     </div>
@@ -63,29 +65,31 @@ function Pair({ label, value, edit }: { label: string; value: ReactNode; edit?: 
 function DigitalPassCard() {
   const p = DIGITAL_PASS
   return (
-    <section className="border border-vintiga-border rounded-vintiga-card bg-vintiga-white p-vintiga-md flex items-center gap-vintiga-md">
-      <span className="w-10 h-10 rounded-full bg-vintiga-indigo-50 text-vintiga-indigo-600 inline-flex items-center justify-center shrink-0 [&>svg]:w-5 [&>svg]:h-5">
-        <MailIcon />
-      </span>
-      <div className="flex-1 min-w-0 flex flex-wrap items-center gap-x-vintiga-xl gap-y-1">
-        <div className="flex items-center gap-vintiga-sm">
-          <span className="typo-body-sm font-semibold text-vintiga-slate-900">Digital Pass</span>
-          <Tag variant="filled" tone="success" size="sm">Active</Tag>
+    <RecordsCard title="Digital Passes" subtitle="Manage your customer digital passes" divider={false}>
+      <div className="flex items-center gap-vintiga-md rounded-vintiga-card border border-vintiga-border p-vintiga-md">
+        <span className="w-10 h-10 rounded-full bg-vintiga-indigo-50 text-vintiga-indigo-600 inline-flex items-center justify-center shrink-0 [&>svg]:w-5 [&>svg]:h-5">
+          <MailIcon />
+        </span>
+        <div className="flex-1 min-w-0 flex flex-wrap items-center gap-x-vintiga-xl gap-y-1">
+          <div className="flex items-center gap-vintiga-sm">
+            <span className="typo-body-sm font-semibold text-vintiga-slate-900">Digital Pass</span>
+            <Tag variant="filled" tone="success" size="sm">Active</Tag>
+          </div>
+          <span className="typo-body-sm text-vintiga-slate-500">Pass ID {p.passId}</span>
+          <span className="typo-body-sm text-vintiga-slate-500">{p.loyaltyPoints} loyalty points</span>
+          <span className="typo-body-sm text-vintiga-slate-500">Accepted {p.invitationAccepted}</span>
+          <span className="typo-body-sm text-vintiga-slate-500">Created {p.created}</span>
         </div>
-        <span className="typo-body-sm text-vintiga-slate-500">Pass ID {p.passId}</span>
-        <span className="typo-body-sm text-vintiga-slate-500">{p.loyaltyPoints} loyalty points</span>
-        <span className="typo-body-sm text-vintiga-slate-500">Accepted {p.invitationAccepted}</span>
-        <span className="typo-body-sm text-vintiga-slate-500">Created {p.created}</span>
+        <PopoverMenu
+          align="right"
+          width="w-44"
+          trigger={(_o, toggle) => (
+            <IconButton variant="outline" size="sm" icon={<EllipsisVerticalIcon />} onClick={toggle} aria-label="More options for Digital Pass" />
+          )}
+          items={[{ label: 'View pass', onClick: () => {} }]}
+        />
       </div>
-      <PopoverMenu
-        align="right"
-        width="w-44"
-        trigger={(_o, toggle) => (
-          <IconButton variant="outline" size="sm" icon={<EllipsisVerticalIcon />} onClick={toggle} aria-label="More options for Digital Pass" />
-        )}
-        items={[{ label: 'View pass', onClick: () => {} }]}
-      />
-    </section>
+    </RecordsCard>
   )
 }
 
@@ -104,35 +108,45 @@ function summaryLine(m: Membership): string {
 
 // ─── Next-shipment block (shipment clubs) ─────────────────────────────────────
 
-function deliveryValue(m: Membership): ReactNode {
-  if (!m.delivery) return '—'
-  const icon = m.delivery.method === 'pickup' ? <MapPinIcon /> : <TruckIcon />
-  const label = m.delivery.method === 'pickup' ? `Pickup · ${m.delivery.location}` : 'Ship'
+const PICKUP_LOCATION = 'Downtown Tasting Room'
+
+function deliveryDisplay(method: 'ship' | 'pickup'): ReactNode {
+  const icon = method === 'pickup' ? <MapPinIcon /> : <TruckIcon />
   return (
     <span className="inline-flex items-center gap-1.5">
       <span className="text-vintiga-slate-400 [&>svg]:w-4 [&>svg]:h-4">{icon}</span>
-      {label}
+      {method === 'pickup' ? 'Pickup' : 'Ship'}
     </span>
   )
 }
 
 function NextShipmentBlock({ m, s }: { m: Membership; s: NextShipment }) {
+  const addresses = useAddresses()
+  const homeAddress = addresses[0] ? `${addresses[0].street}, ${addresses[0].city}, ${addresses[0].state} ${addresses[0].zip}` : ''
+
+  const [method, setMethod] = useState<'ship' | 'pickup'>(m.delivery?.method ?? 'ship')
+  const [addr, setAddr] = useState<string>(m.delivery?.method === 'pickup' ? (m.delivery.location ?? PICKUP_LOCATION) : (m.delivery?.address ?? homeAddress))
+  const [card, setCard] = useState<CardRef | undefined>(m.payment)
+  const [modal, setModal] = useState<'address' | 'card' | 'delivery' | null>(null)
   const [skipped, setSkipped] = useState(s.skipped)
   const total = s.wines.reduce((n, w) => n + w.qty, 0)
-  const shipTo = m.delivery?.method === 'pickup' ? m.delivery.location : m.delivery?.address
 
   return (
     <div className="flex flex-col gap-vintiga-md">
       <div className="rounded-vintiga-card bg-vintiga-surface-secondary p-vintiga-md flex flex-col gap-vintiga-md">
         <p className="typo-caption font-semibold uppercase tracking-wide text-vintiga-slate-500">Your next shipment</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-vintiga-md">
-          <Pair label={m.delivery?.method === 'pickup' ? 'Pickup at' : 'Ships to'} value={shipTo} edit={m.delivery?.method === 'pickup' ? 'Change pickup' : 'Change address'} />
+          <Pair
+            label={method === 'pickup' ? 'Pickup at' : 'Ships to'}
+            value={addr}
+            edit={method === 'pickup' ? { label: 'Change delivery', onClick: () => setModal('delivery') } : { label: 'Change address', onClick: () => setModal('address') }}
+          />
           <Pair
             label="Paid with"
-            value={m.payment ? <span className="inline-flex items-center gap-1.5"><CardBrandLogo brand={m.payment.brand} /> •••• {m.payment.last4}</span> : 'No card on file'}
-            edit={m.payment ? 'Change card' : 'Add a card'}
+            value={card ? <span className="inline-flex items-center gap-1.5"><CardBrandLogo brand={card.brand} /> •••• {card.last4}</span> : 'No card on file'}
+            edit={{ label: card ? 'Change card' : 'Add a card', onClick: () => setModal('card') }}
           />
-          <Pair label="Delivery" value={deliveryValue(m)} edit="Change delivery" />
+          <Pair label="Delivery" value={deliveryDisplay(method)} edit={{ label: 'Change delivery', onClick: () => setModal('delivery') }} />
         </div>
         <div className="flex flex-wrap gap-x-vintiga-xl gap-y-1 pt-vintiga-sm border-t border-vintiga-border">
           <span className="typo-body-sm text-vintiga-slate-500"><span className="font-medium text-vintiga-slate-700">Charges on:</span> {s.chargesOn}</span>
@@ -164,23 +178,39 @@ function NextShipmentBlock({ m, s }: { m: Membership; s: NextShipment }) {
           ))}
         </div>
       </div>
+
+      <ShippingAddressModal open={modal === 'address'} current={addr} onClose={() => setModal(null)} onSave={setAddr} />
+      <CardOnFileModal open={modal === 'card'} current={card} onClose={() => setModal(null)} onSave={setCard} />
+      <DeliveryMethodModal
+        open={modal === 'delivery'}
+        current={method}
+        onClose={() => setModal(null)}
+        onSave={(mth) => { setMethod(mth); setAddr(mth === 'pickup' ? PICKUP_LOCATION : homeAddress) }}
+      />
     </div>
   )
 }
 
 function NonShipmentDetail({ m }: { m: Membership }) {
-  const hasRows = m.level || m.accountCredit !== undefined || m.commitmentEnds || m.payment || m.benefits
+  const [card, setCard] = useState<CardRef | undefined>(m.payment)
+  const [cardModal, setCardModal] = useState(false)
+  const hasRows = m.level || m.accountCredit !== undefined || m.commitmentEnds || card || m.benefits
   if (!hasRows) return <p className="typo-body-sm text-vintiga-slate-500">No additional details yet.</p>
   return (
     <div className="flex flex-col gap-vintiga-md">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-vintiga-md">
-        {m.level && <Pair label="Level" value={`${m.level.name} · $${m.level.monthly}/mo`} edit="Change level" />}
+        {m.level && <Pair label="Level" value={`${m.level.name} · $${m.level.monthly}/mo`} />}
         {m.accountCredit !== undefined && <Pair label="Account credit" value={`$${m.accountCredit.toFixed(2)}`} />}
         {m.commitmentEnds && <Pair label="Commitment ends" value={m.commitmentEnds} />}
-        {m.payment && (
-          <Pair label="Paid with" value={<span className="inline-flex items-center gap-1.5"><CardBrandLogo brand={m.payment.brand} /> •••• {m.payment.last4}</span>} edit="Change card" />
+        {card && (
+          <Pair
+            label="Paid with"
+            value={<span className="inline-flex items-center gap-1.5"><CardBrandLogo brand={card.brand} /> •••• {card.last4}</span>}
+            edit={{ label: 'Change card', onClick: () => setCardModal(true) }}
+          />
         )}
       </div>
+      <CardOnFileModal open={cardModal} current={card} onClose={() => setCardModal(false)} onSave={setCard} />
       {m.benefits && (
         <div>
           <p className="typo-caption font-semibold uppercase tracking-wide text-vintiga-slate-500 mb-vintiga-sm">Member benefits</p>
