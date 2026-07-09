@@ -180,8 +180,10 @@ function DashboardComposition() {
         </div>
       </Reveal>
 
-      {/* Total Revenue card — glassy overlay, reveals after the images */}
-      <Reveal i={4} className="absolute left-[6%] top-[40%] w-[66%]">
+      {/* Total Revenue card — glassy overlay, reveals after the images.
+          Opacity-only reveal (not fadeUp) so no lingering transform isolates the
+          backdrop and the frosted blur actually samples the photo. */}
+      <div className="absolute left-[6%] top-[40%] w-[66%] animate-[glassIn_0.5s_ease-out_both] [animation-delay:280ms]">
         <div className="relative rounded-3xl overflow-hidden backdrop-blur-2xl bg-vintiga-slate-900/25 border border-white/30 shadow-[0_20px_46px_-16px_rgba(15,23,42,0.6)]">
           {/* Figma glass: -45° light sheen + a bright top edge highlight */}
           <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/35 via-white/5 to-transparent" />
@@ -206,10 +208,10 @@ function DashboardComposition() {
             </div>
           </div>
         </div>
-      </Reveal>
+      </div>
 
-      {/* Avatars pill — reveals last */}
-      <Reveal i={5} className="absolute left-[8%] bottom-[10%] ">
+      {/* Avatars pill — reveals last (opacity-only so its glass blur samples the photo) */}
+      <div className="absolute left-[8%] bottom-[10%] animate-[glassIn_0.5s_ease-out_both] [animation-delay:350ms]">
         <div className="inline-flex items-center gap-2 rounded-full bg-white/30 backdrop-blur-xl px-2.5 py-1.5 shadow-[0_12px_30px_-10px_rgba(15,23,42,0.4)] border border-white/50">
           <div className="flex -space-x-2">
             {AVATARS.map((src, k) => (
@@ -222,7 +224,7 @@ function DashboardComposition() {
           <span className="typo-caption font-semibold text-vintiga-slate-700">+6</span>
           <span className="text-vintiga-slate-500 [&>svg]:w-4 [&>svg]:h-4"><EllipsisIcon /></span>
         </div>
-      </Reveal>
+      </div>
     </div>
   )
 }
@@ -862,6 +864,10 @@ export function VintigaOverviewSlidesScreen() {
       <style>{`
         @keyframes compIn { from { opacity: 0; transform: translateY(18px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes deckIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        /* Opacity-only reveal for the glass overlays — a lingering transform (as
+           fadeUp leaves) creates a backdrop root and stops backdrop-filter from
+           blurring the photo behind. */
+        @keyframes glassIn { from { opacity: 0; } to { opacity: 1; } }
       `}</style>
 
       {/* Slide stage — only the active slide is mounted, so it re-enters (and
