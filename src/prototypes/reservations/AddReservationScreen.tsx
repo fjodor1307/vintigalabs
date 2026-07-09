@@ -12,6 +12,7 @@ import { TextField } from '@ds/shared/TextField'
 import { Textarea } from '@ds/shared/Textarea'
 import { SearchIcon, PlusIcon, XIcon, IdCardIcon } from '@ds/icons/Icons'
 import { Select, Stepper, TimeField, TextInput, type Option } from './ResControls'
+import { experienceSelectOptions, findExperience, experienceName, money } from './experienceOptions'
 
 // ─── AddReservationScreen ─────────────────────────────────────────────────────
 // New reservation form (Figma 4783-39358 / 40812). Customer picker → reservation
@@ -26,17 +27,6 @@ const CUSTOMERS: Customer[] = [
   { id: 'c4', name: 'Devon Lee', initials: 'DL', email: 'devon.lee@gmail.com' },
 ]
 
-const EXPERIENCES: Option[] = [
-  { value: 'private-tasting', label: 'Private Tasting Experience (30mins)' },
-  { value: 'lunch', label: 'Lunch' },
-  { value: 'wine-tasting', label: 'Wine Tasting' },
-  { value: 'vineyard-picnic', label: 'Vineyard Picnic' },
-]
-const OPTIONS: (Option & { price: number; short: string })[] = [
-  { value: 'tasting-35', label: 'Tasting ($35.00 / guest)', price: 35, short: 'Tasting' },
-  { value: 'premium-55', label: 'Premium Tasting ($55.00 / guest)', price: 55, short: 'Premium Tasting' },
-  { value: 'reserve-75', label: 'Reserve Flight ($75.00 / guest)', price: 75, short: 'Reserve Flight' },
-]
 const HOSTS: Option[] = [
   { value: 'jim', label: 'Jim Secord' },
   { value: 'donna', label: 'Donna Ataman' },
@@ -53,15 +43,12 @@ const LOCATIONS: Option[] = [
   { value: 'estate', label: 'Estate Tasting Room' },
 ]
 
-const money = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-
 export function AddReservationScreen() {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
 
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [search, setSearch] = useState('')
   const [experience, setExperience] = useState('private-tasting')
-  const [option, setOption] = useState('premium-55')
   const [date, setDate] = useState('Jan 15, 2025')
   const [time, setTime] = useState('2:00')
   const [period, setPeriod] = useState<'AM' | 'PM'>('PM')
@@ -72,7 +59,7 @@ export function AddReservationScreen() {
   const [occasion, setOccasion] = useState('')
   const [notes, setNotes] = useState('')
 
-  const opt = OPTIONS.find((o) => o.value === option)
+  const opt = findExperience(experience)
   const total = (opt?.price ?? 0) * guests
   const locLabel = LOCATIONS.find((l) => l.value === location)?.label
 
@@ -103,7 +90,7 @@ export function AddReservationScreen() {
             rail={
               <SummaryRail
                 customer={customer?.name}
-                experience={opt ? `${opt.short} • ${money(opt.price)} per guest` : undefined}
+                experience={opt ? `${experienceName(opt)} • ${opt.price > 0 ? `${money(opt.price)} per guest` : 'No charge'}` : undefined}
                 dateTime={`${date} / ${time} ${period}`}
                 guests={`${guests} guest${guests === 1 ? '' : 's'}, ${money(total)}`}
                 location={locLabel}
@@ -156,8 +143,7 @@ export function AddReservationScreen() {
 
               {/* Reservation details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-                <Field label="Experience"><Select value={experience} onChange={setExperience} options={EXPERIENCES} /></Field>
-                <Field label="Option"><Select value={option} onChange={setOption} options={OPTIONS} /></Field>
+                <Field label="Experience"><Select value={experience} onChange={setExperience} options={experienceSelectOptions()} /></Field>
               </div>
 
               <div className="flex flex-col md:flex-row gap-vintiga-md md:items-end">
@@ -200,7 +186,7 @@ function SummaryRail({
         <SummaryRow label="Location">{location}</SummaryRow>
       </div>
       <div className="flex items-center justify-end gap-vintiga-sm pt-vintiga-sm border-t border-vintiga-slate-200">
-        <span className="typo-body font-semibold text-vintiga-slate-900">Total: {money(total)}</span>
+        <span className="typo-body font-semibold text-vintiga-slate-900">Total: {total > 0 ? money(total) : 'No charge'}</span>
       </div>
       <div className="rounded-vintiga-md bg-vintiga-slate-50 p-vintiga-md flex flex-col gap-vintiga-sm">
         <div className="flex items-center justify-between typo-caption text-vintiga-slate-600">
@@ -211,7 +197,7 @@ function SummaryRail({
         </div>
       </div>
       <div className="flex flex-col gap-vintiga-sm">
-        <Button fullWidth onClick={() => {}}>Reserve {money(total)}</Button>
+        <Button fullWidth onClick={() => {}}>Reserve{total > 0 ? ` ${money(total)}` : ''}</Button>
         <Button variant="outline" fullWidth onClick={onCancel}>Cancel</Button>
       </div>
     </section>

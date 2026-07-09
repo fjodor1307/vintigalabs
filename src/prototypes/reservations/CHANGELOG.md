@@ -6,6 +6,13 @@
 
 ---
 
+## 2026-07-09 — Fedja + Claude: Combined Experience/Option + Notes modal (Jul 9 review)
+
+- **One Experience dropdown** — Experience and Option are merged into a single picker. Variants are flattened ("Wine Tasting · Premium Tasting — $55.00 / guest"); single-variant experiences show just their name (no separate option); free experiences read **"No charge"**. Shared `experienceOptions.ts` drives both the **Add** and **View** reservation screens. Add's summary/total shows "No charge" for zero-cost bookings.
+- **Notes modal** — the Schedule Notes pencil in the header popover now opens a **"Notes for Today"** modal (Schedule + Staff notes). Saved notes render in the popover and light a small indicator dot on the Notes button. `NotesModal` added to `ReservationModals.tsx`.
+
+Seeded one experience with variants (Wine Tasting, Lunch) and single-variant ones (Private Tasting, Vineyard Picnic) so both cases show. Paid-reservation order flow + host-list filtering still logged in `NOTES.md`.
+
 ## 2026-07-09 — Fedja + Claude: List-view cleanup (Jul 9 review)
 
 Trimmed the reservations header before handing the dev ticket to Donna:
