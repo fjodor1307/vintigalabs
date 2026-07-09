@@ -22,7 +22,7 @@ Designer scratchpad. Anything strange, unclear, or worth improving goes here. Ke
 - **⚪ Segments on the customer record** — show which segments a customer belongs to on the profile. Blocked: PocketFlows has no API yet. · raised 2026-07-01 by Jim
 - **⚪ Multi-select customers → send email** — wherever there's a customer / member / filtered list, allow multi-select and send an email. Then surface campaign / email history on the individual customer view (currently shows nothing). Blocked on APIs. · raised 2026-07-01 by Jim
 - **🟢 Add / Edit / Cancel / Put-on-hold** — wired to modals (Figma designs), mutate the local memberships list. Skip/Unskip works too. · `CustomerMembershipsScreen.tsx` · `membershipModals.tsx` · done 2026-07-09
-- **🔴 Inline "Change …" links are placeholders** — the expanded card's *Change address / card / delivery / level* links are still visual only. Wire to the portal-style shipping-address / delivery-method / card-on-file modals next. · `CustomerMembershipsScreen.tsx` · raised 2026-07-09 by Fedja
+- **🟢 Inline "Change …" links** — *Change address / card / delivery* now open DS-styled modals (`membershipEditModals.tsx`) reading the customer's saved addresses + cards from the store; selections apply to the shipment card locally. *Change level* affordance removed pending a level-picker design. · done 2026-07-09
 
 ## Unclear / to investigate
 
