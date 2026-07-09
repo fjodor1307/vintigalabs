@@ -6,6 +6,17 @@
 
 ---
 
+## 2026-07-09 — Fedja + Claude: List-view cleanup (Jul 9 review)
+
+Trimmed the reservations header before handing the dev ticket to Donna:
+
+- **"More" menu** now only shows **Block Time** + **Print List**. Removed **Ad Hoc Reservation** (redundant — "Add" already covers the walk-in), **Search From All Reservations** (redundant), and **Hold Location** (unclear purpose — parked; the `HoldLocationModal` component stays in `ReservationModals.tsx`, just unused).
+- **Removed the Tasks** popover — no task management yet (comes after promotions).
+- **Search now spans all reservations**, not just the day in view — a text query overrides the List/Day/Week date scope. Verified: searching from an empty day surfaces bookings on other days.
+- **Notes** popover kept (Schedule + Staff Notes) pending the notes redesign.
+
+`ReservationsScreen.tsx`. Follow-ups (AI/quick-create Add, experience-option variants, host list excludes departed staff, free/paid labelling) logged in `NOTES.md`.
+
 ## 2026-06-24 — Fedja + Claude: Day View + Week View calendar
 
 The **List View / Day View / Week View** toggle is now live — the first two were stubs, now they render a time-grid calendar (`ReservationCalendar.tsx`):
