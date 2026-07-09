@@ -1,5 +1,20 @@
 # Customers — Changelog
 
+## 2026-07-09 — Fedja + Claude: Memberships tab — expandable club + next-order model (Jul 1 review)
+
+Built the **Memberships** tab (was a placeholder that bounced to Overview). Reworked per Donna's Jul 1 feedback on Figma 2015:6618 and the customer-portal reference, which combines the club and its next shipment into one card:
+
+- **Digital Pass is its own compact card** at the top — it's a loyalty/identity object, not a subscription club, so it reads separately from the memberships list.
+- **Expandable club cards** — collapsed shows a one-line summary (`Next shipment {date} · N bottles` for shipment clubs, `Level · $X/mo` for Member Choice, `Renews {date}` for Rewards). Expanding reveals the type-specific body:
+  - **Shipment clubs (Curated / Traditional)** → a "Your next shipment" block (ships-to · paid-with · delivery · charge/ship dates · min–max requirements) and an "In this shipment" bottle list with a working **Skip / Unskip** toggle — mirroring the portal, with staff-side edit affordances (Change address / card / delivery).
+  - **Rewards** → member benefits + commitment expiry (no shipment).
+  - **Member Choice** → level ($/mo) + account credit + commitment (no shipment).
+- **On-hold** cards show a hold alert; **cancelled** cards don't expand and show the cancellation reason inline.
+- Seeded Jane Davis with **one of every club type** across active / on-hold / cancelled and both sources.
+
+`CustomerMembershipsScreen.tsx` + `membershipsData.ts` (new); route `#/web/customers/view/memberships` wired; the tab no longer points at Overview. The inline edit affordances (Change address / card / delivery / level, Add) are visual placeholders for now — see `NOTES.md`.
+
+
 > Living handoff document for this prototype. Read first if you're picking up someone else's work.
 >
 > **Convention:** Add new entries at the top. Each entry needs a date, who made the change, what changed, and why. Focus on changes to this prototype only — cross-cutting / design-system changes belong in the repo-level `CHANGELOG.md`.
