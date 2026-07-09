@@ -12,6 +12,8 @@ import {
   BlockIconCard,
   BlockFrame,
   BlockGlassStat,
+  BlockGlassRevenue,
+  BlockAvatarsPill,
 } from './blocks/blocks'
 
 // ─── Presentations hub screens ────────────────────────────────────────────────
@@ -139,6 +141,19 @@ export function PresentationBlocksScreen() {
           <BlockGlassStat />
         </BlockCard>
 
+        <BlockCard label="Glass & blur (Figma 5270:645)" note="Frosted overlays — Total Revenue card (two radii) + avatars pill. Real backdrop-blur, so shown over media.">
+          <div className="relative rounded-vintiga-2xl overflow-hidden aspect-[16/9] bg-vintiga-slate-800">
+            <img src="/brand/imagery/compositions/emma-desk-03.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 p-vintiga-lg flex flex-col justify-between gap-vintiga-md">
+              <div className="flex flex-wrap gap-vintiga-md items-start">
+                <BlockGlassRevenue />
+                <BlockGlassRevenue rounded />
+              </div>
+              <BlockAvatarsPill />
+            </div>
+          </div>
+        </BlockCard>
+
         <BlockCard label="Icon cards" note="Three-up feature / benefit cards.">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-vintiga-lg">
             <BlockIconCard icon={<SparklesIcon />} title="AI-powered hospitality" body="Guest intelligence once reserved for luxury brands, for every winery." />
@@ -165,13 +180,15 @@ export function PresentationBlocksScreen() {
 // 50% black overlay. A first pass — pages are block presets standing in for the
 // live decks until those are refactored to be block-based.
 
-type BlockKind = 'title' | 'stats' | 'icons' | 'glass' | 'frame'
+type BlockKind = 'title' | 'stats' | 'icons' | 'glass' | 'revenue' | 'avatars' | 'frame'
 
 const BLOCK_KINDS: { value: BlockKind; label: string }[] = [
   { value: 'title', label: 'Title & text' },
   { value: 'stats', label: 'Stat row' },
   { value: 'icons', label: 'Icon cards' },
   { value: 'glass', label: 'Glass stat' },
+  { value: 'revenue', label: 'Glass revenue card' },
+  { value: 'avatars', label: 'Glass avatars pill' },
   { value: 'frame', label: 'Framed media' },
 ]
 
@@ -204,6 +221,10 @@ function renderBlock(kind: BlockKind) {
       )
     case 'glass':
       return <BlockGlassStat />
+    case 'revenue':
+      return <BlockGlassRevenue rounded />
+    case 'avatars':
+      return <BlockAvatarsPill />
     case 'frame':
       return <BlockFrame src="/brand/imagery/locations/wine-barrels.jpg" alt="Oak wine barrels" className="w-full max-w-xl aspect-[16/9]" />
   }
