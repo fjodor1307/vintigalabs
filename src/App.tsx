@@ -572,10 +572,10 @@ const PRESENTATIONS: { title: string; desc: string; href: string; cover: string;
   },
   {
     title: 'Vintiga Overview Slides',
-    desc: 'Short branded intro — the problem and why Vintiga now.',
+    desc: 'Investor overview — a light-themed take with an animated title.',
     href: '#/presentations/vintiga-overview-slides',
-    cover: '/brand/imagery/compositions/emma-desk-05.jpg',
-    meta: 'July 2026 · 3 slides',
+    cover: '/brand/imagery/compositions/emma-desk-03.jpg',
+    meta: 'July 2026 · 17 slides',
   },
 ]
 
