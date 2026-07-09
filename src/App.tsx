@@ -4,6 +4,7 @@ import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScre
 import { ToneOfVoiceScreen } from './brand/ToneOfVoiceScreen'
 import { ImageryScreen } from './brand/ImageryScreen'
 import { VintigaOverviewScreen } from './presentations/VintigaOverviewScreen'
+import { VintigaOverviewSlidesScreen } from './presentations/VintigaOverviewSlidesScreen'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { BackArrowIcon, SearchIcon, ArrowRightIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon, ExternalLinkIcon } from './design-system/icons/Icons'
 import { Button } from './design-system/shared/Button'
@@ -46,6 +47,7 @@ const webScreens: Record<string, React.ComponentType> = {
   '#/brand/tone-of-voice': ToneOfVoiceScreen,
   '#/brand/imagery': ImageryScreen,
   '#/presentations/vintiga-overview': VintigaOverviewScreen,
+  '#/presentations/vintiga-overview-slides': VintigaOverviewSlidesScreen,
   ...allRoutes,
 }
 
@@ -567,6 +569,13 @@ const PRESENTATIONS: { title: string; desc: string; href: string; cover: string;
     href: '#/presentations/vintiga-overview',
     cover: '/brand/imagery/locations/estate-terrace.jpg',
     meta: 'July 2026 · 17 slides',
+  },
+  {
+    title: 'Vintiga Overview Slides',
+    desc: 'Short branded intro — the problem and why Vintiga now.',
+    href: '#/presentations/vintiga-overview-slides',
+    cover: '/brand/imagery/compositions/emma-desk-05.jpg',
+    meta: 'July 2026 · 3 slides',
   },
 ]
 
