@@ -5,6 +5,7 @@ import { ToneOfVoiceScreen } from './brand/ToneOfVoiceScreen'
 import { ImageryScreen } from './brand/ImageryScreen'
 import { VintigaOverviewScreen } from './presentations/VintigaOverviewScreen'
 import { VintigaOverviewSlidesScreen } from './presentations/VintigaOverviewSlidesScreen'
+import { InvestorDecksScreen, PresentationBlocksScreen, PageBuilderScreen } from './presentations/PresentationsHub'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { BackArrowIcon, SearchIcon, ArrowRightIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon, ExternalLinkIcon } from './design-system/icons/Icons'
 import { Button } from './design-system/shared/Button'
@@ -48,6 +49,9 @@ const webScreens: Record<string, React.ComponentType> = {
   '#/brand/imagery': ImageryScreen,
   '#/presentations/vintiga-overview': VintigaOverviewScreen,
   '#/presentations/vintiga-overview-slides': VintigaOverviewSlidesScreen,
+  '#/presentations/investor-decks': InvestorDecksScreen,
+  '#/presentations/blocks': PresentationBlocksScreen,
+  '#/presentations/page-builder': PageBuilderScreen,
   ...allRoutes,
 }
 
@@ -561,44 +565,55 @@ function BrandSectionCards() {
   )
 }
 
-// Presentations — branded decks that open full-screen.
-const PRESENTATIONS: { title: string; desc: string; href: string; cover: string; meta: string }[] = [
-  {
-    title: 'Vintiga Overview',
-    desc: 'Investor overview — the winery guest-intelligence platform.',
-    href: '#/presentations/vintiga-overview',
-    cover: '/brand/imagery/locations/estate-terrace.jpg',
-    meta: 'July 2026 · 17 slides',
-  },
-  {
-    title: 'Vintiga Overview Slides',
-    desc: 'Investor overview — a light-themed take with an animated title.',
-    href: '#/presentations/vintiga-overview-slides',
-    cover: '/brand/imagery/compositions/emma-desk-03.jpg',
-    meta: 'July 2026 · 17 slides',
-  },
+// Presentations — two groups: the deck categories, and the Builder tooling.
+// Card style matches Brand (title · desc · Open → / Coming soon).
+type HubCard = { label: string; desc: string; href: string | null }
+
+const PRESENTATION_CATEGORIES: HubCard[] = [
+  { label: 'Investor Decks', desc: 'Fundraising overviews — the guest-intelligence platform.', href: '#/presentations/investor-decks' },
+  { label: 'Demo', desc: 'Product walkthroughs for prospects and calls.', href: null },
+  { label: 'Sprint Review', desc: 'What shipped this sprint, for the team.', href: null },
+  { label: 'Board Update', desc: 'Quarterly board & stakeholder updates.', href: null },
+  { label: 'Sales Pitch', desc: 'Short pitch decks for outreach.', href: null },
 ]
+
+const PRESENTATION_BUILDER: HubCard[] = [
+  { label: 'Blocks', desc: 'Reusable presentation blocks — titles, stats, glass cards, media.', href: '#/presentations/blocks' },
+  { label: 'Page Builder', desc: 'Assemble decks from blocks — pick pages, swap copy & imagery, export.', href: null },
+]
+
+function HubCardGrid({ cards }: { cards: HubCard[] }) {
+  const base = 'bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-vintiga-sm transition-colors'
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
+      {cards.map((c) =>
+        c.href ? (
+          <a key={c.label} href={c.href} className={`${base} hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted no-underline`}>
+            <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">{c.label}</h3>
+            <p className="typo-body-sm text-vintiga-foreground-muted">{c.desc}</p>
+            <span className="mt-auto pt-vintiga-md typo-body-sm font-semibold text-vintiga-primary">Open →</span>
+          </a>
+        ) : (
+          <div key={c.label} className={`${base} opacity-70`}>
+            <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">{c.label}</h3>
+            <p className="typo-body-sm text-vintiga-foreground-muted">{c.desc}</p>
+            <span className="mt-auto pt-vintiga-md typo-caption font-semibold uppercase tracking-wide text-vintiga-foreground-muted">Coming soon</span>
+          </div>
+        ),
+      )}
+    </div>
+  )
+}
 
 function PresentationsSectionCards() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg items-start">
-      {PRESENTATIONS.map((p) => (
-        <a
-          key={p.href}
-          href={p.href}
-          className="group bg-vintiga-surface border border-vintiga-border rounded-vintiga-card overflow-hidden flex flex-col hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted transition-colors no-underline"
-        >
-          <div className="aspect-[16/9] bg-vintiga-surface-element overflow-hidden">
-            <img src={p.cover} alt="" className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]" />
-          </div>
-          <div className="p-vintiga-lg flex flex-col gap-vintiga-xs">
-            <span className="typo-caption font-semibold uppercase tracking-wide text-vintiga-foreground-muted">{p.meta}</span>
-            <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">{p.title}</h3>
-            <p className="typo-body-sm text-vintiga-foreground-muted">{p.desc}</p>
-            <span className="mt-vintiga-sm typo-body-sm font-semibold text-vintiga-primary">Open →</span>
-          </div>
-        </a>
-      ))}
+    <div className="flex flex-col gap-vintiga-2xl">
+      {/* Categories render directly under the "Presentations" segment heading. */}
+      <HubCardGrid cards={PRESENTATION_CATEGORIES} />
+      <div className="flex flex-col gap-vintiga-lg">
+        <h2 className="typo-title-section font-semibold text-vintiga-foreground">Builder</h2>
+        <HubCardGrid cards={PRESENTATION_BUILDER} />
+      </div>
     </div>
   )
 }
