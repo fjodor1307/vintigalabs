@@ -24,8 +24,20 @@ function isFigmaCapture() {
   )
 }
 
+// Exact deck routes the presentation password unlocks. NOT a `startsWith`
+// prefix — the bare `#/presentations/` (and any unknown sub-path) falls through
+// to the prototype hub, so a prefix match would let the presentation password
+// into the whole app. Keep this list in sync with the presentation routes
+// registered in App.tsx.
+const PRESENTATION_ROUTES = [
+  '#/presentations/vintiga-overview',
+  '#/presentations/vintiga-overview-slides',
+]
+
 function isPresentationHash(hash: string) {
-  return hash.startsWith('#/presentations/')
+  // Normalise away any query string / trailing slash before matching.
+  const base = hash.split('?')[0].replace(/\/+$/, '')
+  return PRESENTATION_ROUTES.includes(base)
 }
 
 export function PasswordGate({ children }: { children: React.ReactNode }) {
