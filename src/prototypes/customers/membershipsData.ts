@@ -22,6 +22,7 @@ export interface DigitalPass {
   passId: string
   loyaltyPoints: number
   invitationAccepted: string
+  created: string
 }
 
 export interface ShipmentWine {
@@ -98,6 +99,7 @@ export const DIGITAL_PASS: DigitalPass = {
   passId: 'VA12345678',
   loyaltyPoints: 210,
   invitationAccepted: 'Jan 18, 2026',
+  created: 'Mar 15, 2023',
 }
 
 // One of every club type so the layout can be checked for consistency (Jul 1).

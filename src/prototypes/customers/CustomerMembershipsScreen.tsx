@@ -15,6 +15,7 @@ import {
   ChevronDownIcon,
   TruckIcon,
   MapPinIcon,
+  IdCardIcon,
 } from '@ds/icons/Icons'
 import {
   DIGITAL_PASS,
@@ -74,7 +75,16 @@ function DigitalPassCard() {
         <span className="typo-body-sm text-vintiga-slate-500">Pass ID {p.passId}</span>
         <span className="typo-body-sm text-vintiga-slate-500">{p.loyaltyPoints} loyalty points</span>
         <span className="typo-body-sm text-vintiga-slate-500">Accepted {p.invitationAccepted}</span>
+        <span className="typo-body-sm text-vintiga-slate-500">Created {p.created}</span>
       </div>
+      <PopoverMenu
+        align="right"
+        width="w-44"
+        trigger={(_o, toggle) => (
+          <IconButton variant="outline" size="sm" icon={<EllipsisVerticalIcon />} onClick={toggle} aria-label="More options for Digital Pass" />
+        )}
+        items={[{ label: 'View pass', onClick: () => {} }]}
+      />
     </section>
   )
 }
@@ -339,6 +349,20 @@ export function CustomerMembershipsScreen() {
             </Button>
           }
           divider={false}
+          empty={
+            <div className="flex flex-col items-center text-center gap-vintiga-md py-vintiga-lg">
+              <span className="w-12 h-12 rounded-full bg-vintiga-surface-element text-vintiga-slate-400 inline-flex items-center justify-center [&>svg]:w-6 [&>svg]:h-6">
+                <IdCardIcon />
+              </span>
+              <div>
+                <p className="typo-body font-semibold text-vintiga-slate-900">No memberships yet</p>
+                <p className="typo-body-sm text-vintiga-slate-500 mt-1">This customer isn't in any clubs yet.</p>
+              </div>
+              <Button variant="outline" size="md" leftIcon={<PlusIcon />} onClick={() => setModal({ kind: 'add' })}>
+                Add
+              </Button>
+            </div>
+          }
         >
           {memberships.map((m, i) => (
             <MembershipCard
