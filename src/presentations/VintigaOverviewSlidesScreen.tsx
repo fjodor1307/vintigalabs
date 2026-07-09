@@ -182,10 +182,10 @@ function DashboardComposition() {
 
       {/* Total Revenue card — glassy overlay, reveals after the images */}
       <Reveal i={4} className="absolute left-[6%] top-[40%] w-[66%]">
-        <div className="rounded-2xl bg-vintiga-slate-900/80 backdrop-blur-md border border-white/10 p-3.5 shadow-[0_18px_40px_-16px_rgba(15,23,42,0.6)]">
+        <div className="rounded-2xl bg-vintiga-slate-900/35 backdrop-blur-2xl border border-white/25 p-3.5 shadow-[0_18px_40px_-16px_rgba(15,23,42,0.55)]">
           <div className="flex items-center justify-between gap-2">
-            <span className="typo-caption text-white/70">Total Revenue</span>
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/10 text-white [&>svg]:w-3.5 [&>svg]:h-3.5"><DollarIcon /></span>
+            <span className="typo-caption text-white/80">Total Revenue</span>
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/20 text-white [&>svg]:w-3.5 [&>svg]:h-3.5"><DollarIcon /></span>
           </div>
           <p className="font-vintiga-display font-light text-white text-2xl md:text-[1.7rem] leading-none mt-1 tabular-nums">
             ${revenue.toLocaleString('en-US')}
@@ -205,7 +205,7 @@ function DashboardComposition() {
 
       {/* Avatars pill — reveals last */}
       <Reveal i={5} className="absolute left-[8%] bottom-[10%] ">
-        <div className="inline-flex items-center gap-2 rounded-full bg-white px-2.5 py-1.5 shadow-[0_12px_30px_-10px_rgba(15,23,42,0.4)] border border-vintiga-slate-100">
+        <div className="inline-flex items-center gap-2 rounded-full bg-white/30 backdrop-blur-xl px-2.5 py-1.5 shadow-[0_12px_30px_-10px_rgba(15,23,42,0.4)] border border-white/50">
           <div className="flex -space-x-2">
             {AVATARS.map((src, k) => (
               <span key={k} className="w-6 h-6 rounded-full ring-2 ring-white overflow-hidden bg-vintiga-slate-200">
@@ -214,8 +214,8 @@ function DashboardComposition() {
             ))}
             <span className="w-6 h-6 rounded-full ring-2 ring-white bg-vintiga-indigo-100 text-vintiga-indigo-700 inline-flex items-center justify-center typo-caption font-semibold">A</span>
           </div>
-          <span className="typo-caption font-semibold text-vintiga-slate-500">+6</span>
-          <span className="text-vintiga-slate-400 [&>svg]:w-4 [&>svg]:h-4"><EllipsisIcon /></span>
+          <span className="typo-caption font-semibold text-vintiga-slate-700">+6</span>
+          <span className="text-vintiga-slate-500 [&>svg]:w-4 [&>svg]:h-4"><EllipsisIcon /></span>
         </div>
       </Reveal>
     </div>
@@ -424,7 +424,7 @@ const SLIDES: Slide[] = [
           </ul>
         </div>
         <Reveal i={2} className="h-[38vh] lg:h-[62vh] max-h-[560px] order-first lg:order-last">
-          <Frame src={img('mockups/dashboard-office-portrait.jpg')} alt="Winery owner in a home office with the Vintiga dashboard on the screen behind her" className="h-full" />
+          <Frame src={img('mockups/dashboard-desk-window.jpg')} alt="Angled desktop monitor with the Vintiga dashboard on a wooden desk by a window" className="h-full" />
         </Reveal>
       </div>
     ),
