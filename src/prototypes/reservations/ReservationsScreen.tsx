@@ -34,7 +34,7 @@ import { Popover } from './Popover'
 import { MiniCalendar } from './MiniCalendar'
 import { ReservationCalendar } from './ReservationCalendar'
 import { GuestPanel } from './GuestPanel'
-import { BlockTimeModal } from './ReservationModals'
+import { BlockTimeModal, NotesModal } from './ReservationModals'
 import {
   RESERVATIONS,
   STATUS_TONE,
@@ -112,6 +112,9 @@ export function ReservationsScreen() {
   // The reservation whose "Get To Know" guest panel is open (bulb action).
   const [guest, setGuest] = useState<Reservation | null>(null)
   const [blockOpen, setBlockOpen] = useState(false)
+  const [notesOpen, setNotesOpen] = useState(false)
+  const [scheduleNotes, setScheduleNotes] = useState('')
+  const [staffNotes, setStaffNotes] = useState('')
 
   // Toolbar filters (search · experience · status), applied regardless of date.
   const matched = useMemo(() => {
@@ -212,21 +215,26 @@ export function ReservationsScreen() {
                   align="right"
                   width="w-96"
                   trigger={(_open, toggle) => (
-                    <IconButton variant="outline" size="md" icon={<MessageIcon />} aria-label="Notes" onClick={toggle} />
+                    <span className="relative inline-flex">
+                      <IconButton variant="outline" size="md" icon={<MessageIcon />} aria-label="Notes" onClick={toggle} />
+                      {(scheduleNotes || staffNotes) && (
+                        <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-vintiga-primary ring-2 ring-vintiga-white" aria-hidden />
+                      )}
+                    </span>
                   )}
                 >
-                  {() => (
+                  {(close) => (
                     <div className="flex flex-col gap-vintiga-md">
                       <div className="flex flex-col gap-vintiga-xs">
                         <div className="flex items-center justify-between gap-vintiga-md">
                           <h3 className="typo-body-lg font-semibold text-vintiga-slate-900">Schedule Notes</h3>
-                          <IconButton variant="outline" size="sm" icon={<PencilIcon />} aria-label="Edit schedule notes" onClick={() => {}} />
+                          <IconButton variant="outline" size="sm" icon={<PencilIcon />} aria-label="Edit notes for today" onClick={() => { close(); setNotesOpen(true) }} />
                         </div>
-                        <p className="typo-body-sm text-vintiga-slate-500">No notes entered.</p>
+                        <p className={`typo-body-sm ${scheduleNotes ? 'text-vintiga-slate-700' : 'text-vintiga-slate-500'}`}>{scheduleNotes || 'No notes entered.'}</p>
                       </div>
                       <div className="flex flex-col gap-vintiga-xs">
                         <h3 className="typo-body-lg font-semibold text-vintiga-slate-900">Staff Notes</h3>
-                        <p className="typo-body-sm text-vintiga-slate-500">No notes entered.</p>
+                        <p className={`typo-body-sm ${staffNotes ? 'text-vintiga-slate-700' : 'text-vintiga-slate-500'}`}>{staffNotes || 'No notes entered.'}</p>
                       </div>
                     </div>
                   )}
@@ -335,7 +343,7 @@ export function ReservationsScreen() {
                       <div className="inline-flex items-center justify-end gap-vintiga-sm" onClick={(e) => e.stopPropagation()}>
                         <IconButton variant="outline" size="sm" icon={<SparklesIcon />} aria-label={`Get to know ${r.name}`} onClick={() => setGuest(r)} />
                         {r.status === 'Checked In' ? (
-                          <span className="typo-body-sm font-medium text-vintiga-success">Checked In</span>
+                          <span className="typo-body-sm font-medium text-vintiga-success whitespace-nowrap">Checked In</span>
                         ) : (
                           <Button size="sm" onClick={() => checkIn(r.id)}>Check In</Button>
                         )}
@@ -366,6 +374,13 @@ export function ReservationsScreen() {
 
       {guest && <GuestPanel guest={guest} onClose={() => setGuest(null)} />}
       <BlockTimeModal open={blockOpen} onClose={() => setBlockOpen(false)} />
+      <NotesModal
+        open={notesOpen}
+        scheduleNotes={scheduleNotes}
+        staffNotes={staffNotes}
+        onClose={() => setNotesOpen(false)}
+        onSave={(s, st) => { setScheduleNotes(s); setStaffNotes(st) }}
+      />
     </div>
   )
 }

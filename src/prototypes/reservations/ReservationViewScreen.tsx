@@ -16,18 +16,13 @@ import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@ds/shared/Table'
 import { EllipsisVerticalIcon, UserCheckIcon, IdCardIcon, InfoIcon } from '@ds/icons/Icons'
 import { Select, TextInput, type Option } from './ResControls'
+import { experienceSelectOptions } from './experienceOptions'
 
 // ─── ReservationViewScreen ────────────────────────────────────────────────────
 // Reservation detail (Figma 4781-28789). Reservation Details + Order Items +
 // Order Summary in the main column; a customer card in the rail. Built with
 // Vintiga components.
 
-const EXPERIENCES: Option[] = [
-  { value: 'any', label: 'Any Experience' },
-  { value: 'private-tasting', label: 'Private Tasting Experience' },
-  { value: 'lunch', label: 'Lunch' },
-]
-const OPTIONS: Option[] = [{ value: 'tasting-35', label: 'Tasting ($35.00 / guest)' }]
 const HOSTS: Option[] = [{ value: 'none', label: 'None' }, { value: 'jim', label: 'Jim Secord' }]
 const TABLES: Option[] = [{ value: '10', label: '10 (1-30)' }, { value: '1', label: '1' }]
 const AVAILABILITY = ['11:00 AM', '1:00 PM']
@@ -35,7 +30,7 @@ const AVAILABILITY = ['11:00 AM', '1:00 PM']
 export function ReservationViewScreen() {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
 
-  const [experience, setExperience] = useState('any')
+  const [experience, setExperience] = useState('wine-tasting:tasting')
   const [host, setHost] = useState('none')
   const [table, setTable] = useState('10')
   const [slot, setSlot] = useState('11:00 AM')
@@ -85,10 +80,7 @@ export function ReservationViewScreen() {
               {/* Reservation Details */}
               <SectionCard title="Reservation Details" action={<Tag variant="neutral-light" size="sm">Reserved</Tag>}>
                 <Field label="Customer"><TextInput value="Ms Dorothy Ladner" readOnly /></Field>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
-                  <Field label="Experience"><Select value={experience} onChange={setExperience} options={EXPERIENCES} /></Field>
-                  <Field label="Option"><Select value={OPTIONS[0].value} options={OPTIONS} disabled /></Field>
-                </div>
+                <Field label="Experience"><Select value={experience} onChange={setExperience} options={experienceSelectOptions()} /></Field>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-vintiga-md">
                   <Field label="Date"><TextInput value="Jan 15, 2025" onChange={() => {}} /></Field>
                   <Field label="Set Host"><Select value={host} onChange={setHost} options={HOSTS} /></Field>
