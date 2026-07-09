@@ -1,5 +1,17 @@
 # Customers — Changelog
 
+## 2026-07-09 — Fedja + Claude: Memberships tab (Jul 1 review redesign)
+
+Built the **Memberships** tab (was a placeholder that bounced to Overview), reworked per Donna's Jul 1 feedback on Figma 2015:6618:
+
+- **Digital Pass condensed at the top** — a single compact row (Pass ID · loyalty points · accepted date) so it plus a membership fit above the fold.
+- **Compact membership cards** — inline label/value pairs that wrap horizontally instead of the tall stacked blocks in the old design. Billing / shipping (always the customer's own address) hide behind a **"Billing & shipping" disclosure** rather than two blocks per card.
+- **Type-specific fields per club kind** — Member Choice shows level ($/mo) + commitment end; Rewards shows commitment expiry; Curated shows the order-review toggle; **delivery method only appears on shipment clubs (curated / traditional)** — Rewards and Member Choice don't ship, so no delivery line.
+- Seeded Jane Davis with **one of every club type** (Curated, Rewards, Member Choice, Traditional, plus a cancelled C7 curated) across active / on-hold / cancelled states so the layout can be checked for consistency.
+
+`CustomerMembershipsScreen.tsx` + `membershipsData.ts` (new); route `#/web/customers/view/memberships` wired; the tab no longer points at Overview. Open items (Add-membership wiring, Member-Choice level selector at signup, segments + multi-select email) logged in `NOTES.md`.
+
+
 > Living handoff document for this prototype. Read first if you're picking up someone else's work.
 >
 > **Convention:** Add new entries at the top. Each entry needs a date, who made the change, what changed, and why. Focus on changes to this prototype only — cross-cutting / design-system changes belong in the repo-level `CHANGELOG.md`.
