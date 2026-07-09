@@ -1,7 +1,18 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 
-const PASSWORD = 'vintiga2026'
-const STORAGE_KEY = 'vintiga-proto-auth'
+// Full-prototype access.
+const MAIN_PASSWORD = 'vintiga2026'
+const MAIN_KEY = 'vintiga-proto-auth'
+
+// Presentations-only access. Share a deck link with this password and the viewer
+// can open the presentations but nothing else in the prototype. It's a separate,
+// harder-to-guess secret so the main prototype stays private.
+//
+// NOTE: this is a client-side gate — the password ships in the bundle, so it
+// deters casual access, it is NOT real security. For anything sensitive, gate it
+// server-side. To change it, edit the constant below.
+const PRESENTATION_PASSWORD = 'Vintiga-Deck-4K9Qm7'
+const PRESENTATION_KEY = 'vintiga-presentation-auth'
 
 // A fresh browser tab opened for a Figma capture has no session auth. Detect the
 // capture params (same convention as the ?figmaroute= router bypass in App.tsx)
@@ -13,38 +24,54 @@ function isFigmaCapture() {
   )
 }
 
+function isPresentationHash(hash: string) {
+  return hash.startsWith('#/presentations/')
+}
+
 export function PasswordGate({ children }: { children: React.ReactNode }) {
-  const [unlocked, setUnlocked] = useState(
-    () => sessionStorage.getItem(STORAGE_KEY) === 'ok' || isFigmaCapture(),
-  )
+  const [hash, setHash] = useState(() => window.location.hash)
+  const [mainAuthed, setMainAuthed] = useState(() => sessionStorage.getItem(MAIN_KEY) === 'ok')
+  const [presAuthed, setPresAuthed] = useState(() => sessionStorage.getItem(PRESENTATION_KEY) === 'ok')
   const [value, setValue] = useState('')
   const [error, setError] = useState(false)
 
+  // Re-evaluate access as the route changes — a presentations-only viewer who
+  // navigates to a prototype route gets re-gated.
+  useEffect(() => {
+    const onHash = () => { setHash(window.location.hash); setValue(''); setError(false) }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
+  const presentationRoute = isPresentationHash(hash)
+  const allowed = isFigmaCapture() || (presentationRoute ? mainAuthed || presAuthed : mainAuthed)
+
   function onSubmit(e: FormEvent) {
     e.preventDefault()
-    if (value === PASSWORD) {
-      sessionStorage.setItem(STORAGE_KEY, 'ok')
-      setUnlocked(true)
+    if (value === MAIN_PASSWORD) {
+      sessionStorage.setItem(MAIN_KEY, 'ok')
+      setMainAuthed(true)
+    } else if (presentationRoute && value === PRESENTATION_PASSWORD) {
+      sessionStorage.setItem(PRESENTATION_KEY, 'ok')
+      setPresAuthed(true)
     } else {
       setError(true)
     }
   }
 
-  if (unlocked) return <>{children}</>
+  if (allowed) return <>{children}</>
+
+  const title = presentationRoute ? 'Vintiga Presentation' : 'Vintiga Prototypes'
+  const subtitle = presentationRoute
+    ? 'Enter the password to view this presentation.'
+    : 'Enter the password to continue.'
 
   return (
     <div className="min-h-screen bg-vintiga-surface flex items-center justify-center p-vintiga-lg">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-sm flex flex-col gap-vintiga-lg"
-      >
+      <form onSubmit={onSubmit} className="w-full max-w-sm flex flex-col gap-vintiga-lg">
         <div>
-          <h1 className="typo-title-screen font-light text-vintiga-foreground">
-            Vintiga Prototypes
-          </h1>
-          <p className="typo-body text-vintiga-foreground-muted mt-vintiga-sm">
-            Enter the password to continue.
-          </p>
+          <h1 className="typo-title-screen font-light text-vintiga-foreground">{title}</h1>
+          <p className="typo-body text-vintiga-foreground-muted mt-vintiga-sm">{subtitle}</p>
         </div>
         <div className="flex flex-col gap-vintiga-xs">
           <label htmlFor="pw" className="typo-caption font-semibold text-vintiga-foreground">
@@ -60,14 +87,10 @@ export function PasswordGate({ children }: { children: React.ReactNode }) {
               setError(false)
             }}
             className={`bg-vintiga-surface-element rounded-vintiga-input border px-vintiga-md py-vintiga-sm typo-body focus:outline-none ${
-              error
-                ? 'border-vintiga-danger'
-                : 'border-transparent focus:border-vintiga-primary'
+              error ? 'border-vintiga-danger' : 'border-transparent focus:border-vintiga-primary'
             }`}
           />
-          {error && (
-            <p className="typo-caption text-vintiga-danger">Incorrect password.</p>
-          )}
+          {error && <p className="typo-caption text-vintiga-danger">Incorrect password.</p>}
         </div>
         <button
           type="submit"
