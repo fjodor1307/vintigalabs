@@ -772,8 +772,15 @@ function exitToHub() {
   window.location.hash = '#/'
 }
 
+// Deep-link a starting slide via ?slide=N (1-based) so each slide is directly
+// reachable — shareable, and it lets the Figma capture load each slide fresh.
+const initialSlide = (() => {
+  const n = Number(new URLSearchParams(window.location.search).get('slide'))
+  return n > 0 ? Math.min(n, SLIDES.length) - 1 : 0
+})()
+
 export function VintigaOverviewScreen() {
-  const [index, setIndex] = useState(0)
+  const [index, setIndex] = useState(initialSlide)
   const total = SLIDES.length
   const slide = SLIDES[index]
   const dark = slide.theme !== 'light'
