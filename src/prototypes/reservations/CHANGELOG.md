@@ -14,8 +14,9 @@ Wired what happens after **Reserve** on the Add screen (was a no-op):
 - The rail's primary button becomes **Save changes** (flips the banner to "Changes saved"); the secondary becomes **Back to reservations**.
 - **Back nav** — the confirmation banner carries a **Back to reservations** action (breadcrumbs still work too). Chosen over a header button to avoid duplicating the breadcrumb.
 - Reserve is disabled until a customer (or walk-in) is selected.
+- **Zero-charge only** — per the Jul 9 review, we only handle no-charge reservations right now, so every experience is priced at **0** ("No charge" across the dropdown, summary and total; the Reserve button drops the amount). The paid flow (reserve → create order → charge card on file) stays deferred in `NOTES.md`; the price model + labelling are kept so a charged experience lights up automatically later.
 
-`AddReservationScreen.tsx`.
+`AddReservationScreen.tsx`, `experienceOptions.ts`.
 
 ## 2026-07-09 — Fedja + Claude: Combined Experience/Option + Notes modal (Jul 9 review)
 

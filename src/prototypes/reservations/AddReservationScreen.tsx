@@ -109,7 +109,7 @@ export function AddReservationScreen() {
                 customer={customer?.name}
                 experience={opt ? `${experienceName(opt)} • ${opt.price > 0 ? `${money(opt.price)} per guest` : 'No charge'}` : undefined}
                 dateTime={`${date} / ${time} ${period}`}
-                guests={`${guests} guest${guests === 1 ? '' : 's'}, ${money(total)}`}
+                guests={`${guests} guest${guests === 1 ? '' : 's'}${total > 0 ? `, ${money(total)}` : ''}`}
                 location={locLabel}
                 total={total}
                 reserved={reserved}
