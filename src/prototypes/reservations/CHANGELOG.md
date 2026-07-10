@@ -6,6 +6,17 @@
 
 ---
 
+## 2026-07-10 — Fedja + Claude: Reservation View actions wired
+
+Made the detail-page header actions do something (all were no-ops):
+
+- **Check In** — flips the reservation to **Checked In**: the header + card status tags turn green, the button becomes a disabled "Checked In", and a success toast fires. Reversible via **Undo check-in** in the menu.
+- **Edit reservation** — the details form is now **read-only by default**; Edit unlocks it (fields enable + a **Save changes / Discard** bar appears). Save exits edit mode with a "Changes saved" toast.
+- **Resend confirmation** — info toast ("Sent to dorothyladner@gmail.com").
+- **Cancel reservation** — opens a danger confirm modal; confirming marks it **Cancelled** (red tags + a cancelled banner, Check In hidden). Reversible via **Reinstate reservation**.
+
+All feedback uses the DS `Toast`; the confirm uses the DS `Modal`. Reversible on purpose so the flow is repeatable in a demo. `ReservationViewScreen.tsx`.
+
 ## 2026-07-10 — Fedja + Claude: Post-Reserve confirmed state
 
 Wired what happens after **Reserve** on the Add screen (was a no-op):
