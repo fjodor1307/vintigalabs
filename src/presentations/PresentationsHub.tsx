@@ -271,11 +271,27 @@ function buildPrompt(pages: PageConfig[], closing: boolean): string {
 // through page count → per-page background + elements (with a live preview) → an
 // optional auto-written closing slide → a copy-ready PROMPT to paste into Claude
 // Code, which then builds the real deck.
+// Deep-link the wizard step from the query string so each screen is directly
+// reachable (shareable steps + lets the Figma capture hit each one):
+//   ?pb=pages&pbn=5&pbi=1   → page-by-page, 5 pages, on page 1
+//   ?pb=prompt&pbn=5        → the generated prompt
+const pbInit = (() => {
+  const q = new URLSearchParams(window.location.search)
+  const pb = q.get('pb')
+  const n = Number(q.get('pbn'))
+  if ((pb === 'pages' || pb === 'prompt') && n > 0) {
+    return { phase: pb as 'pages' | 'prompt', count: n, idx: Math.min(Math.max(1, Number(q.get('pbi')) || 1) - 1, n - 1) }
+  }
+  return { phase: 'setup' as const, count: null as number | null, idx: 0 }
+})()
+
 export function PageBuilderScreen() {
-  const [phase, setPhase] = useState<'setup' | 'pages' | 'prompt'>('setup')
-  const [count, setCount] = useState<number | null>(null)
-  const [pages, setPages] = useState<PageConfig[]>([])
-  const [idx, setIdx] = useState(0)
+  const [phase, setPhase] = useState<'setup' | 'pages' | 'prompt'>(pbInit.phase)
+  const [count, setCount] = useState<number | null>(pbInit.count)
+  const [pages, setPages] = useState<PageConfig[]>(() =>
+    pbInit.count ? Array.from({ length: pbInit.count }, () => ({ bg: 'white', bgImage: BG_IMAGES[0].src, blocks: ['title'] as BlockKind[] })) : [],
+  )
+  const [idx, setIdx] = useState(pbInit.idx)
   const [closing, setClosing] = useState(true)
   const [copied, setCopied] = useState(false)
 

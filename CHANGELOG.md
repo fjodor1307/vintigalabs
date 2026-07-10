@@ -39,7 +39,7 @@ Reworked the Page Builder (`#/presentations/page-builder`) from a live block-swa
 - **Step 2 — page by page.** For each page: choose the **background** (White, or Image + 50% black overlay with an image switcher) and toggle which **elements** it has (the presentation blocks). A live 16:9 **preview** updates as you go, with a progress bar + dots. On the **last page** a callout asks whether to add an auto-written **closing slide**.
 - **Step 3 — the prompt.** Generates a precise spec of every page's background + elements (and the closing slide), shown in a code panel with **Copy prompt**. Paste into Claude Code to build the deck.
 
-Removed the old page-preset / hover-to-swap builder. `PresentationsHub.tsx`.
+Each step is **deep-linkable** via the query string (`?pb=pages&pbn=5&pbi=1`, `?pb=prompt&pbn=5`) so a screen is directly reachable — shareable, and it lets the Figma capture hit each state. Removed the old page-preset / hover-to-swap builder. `PresentationsHub.tsx`.
 
 ## 2026-07-06 — Fedja + Claude: Tone of voice refreshed from vintigalabs.com
 
