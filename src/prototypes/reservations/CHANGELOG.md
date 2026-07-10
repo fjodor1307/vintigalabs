@@ -6,6 +6,17 @@
 
 ---
 
+## 2026-07-10 — Fedja + Claude: Post-Reserve confirmed state
+
+Wired what happens after **Reserve** on the Add screen (was a no-op):
+
+- **Stay + edit mode** — the page stays open as the saved reservation. A green success banner ("Reservation #1004 confirmed for …") confirms it, the title gains a **Reserved** tag, the breadcrumb flips from *Add Reservation* → *Reservation #1004*, and every field stays editable so staff can immediately adjust host/table/notes.
+- The rail's primary button becomes **Save changes** (flips the banner to "Changes saved"); the secondary becomes **Back to reservations**.
+- **Back nav** — the confirmation banner carries a **Back to reservations** action (breadcrumbs still work too). Chosen over a header button to avoid duplicating the breadcrumb.
+- Reserve is disabled until a customer (or walk-in) is selected.
+
+`AddReservationScreen.tsx`.
+
 ## 2026-07-09 — Fedja + Claude: Combined Experience/Option + Notes modal (Jul 9 review)
 
 - **One Experience dropdown** — Experience and Option are merged into a single picker. Variants are flattened ("Wine Tasting · Premium Tasting — $55.00 / guest"); single-variant experiences show just their name (no separate option); free experiences read **"No charge"**. Shared `experienceOptions.ts` drives both the **Add** and **View** reservation screens. Add's summary/total shows "No charge" for zero-cost bookings.

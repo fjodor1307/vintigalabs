@@ -7,9 +7,11 @@ import { BreadcrumbHomeIcon } from '@ds/shared/Breadcrumb'
 import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
 import { Avatar } from '@ds/shared/Avatar'
+import { Tag } from '@ds/shared/Tag'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
 import { Textarea } from '@ds/shared/Textarea'
+import { AlertSoft } from '@ds/shared/AlertSoft'
 import { SearchIcon, PlusIcon, XIcon, IdCardIcon } from '@ds/icons/Icons'
 import { Select, Stepper, TimeField, TextInput, type Option } from './ResControls'
 import { experienceSelectOptions, findExperience, experienceName, money } from './experienceOptions'
@@ -58,6 +60,18 @@ export function AddReservationScreen() {
   const [location, setLocation] = useState('downtown')
   const [occasion, setOccasion] = useState('')
   const [notes, setNotes] = useState('')
+  const [reserved, setReserved] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  const goToList = () => { window.location.hash = '#/web/reservations' }
+
+  const onReserve = () => {
+    if (!customer) return
+    setReserved(true)
+    setSaved(false)
+    document.querySelector('[data-scroll-top]')?.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  const onSave = () => setSaved(true)
 
   const opt = findExperience(experience)
   const total = (opt?.price ?? 0) * guests
@@ -74,16 +88,19 @@ export function AddReservationScreen() {
       <AppSidebar collapsed={collapsed} mobileOpen={mobileOpen} onMobileClose={closeMobile} activeNav="Reservations" />
       <div className="flex-1 flex flex-col min-w-0 relative">
         <Navbar device="responsive" fixed user={{ name: 'Tom Cook', initials: 'TC' }} onMenuToggle={onMenuToggle} onUserClick={() => {}} onNotificationClick={() => {}} />
-        <div className="flex-1 overflow-y-auto overflow-x-hidden pt-16 bg-vintiga-white">
+        <div data-scroll-top className="flex-1 overflow-y-auto overflow-x-hidden pt-16 bg-vintiga-white">
           <PageTemplate
             breadcrumbs={[
               { icon: <BreadcrumbHomeIcon />, href: '#/web/reservations' },
               { label: 'Reservations', href: '#/web/reservations' },
-              { label: 'Add Reservation' },
+              { label: reserved ? 'Reservation #1004' : 'Add Reservation' },
             ]}
             title={
               <div className="flex flex-col gap-0.5">
-                <span className="typo-title-screen font-semibold text-vintiga-slate-900">Reservation #1004</span>
+                <span className="typo-title-screen font-semibold text-vintiga-slate-900 inline-flex items-center gap-vintiga-sm">
+                  Reservation #1004
+                  {reserved && <Tag variant="neutral-light" size="md">Reserved</Tag>}
+                </span>
                 <span className="typo-caption text-vintiga-slate-500 uppercase tracking-wide">Apr 13, 2025 at 5:20 PM</span>
               </div>
             }
@@ -95,11 +112,24 @@ export function AddReservationScreen() {
                 guests={`${guests} guest${guests === 1 ? '' : 's'}, ${money(total)}`}
                 location={locLabel}
                 total={total}
-                onCancel={() => { window.location.hash = '#/web/reservations' }}
+                reserved={reserved}
+                canReserve={!!customer}
+                onReserve={onReserve}
+                onSave={onSave}
+                onCancel={goToList}
               />
             }
           >
             <div className="flex flex-col gap-vintiga-lg">
+              {reserved && (
+                <AlertSoft
+                  variant="success"
+                  title={saved ? 'Changes saved' : `Reservation #1004 confirmed for ${customer?.name ?? 'guest'}`}
+                  subtitle={`${date} at ${time} ${period} · ${guests} guest${guests === 1 ? '' : 's'}${locLabel ? ` · ${locLabel}` : ''}. Edit any details below, or head back to the list.`}
+                  actionLabel="Back to reservations"
+                  onAction={goToList}
+                />
+              )}
               {/* Customer */}
               {customer ? (
                 <div className="flex items-center gap-vintiga-md border border-vintiga-slate-200 rounded-vintiga-lg p-vintiga-md">
@@ -171,9 +201,10 @@ export function AddReservationScreen() {
 }
 
 function SummaryRail({
-  customer, experience, dateTime, guests, location, total, onCancel,
+  customer, experience, dateTime, guests, location, total, reserved, canReserve, onReserve, onSave, onCancel,
 }: {
-  customer?: string; experience?: string; dateTime?: string; guests?: string; location?: string; total: number; onCancel: () => void
+  customer?: string; experience?: string; dateTime?: string; guests?: string; location?: string; total: number
+  reserved: boolean; canReserve: boolean; onReserve: () => void; onSave: () => void; onCancel: () => void
 }) {
   return (
     <section className="border border-vintiga-slate-200 rounded-vintiga-xl bg-vintiga-white p-vintiga-lg flex flex-col gap-vintiga-md">
@@ -197,8 +228,17 @@ function SummaryRail({
         </div>
       </div>
       <div className="flex flex-col gap-vintiga-sm">
-        <Button fullWidth onClick={() => {}}>Reserve{total > 0 ? ` ${money(total)}` : ''}</Button>
-        <Button variant="outline" fullWidth onClick={onCancel}>Cancel</Button>
+        {reserved ? (
+          <>
+            <Button fullWidth onClick={onSave}>Save changes</Button>
+            <Button variant="outline" fullWidth onClick={onCancel}>Back to reservations</Button>
+          </>
+        ) : (
+          <>
+            <Button fullWidth disabled={!canReserve} onClick={onReserve}>Reserve{total > 0 ? ` ${money(total)}` : ''}</Button>
+            <Button variant="outline" fullWidth onClick={onCancel}>Cancel</Button>
+          </>
+        )}
       </div>
     </section>
   )
