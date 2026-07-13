@@ -1,5 +1,9 @@
 # Customers — Changelog
 
+## 2026-07-10 — Fedja + Claude: Add-card validation message wording
+
+Set the invalid-card message on the Billing → Add card modal to the exact ticket copy — **"Credit Card number entered can not be validated. Check the number and re-enter."** — replacing the opaque "Payment method ID is required" the processor returns. Still caught client-side (Luhn + length) and shown inline under the card field. `AddCardModal.tsx`.
+
 ## 2026-07-09 — Fedja + Claude: Memberships tab — expandable club + next-order model (Jul 1 review)
 
 Built the **Memberships** tab (was a placeholder that bounced to Overview). Reworked per Donna's Jul 1 feedback on Figma 2015:6618 and the customer-portal reference, which combines the club and its next shipment into one card:
