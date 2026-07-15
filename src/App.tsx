@@ -5,6 +5,7 @@ import { ToneOfVoiceScreen } from './brand/ToneOfVoiceScreen'
 import { ImageryScreen } from './brand/ImageryScreen'
 import { VintigaOverviewScreen } from './presentations/VintigaOverviewScreen'
 import { VintigaOverviewSlidesScreen } from './presentations/VintigaOverviewSlidesScreen'
+import { WhyVintigaNowScreen } from './presentations/WhyVintigaNowScreen'
 import { InvestorDecksScreen, PresentationBlocksScreen, PageBuilderScreen } from './presentations/PresentationsHub'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
 import { BackArrowIcon, SearchIcon, ArrowRightIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon, ExternalLinkIcon } from './design-system/icons/Icons'
@@ -49,6 +50,7 @@ const webScreens: Record<string, React.ComponentType> = {
   '#/brand/imagery': ImageryScreen,
   '#/presentations/vintiga-overview': VintigaOverviewScreen,
   '#/presentations/vintiga-overview-slides': VintigaOverviewSlidesScreen,
+  '#/presentations/why-vintiga-now': WhyVintigaNowScreen,
   '#/presentations/investor-decks': InvestorDecksScreen,
   '#/presentations/blocks': PresentationBlocksScreen,
   '#/presentations/page-builder': PageBuilderScreen,
