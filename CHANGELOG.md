@@ -39,8 +39,8 @@ Made the Deck Builder slide-type aware, from the variations board. The **intro s
 - **Content slides (2+)** — a simpler **Layout** picker: *Title + points, image right* (eyebrow + title + subtitle + a **points** editor + image), *Title + 3 cards* (a **cards** editor), *Text + media*, *Centered text*. No header-position options.
 - The **live preview** renders each faithfully — the intro header top/left rail, the points-and-image "growth crisis" layout, and the 3 icon cards — across the backgrounds.
 - **Backgrounds** — White · Black · Indigo · **Image** (photo only, no overlay) · **Image + 65% overlay** (darkened for white text). The plain Image option shows the photo untouched as the background.
-- **Deck chrome + editable store name** (Figma 5294:1345 / 5288:1091) — the real Vintiga icon logo, plus a vertical **left rail** (logo + store name + page number) on content slides and the left-header intro. The **store name** is editable on the intro slide (default "Vintiga Labs, LLC") and shows on every slide.
-- The generated **prompt** captures the intro's header + media, the store name, and each content slide's layout, points and cards.
+- **Deck chrome** (Figma 5294:1345 / 5288:1091) — the real Vintiga **vertical logo lockup** (icon + "Vintiga Labs" wordmark, the provided `Logo.svg`) at the top of a **left rail**, with a **divider** and the **page number** at the bottom, on content slides and the left-header intro. The lockup inverts on dark backgrounds. Intro slides with a top header show the icon mark top-left.
+- The generated **prompt** captures the intro's header + media and each content slide's layout, points and cards.
 
 `PresentationsHub.tsx`.
 
