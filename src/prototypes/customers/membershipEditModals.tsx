@@ -8,6 +8,7 @@ import { SegmentedControl } from '@ds/shared/SegmentedControl'
 import { CardBrandLogo } from '@ds/shared/CardBrandLogo'
 import { TruckIcon, MapPinIcon, PlusIcon } from '@ds/icons/Icons'
 import { useAddresses, usePaymentMethods, type CardBrand } from './customerStore'
+import { PICKUP_LOCATIONS } from './membershipsData'
 
 // ─── Membership shipment edit modals ──────────────────────────────────────────
 // Change address / card / delivery for a club's next shipment. DS-styled
@@ -203,48 +204,92 @@ function CardOnFileForm({ current, onClose, onSave }: { current?: CardRef; onClo
   )
 }
 
-// ─── Delivery method ──────────────────────────────────────────────────────────
+// ─── Delivery method + destination (combined) ─────────────────────────────────
+// Jul 15 review: one control that combines the "ship or pickup" choice with the
+// destination. Since most customers have one pickup location + one address, we
+// list pickup locations AND saved addresses together — one tap sets both the
+// method and where it goes. Same paradigm to hand to Vantage.
 
-export function DeliveryMethodModal({
+export interface DeliveryChoice { method: 'ship' | 'pickup'; destination: string }
+
+export function DeliveryDestinationModal({
   open,
   current,
   onClose,
   onSave,
 }: {
   open: boolean
-  current: 'ship' | 'pickup'
+  current: DeliveryChoice
   onClose: () => void
-  onSave: (method: 'ship' | 'pickup') => void
+  onSave: (choice: DeliveryChoice) => void
 }) {
   return (
     <Modal open={open} onClose={onClose} size="md">
-      {open && <DeliveryMethodForm current={current} onClose={onClose} onSave={onSave} />}
+      {open && <DeliveryDestinationForm current={current} onClose={onClose} onSave={onSave} />}
     </Modal>
   )
 }
 
-function DeliveryMethodForm({ current, onClose, onSave }: { current: 'ship' | 'pickup'; onClose: () => void; onSave: (m: 'ship' | 'pickup') => void }) {
-  const [method, setMethod] = useState<'ship' | 'pickup'>(current)
+function DeliveryDestinationForm({ current, onClose, onSave }: { current: DeliveryChoice; onClose: () => void; onSave: (c: DeliveryChoice) => void }) {
+  const addresses = useAddresses()
+  // A flat list of every destination the customer can choose — pickups then addresses.
+  const options: DeliveryChoice[] = [
+    ...PICKUP_LOCATIONS.map((loc) => ({ method: 'pickup' as const, destination: loc })),
+    ...addresses.map((a) => ({ method: 'ship' as const, destination: formatAddress(a) })),
+  ]
+  const key = (c: DeliveryChoice) => `${c.method}:${c.destination}`
+  const [selected, setSelected] = useState(key(current))
+  const [tab, setTab] = useState<'pick' | 'new'>('pick')
+  const [draft, setDraft] = useState({ street: '', city: '', state: '', zip: '' })
+
+  function handleSave() {
+    if (tab === 'new' && draft.street.trim()) {
+      onSave({ method: 'ship', destination: formatAddress(draft) })
+    } else {
+      const chosen = options.find((o) => key(o) === selected) ?? options[0]
+      if (chosen) onSave(chosen)
+    }
+    onClose()
+  }
+
   return (
     <>
-      <ModalHeader title="Delivery method" onClose={onClose} />
+      <ModalHeader title="Delivery" description="Pick up at a tasting room, or ship to an address." onClose={onClose} />
       <ModalBody>
-        <div className="flex flex-col gap-vintiga-sm">
-          <RadioCard selected={method === 'ship'} onSelect={() => setMethod('ship')}>
-            <span className="inline-flex items-center gap-vintiga-sm typo-body-sm font-semibold text-vintiga-slate-900">
-              <TruckIcon className="w-4 h-4 text-vintiga-slate-500" /> Ship
-            </span>
-          </RadioCard>
-          <RadioCard selected={method === 'pickup'} onSelect={() => setMethod('pickup')}>
-            <span className="inline-flex items-center gap-vintiga-sm typo-body-sm font-semibold text-vintiga-slate-900">
-              <MapPinIcon className="w-4 h-4 text-vintiga-slate-500" /> Pickup
-            </span>
-          </RadioCard>
+        <div className="flex flex-col gap-vintiga-md">
+          <SegmentedControl<'pick' | 'new'>
+            value={tab}
+            onChange={setTab}
+            options={[{ value: 'pick', label: 'Pickup or saved address' }, { value: 'new', label: 'New address' }]}
+          />
+          {tab === 'pick' ? (
+            <div className="flex flex-col gap-vintiga-sm">
+              {options.map((o) => (
+                <RadioCard key={key(o)} selected={selected === key(o)} onSelect={() => setSelected(key(o))}>
+                  <div className="flex items-center gap-vintiga-md">
+                    <span className="text-vintiga-slate-400 shrink-0 [&>svg]:w-4 [&>svg]:h-4">{o.method === 'pickup' ? <MapPinIcon /> : <TruckIcon />}</span>
+                    <div className="min-w-0">
+                      <p className="typo-body-sm font-semibold text-vintiga-slate-900">{o.method === 'pickup' ? 'Pickup' : 'Ship'} · {o.destination}</p>
+                    </div>
+                  </div>
+                </RadioCard>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-vintiga-md">
+              <Field label="Street address"><TextField value={draft.street} onChange={(e) => setDraft({ ...draft, street: e.target.value })} placeholder="123 Main St" /></Field>
+              <div className="grid grid-cols-2 gap-vintiga-md">
+                <Field label="City"><TextField value={draft.city} onChange={(e) => setDraft({ ...draft, city: e.target.value })} placeholder="City" /></Field>
+                <Field label="State"><TextField value={draft.state} onChange={(e) => setDraft({ ...draft, state: e.target.value })} placeholder="CA" /></Field>
+              </div>
+              <Field label="ZIP"><TextField value={draft.zip} onChange={(e) => setDraft({ ...draft, zip: e.target.value })} placeholder="94954" /></Field>
+            </div>
+          )}
         </div>
       </ModalBody>
       <ModalFooter>
         <Button variant="outline" onClick={onClose}>Cancel</Button>
-        <Button onClick={() => { onSave(method); onClose() }}>Save</Button>
+        <Button onClick={handleSave}>Save</Button>
       </ModalFooter>
     </>
   )

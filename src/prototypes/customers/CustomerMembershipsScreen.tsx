@@ -25,10 +25,10 @@ import {
   type DigitalPass,
   type Membership,
   type MembershipStatus,
-  type NextShipment,
+  PICKUP_LOCATIONS,
 } from './membershipsData'
 import { AddEditMembershipModal, CancelMembershipModal, type MembershipFormValue } from './membershipModals'
-import { ShippingAddressModal, CardOnFileModal, DeliveryMethodModal, type CardRef } from './membershipEditModals'
+import { CardOnFileModal, DeliveryDestinationModal, type CardRef, type DeliveryChoice } from './membershipEditModals'
 import { useAddresses } from './customerStore'
 
 // ─── CustomerMembershipsScreen ────────────────────────────────────────────────
@@ -144,122 +144,68 @@ function DigitalPassCard() {
 
 function summaryLine(m: Membership): string {
   if (m.status === 'cancelled') return `Cancelled ${m.cancelledOn} · ${m.cancelReason}`
-  if (m.nextShipment) {
-    const total = m.nextShipment.wines.reduce((n, w) => n + w.qty, 0)
-    return `Next shipment ${m.nextShipment.date} · ${total} bottle${total === 1 ? '' : 's'}`
-  }
   if (m.kind === 'member-choice' && m.level) return `${m.level.name} · $${m.level.monthly}/mo`
   if (m.kind === 'rewards' && m.renews) return `Renews ${m.renews}`
   return `${m.clubType} · Joined ${m.joined}`
 }
 
-// ─── Next-shipment block (shipment clubs) ─────────────────────────────────────
+// ─── Membership detail (condensed) ────────────────────────────────────────────
+// Jul 15 review: the card carries the essentials — delivery, payment, dates,
+// notes. The next shipment (bottles / charge dates) lives in Club processing;
+// deep detail (past orders, tags, custom fields) is on the full membership page.
 
-const PICKUP_LOCATION = 'Downtown Tasting Room'
-
-function deliveryDisplay(method: 'ship' | 'pickup'): ReactNode {
-  const icon = method === 'pickup' ? <MapPinIcon /> : <TruckIcon />
+function deliveryLabel(d: DeliveryChoice): ReactNode {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className="text-vintiga-slate-400 [&>svg]:w-4 [&>svg]:h-4">{icon}</span>
-      {method === 'pickup' ? 'Pickup' : 'Ship'}
+      <span className="text-vintiga-slate-400 [&>svg]:w-4 [&>svg]:h-4">{d.method === 'pickup' ? <MapPinIcon /> : <TruckIcon />}</span>
+      {d.method === 'pickup' ? 'Pickup' : 'Ship'} · {d.destination}
     </span>
   )
 }
 
-function NextShipmentBlock({ m, s }: { m: Membership; s: NextShipment }) {
+function MembershipDetailBlock({ m, onView }: { m: Membership; onView: () => void }) {
   const addresses = useAddresses()
   const homeAddress = addresses[0] ? `${addresses[0].street}, ${addresses[0].city}, ${addresses[0].state} ${addresses[0].zip}` : ''
+  const initialDelivery: DeliveryChoice = m.delivery?.method === 'pickup'
+    ? { method: 'pickup', destination: m.delivery.location ?? PICKUP_LOCATIONS[0] }
+    : { method: 'ship', destination: m.delivery?.address ?? homeAddress }
 
-  const [method, setMethod] = useState<'ship' | 'pickup'>(m.delivery?.method ?? 'ship')
-  const [addr, setAddr] = useState<string>(m.delivery?.method === 'pickup' ? (m.delivery.location ?? PICKUP_LOCATION) : (m.delivery?.address ?? homeAddress))
+  const [delivery, setDelivery] = useState<DeliveryChoice>(initialDelivery)
   const [card, setCard] = useState<CardRef | undefined>(m.payment)
-  const [modal, setModal] = useState<'address' | 'card' | 'delivery' | null>(null)
-  const [skipped, setSkipped] = useState(s.skipped)
-  const total = s.wines.reduce((n, w) => n + w.qty, 0)
+  const [modal, setModal] = useState<'delivery' | 'card' | null>(null)
+  const isShipmentKind = m.kind === 'curated' || m.kind === 'traditional'
 
   return (
     <div className="flex flex-col gap-vintiga-md">
-      <div className="rounded-vintiga-card bg-vintiga-surface-secondary p-vintiga-md flex flex-col gap-vintiga-md">
-        <p className="typo-caption font-semibold uppercase tracking-wide text-vintiga-slate-500">Your next shipment</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-vintiga-md">
-          <Pair
-            label={method === 'pickup' ? 'Pickup at' : 'Ships to'}
-            value={addr}
-            edit={method === 'pickup' ? { label: 'Change delivery', onClick: () => setModal('delivery') } : { label: 'Change address', onClick: () => setModal('address') }}
-          />
-          <Pair
-            label="Paid with"
-            value={card ? <span className="inline-flex items-center gap-1.5"><CardBrandLogo brand={card.brand} /> •••• {card.last4}</span> : 'No card on file'}
-            edit={{ label: card ? 'Change card' : 'Add a card', onClick: () => setModal('card') }}
-          />
-          <Pair label="Delivery" value={deliveryDisplay(method)} edit={{ label: 'Change delivery', onClick: () => setModal('delivery') }} />
-        </div>
-        <div className="flex flex-wrap gap-x-vintiga-xl gap-y-1 pt-vintiga-sm border-t border-vintiga-border">
-          <span className="typo-body-sm text-vintiga-slate-500"><span className="font-medium text-vintiga-slate-700">Charges on:</span> {s.chargesOn}</span>
-          <span className="typo-body-sm text-vintiga-slate-500"><span className="font-medium text-vintiga-slate-700">Ships on:</span> {s.shipsOn}</span>
-          <span className="typo-body-sm text-vintiga-slate-500"><span className="font-medium text-vintiga-slate-700">Requirements:</span> {s.minBottles}–{s.maxBottles} bottles</span>
-        </div>
-      </div>
+      {m.outstandingPickup && (
+        <AlertSoft variant="warning" title="Order waiting for pickup" subtitle={`Ready since ${m.outstandingPickup}.`} />
+      )}
 
-      <div>
-        <div className="flex items-center justify-between mb-vintiga-sm">
-          <div className="flex items-center gap-vintiga-sm">
-            <span className="typo-caption font-semibold uppercase tracking-wide text-vintiga-slate-500">In this shipment</span>
-            {skipped && <Tag variant="filled" tone="orange" size="sm">Skipped</Tag>}
-          </div>
-          <div className="flex items-center gap-vintiga-sm">
-            <span className="typo-body-sm text-vintiga-slate-500 tabular-nums">{total} bottles · ${s.price.toFixed(2)}</span>
-            <Button variant="outline" size="sm" onClick={() => setSkipped((v) => !v)}>{skipped ? 'Unskip' : 'Skip'}</Button>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-sm">
-          {s.wines.map((w) => (
-            <div key={w.name} className="flex items-start gap-vintiga-sm rounded-vintiga-md border border-vintiga-border p-vintiga-sm">
-              <span className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-vintiga-surface-element text-vintiga-slate-500 inline-flex items-center justify-center typo-caption font-semibold tabular-nums">×{w.qty}</span>
-              <div className="min-w-0">
-                <p className="typo-body-sm font-medium text-vintiga-slate-900">{w.name}</p>
-                <p className="typo-caption text-vintiga-slate-500">{w.note}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <ShippingAddressModal open={modal === 'address'} current={addr} onClose={() => setModal(null)} onSave={setAddr} />
-      <CardOnFileModal open={modal === 'card'} current={card} onClose={() => setModal(null)} onSave={setCard} />
-      <DeliveryMethodModal
-        open={modal === 'delivery'}
-        current={method}
-        onClose={() => setModal(null)}
-        onSave={(mth) => { setMethod(mth); setAddr(mth === 'pickup' ? PICKUP_LOCATION : homeAddress) }}
-      />
-    </div>
-  )
-}
-
-function NonShipmentDetail({ m }: { m: Membership }) {
-  const [card, setCard] = useState<CardRef | undefined>(m.payment)
-  const [cardModal, setCardModal] = useState(false)
-  const hasRows = m.level || m.accountCredit !== undefined || m.commitmentEnds || card || m.benefits
-  if (!hasRows) return <p className="typo-body-sm text-vintiga-slate-500">No additional details yet.</p>
-  return (
-    <div className="flex flex-col gap-vintiga-md">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-vintiga-md">
+        {isShipmentKind && (
+          <Pair label="Delivery" value={deliveryLabel(delivery)} edit={{ label: 'Change delivery', onClick: () => setModal('delivery') }} />
+        )}
+        <Pair
+          label="Paid with"
+          value={card ? <span className="inline-flex items-center gap-1.5"><CardBrandLogo brand={card.brand} /> •••• {card.last4}</span> : 'No card on file'}
+          edit={{ label: card ? 'Change card' : 'Add a card', onClick: () => setModal('card') }}
+        />
         {m.level && <Pair label="Level" value={`${m.level.name} · $${m.level.monthly}/mo`} />}
         {m.accountCredit !== undefined && <Pair label="Account credit" value={`$${m.accountCredit.toFixed(2)}`} />}
-        {m.commitmentEnds && <Pair label="Commitment ends" value={m.commitmentEnds} />}
-        {card && (
-          <Pair
-            label="Paid with"
-            value={<span className="inline-flex items-center gap-1.5"><CardBrandLogo brand={card.brand} /> •••• {card.last4}</span>}
-            edit={{ label: 'Change card', onClick: () => setCardModal(true) }}
-          />
-        )}
+        <Pair label="Joined" value={m.joined} />
+        {(m.renews || m.commitmentEnds) && <Pair label={m.renews ? 'Renews' : 'Commitment ends'} value={(m.renews ?? m.commitmentEnds) as string} />}
+        {isShipmentKind && <Pair label="Preferred shipping" value={m.preferredShipping ?? '—'} />}
       </div>
-      <CardOnFileModal open={cardModal} current={card} onClose={() => setCardModal(false)} onSave={setCard} />
+
+      {isShipmentKind && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-vintiga-md pt-vintiga-sm border-t border-vintiga-border">
+          <Pair label="Shipping notes" value={m.shippingNotes || <span className="text-vintiga-slate-400">None</span>} />
+          <Pair label="Gift message" value={m.giftMessage ? m.giftMessage : <span className="text-vintiga-slate-400">None</span>} />
+        </div>
+      )}
+
       {m.benefits && (
-        <div>
+        <div className="pt-vintiga-sm border-t border-vintiga-border">
           <p className="typo-caption font-semibold uppercase tracking-wide text-vintiga-slate-500 mb-vintiga-sm">Member benefits</p>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-vintiga-lg gap-y-1.5">
             {m.benefits.map((b) => (
@@ -270,6 +216,21 @@ function NonShipmentDetail({ m }: { m: Membership }) {
           </ul>
         </div>
       )}
+
+      <div className="flex items-center justify-between gap-vintiga-md pt-vintiga-sm border-t border-vintiga-border">
+        {m.kind === 'curated' && m.orderReview !== undefined ? (
+          <span className="inline-flex items-center gap-vintiga-sm typo-body-sm text-vintiga-slate-500">
+            <span className="font-medium text-vintiga-slate-700">Order review</span>
+            <Tag variant={m.orderReview ? 'filled' : 'neutral-light'} tone={m.orderReview ? 'success' : 'default'} size="sm">{m.orderReview ? 'On' : 'Off'}</Tag>
+          </span>
+        ) : <span />}
+        <button type="button" onClick={onView} className="typo-body-sm font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 bg-transparent border-none p-0 cursor-pointer">
+          View full membership →
+        </button>
+      </div>
+
+      <DeliveryDestinationModal open={modal === 'delivery'} current={delivery} onClose={() => setModal(null)} onSave={setDelivery} />
+      <CardOnFileModal open={modal === 'card'} current={card} onClose={() => setModal(null)} onSave={setCard} />
     </div>
   )
 }
@@ -282,16 +243,17 @@ function MembershipCard({
   onEdit,
   onHold,
   onCancel,
+  onView,
 }: {
   m: Membership
   defaultOpen?: boolean
   onEdit: () => void
   onHold: () => void
   onCancel: () => void
+  onView: () => void
 }) {
   const [open, setOpen] = useState(!!defaultOpen)
   const canExpand = m.status !== 'cancelled'
-  const isShipmentKind = m.kind === 'curated' || m.kind === 'traditional'
 
   return (
     <div className="rounded-vintiga-card border border-vintiga-border">
@@ -336,22 +298,7 @@ function MembershipCard({
           {m.status === 'on-hold' && (
             <AlertSoft variant="warning" title="Membership on hold" subtitle={`On hold since ${m.onHoldSince}${m.holdExpires ? `. Resumes ${m.holdExpires}` : ''}.`} />
           )}
-          {m.nextShipment ? (
-            <NextShipmentBlock m={m} s={m.nextShipment} />
-          ) : isShipmentKind ? (
-            <p className="typo-body-sm text-vintiga-slate-500">No upcoming shipment scheduled yet.</p>
-          ) : (
-            <NonShipmentDetail m={m} />
-          )}
-          {m.kind === 'curated' && m.orderReview !== undefined && (
-            <div className="flex items-center gap-vintiga-sm typo-body-sm text-vintiga-slate-500 pt-vintiga-sm border-t border-vintiga-border">
-              <span className="font-medium text-vintiga-slate-700">Order review</span>
-              <Tag variant={m.orderReview ? 'filled' : 'neutral-light'} tone={m.orderReview ? 'success' : 'default'} size="sm">
-                {m.orderReview ? 'On' : 'Off'}
-              </Tag>
-              <span>Member confirms each box before it charges.</span>
-            </div>
-          )}
+          <MembershipDetailBlock m={m} onView={onView} />
         </div>
       )}
     </div>
@@ -449,6 +396,7 @@ export function CustomerMembershipsScreen() {
               onEdit={() => setModal({ kind: 'edit', id: m.id })}
               onHold={() => handleHold(m.id)}
               onCancel={() => setModal({ kind: 'cancel', id: m.id })}
+              onView={() => { window.location.hash = `#/web/customers/view/memberships/${m.id}` }}
             />
           ))}
         </RecordsCard>

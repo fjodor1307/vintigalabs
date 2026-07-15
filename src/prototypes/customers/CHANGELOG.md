@@ -1,5 +1,16 @@
 # Customers — Changelog
 
+## 2026-07-15 — Fedja + Claude: Memberships — condensed card + full page + combined delivery (Jul 15 review)
+
+Reworked the Memberships tab per the Jul 15 review.
+
+- **Condensed card** carries the essentials only: **delivery** (combined), **payment** (change card), **join date + commitment/renewal**, **preferred shipping**, **shipping notes + gift message**, **order review**, and an **"order waiting for pickup"** alert when one exists.
+- **Removed the "Your next shipment" block** (bottles, charge/ship dates, min–max) from the card — that lives in Club processing. No shipment info in the collapsed summary either.
+- **Full membership page** behind a **"View full membership →"** link (`#/web/customers/view/memberships/{id}`, `MembershipDetailPage.tsx`): Overview + **membership tags** and **membership notes** (kept distinct from the customer-level ones) + **paginated past club orders**.
+- **Combined delivery method** (`DeliveryDestinationModal`) — one picker listing **pickup locations *and* saved addresses together**; one tap sets method + destination (no two-step). Replaces the separate ship-to + delivery modals. Same paradigm to hand to Vantage.
+
+`CustomerMembershipsScreen.tsx`, `MembershipDetailPage.tsx` (new), `membershipEditModals.tsx`, `membershipsData.ts`, route in `prototype.config.ts`.
+
 ## 2026-07-10 — Fedja + Claude: Digital Pass lifecycle + Send Invite
 
 Reworked the **Digital Pass** on the Memberships tab from a static "Active" row into the ticketed lifecycle. Every customer record has a pass (its own card, separate from the addable clubs — a pass can't be "added").

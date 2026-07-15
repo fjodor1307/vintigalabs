@@ -7,7 +7,9 @@ import { CustomerMembershipsScreen } from './CustomerMembershipsScreen'
 import { BalanceTransactionsScreen } from './BalanceTransactionsScreen'
 import { PointsTransactionsScreen } from './PointsTransactionsScreen'
 import { OrderDetailScreen } from './OrderDetailScreen'
+import { MembershipDetailPage } from './MembershipDetailPage'
 import { CUSTOMER } from './customerSample'
+import { MEMBERSHIPS } from './membershipsData'
 
 const baseRoutes: Record<string, ComponentType> = {
   '#/web/customers':                          CustomersScreen,
@@ -24,6 +26,12 @@ const baseRoutes: Record<string, ComponentType> = {
 // URL stays valid.
 for (const o of CUSTOMER.recentOrders) {
   baseRoutes[`#/web/customers/view/orders/${o.id.replace(/^#/, '')}`] = OrderDetailScreen
+}
+
+// Per-membership detail — the full membership page behind each card's
+// "View full membership →" link. Same id-in-hash pattern as orders.
+for (const m of MEMBERSHIPS) {
+  baseRoutes[`#/web/customers/view/memberships/${m.id}`] = MembershipDetailPage
 }
 
 export const config: PrototypeConfig = {
