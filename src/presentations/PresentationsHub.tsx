@@ -450,15 +450,15 @@ function SlidePreview({ slide, index }: { slide: SlideConfig; index: number }) {
       )}
 
       {useRail ? (
-        <div className={`absolute left-0 inset-y-0 w-[8%] border-r ${theme.card} flex flex-col items-center justify-between py-[6%] z-10`}>
-          <VintigaLockup invert={dark} className="h-[15%]" />
+        <div className={`absolute left-0 inset-y-0 w-[5.4%] border-r ${theme.card} flex flex-col items-center justify-between py-3 z-10`}>
+          <VintigaLockup invert={dark} className="h-[13%]" />
           <span className={`text-[9px] tabular-nums ${theme.foot}`}>{String(index + 1).padStart(2, '0')}</span>
         </div>
       ) : (
-        <div className="absolute left-[3%] top-[4%] z-10"><VintigaMark size={20} invert={dark} /></div>
+        <div className="absolute left-[3.3%] top-[3%] z-10"><VintigaMark size={18} invert={dark} /></div>
       )}
 
-      <div className={useRail ? 'absolute inset-0 left-[8%]' : 'contents'}>{body}</div>
+      <div className={useRail ? 'absolute inset-0 left-[5.4%]' : 'contents'}>{body}</div>
     </div>
   )
 }
