@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-07-16 — Fedja + Claude: Uniform delivery picker (shared DS control)
+
+Aligned the two clubs delivery UIs with the customer memberships surface using the new shared `@ds/shared/DeliveryPicker`.
+
+- **Member detail** (`MembershipDetailScreen.tsx`): the pickup/shipping split cards are now one **editable** `Delivery Method` card — the ⋯ opens the shared `DeliveryMethodModal` (previously a dead `onClick`). Pickup and shipping both render through the same control.
+- **Add Membership** (`AddMembershipScreen.tsx`): replaced the bespoke `DeliveryOption` tiles + separate "Shipping Address" dropdown + inline new-address fields with the shared `DeliveryPicker` (one radio list: pickup locations, saved addresses, "Add new address"). Delivery state collapsed to a single `DeliveryValue`; the live right-rail preview and submit payload read from it.
+- Pickup location names + address set now match the customer surface exactly (canonical `PICKUP_LOCATIONS` from the DS; Home/Work addresses).
+
 ## 2026-06-24 — Fedja + Claude: Design-review follow-ups — club renames, create-time charge, save-driven activation
 
 From the Jun 24 design review (Fedja, Donna, Jim, Geoff). Six changes:

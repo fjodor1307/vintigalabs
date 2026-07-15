@@ -28,8 +28,10 @@ import {
   PICKUP_LOCATIONS,
 } from './membershipsData'
 import { AddEditMembershipModal, CancelMembershipModal, type MembershipFormValue } from './membershipModals'
-import { CardOnFileModal, DeliveryDestinationModal, type CardRef, type DeliveryChoice } from './membershipEditModals'
-import { useAddresses } from './customerStore'
+import { CardOnFileModal, type CardRef } from './membershipEditModals'
+import { useAddresses, customerActions } from './customerStore'
+import { DeliveryMethodModal } from '@ds/shared/DeliveryPicker'
+import { deliveryLabel, formatAddressLine, type DeliveryAddress, type DeliveryValue } from '@ds/shared/delivery'
 
 // ─── CustomerMembershipsScreen ────────────────────────────────────────────────
 // Redesign of Figma 2015:6618 per the Jul 1 review. Digital Pass is its own
@@ -154,23 +156,23 @@ function summaryLine(m: Membership): string {
 // notes. The next shipment (bottles / charge dates) lives in Club processing;
 // deep detail (past orders, tags, custom fields) is on the full membership page.
 
-function deliveryLabel(d: DeliveryChoice): ReactNode {
+function deliveryDisplay(value: DeliveryValue, addresses: DeliveryAddress[]): ReactNode {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className="text-vintiga-slate-400 [&>svg]:w-4 [&>svg]:h-4">{d.method === 'pickup' ? <MapPinIcon /> : <TruckIcon />}</span>
-      {d.method === 'pickup' ? 'Pickup' : 'Ship'} · {d.destination}
+      <span className="text-vintiga-slate-400 [&>svg]:w-4 [&>svg]:h-4">{value.kind === 'pickup' ? <MapPinIcon /> : <TruckIcon />}</span>
+      {deliveryLabel(value, addresses)}
     </span>
   )
 }
 
 function MembershipDetailBlock({ m, onView }: { m: Membership; onView: () => void }) {
   const addresses = useAddresses()
-  const homeAddress = addresses[0] ? `${addresses[0].street}, ${addresses[0].city}, ${addresses[0].state} ${addresses[0].zip}` : ''
-  const initialDelivery: DeliveryChoice = m.delivery?.method === 'pickup'
-    ? { method: 'pickup', destination: m.delivery.location ?? PICKUP_LOCATIONS[0] }
-    : { method: 'ship', destination: m.delivery?.address ?? homeAddress }
+  const deliveryAddresses: DeliveryAddress[] = addresses.map((a) => ({ id: a.id, label: a.label, line: formatAddressLine(a) }))
+  const initialDelivery: DeliveryValue = m.delivery?.method === 'pickup'
+    ? { kind: 'pickup', location: m.delivery.location ?? PICKUP_LOCATIONS[0] }
+    : { kind: 'ship', addressId: deliveryAddresses.find((a) => a.line === m.delivery?.address)?.id ?? deliveryAddresses[0]?.id ?? '' }
 
-  const [delivery, setDelivery] = useState<DeliveryChoice>(initialDelivery)
+  const [delivery, setDelivery] = useState<DeliveryValue>(initialDelivery)
   const [card, setCard] = useState<CardRef | undefined>(m.payment)
   const [modal, setModal] = useState<'delivery' | 'card' | null>(null)
   const isShipmentKind = m.kind === 'curated' || m.kind === 'traditional'
@@ -183,7 +185,7 @@ function MembershipDetailBlock({ m, onView }: { m: Membership; onView: () => voi
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-vintiga-md">
         {isShipmentKind && (
-          <Pair label="Delivery" value={deliveryLabel(delivery)} edit={{ label: 'Change delivery', onClick: () => setModal('delivery') }} />
+          <Pair label="Delivery" value={deliveryDisplay(delivery, deliveryAddresses)} edit={{ label: 'Change delivery', onClick: () => setModal('delivery') }} />
         )}
         <Pair
           label="Paid with"
@@ -229,7 +231,14 @@ function MembershipDetailBlock({ m, onView }: { m: Membership; onView: () => voi
         </button>
       </div>
 
-      <DeliveryDestinationModal open={modal === 'delivery'} current={delivery} onClose={() => setModal(null)} onSave={setDelivery} />
+      <DeliveryMethodModal
+        open={modal === 'delivery'}
+        current={delivery}
+        addresses={deliveryAddresses}
+        onClose={() => setModal(null)}
+        onSave={setDelivery}
+        onAddAddress={(a) => customerActions.addAddress({ ...a, label: 'New address', country: 'United States' })}
+      />
       <CardOnFileModal open={modal === 'card'} current={card} onClose={() => setModal(null)} onSave={setCard} />
     </div>
   )

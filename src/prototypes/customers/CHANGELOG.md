@@ -1,5 +1,14 @@
 # Customers — Changelog
 
+## 2026-07-16 — Fedja + Claude: Delivery picker bug fix + shared control
+
+Follow-up to the Jul 15 combined-delivery work.
+
+- **Fixed the duplicate/both-selected bug.** The seed had two byte-identical saved addresses, and the picker selected by address *text*, so both rows rendered as selected. The seed now carries two distinct addresses (**Home** — 1210 Lakeview, Bellingham WA · **Work** — 500 Market St, San Francisco CA), state stored as the two-letter abbreviation (`WA`/`CA`) to match how it's shown elsewhere, and selection is keyed by unique address **id**.
+- **Adopted the shared `DeliveryMethodModal`** (`@ds/shared/DeliveryPicker`) in place of the local `DeliveryDestinationModal`, which was removed. "Add new address" writes through `customerActions.addAddress` (now returns the new id) and selects it.
+
+`CustomerMembershipsScreen.tsx`, `membershipEditModals.tsx`, `membershipsData.ts` (re-exports canonical `PICKUP_LOCATIONS` from the DS), `customerStore.ts`.
+
 ## 2026-07-15 — Fedja + Claude: Memberships — condensed card + full page + combined delivery (Jul 15 review)
 
 Reworked the Memberships tab per the Jul 15 review.

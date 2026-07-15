@@ -30,8 +30,11 @@ import {
   ChevronRightIcon,
   CreditCardIcon,
   StoreIcon,
+  TruckIcon,
   CheckCircleIcon,
 } from '@ds/icons/Icons'
+import { DeliveryMethodModal } from '@ds/shared/DeliveryPicker'
+import { PICKUP_LOCATIONS, type DeliveryAddress, type DeliveryValue } from '@ds/shared/delivery'
 import { Switch } from '@ds/shared/Switch'
 import { Textarea } from '@ds/shared/Textarea'
 import { AgeVerifiedBadge } from '@ds/shared/AgeVerifiedBadge'
@@ -424,9 +427,7 @@ export function MembershipDetailScreen() {
                 instructions={orderReviewInstructions}
                 onInstructionsChange={setOrderReviewInstructions}
               />
-              {member.delivery === 'pickup'
-                ? <PickupDeliveryCard />
-                : <AddressCard title="Shipping Address" />}
+              <DeliveryMethodCard member={member} />
               <AddressCard title="Billing Address" />
               <PaymentMethodCard hasCard={hasCard} onAddCard={addCard} />
               <ClubOrdersCard />
@@ -781,28 +782,44 @@ function PaymentMethodCard({ hasCard, onAddCard }: { hasCard: boolean; onAddCard
   )
 }
 
-// Pickup memberships have no shipping address — the customer collects releases
-// at the winery. We surface the delivery method + pickup location instead.
-function PickupDeliveryCard() {
+// The customer's saved addresses, shared with the customer memberships surface
+// so both show the same options in the same order.
+const CLUB_ADDRESSES: DeliveryAddress[] = [
+  { id: 'addr-1', label: 'Home', line: '1210 Lakeview Street, Bellingham, WA 98229' },
+  { id: 'addr-2', label: 'Work', line: '500 Market Street, San Francisco, CA 94110' },
+]
+
+// One editable delivery card for both pickup and shipping — the same control
+// (DeliveryMethodModal) the customer memberships surface uses, so the pattern is
+// uniform across the app. The ⋯ opens the picker.
+function DeliveryMethodCard({ member }: { member: Member }) {
+  const initial: DeliveryValue = member.delivery === 'pickup'
+    ? { kind: 'pickup', location: PICKUP_LOCATIONS[0] }
+    : { kind: 'ship', addressId: CLUB_ADDRESSES[0].id }
+  const [value, setValue] = useState<DeliveryValue>(initial)
+  const [open, setOpen] = useState(false)
+  const isPickup = value.kind === 'pickup'
+  const subtitle = isPickup ? value.location : (CLUB_ADDRESSES.find((a) => a.id === value.addressId)?.line ?? '')
   return (
     <RecordsCard title="Delivery Method">
       <div className="flex items-center gap-vintiga-md">
         <div className="w-10 h-10 rounded-full bg-vintiga-slate-100 inline-flex items-center justify-center text-vintiga-slate-500 shrink-0">
-          <StoreIcon className="w-5 h-5" />
+          {isPickup ? <StoreIcon className="w-5 h-5" /> : <TruckIcon className="w-5 h-5" />}
         </div>
-        <div className="flex flex-col">
-          <span className="typo-body-sm font-semibold text-vintiga-slate-900">Pickup</span>
-          <span className="typo-caption text-vintiga-slate-500">Estate Tasting Room · 1210 Lakeview Street, Napa</span>
+        <div className="flex flex-col min-w-0">
+          <span className="typo-body-sm font-semibold text-vintiga-slate-900">{isPickup ? 'Pickup' : 'Shipping'}</span>
+          <span className="typo-caption text-vintiga-slate-500 truncate">{subtitle}</span>
         </div>
         <div className="flex-1" />
         <IconButton
           variant="outline"
           size="sm"
           icon={<EllipsisVerticalIcon />}
-          aria-label="Delivery method actions"
-          onClick={() => {}}
+          aria-label="Edit delivery method"
+          onClick={() => setOpen(true)}
         />
       </div>
+      <DeliveryMethodModal open={open} current={value} addresses={CLUB_ADDRESSES} onClose={() => setOpen(false)} onSave={setValue} />
     </RecordsCard>
   )
 }
