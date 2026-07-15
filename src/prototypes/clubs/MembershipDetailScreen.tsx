@@ -30,8 +30,11 @@ import {
   ChevronRightIcon,
   CreditCardIcon,
   StoreIcon,
+  TruckIcon,
   CheckCircleIcon,
 } from '@ds/icons/Icons'
+import { DeliveryMethodModal } from '@ds/shared/DeliveryMethodPicker'
+import { DELIVERY_PICKUP_LOCATIONS, type DeliverySavedAddress, type DeliveryResult } from '@ds/shared/deliveryMethod'
 import { Switch } from '@ds/shared/Switch'
 import { Textarea } from '@ds/shared/Textarea'
 import { AgeVerifiedBadge } from '@ds/shared/AgeVerifiedBadge'
@@ -424,9 +427,7 @@ export function MembershipDetailScreen() {
                 instructions={orderReviewInstructions}
                 onInstructionsChange={setOrderReviewInstructions}
               />
-              {member.delivery === 'pickup'
-                ? <PickupDeliveryCard />
-                : <AddressCard title="Shipping Address" />}
+              <DeliveryMethodCard member={member} />
               <AddressCard title="Billing Address" />
               <PaymentMethodCard hasCard={hasCard} onAddCard={addCard} />
               <ClubOrdersCard />
@@ -781,28 +782,63 @@ function PaymentMethodCard({ hasCard, onAddCard }: { hasCard: boolean; onAddCard
   )
 }
 
-// Pickup memberships have no shipping address — the customer collects releases
-// at the winery. We surface the delivery method + pickup location instead.
-function PickupDeliveryCard() {
+// The customer's saved addresses (same set the Add Membership form offers).
+const CLUB_ADDRESSES: DeliverySavedAddress[] = [
+  { value: 'home',   label: '1210 Lakeview Street, Bellingham, WA 98229' },
+  { value: 'office', label: '500 Market Street, San Francisco, CA 94110' },
+]
+
+// Read-only delivery summary; the ⋯ opens the shared DeliveryMethodModal — the
+// same tiles + "Shipping Address" editor as the Add Membership form.
+function DeliveryMethodCard({ member }: { member: Member }) {
+  const [addresses, setAddresses] = useState<DeliverySavedAddress[]>(CLUB_ADDRESSES)
+  const [result, setResult] = useState<DeliveryResult>(
+    member.delivery === 'pickup'
+      ? { method: 'pickup', destination: DELIVERY_PICKUP_LOCATIONS[0].label }
+      : { method: 'ship', destination: CLUB_ADDRESSES[0].label },
+  )
+  const [open, setOpen] = useState(false)
+  const isPickup = result.method === 'pickup'
+
+  const initialOption = isPickup
+    ? `pickup:${DELIVERY_PICKUP_LOCATIONS.find((l) => l.label === result.destination)?.value ?? DELIVERY_PICKUP_LOCATIONS[0].value}`
+    : 'shipping'
+  const initialShipAddress = isPickup
+    ? (addresses[0]?.value ?? 'new')
+    : (addresses.find((a) => a.label === result.destination)?.value ?? addresses[0]?.value ?? 'new')
+
   return (
     <RecordsCard title="Delivery Method">
       <div className="flex items-center gap-vintiga-md">
         <div className="w-10 h-10 rounded-full bg-vintiga-slate-100 inline-flex items-center justify-center text-vintiga-slate-500 shrink-0">
-          <StoreIcon className="w-5 h-5" />
+          {isPickup ? <StoreIcon className="w-5 h-5" /> : <TruckIcon className="w-5 h-5" />}
         </div>
-        <div className="flex flex-col">
-          <span className="typo-body-sm font-semibold text-vintiga-slate-900">Pickup</span>
-          <span className="typo-caption text-vintiga-slate-500">Estate Tasting Room · 1210 Lakeview Street, Napa</span>
+        <div className="flex flex-col min-w-0">
+          <span className="typo-body-sm font-semibold text-vintiga-slate-900">{isPickup ? 'Pickup' : 'Shipping'}</span>
+          <span className="typo-caption text-vintiga-slate-500 truncate">{result.destination}</span>
         </div>
         <div className="flex-1" />
         <IconButton
           variant="outline"
           size="sm"
           icon={<EllipsisVerticalIcon />}
-          aria-label="Delivery method actions"
-          onClick={() => {}}
+          aria-label="Edit delivery method"
+          onClick={() => setOpen(true)}
         />
       </div>
+      <DeliveryMethodModal
+        open={open}
+        savedAddresses={addresses}
+        initialOption={initialOption}
+        initialShipAddress={initialShipAddress}
+        onClose={() => setOpen(false)}
+        onSave={setResult}
+        onAddAddress={(a) => {
+          const opt = { value: `addr-new-${addresses.length + 1}`, label: `${a.street}, ${a.city}, ${a.state} ${a.zip}` }
+          setAddresses((prev) => [...prev, opt])
+          return opt
+        }}
+      />
     </RecordsCard>
   )
 }

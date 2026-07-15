@@ -56,6 +56,7 @@ export interface NextShipment {
 
 export interface Membership {
   id: string
+  clubMemberId?: string // links to the full membership page in the Clubs prototype (#/web/clubs/memberships/{id})
   clubName: string
   clubType: string
   kind: MembershipKind
@@ -73,6 +74,16 @@ export interface Membership {
   delivery?: { method: 'pickup' | 'ship'; location?: string; address?: string }
   orderReview?: boolean // curated only
   nextShipment?: NextShipment
+
+  // Jul 15 review: the card carries these; the shipment itself lives in Club processing.
+  shippingNotes?: string
+  giftMessage?: string
+  preferredShipping?: string        // future, with shipping tie-ins
+  outstandingPickup?: string        // date an order has been waiting for pickup, if any
+  // Deep detail — shown on the full membership page.
+  membershipTags?: string[]
+  membershipNotes?: string
+  pastOrders?: { date: string; bottles: number; total: number; status: string }[]
 
   // Rewards
   benefits?: string[]
@@ -121,6 +132,7 @@ export const DIGITAL_PASS: DigitalPass = {
 export const MEMBERSHIPS: Membership[] = [
   {
     id: 'mbr-curated',
+    clubMemberId: '1001', // Jane Davis in the Clubs prototype
     clubName: 'Curators Club',
     clubType: 'Curated Bottle Club',
     kind: 'curated',
@@ -131,6 +143,21 @@ export const MEMBERSHIPS: Membership[] = [
     delivery: { method: 'ship', address: HOME_ADDRESS },
     orderReview: true,
     payment: { brand: 'mastercard', last4: '0092', expiresMonth: '07', expiresYear: '2027' },
+    commitmentEnds: 'Mar 15, 2026',
+    outstandingPickup: 'Jul 09, 2026',
+    shippingNotes: 'Leave with the front-desk concierge if not home.',
+    giftMessage: '',
+    preferredShipping: 'UPS Ground',
+    membershipTags: ['VIP', 'Bordeaux lover'],
+    membershipNotes: 'Prefers reds; skip whites when possible. Anniversary shipment always a gift.',
+    pastOrders: [
+      { date: 'Apr 16, 2026', bottles: 4, total: 168, status: 'Delivered' },
+      { date: 'Jan 16, 2026', bottles: 3, total: 132, status: 'Delivered' },
+      { date: 'Oct 16, 2025', bottles: 6, total: 246, status: 'Delivered' },
+      { date: 'Jul 16, 2025', bottles: 4, total: 168, status: 'Picked up' },
+      { date: 'Apr 16, 2025', bottles: 3, total: 132, status: 'Delivered' },
+      { date: 'Jan 16, 2025', bottles: 4, total: 168, status: 'Delivered' },
+    ],
     nextShipment: {
       date: 'Jul 16, 2026',
       chargesOn: 'Jul 12, 2026',

@@ -1,5 +1,25 @@
 # Customers — Changelog
 
+## 2026-07-16 — Fedja + Claude: Delivery picker bug fix + shared editor
+
+Follow-up to the Jul 15 combined-delivery work.
+
+- **Fixed the duplicate/both-selected bug.** The seed had two byte-identical saved addresses, and the picker selected by address *text*, so both rows rendered as selected. The seed now carries two distinct addresses (**Home** — 1210 Lakeview, Bellingham WA · **Work** — 500 Market St, San Francisco CA), state stored as the two-letter abbreviation (`WA`/`CA`).
+- **"Change delivery" now opens the shared `DeliveryMethodModal`** (`@ds/shared/DeliveryMethodPicker`) — the same tiles + "Shipping Address" dropdown as the Add Membership form — in place of the local combined `DeliveryDestinationModal`, which was removed. "Add new address" writes through `customerActions.addAddress` (now returns the new id).
+
+`CustomerMembershipsScreen.tsx`, `membershipEditModals.tsx`, `customerStore.ts`.
+
+## 2026-07-15 — Fedja + Claude: Memberships — condensed card + full page + combined delivery (Jul 15 review)
+
+Reworked the Memberships tab per the Jul 15 review.
+
+- **Condensed card** carries the essentials only: **delivery** (combined), **payment** (change card), **join date + commitment/renewal**, **preferred shipping**, **shipping notes + gift message**, **order review**, and an **"order waiting for pickup"** alert when one exists.
+- **Removed the "Your next shipment" block** (bottles, charge/ship dates, min–max) from the card — that lives in Club processing. No shipment info in the collapsed summary either.
+- **"View full membership →"** links to the existing **Clubs membership page** (`#/web/clubs/memberships/{clubMemberId}`) — the canonical deep view (orders, history, addresses, payment, holds) — instead of duplicating it under Customers. Per the Jul 15 decision, membership deep-detail lives in Club processing. The customer's Curators Club maps to club member `1001` (Jane Davis) via a new `clubMemberId`.
+- **Combined delivery method** (`DeliveryDestinationModal`) — one picker listing **pickup locations *and* saved addresses together**; one tap sets method + destination (no two-step). Replaces the separate ship-to + delivery modals. Same paradigm to hand to Vantage.
+
+`CustomerMembershipsScreen.tsx`, `MembershipDetailPage.tsx` (new), `membershipEditModals.tsx`, `membershipsData.ts`, route in `prototype.config.ts`.
+
 ## 2026-07-10 — Fedja + Claude: Digital Pass lifecycle + Send Invite
 
 Reworked the **Digital Pass** on the Memberships tab from a static "Active" row into the ticketed lifecycle. Every customer record has a pass (its own card, separate from the addable clubs — a pass can't be "added").
