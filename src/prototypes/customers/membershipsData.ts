@@ -115,10 +115,6 @@ export const CANCEL_REASONS = [
   'Other',
 ]
 
-// Canonical pickup locations live in the design system so every surface
-// (customer memberships, clubs) shows the same tasting rooms in the same order.
-export { PICKUP_LOCATIONS } from '@ds/shared/delivery'
-
 const HOME_ADDRESS = '1210 Lakeview Street, Bellingham, WA 98229'
 
 // Seeded in the "new customer" starting state: the pass exists but no invite has

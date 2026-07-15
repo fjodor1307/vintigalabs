@@ -9,9 +9,8 @@ import { RailSection } from '@ds/shared/RightRail'
 import { Field } from '@ds/shared/Field'
 import { TextField } from '@ds/shared/TextField'
 import { Select } from '@ds/shared/Select'
+import { Radio } from '@ds/shared/Radio'
 import { Button } from '@ds/shared/Button'
-import { DeliveryPicker } from '@ds/shared/DeliveryPicker'
-import { PICKUP_LOCATIONS, deliveryLabel, formatAddressLine, type DeliveryAddress, type DeliveryValue } from '@ds/shared/delivery'
 import { Tag } from '@ds/shared/Tag'
 import { Modal, ModalHeader, ModalBody, ModalFooter, ModalAlertHeader } from '@ds/shared/Modal'
 import { type CardBrand } from '@ds/shared/CardBrandLogo'
@@ -46,12 +45,14 @@ const CLUB_FEES: Partial<Record<ClubKey, { fee: number; taxRate: number }>> = {
   'curators':          { fee: 50,  taxRate: 0 },
 }
 
-// The customer's saved addresses. Same set + order as the customer memberships
-// surface so delivery looks identical wherever it's edited. PICKUP_LOCATIONS
-// comes from the design system (@ds/shared/delivery).
-const CLUB_ADDRESSES: DeliveryAddress[] = [
-  { id: 'home',   label: 'Home', line: '1210 Lakeview Street, Bellingham, WA 98229' },
-  { id: 'office', label: 'Work', line: '500 Market Street, San Francisco, CA 94110' },
+const SAVED_ADDRESSES = [
+  { value: 'home',   label: '1210 Lakeview Street, Bellingham, WA 98229' },
+  { value: 'office', label: '500 Market Street, San Francisco, CA 94110' },
+]
+
+const PICKUP_LOCATIONS = [
+  { value: 'estate',       label: 'Estate' },
+  { value: 'tasting-room', label: 'Tasting Room' },
 ]
 
 // Member Choice clubs expose their contribution levels as nested options in
@@ -172,13 +173,14 @@ export function AddMembershipScreen() {
   // shipment in the tasting room. `'shipping'` flips the address picker on.
   // Per-pickup-location options expanded into the radio (no second
   // dropdown) so the operator picks the destination in one step.
-  // Delivery: one shared model (pickup location OR a saved-address id). Defaults
-  // to the first pickup location — most operators enrol someone collecting their
-  // first shipment in person. Saved addresses (and a "new address" flow) live in
-  // the shared DeliveryPicker below.
-  const [addresses, setAddresses] = useState<DeliveryAddress[]>(CLUB_ADDRESSES)
-  const [delivery, setDelivery]   = useState<DeliveryValue>({ kind: 'pickup', location: PICKUP_LOCATIONS[0] })
-  const isShipping = delivery.kind === 'ship'
+  const [deliveryOption, setDeliveryOption] = useState<string>(`pickup:${PICKUP_LOCATIONS[0].value}`)
+  const [shipAddress, setShipAddress]       = useState('home')
+  const isShipping = deliveryOption === 'shipping'
+  const pickedPickupId = isShipping ? null : deliveryOption.slice('pickup:'.length)
+  const [newStreet, setNewStreet]     = useState('')
+  const [newCity, setNewCity]         = useState('')
+  const [newState, setNewState]       = useState('')
+  const [newZip, setNewZip]           = useState('')
   // Cards on file for the selected customer — reloaded whenever the customer
   // changes. Held in local state so the operator can add a card from the inline
   // "Add Payment Method" affordance when the customer has nothing on record;
@@ -227,9 +229,10 @@ export function AddMembershipScreen() {
   const hasCard = savedCards.length > 0
   // Shipping needs an address; a "new" address counts only once its fields are
   // filled in. Pickup never needs one.
-  // Shipping needs a concrete saved address selected; the picker guarantees one
-  // (you can't pick "ship" without choosing an address). Pickup never needs one.
-  const hasShippingAddress = !isShipping || (delivery.kind === 'ship' && !!delivery.addressId)
+  const hasShippingAddress =
+    !isShipping ||
+    (shipAddress !== 'new') ||
+    !!(newStreet && newCity && newState && newZip)
   // Non-charge clubs land Active only when every requirement is met.
   const wouldBeActive = hasCard && hasShippingAddress
 
@@ -310,7 +313,7 @@ export function AddMembershipScreen() {
                 levelLabel={selectedLevel ? `${selectedLevel.name} · $${selectedLevel.amount}/${selectedLevel.cadence.toLowerCase()}` : null}
                 joinDate={joinDate}
                 isShipping={isShipping}
-                deliveryText={deliveryLabel(delivery, addresses)}
+                pickedPickupLabel={pickedPickupId ? PICKUP_LOCATIONS.find((l) => l.value === pickedPickupId)?.label ?? null : null}
               />
             }
           >
@@ -388,21 +391,67 @@ export function AddMembershipScreen() {
               </RecordsCard>
 
               <RecordsCard title="Delivery Method" divider={false}>
-                {/* Pickup locations first — most operators creating a membership
-                    are doing it for a customer who'll grab their first shipment
-                    in person — then the customer's saved addresses. The shared
-                    DeliveryPicker is the same control used to edit delivery on
-                    the customer and member detail screens. */}
-                <DeliveryPicker
-                  addresses={addresses}
-                  value={delivery}
-                  onChange={setDelivery}
-                  onAddAddress={(a) => {
-                    const id = `addr-new-${addresses.length + 1}`
-                    setAddresses((prev) => [...prev, { id, label: 'New address', line: formatAddressLine(a) }])
-                    return id
-                  }}
-                />
+                {/* Pickup tiles first — most operators creating a membership
+                    are doing it for a customer who'll grab their first
+                    shipment in person. Shipping sits at the bottom as the
+                    fallback for remote customers. */}
+                <div className="grid grid-cols-1 gap-vintiga-sm">
+                  {PICKUP_LOCATIONS.map((loc) => {
+                    const value = `pickup:${loc.value}`
+                    return (
+                      <DeliveryOption
+                        key={value}
+                        selected={deliveryOption === value}
+                        onClick={() => setDeliveryOption(value)}
+                        icon={<StoreIcon />}
+                        label={`Pickup - ${loc.label}`}
+                      />
+                    )
+                  })}
+                  <DeliveryOption
+                    selected={isShipping}
+                    onClick={() => setDeliveryOption('shipping')}
+                    icon={<TruckIcon />}
+                    label="Shipping"
+                  />
+                </div>
+
+                {isShipping && (
+                  <>
+                    <Field label="Shipping Address" required>
+                      <Select
+                        value={shipAddress}
+                        onChange={(e) => setShipAddress(e.target.value)}
+                        options={[...SAVED_ADDRESSES, { value: 'new', label: '+ Add new address' }]}
+                      />
+                    </Field>
+                    <div className="flex items-start gap-vintiga-sm rounded-vintiga-md bg-vintiga-slate-50 px-vintiga-md py-vintiga-sm">
+                      <InfoIcon className="w-4 h-4 text-vintiga-slate-400 shrink-0 mt-0.5" />
+                      <span className="typo-caption text-vintiga-slate-500">
+                        If the customer has no saved address, add one below or pick a Pickup location.
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                {isShipping && shipAddress === 'new' && (
+                  <div className="border border-vintiga-slate-200 rounded-vintiga-lg p-vintiga-md flex flex-col gap-vintiga-md">
+                    <Field label="Street Address" required>
+                      <TextField value={newStreet} onChange={(e) => setNewStreet(e.target.value)} placeholder="123 Main Street" />
+                    </Field>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-vintiga-md">
+                      <Field label="City" required>
+                        <TextField value={newCity} onChange={(e) => setNewCity(e.target.value)} placeholder="City" />
+                      </Field>
+                      <Field label="State" required>
+                        <TextField value={newState} onChange={(e) => setNewState(e.target.value)} placeholder="State" />
+                      </Field>
+                      <Field label="ZIP" required>
+                        <TextField value={newZip} onChange={(e) => setNewZip(e.target.value)} placeholder="ZIP" />
+                      </Field>
+                    </div>
+                  </div>
+                )}
               </RecordsCard>
 
               {/* Payment Method — only after a customer is picked. A dropdown
@@ -521,6 +570,34 @@ export function AddMembershipScreen() {
   )
 }
 
+function DeliveryOption({ selected, onClick, icon, label }: { selected: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
+  return (
+    <div
+      role="radio"
+      aria-checked={selected}
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+      className={[
+        'flex items-center gap-vintiga-md p-vintiga-md rounded-vintiga-lg border text-left transition-colors cursor-pointer',
+        selected
+          ? 'border-vintiga-indigo-500 bg-vintiga-indigo-50'
+          : 'border-vintiga-slate-200 hover:border-vintiga-slate-300',
+      ].join(' ')}
+    >
+      <span className={[
+        '[&>svg]:w-5 [&>svg]:h-5',
+        selected ? 'text-vintiga-indigo-600' : 'text-vintiga-slate-500',
+      ].join(' ')}>{icon}</span>
+      <span className={[
+        'typo-body-sm font-semibold flex-1',
+        selected ? 'text-vintiga-indigo-700' : 'text-vintiga-slate-900',
+      ].join(' ')}>{label}</span>
+      <Radio checked={selected} aria-label={label} />
+    </div>
+  )
+}
+
 // Right-rail summary that mirrors the live form state: club tag + join date +
 // delivery method. Fields show "—" until the operator picks a value.
 function MembershipDetailsRail({
@@ -528,14 +605,15 @@ function MembershipDetailsRail({
   levelLabel,
   joinDate,
   isShipping,
-  deliveryText,
+  pickedPickupLabel,
 }: {
   clubKey: ClubKey | null
   levelLabel: string | null
   joinDate: string
   isShipping: boolean
-  /** Human-readable delivery summary — "Pickup · Estate Tasting Room" / "Ship · …". */
-  deliveryText: string
+  /** When pickup is selected, the human-readable location label. Null when
+   *  shipping is selected. */
+  pickedPickupLabel: string | null
 }) {
   const club = clubKey ? CLUBS_CATALOG[clubKey] : null
   return (
@@ -564,7 +642,7 @@ function MembershipDetailsRail({
             {isShipping
               ? <TruckIcon className="w-4 h-4 text-vintiga-slate-400" />
               : <StoreIcon className="w-4 h-4 text-vintiga-slate-400" />}
-            {deliveryText}
+            {isShipping ? 'Shipping' : (pickedPickupLabel ? `Pickup - ${pickedPickupLabel}` : 'Pickup')}
           </span>
         </RailRow>
       </div>

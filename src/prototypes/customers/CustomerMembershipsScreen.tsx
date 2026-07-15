@@ -25,13 +25,12 @@ import {
   type DigitalPass,
   type Membership,
   type MembershipStatus,
-  PICKUP_LOCATIONS,
 } from './membershipsData'
 import { AddEditMembershipModal, CancelMembershipModal, type MembershipFormValue } from './membershipModals'
 import { CardOnFileModal, type CardRef } from './membershipEditModals'
 import { useAddresses, customerActions } from './customerStore'
-import { DeliveryMethodModal } from '@ds/shared/DeliveryPicker'
-import { deliveryLabel, formatAddressLine, type DeliveryAddress, type DeliveryValue } from '@ds/shared/delivery'
+import { DeliveryMethodModal } from '@ds/shared/DeliveryMethodPicker'
+import { DELIVERY_PICKUP_LOCATIONS, type DeliverySavedAddress, type DeliveryResult } from '@ds/shared/deliveryMethod'
 
 // ─── CustomerMembershipsScreen ────────────────────────────────────────────────
 // Redesign of Figma 2015:6618 per the Jul 1 review. Digital Pass is its own
@@ -156,23 +155,27 @@ function summaryLine(m: Membership): string {
 // notes. The next shipment (bottles / charge dates) lives in Club processing;
 // deep detail (past orders, tags, custom fields) is on the full membership page.
 
-function deliveryDisplay(value: DeliveryValue, addresses: DeliveryAddress[]): ReactNode {
+function deliveryDisplay(result: DeliveryResult): ReactNode {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className="text-vintiga-slate-400 [&>svg]:w-4 [&>svg]:h-4">{value.kind === 'pickup' ? <MapPinIcon /> : <TruckIcon />}</span>
-      {deliveryLabel(value, addresses)}
+      <span className="text-vintiga-slate-400 [&>svg]:w-4 [&>svg]:h-4">{result.method === 'pickup' ? <MapPinIcon /> : <TruckIcon />}</span>
+      {result.method === 'pickup' ? 'Pickup' : 'Ship'} · {result.destination}
     </span>
   )
 }
 
+function membershipAddressLine(a: { street: string; city: string; state: string; zip: string }): string {
+  return `${a.street}, ${a.city}, ${a.state} ${a.zip}`
+}
+
 function MembershipDetailBlock({ m, onView }: { m: Membership; onView: () => void }) {
   const addresses = useAddresses()
-  const deliveryAddresses: DeliveryAddress[] = addresses.map((a) => ({ id: a.id, label: a.label, line: formatAddressLine(a) }))
-  const initialDelivery: DeliveryValue = m.delivery?.method === 'pickup'
-    ? { kind: 'pickup', location: m.delivery.location ?? PICKUP_LOCATIONS[0] }
-    : { kind: 'ship', addressId: deliveryAddresses.find((a) => a.line === m.delivery?.address)?.id ?? deliveryAddresses[0]?.id ?? '' }
+  const savedAddresses: DeliverySavedAddress[] = addresses.map((a) => ({ value: a.id, label: membershipAddressLine(a) }))
+  const initialDelivery: DeliveryResult = m.delivery?.method === 'pickup'
+    ? { method: 'pickup', destination: m.delivery.location ?? DELIVERY_PICKUP_LOCATIONS[0].label }
+    : { method: 'ship', destination: m.delivery?.address ?? savedAddresses[0]?.label ?? '' }
 
-  const [delivery, setDelivery] = useState<DeliveryValue>(initialDelivery)
+  const [delivery, setDelivery] = useState<DeliveryResult>(initialDelivery)
   const [card, setCard] = useState<CardRef | undefined>(m.payment)
   const [modal, setModal] = useState<'delivery' | 'card' | null>(null)
   const isShipmentKind = m.kind === 'curated' || m.kind === 'traditional'
@@ -185,7 +188,7 @@ function MembershipDetailBlock({ m, onView }: { m: Membership; onView: () => voi
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-vintiga-md">
         {isShipmentKind && (
-          <Pair label="Delivery" value={deliveryDisplay(delivery, deliveryAddresses)} edit={{ label: 'Change delivery', onClick: () => setModal('delivery') }} />
+          <Pair label="Delivery" value={deliveryDisplay(delivery)} edit={{ label: 'Change delivery', onClick: () => setModal('delivery') }} />
         )}
         <Pair
           label="Paid with"
@@ -233,11 +236,19 @@ function MembershipDetailBlock({ m, onView }: { m: Membership; onView: () => voi
 
       <DeliveryMethodModal
         open={modal === 'delivery'}
-        current={delivery}
-        addresses={deliveryAddresses}
+        savedAddresses={savedAddresses}
+        initialOption={delivery.method === 'pickup'
+          ? `pickup:${DELIVERY_PICKUP_LOCATIONS.find((l) => l.label === delivery.destination)?.value ?? DELIVERY_PICKUP_LOCATIONS[0].value}`
+          : 'shipping'}
+        initialShipAddress={delivery.method === 'ship'
+          ? (savedAddresses.find((a) => a.label === delivery.destination)?.value ?? savedAddresses[0]?.value ?? 'new')
+          : (savedAddresses[0]?.value ?? 'new')}
         onClose={() => setModal(null)}
         onSave={setDelivery}
-        onAddAddress={(a) => customerActions.addAddress({ ...a, label: 'New address', country: 'United States' })}
+        onAddAddress={(a) => {
+          const id = customerActions.addAddress({ ...a, label: 'New address', country: 'United States' })
+          return { value: id, label: membershipAddressLine(a) }
+        }}
       />
       <CardOnFileModal open={modal === 'card'} current={card} onClose={() => setModal(null)} onSave={setCard} />
     </div>
