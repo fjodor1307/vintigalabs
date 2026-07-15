@@ -15,11 +15,11 @@
 | Prototype | Last updated | Changelog |
 |-----------|--------------|-----------|
 | Clubs | 2026-06-24 | [src/prototypes/clubs/CHANGELOG.md](src/prototypes/clubs/CHANGELOG.md) |
-| Customers | 2026-07-09 | [src/prototypes/customers/CHANGELOG.md](src/prototypes/customers/CHANGELOG.md) |
+| Customers | 2026-07-10 | [src/prototypes/customers/CHANGELOG.md](src/prototypes/customers/CHANGELOG.md) |
 | Onboarding | 2026-04-27 | [src/prototypes/onboarding/CHANGELOG.md](src/prototypes/onboarding/CHANGELOG.md) |
 | Pos | 2026-06-25 | [src/prototypes/pos/CHANGELOG.md](src/prototypes/pos/CHANGELOG.md) |
 | Pos Profiles | 2026-07-02 | [src/prototypes/pos-profiles/CHANGELOG.md](src/prototypes/pos-profiles/CHANGELOG.md) |
-| Products | 2026-07-06 | [src/prototypes/products/CHANGELOG.md](src/prototypes/products/CHANGELOG.md) |
+| Products | 2026-07-10 | [src/prototypes/products/CHANGELOG.md](src/prototypes/products/CHANGELOG.md) |
 | Reservations | 2026-07-10 | [src/prototypes/reservations/CHANGELOG.md](src/prototypes/reservations/CHANGELOG.md) |
 | Sales Chat | 2026-05-28 | [src/prototypes/sales-chat/CHANGELOG.md](src/prototypes/sales-chat/CHANGELOG.md) |
 | Sales Chat Imessage | 2026-06-12 | [src/prototypes/sales-chat-imessage/CHANGELOG.md](src/prototypes/sales-chat-imessage/CHANGELOG.md) |
@@ -37,7 +37,8 @@ Made the Deck Builder slide-type aware, from the variations board. The **intro s
 
 - **Intro slide** — carries a **Header position** control (across the **top** / vertical on the **left**), a **Media** mode (product **Composition** / plain **Image** / **None** = full-width headline), plus background + content fields. Marked with an "Intro" badge.
 - **Content slides (2+)** — a simpler **Layout** picker: *Title + points, image right* (eyebrow + title + subtitle + a **points** editor + image), *Title + 3 cards* (a **cards** editor), *Text + media*, *Centered text*. No header-position options.
-- The **live preview** renders each faithfully — the intro header top/left rail, the points-and-image "growth crisis" layout, and the 3 icon cards — across White / Black / Indigo / Image backgrounds.
+- The **live preview** renders each faithfully — the intro header top/left rail, the points-and-image "growth crisis" layout, and the 3 icon cards — across the backgrounds.
+- **Backgrounds** — White · Black · Indigo · **Image** (photo only, no overlay) · **Image + 65% overlay** (darkened for white text). The plain Image option shows the photo untouched as the background.
 - The generated **prompt** captures the intro's header + media and each content slide's layout, points and cards.
 
 `PresentationsHub.tsx`.

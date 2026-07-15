@@ -181,7 +181,7 @@ export function PresentationBlocksScreen() {
 // content fields — with a live branded preview, then export the spec. Modelled
 // on Figma 5339:8004.
 
-type SlideBg = 'white' | 'black' | 'indigo' | 'image'
+type SlideBg = 'white' | 'black' | 'indigo' | 'image' | 'image-plain'
 type IntroHeader = 'top' | 'left'
 type IntroMedia = 'composition' | 'image' | 'none'
 type ContentLayout = 'content-image' | 'cards' | 'text-media' | 'centered'
@@ -224,7 +224,7 @@ const CONTENT_LAYOUTS: { value: ContentLayout; label: string }[] = [
   { value: 'centered',      label: 'Centered text' },
 ]
 
-const BG_LABEL: Record<SlideBg, string> = { white: 'White', black: 'Black', indigo: 'Indigo', image: 'Image + 65% overlay' }
+const BG_LABEL: Record<SlideBg, string> = { white: 'White', black: 'Black', indigo: 'Indigo', image: 'Image + 65% overlay', 'image-plain': 'Image' }
 
 const DEFAULT_BULLETS: Bullet[] = [
   { point: 'U.S. wine sales down ~20% from peak', detail: 'A prolonged, industry-wide demand slowdown.' },
@@ -292,6 +292,7 @@ const BG_THEME: Record<SlideBg, { wrap: string; text: string; kicker: string; su
   black:  { wrap: 'bg-[#0a0a12]',          text: 'text-white',             kicker: 'text-vintiga-indigo-300', sub: 'text-vintiga-indigo-200', foot: 'text-white/55',          card: 'border-white/15' },
   indigo: { wrap: 'bg-vintiga-indigo-700', text: 'text-white',             kicker: 'text-white/75',          sub: 'text-white',             foot: 'text-white/75',          card: 'border-white/25' },
   image:  { wrap: 'bg-vintiga-slate-900',  text: 'text-white',             kicker: 'text-vintiga-indigo-200', sub: 'text-white',             foot: 'text-white/75',          card: 'border-white/25' },
+  'image-plain': { wrap: 'bg-vintiga-slate-900', text: 'text-white',       kicker: 'text-vintiga-indigo-200', sub: 'text-white',             foot: 'text-white/75',          card: 'border-white/25' },
 }
 
 type Theme = (typeof BG_THEME)[SlideBg]
@@ -415,10 +416,10 @@ function SlidePreview({ slide, index }: { slide: SlideConfig; index: number }) {
 
   return (
     <div className={`relative w-full aspect-[16/9] rounded-vintiga-2xl overflow-hidden border border-vintiga-border shadow-sm ${theme.wrap}`}>
-      {slide.bg === 'image' && (
+      {(slide.bg === 'image' || slide.bg === 'image-plain') && (
         <>
           <img src={slide.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/65" />
+          {slide.bg === 'image' && <div className="absolute inset-0 bg-black/65" />}
         </>
       )}
 
@@ -444,7 +445,10 @@ function buildPrompt(slides: SlideConfig[], closing: boolean): string {
   out.push('Conventions: fully branded with Vintiga tokens + Inter, the same entrance animations as the existing "Vintiga Overview" deck, one dominant colour (indigo), a visual on every slide, and mobile responsive. Build from the presentation blocks in src/presentations/blocks/blocks.tsx (kicker · display title · lead · footnote · icon cards) and the glass blocks for product imagery. Add it as a new screen under src/presentations/ and register it like the other decks.')
   out.push('')
   slides.forEach((s, i) => {
-    const bgLine = s.bg === 'image' ? `image (${s.bgImage}) under a 65% black overlay; text in white` : BG_LABEL[s.bg]
+    const bgLine =
+      s.bg === 'image' ? `image (${s.bgImage}) under a 65% black overlay; text in white`
+      : s.bg === 'image-plain' ? `image (${s.bgImage}) as a full background, no overlay; text in white`
+      : BG_LABEL[s.bg]
     if (s.kind === 'intro') {
       out.push(`Slide ${i + 1} — Intro · header ${s.header === 'left' ? 'on the left (vertical)' : 'across the top'}`)
       out.push(`- Background: ${bgLine}.`)
@@ -579,7 +583,7 @@ export function PageBuilderScreen() {
   const slide = slides[idx]
   const isLast = idx === slides.length - 1
   const isIntro = slide.kind === 'intro'
-  const onImage = slide.bg === 'image'
+  const onImage = slide.bg === 'image' || slide.bg === 'image-plain'
 
   const updateBullet = (k: number, patch: Partial<Bullet>) =>
     setSlides((prev) => prev.map((s, i) => (i === idx ? { ...s, bullets: s.bullets.map((b, j) => (j === k ? { ...b, ...patch } : b)) } : s)))
@@ -641,6 +645,7 @@ export function PageBuilderScreen() {
                     { value: 'white', label: 'White' },
                     { value: 'black', label: 'Black' },
                     { value: 'indigo', label: 'Indigo' },
+                    { value: 'image-plain', label: 'Image' },
                     { value: 'image', label: 'Image + 65% overlay' },
                   ]}
                 />
