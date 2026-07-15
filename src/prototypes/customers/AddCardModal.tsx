@@ -12,10 +12,10 @@ import { customerActions, type CardBrand } from './customerStore'
 // "Payment Method ID is required" the processor returns downstream.
 //
 // Ticket: when the number can't be validated, tell the user plainly and point
-// them at the fix — "Credit card number can't be validated. Check the number
-// and re-enter."
+// them at the fix — the exact copy the ticket asked for (instead of the opaque
+// "Payment Method ID is required" the processor returns downstream).
 
-const CARD_ERROR = 'Credit card number can’t be validated. Check the number and re-enter.'
+const CARD_ERROR = 'Credit Card number entered can not be validated. Check the number and re-enter.'
 
 function detectBrand(digits: string): CardBrand {
   if (/^4/.test(digits))               return 'visa'

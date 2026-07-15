@@ -6,6 +6,17 @@
 
 ---
 
+## 2026-07-10 — Fedja + Claude: Reservation View actions wired
+
+Made the detail-page header actions do something (all were no-ops):
+
+- **Check In** — flips the reservation to **Checked In**: the header + card status tags turn green, the button becomes a disabled "Checked In", and a success toast fires. Reversible via **Undo check-in** in the menu.
+- **Edit reservation** — the details form is now **read-only by default**; Edit unlocks it (fields enable + a **Save changes / Discard** bar appears). Save exits edit mode with a "Changes saved" toast.
+- **Resend confirmation** — info toast ("Sent to dorothyladner@gmail.com").
+- **Cancel reservation** — opens a danger confirm modal; confirming marks it **Cancelled** (red tags + a cancelled banner, Check In hidden). Reversible via **Reinstate reservation**.
+
+All feedback uses the DS `Toast`; the confirm uses the DS `Modal`. Reversible on purpose so the flow is repeatable in a demo. `ReservationViewScreen.tsx`.
+
 ## 2026-07-10 — Fedja + Claude: Post-Reserve confirmed state
 
 Wired what happens after **Reserve** on the Add screen (was a no-op):
@@ -14,8 +25,9 @@ Wired what happens after **Reserve** on the Add screen (was a no-op):
 - The rail's primary button becomes **Save changes** (flips the banner to "Changes saved"); the secondary becomes **Back to reservations**.
 - **Back nav** — the confirmation banner carries a **Back to reservations** action (breadcrumbs still work too). Chosen over a header button to avoid duplicating the breadcrumb.
 - Reserve is disabled until a customer (or walk-in) is selected.
+- **Zero-charge only** — per the Jul 9 review, we only handle no-charge reservations right now, so every experience is priced at **0** ("No charge" across the dropdown, summary and total; the Reserve button drops the amount). The paid flow (reserve → create order → charge card on file) stays deferred in `NOTES.md`; the price model + labelling are kept so a charged experience lights up automatically later.
 
-`AddReservationScreen.tsx`.
+`AddReservationScreen.tsx`, `experienceOptions.ts`.
 
 ## 2026-07-09 — Fedja + Claude: Combined Experience/Option + Notes modal (Jul 9 review)
 
