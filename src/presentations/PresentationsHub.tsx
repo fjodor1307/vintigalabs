@@ -4,7 +4,6 @@ import type { Segment } from '../hub/segments'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
 import { Button } from '@ds/shared/Button'
 import { TextField } from '@ds/shared/TextField'
-import { VintigaIconBlack } from '@ds/shared/VintigaLogo'
 import { BackArrowIcon, SearchIcon, SparklesIcon, TrendingUpIcon, UsersIcon, CopyIcon, CheckIcon, ArrowRightIcon } from '@ds/icons/Icons'
 import {
   BlockKicker,
@@ -374,16 +373,26 @@ function PlainMedia({ slide }: { slide: SlideConfig }) {
   )
 }
 
-// The Vintiga mark — the provided icon-only logo (black square + white chalice).
-function LogoMark({ size = 16 }: { size?: number }) {
-  return <VintigaIconBlack size={size} className="rounded-[3px] shrink-0" />
+// The Vintiga mark — the provided icon-only logo. Inverts on dark backgrounds so
+// it stays visible (black square on light, white square on dark).
+function VintigaMark({ size = 20, invert = false }: { size?: number; invert?: boolean }) {
+  const square = invert ? '#FFFFFF' : '#0A0A0A'
+  const glyph = invert ? '#0A0A0A' : '#FFFFFF'
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+      <rect width="40" height="40" rx="10" fill={square} />
+      <path d="M20 21.25C20 16.4175 16.0825 12.5 11.25 12.5H10L10 18.75C10 23.5825 13.9175 27.5 18.75 27.5H20L20 21.25Z" fill={glyph} />
+      <path d="M20 21.25C20 16.4175 23.9175 12.5 28.75 12.5H30V18.75C30 23.5825 26.0825 27.5 21.25 27.5H20L20 21.25Z" fill={glyph} />
+    </svg>
+  )
 }
 
 // Live branded 16:9 render of the slide being edited.
 function SlidePreview({ slide, index, storeName }: { slide: SlideConfig; index: number; storeName: string }) {
   const theme = BG_THEME[slide.bg]
+  const dark = slide.bg !== 'white'
   // Intro with a top header shows a small mark; content slides (and intro-left)
-  // use the vertical rail — logo + store name + page number.
+  // use the vertical rail — store name + logo + page number.
   const useRail = slide.kind === 'content' || (slide.kind === 'intro' && slide.header === 'left')
 
   let body: ReactNode
@@ -426,18 +435,19 @@ function SlidePreview({ slide, index, storeName }: { slide: SlideConfig; index: 
       )}
 
       {useRail ? (
-        <div className="absolute left-0 inset-y-0 w-[7%] flex flex-col items-center justify-between py-[5%] z-10">
-          <div className="flex flex-col items-center gap-2">
-            <LogoMark size={16} />
-            <span className={`[writing-mode:vertical-rl] rotate-180 text-[8px] tracking-wide whitespace-nowrap ${theme.foot}`}>{storeName}</span>
+        <div className="absolute left-0 inset-y-0 w-[8%] flex flex-col items-center justify-between py-[6%] z-10">
+          <span aria-hidden />
+          <div className="flex flex-col items-center gap-3">
+            <span className={`[writing-mode:vertical-rl] rotate-180 text-[9px] tracking-wide whitespace-nowrap ${theme.text}`}>{storeName}</span>
+            <VintigaMark size={20} invert={dark} />
           </div>
           <span className={`text-[9px] tabular-nums ${theme.foot}`}>{String(index + 1).padStart(2, '0')}</span>
         </div>
       ) : (
-        <div className="absolute left-[3%] top-[5%] z-10"><LogoMark size={16} /></div>
+        <div className="absolute left-[3%] top-[4%] z-10"><VintigaMark size={20} invert={dark} /></div>
       )}
 
-      <div className={useRail ? 'absolute inset-0 left-[7%]' : 'contents'}>{body}</div>
+      <div className={useRail ? 'absolute inset-0 left-[8%]' : 'contents'}>{body}</div>
     </div>
   )
 }
