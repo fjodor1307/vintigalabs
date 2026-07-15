@@ -79,6 +79,9 @@ function CategoryBadge({ category }: { category: Category }) {
 }
 
 // Shareable review-view hash for a prototype entry.
+// Prototypes open in a new browser tab from the hub, so the catalogue stays put.
+const NEW_TAB = { target: '_blank', rel: 'noopener noreferrer' } as const
+
 function reviewHashFor(entry: EnrichedEntry): string {
   const pathParts = entry.path.split('/')
   const flowSegment = pathParts.length >= 5 ? pathParts[3] : undefined
@@ -121,7 +124,7 @@ function CardArrow({ entry, featured }: { entry: EnrichedEntry; featured?: boole
       size="lg"
       icon={<ArrowRightIcon />}
       onClick={() => {
-        window.location.hash = entry.path
+        window.open(`${window.location.pathname}${entry.path}`, '_blank', 'noopener,noreferrer')
       }}
       aria-label="Open prototype"
       className={featured ? '' : HUB_OUTLINE_DARK}
@@ -132,9 +135,9 @@ function CardArrow({ entry, featured }: { entry: EnrichedEntry; featured?: boole
 function PrototypeLinks({ entry }: { entry: EnrichedEntry }) {
   return (
     <div className="flex items-center gap-vintiga-md">
-      <a href={entry.path} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Prototype</a>
-      <a href={`${entry.path}?view=overview`} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Designs</a>
-      <a href={reviewHashFor(entry)} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Review</a>
+      <a href={entry.path} {...NEW_TAB} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Prototype</a>
+      <a href={`${entry.path}?view=overview`} {...NEW_TAB} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Designs</a>
+      <a href={reviewHashFor(entry)} {...NEW_TAB} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Review</a>
     </div>
   )
 }
@@ -144,7 +147,7 @@ function PrototypeLinks({ entry }: { entry: EnrichedEntry }) {
 function CardMeta({ entry, category, featured }: { entry: EnrichedEntry; category: Category; featured?: boolean }) {
   return (
     <>
-      <a href={entry.path} className="flex flex-col gap-vintiga-sm no-underline">
+      <a href={entry.path} {...NEW_TAB} className="flex flex-col gap-vintiga-sm no-underline">
         <CardBadgeRow category={category} featured={featured} />
         <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">{entry.name}</h2>
         <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-3">{entry.description}</p>
@@ -171,6 +174,7 @@ function ScreenThumb({ path, frame, height = 168 }: { path: string; frame: Proto
   return (
     <a
       href={path}
+      {...NEW_TAB}
       aria-label="Open screen"
       className="shrink-0 block overflow-hidden rounded-vintiga-md border border-vintiga-border bg-vintiga-surface hover:border-vintiga-surface-muted transition-colors"
       style={{ width: outerW, height }}
@@ -199,7 +203,7 @@ function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull:
         'bg-vintiga-indigo-50 dark:bg-vintiga-surface border border-vintiga-indigo-200 dark:border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-5 overflow-hidden transition-colors hover:border-vintiga-indigo-300 dark:hover:border-vintiga-surface-muted',
       ].join(' ')}
     >
-      <a href={entry.path} className="flex flex-col gap-6 no-underline">
+      <a href={entry.path} {...NEW_TAB} className="flex flex-col gap-6 no-underline">
         <div className="flex flex-col gap-1">
           <CardBadgeRow category={category} featured />
           <h2 className="text-[30px] leading-9 font-medium text-vintiga-foreground">{entry.name}</h2>
@@ -579,7 +583,7 @@ const PRESENTATION_CATEGORIES: HubCard[] = [
 
 const PRESENTATION_BUILDER: HubCard[] = [
   { label: 'Blocks', desc: 'Reusable presentation blocks — titles, stats, glass cards, media.', href: '#/presentations/blocks' },
-  { label: 'Page Builder', desc: 'Assemble decks from blocks — pick pages, swap copy & imagery, export.', href: null },
+  { label: 'Deck Builder', desc: 'Assemble decks from blocks — pick pages, swap copy & imagery, export.', href: '#/presentations/page-builder' },
 ]
 
 function HubCardGrid({ cards }: { cards: HubCard[] }) {
