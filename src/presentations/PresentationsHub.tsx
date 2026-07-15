@@ -18,7 +18,7 @@ import {
 
 // ─── Presentations hub screens ────────────────────────────────────────────────
 // Investor Decks (deck listing), Presentation Blocks (the block catalog), and a
-// Page Builder placeholder. Rendered inside the hub chrome (HubNavbar), matching
+// Deck Builder placeholder. Rendered inside the hub chrome (HubNavbar), matching
 // Brand / Design System sub-pages.
 
 function goToHub() {
@@ -168,13 +168,13 @@ export function PresentationBlocksScreen() {
       </div>
 
       <p className="typo-body-sm text-vintiga-foreground-muted mt-vintiga-2xl">
-        More blocks (tables, team, funding, dividers) get added here as the decks grow — this catalog is the source the Page Builder will assemble from.
+        More blocks (tables, team, funding, dividers) get added here as the decks grow — this catalog is the source the Deck Builder will assemble from.
       </p>
     </PresentationsShell>
   )
 }
 
-// ─── Page Builder ─────────────────────────────────────────────────────────────
+// ─── Deck Builder ─────────────────────────────────────────────────────────────
 // Pick a deck page, then compose it: every block has a dropdown to swap it for
 // another block, and the page background can be white or a brand image with a
 // 50% black overlay. A first pass — pages are block presets standing in for the
@@ -321,7 +321,7 @@ export function PageBuilderScreen() {
   // ── Step 1 · how many pages ──────────────────────────────────────────────────
   if (phase === 'setup') {
     return (
-      <PresentationsShell title="Page Builder" subtitle="Answer a few questions and get a copy-ready prompt for Claude Code — it can't build the deck live yet, so this hands you the exact spec.">
+      <PresentationsShell title="Deck Builder" subtitle="Answer a few questions and get a copy-ready prompt for Claude Code — it can't build the deck live yet, so this hands you the exact spec.">
         <div className="max-w-xl flex flex-col gap-vintiga-lg rounded-vintiga-card border border-vintiga-border bg-vintiga-surface p-vintiga-xl">
           <div className="flex flex-col gap-1">
             <span className="typo-caption font-semibold uppercase tracking-wide text-vintiga-primary">Step 1 of 3</span>
@@ -350,7 +350,7 @@ export function PageBuilderScreen() {
   // ── Step 3 · the prompt ──────────────────────────────────────────────────────
   if (phase === 'prompt') {
     return (
-      <PresentationsShell title="Page Builder" subtitle="The exact spec for your deck — paste it into Claude Code.">
+      <PresentationsShell title="Deck Builder" subtitle="The exact spec for your deck — paste it into Claude Code.">
         <div className="max-w-3xl flex flex-col gap-vintiga-lg">
           <div className="flex flex-col gap-1">
             <span className="typo-caption font-semibold uppercase tracking-wide text-vintiga-primary">Step 3 of 3 · Your prompt</span>
@@ -378,7 +378,7 @@ export function PageBuilderScreen() {
   const onImage = page.bg === 'image'
 
   return (
-    <PresentationsShell title="Page Builder" subtitle="Set each page's background and elements. The preview updates as you go.">
+    <PresentationsShell title="Deck Builder" subtitle="Set each page's background and elements. The preview updates as you go.">
       <div className="flex flex-col gap-vintiga-lg">
         {/* Progress */}
         <div className="flex items-center justify-between gap-vintiga-md">
