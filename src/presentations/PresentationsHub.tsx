@@ -451,7 +451,7 @@ function SlidePreview({ slide, index }: { slide: SlideConfig; index: number }) {
 
       {useRail ? (
         <div className={`absolute left-0 inset-y-0 w-[8%] border-r ${theme.card} flex flex-col items-center justify-between py-[6%] z-10`}>
-          <VintigaLockup invert={dark} className="h-[36%]" />
+          <VintigaLockup invert={dark} className="h-[15%]" />
           <span className={`text-[9px] tabular-nums ${theme.foot}`}>{String(index + 1).padStart(2, '0')}</span>
         </div>
       ) : (
