@@ -435,8 +435,7 @@ function SlidePreview({ slide, index, storeName }: { slide: SlideConfig; index: 
       )}
 
       {useRail ? (
-        <div className="absolute left-0 inset-y-0 w-[8%] flex flex-col items-center justify-between py-[6%] z-10">
-          <span aria-hidden />
+        <div className={`absolute left-0 inset-y-0 w-[8%] border-r ${theme.card} flex flex-col items-center justify-between py-[6%] z-10`}>
           <div className="flex flex-col items-center gap-3">
             <span className={`[writing-mode:vertical-rl] rotate-180 text-[9px] tracking-wide whitespace-nowrap ${theme.text}`}>{storeName}</span>
             <VintigaMark size={20} invert={dark} />
