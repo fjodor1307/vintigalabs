@@ -18,11 +18,22 @@ export type MembershipKind = 'curated' | 'traditional' | 'rewards' | 'member-cho
 export type MembershipStatus = 'active' | 'cancelled' | 'on-hold'
 export type MembershipSource = 'vintiga' | 'commerce7'
 
+// Every customer record gets a Digital Pass automatically. The lifecycle is
+// derived from which dates are present (see `passStatus` in the screen):
+//   nothing set                → Inactive · Invitation Sent: Not Sent  (new customer)
+//   invitationSentOn           → Inactive · Invitation Sent: {date}
+//   invitationAcceptedOn       → Active   · Invitation Accepted: {date}
+//   lastUsedOn                 → Active   · Last Used: {date}
+// The most-advanced state wins, so re-sending an invite on an already-active
+// pass updates invitationSentOn internally but never downgrades the display.
+// passId is null until the pass is first created (on the first Send Invite).
 export interface DigitalPass {
-  passId: string
+  passId: string | null
   loyaltyPoints: number
-  invitationAccepted: string
   created: string
+  invitationSentOn: string | null
+  invitationAcceptedOn: string | null
+  lastUsedOn: string | null
 }
 
 export interface ShipmentWine {
@@ -95,11 +106,15 @@ export const CANCEL_REASONS = [
 
 const HOME_ADDRESS = '1210 Lakeview Street, Bellingham, WA 98229'
 
+// Seeded in the "new customer" starting state: the pass exists but no invite has
+// been sent yet, so there is no passId and the status reads "Not Sent".
 export const DIGITAL_PASS: DigitalPass = {
-  passId: 'VA12345678',
-  loyaltyPoints: 210,
-  invitationAccepted: 'Jan 18, 2026',
-  created: 'Mar 15, 2023',
+  passId: null,
+  loyaltyPoints: 0,
+  created: 'Jan 15, 2026',
+  invitationSentOn: null,
+  invitationAcceptedOn: null,
+  lastUsedOn: null,
 }
 
 // One of every club type so the layout can be checked for consistency (Jul 1).

@@ -1,8 +1,18 @@
 # Customers — Changelog
 
-## 2026-07-10 — Fedja + Claude: Add-card validation message wording
+## 2026-07-10 — Fedja + Claude: Digital Pass lifecycle + Send Invite
 
-Set the invalid-card message on the Billing → Add card modal to the exact ticket copy — **"Credit Card number entered can not be validated. Check the number and re-enter."** — replacing the opaque "Payment method ID is required" the processor returns. Still caught client-side (Luhn + length) and shown inline under the card field. `AddCardModal.tsx`.
+Reworked the **Digital Pass** on the Memberships tab from a static "Active" row into the ticketed lifecycle. Every customer record has a pass (its own card, separate from the addable clubs — a pass can't be "added").
+
+- **State is derived from dates** (`passStatus`), most-advanced wins:
+  - `Inactive · Invitation Sent: Not Sent` — new-customer starting state (seeded), **no Pass ID shown**.
+  - `Inactive · Invitation Sent: {date}` after an invite goes out.
+  - `Active · Invitation Accepted: {date}` once accepted.
+  - `Active · Last Used: {date}` once used. All states except "Not Sent" show their date.
+- **Send Invite** replaces "View pass" as the 3-dot action — sends the email invite (toast), stamps `invitationSentOn`, and **mints the Pass ID on first send** (dev may instead mint at record creation). "View pass" returns as a second item once a Pass ID exists.
+- **Re-send never downgrades** — resending updates `invitationSentOn` internally but the display follows the precedence, so an already-active/used pass keeps showing `Active · Last Used: {date}`.
+
+`membershipsData.ts` (new `DigitalPass` shape), `CustomerMembershipsScreen.tsx`.
 
 ## 2026-07-09 — Fedja + Claude: Memberships tab — expandable club + next-order model (Jul 1 review)
 

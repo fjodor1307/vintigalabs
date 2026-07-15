@@ -8,6 +8,8 @@ Designer scratchpad. Anything strange, unclear, or worth improving goes here. Ke
 
 ## Open questions
 
+- **⚪ Digital Pass — active/used states are display-only in the demo** — the pass is seeded in the *new customer* state (`Inactive · Invitation Sent: Not Sent`, no passId) so the reviewer sees the starting point + **Send Invite** forward step. `Active · Invitation Accepted` and `Active · Last Used` are the same `passStatus()` precedence but can't be reached from the winery UI (they're customer-side: accept / tap-to-use). The **don't-downgrade-on-resend** rule is implemented via that precedence (lastUsed > accepted > sent > not-sent) but only *visible* if seeded active. Can seed a second active example customer if we want to show it. · `CustomerMembershipsScreen.tsx` · 2026-07-10
+- **⚪ passId creation timing** — ticket leaves it to dev: at record creation vs first Send Invite. Prototype mints it on first send (so the display has no passId until then), matching the "no value until first created/sent" note. · 2026-07-10
 - **🔴 Notes vs Reminders vs Flags** — three visual variants in the rail, but the workflow difference isn't defined. Do Reminders have due dates / assignees? Do Flags escalate? · `CustomerOverviewScreen.tsx` · raised 2026-05-07 by Fedja
 - **🔴 What does "Update" open?** — drawer, modal, or full edit screen? · `CustomerOverviewScreen.tsx` · raised 2026-05-07 by Fedja
 
