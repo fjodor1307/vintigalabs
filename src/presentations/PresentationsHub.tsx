@@ -1,9 +1,9 @@
 import { useState, type ReactNode } from 'react'
 import { HubNavbar } from '../hub/HubNavbar'
 import type { Segment } from '../hub/segments'
-import { Select } from '@ds/shared/Select'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
-import { BackArrowIcon, SearchIcon, SparklesIcon, TrendingUpIcon, UsersIcon } from '@ds/icons/Icons'
+import { Button } from '@ds/shared/Button'
+import { BackArrowIcon, SearchIcon, SparklesIcon, TrendingUpIcon, UsersIcon, CopyIcon, CheckIcon, ArrowRightIcon } from '@ds/icons/Icons'
 import {
   BlockKicker,
   BlockTitle,
@@ -230,15 +230,6 @@ function renderBlock(kind: BlockKind) {
   }
 }
 
-interface Slot { id: string; kind: BlockKind }
-
-const BUILDER_PAGES: { value: string; label: string; slots: Slot[] }[] = [
-  { value: 'overview-title',   label: 'Vintiga Overview · Title',      slots: [{ id: 's1', kind: 'title' }, { id: 's2', kind: 'glass' }] },
-  { value: 'overview-problem', label: 'Vintiga Overview · The Problem', slots: [{ id: 's1', kind: 'title' }, { id: 's2', kind: 'stats' }] },
-  { value: 'overview-why',     label: 'Vintiga Overview · Why Now',     slots: [{ id: 's1', kind: 'title' }, { id: 's2', kind: 'icons' }] },
-  { value: 'blank',            label: 'Blank page',                     slots: [{ id: 's1', kind: 'title' }] },
-]
-
 const BG_IMAGES = [
   { src: '/brand/imagery/locations/estate-terrace.jpg', label: 'Estate terrace' },
   { src: '/brand/imagery/locations/wine-barrels.jpg',   label: 'Wine barrels' },
@@ -246,81 +237,245 @@ const BG_IMAGES = [
   { src: '/brand/imagery/locations/garden-path.jpg',    label: 'Garden path' },
 ]
 
+const PAGE_COUNTS = [5, 10, 20]
+
+interface PageConfig { bg: 'white' | 'image'; bgImage: string; blocks: BlockKind[] }
+
+const blockLabel = (k: BlockKind) => BLOCK_KINDS.find((b) => b.value === k)?.label ?? k
+const bgLabelOf = (src: string) => BG_IMAGES.find((i) => i.src === src)?.label ?? src
+
+// Turn the answers into a precise, copy-ready spec for Claude Code to build from.
+function buildPrompt(pages: PageConfig[], closing: boolean): string {
+  const out: string[] = []
+  out.push(`Build a Vintiga presentation deck — ${pages.length} page${pages.length === 1 ? '' : 's'}${closing ? ' plus a closing slide' : ''}.`)
+  out.push('')
+  out.push('Conventions: fully branded with Vintiga tokens, dark cinematic imagery where used, the same entrance animations as the existing "Vintiga Overview" deck, and mobile responsive. Assemble every page ONLY from the presentation blocks in src/presentations/blocks/blocks.tsx — Title & text, Stat row, Icon cards, Glass stat, Glass revenue card, Glass avatars pill, Framed media. Add it as a new screen under src/presentations/ and register it like the other decks.')
+  out.push('')
+  pages.forEach((p, i) => {
+    out.push(`Page ${i + 1}`)
+    out.push(p.bg === 'image'
+      ? `- Background: image "${bgLabelOf(p.bgImage)}" (${p.bgImage}) under a 50% black overlay; render text in white.`
+      : '- Background: solid white.')
+    out.push(`- Elements, top to bottom: ${p.blocks.length ? p.blocks.map(blockLabel).join(', ') : '(none selected — leave a blank section)'}.`)
+    out.push('')
+  })
+  if (closing) {
+    out.push(`Closing slide (page ${pages.length + 1})`)
+    out.push('- A short, calm sign-off written from the themes above — one line like "That\'s Vintiga." with a single summarizing sentence. No new data; echo the story the pages tell.')
+    out.push('')
+  }
+  return out.join('\n').trimEnd()
+}
+
+// A questionnaire, not a live editor (we can't build decks live yet). Walks you
+// through page count → per-page background + elements (with a live preview) → an
+// optional auto-written closing slide → a copy-ready PROMPT to paste into Claude
+// Code, which then builds the real deck.
+// Deep-link the wizard step from the query string so each screen is directly
+// reachable (shareable steps + lets the Figma capture hit each one):
+//   ?pb=pages&pbn=5&pbi=1   → page-by-page, 5 pages, on page 1
+//   ?pb=prompt&pbn=5        → the generated prompt
+const pbInit = (() => {
+  const q = new URLSearchParams(window.location.search)
+  const pb = q.get('pb')
+  const n = Number(q.get('pbn'))
+  if ((pb === 'pages' || pb === 'prompt') && n > 0) {
+    return { phase: pb as 'pages' | 'prompt', count: n, idx: Math.min(Math.max(1, Number(q.get('pbi')) || 1) - 1, n - 1) }
+  }
+  return { phase: 'setup' as const, count: null as number | null, idx: 0 }
+})()
+
 export function PageBuilderScreen() {
-  const [pageValue, setPageValue] = useState(BUILDER_PAGES[0].value)
-  const [slots, setSlots] = useState<Slot[]>(BUILDER_PAGES[0].slots)
-  const [bgMode, setBgMode] = useState<'white' | 'image'>('white')
-  const [bgImage, setBgImage] = useState(BG_IMAGES[0].src)
+  const [phase, setPhase] = useState<'setup' | 'pages' | 'prompt'>(pbInit.phase)
+  const [count, setCount] = useState<number | null>(pbInit.count)
+  const [pages, setPages] = useState<PageConfig[]>(() =>
+    pbInit.count ? Array.from({ length: pbInit.count }, () => ({ bg: 'white', bgImage: BG_IMAGES[0].src, blocks: ['title'] as BlockKind[] })) : [],
+  )
+  const [idx, setIdx] = useState(pbInit.idx)
+  const [closing, setClosing] = useState(true)
+  const [copied, setCopied] = useState(false)
 
-  function selectPage(v: string) {
-    setPageValue(v)
-    setSlots(BUILDER_PAGES.find((p) => p.value === v)?.slots ?? [])
+  function begin() {
+    if (!count) return
+    setPages(Array.from({ length: count }, () => ({ bg: 'white', bgImage: BG_IMAGES[0].src, blocks: ['title'] as BlockKind[] })))
+    setIdx(0)
+    setPhase('pages')
   }
-  function swapBlock(id: string, kind: BlockKind) {
-    setSlots((prev) => prev.map((s) => (s.id === id ? { ...s, kind } : s)))
+  function update(patch: Partial<PageConfig>) {
+    setPages((prev) => prev.map((p, i) => (i === idx ? { ...p, ...patch } : p)))
+  }
+  function toggleBlock(k: BlockKind) {
+    setPages((prev) => prev.map((p, i) => {
+      if (i !== idx) return p
+      return { ...p, blocks: p.blocks.includes(k) ? p.blocks.filter((b) => b !== k) : [...p.blocks, k] }
+    }))
+  }
+  async function copyPrompt() {
+    try {
+      await navigator.clipboard.writeText(buildPrompt(pages, closing))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch { /* clipboard blocked — user can still select the text */ }
   }
 
-  const onImage = bgMode === 'image'
+  // ── Step 1 · how many pages ──────────────────────────────────────────────────
+  if (phase === 'setup') {
+    return (
+      <PresentationsShell title="Page Builder" subtitle="Answer a few questions and get a copy-ready prompt for Claude Code — it can't build the deck live yet, so this hands you the exact spec.">
+        <div className="max-w-xl flex flex-col gap-vintiga-lg rounded-vintiga-card border border-vintiga-border bg-vintiga-surface p-vintiga-xl">
+          <div className="flex flex-col gap-1">
+            <span className="typo-caption font-semibold uppercase tracking-wide text-vintiga-primary">Step 1 of 3</span>
+            <h2 className="typo-title-section font-semibold text-vintiga-foreground">How many pages do you want?</h2>
+            <p className="typo-body-sm text-vintiga-foreground-muted">You'll set the background and elements for each one next.</p>
+          </div>
+          <div className="grid grid-cols-3 gap-vintiga-md">
+            {PAGE_COUNTS.map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setCount(n)}
+                className={`flex flex-col items-center justify-center gap-0.5 rounded-vintiga-card border-2 p-vintiga-lg transition-colors cursor-pointer ${count === n ? 'border-vintiga-primary bg-vintiga-primary-soft' : 'border-vintiga-border bg-vintiga-white hover:border-vintiga-slate-400'}`}
+              >
+                <span className="typo-display font-light text-vintiga-foreground">{n}</span>
+                <span className="typo-body-sm text-vintiga-foreground-muted">pages</span>
+              </button>
+            ))}
+          </div>
+          <Button disabled={!count} onClick={begin}>Continue</Button>
+        </div>
+      </PresentationsShell>
+    )
+  }
+
+  // ── Step 3 · the prompt ──────────────────────────────────────────────────────
+  if (phase === 'prompt') {
+    return (
+      <PresentationsShell title="Page Builder" subtitle="The exact spec for your deck — paste it into Claude Code.">
+        <div className="max-w-3xl flex flex-col gap-vintiga-lg">
+          <div className="flex flex-col gap-1">
+            <span className="typo-caption font-semibold uppercase tracking-wide text-vintiga-primary">Step 3 of 3 · Your prompt</span>
+            <h2 className="typo-title-section font-semibold text-vintiga-foreground">Paste this into Claude Code</h2>
+            <p className="typo-body-sm text-vintiga-foreground-muted">
+              We can't build the deck live yet — this is the spec for {pages.length} page{pages.length === 1 ? '' : 's'}{closing ? ' plus a closing slide' : ''}. Claude Code follows it to build the presentation.
+            </p>
+          </div>
+          <div className="rounded-vintiga-card border border-vintiga-border bg-vintiga-slate-900 p-vintiga-lg">
+            <pre className="whitespace-pre-wrap font-mono typo-body-sm text-vintiga-slate-100 leading-relaxed overflow-x-auto">{buildPrompt(pages, closing)}</pre>
+          </div>
+          <div className="flex flex-wrap items-center gap-vintiga-sm">
+            <Button leftIcon={copied ? <CheckIcon className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />} onClick={copyPrompt}>{copied ? 'Copied' : 'Copy prompt'}</Button>
+            <Button variant="outline" leftIcon={<BackArrowIcon className="w-4 h-4" />} onClick={() => { setPhase('pages'); setIdx(pages.length - 1) }}>Back to pages</Button>
+            <Button variant="outline" onClick={() => { setPhase('setup'); setCount(null) }}>Start over</Button>
+          </div>
+        </div>
+      </PresentationsShell>
+    )
+  }
+
+  // ── Step 2 · page by page ────────────────────────────────────────────────────
+  const page = pages[idx]
+  const isLast = idx === pages.length - 1
+  const onImage = page.bg === 'image'
 
   return (
-    <PresentationsShell title="Page Builder" subtitle="Pick a page, swap its blocks, and set the background — then export.">
+    <PresentationsShell title="Page Builder" subtitle="Set each page's background and elements. The preview updates as you go.">
       <div className="flex flex-col gap-vintiga-lg">
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-end gap-vintiga-lg rounded-vintiga-card border border-vintiga-border bg-vintiga-surface p-vintiga-md">
-          <label className="flex flex-col gap-1.5 min-w-[240px]">
-            <span className="typo-caption font-semibold text-vintiga-foreground-muted">Page</span>
-            <Select value={pageValue} onChange={(e) => selectPage(e.target.value)} options={BUILDER_PAGES.map((p) => ({ value: p.value, label: p.label }))} />
-          </label>
-          <div className="flex flex-col gap-1.5">
-            <span className="typo-caption font-semibold text-vintiga-foreground-muted">Background</span>
-            <SegmentedControl<'white' | 'image'>
-              value={bgMode}
-              onChange={setBgMode}
-              options={[{ value: 'white', label: 'White' }, { value: 'image', label: 'Image' }]}
-            />
-          </div>
-          {onImage && (
-            <div className="flex items-center gap-vintiga-sm">
-              {BG_IMAGES.map((im) => (
-                <button
-                  key={im.src}
-                  type="button"
-                  onClick={() => setBgImage(im.src)}
-                  aria-label={im.label}
-                  className={`w-12 h-12 rounded-vintiga-md overflow-hidden border-2 transition-colors ${bgImage === im.src ? 'border-vintiga-primary' : 'border-transparent hover:border-vintiga-border'}`}
-                >
-                  <img src={im.src} alt="" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Canvas — 16:9 slide */}
-        <div className="relative w-full aspect-[16/9] rounded-vintiga-2xl overflow-hidden border border-vintiga-border bg-vintiga-white shadow-sm">
-          {onImage && (
-            <>
-              <img src={bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/50" />
-            </>
-          )}
-          <div className={`relative h-full overflow-y-auto px-vintiga-2xl py-vintiga-xl flex flex-col justify-center gap-vintiga-xl ${onImage ? '[&_h2]:!text-white [&_h3]:!text-white [&_p]:!text-white/85 [&_.text-vintiga-indigo-600]:!text-white' : ''}`}>
-            {slots.map((s) => (
-              <div key={s.id} className="group relative">
-                <div className="absolute -top-2 right-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-52">
-                    <Select value={s.kind} onChange={(e) => swapBlock(s.id, e.target.value as BlockKind)} options={BLOCK_KINDS} />
-                  </div>
-                </div>
-                {renderBlock(s.kind)}
-              </div>
+        {/* Progress */}
+        <div className="flex items-center justify-between gap-vintiga-md">
+          <span className="typo-caption font-semibold uppercase tracking-wide text-vintiga-primary">Step 2 of 3 · Page {idx + 1} of {pages.length}</span>
+          <div className="flex items-center gap-1">
+            {pages.map((_, i) => (
+              <span key={i} className={`h-1.5 rounded-full transition-all ${i === idx ? 'w-6 bg-vintiga-primary' : 'w-1.5 bg-vintiga-border'}`} />
             ))}
           </div>
         </div>
 
-        <p className="typo-body-sm text-vintiga-foreground-muted">
-          Hover a block to swap it. Backgrounds and block choices are per-page. Export lands here once the live decks are block-based.
-        </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-vintiga-lg items-start">
+          {/* Controls */}
+          <div className="flex flex-col gap-vintiga-lg">
+            <div className="flex flex-col gap-vintiga-sm rounded-vintiga-card border border-vintiga-border bg-vintiga-surface p-vintiga-lg">
+              <span className="typo-caption font-semibold text-vintiga-foreground-muted">Background</span>
+              <SegmentedControl<'white' | 'image'>
+                value={page.bg}
+                onChange={(v) => update({ bg: v })}
+                options={[{ value: 'white', label: 'White' }, { value: 'image', label: 'Image + 50% overlay' }]}
+              />
+              {onImage && (
+                <div className="flex flex-wrap gap-vintiga-sm mt-1">
+                  {BG_IMAGES.map((im) => (
+                    <button
+                      key={im.src}
+                      type="button"
+                      onClick={() => update({ bgImage: im.src })}
+                      aria-label={im.label}
+                      className={`w-14 h-14 rounded-vintiga-md overflow-hidden border-2 transition-colors ${page.bgImage === im.src ? 'border-vintiga-primary' : 'border-transparent hover:border-vintiga-border'}`}
+                    >
+                      <img src={im.src} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-vintiga-sm rounded-vintiga-card border border-vintiga-border bg-vintiga-surface p-vintiga-lg">
+              <span className="typo-caption font-semibold text-vintiga-foreground-muted">Elements</span>
+              <div className="flex flex-wrap gap-vintiga-sm">
+                {BLOCK_KINDS.map((b) => {
+                  const on = page.blocks.includes(b.value)
+                  return (
+                    <button
+                      key={b.value}
+                      type="button"
+                      onClick={() => toggleBlock(b.value)}
+                      className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-full border typo-body-sm font-semibold transition-colors ${on ? 'border-vintiga-primary bg-vintiga-primary-soft text-vintiga-primary' : 'border-vintiga-border bg-vintiga-white text-vintiga-foreground-muted hover:border-vintiga-slate-400'}`}
+                    >
+                      {on && <CheckIcon className="w-3.5 h-3.5" />}{b.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {isLast && (
+              <div className="flex flex-col gap-vintiga-sm rounded-vintiga-card border-2 border-vintiga-primary/40 bg-vintiga-primary-soft p-vintiga-lg">
+                <span className="inline-flex items-center gap-1.5 typo-body-sm font-semibold text-vintiga-primary"><SparklesIcon className="w-4 h-4" />This is your last page</span>
+                <p className="typo-body-sm text-vintiga-foreground-muted">Want a closing slide written for you? It'll be a short "the end" sign-off drawn from everything you picked.</p>
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={closing} onChange={(e) => setClosing(e.target.checked)} className="w-4 h-4 accent-vintiga-primary" />
+                  <span className="typo-body-sm text-vintiga-foreground">Yes, add a closing slide</span>
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Preview */}
+          <div className="lg:sticky lg:top-vintiga-lg flex flex-col gap-vintiga-sm">
+            <span className="typo-caption font-semibold text-vintiga-foreground-muted">Preview · page {idx + 1}</span>
+            <div className="relative w-full aspect-[16/9] rounded-vintiga-2xl overflow-hidden border border-vintiga-border bg-vintiga-white shadow-sm">
+              {onImage && (
+                <>
+                  <img src={page.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/50" />
+                </>
+              )}
+              <div className={`relative h-full overflow-y-auto px-vintiga-xl py-vintiga-lg flex flex-col justify-center gap-vintiga-lg ${onImage ? '[&_h2]:!text-white [&_h3]:!text-white [&_p]:!text-white/85 [&_.text-vintiga-indigo-600]:!text-white' : ''}`}>
+                {page.blocks.length === 0
+                  ? <p className="typo-body-sm text-center text-vintiga-foreground-muted">Pick elements to preview this page.</p>
+                  : page.blocks.map((k, i) => <div key={`${k}-${i}`}>{renderBlock(k)}</div>)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <div className="flex items-center justify-between border-t border-vintiga-border pt-vintiga-lg">
+          <Button variant="outline" leftIcon={<BackArrowIcon className="w-4 h-4" />} onClick={() => (idx === 0 ? setPhase('setup') : setIdx(idx - 1))}>
+            {idx === 0 ? 'Start over' : 'Previous'}
+          </Button>
+          {isLast
+            ? <Button leftIcon={<SparklesIcon className="w-4 h-4" />} onClick={() => setPhase('prompt')}>Generate prompt</Button>
+            : <Button leftIcon={<ArrowRightIcon className="w-4 h-4" />} onClick={() => setIdx(idx + 1)}>Next page</Button>}
+        </div>
       </div>
     </PresentationsShell>
   )
