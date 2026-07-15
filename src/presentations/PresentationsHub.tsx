@@ -4,6 +4,7 @@ import type { Segment } from '../hub/segments'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
 import { Button } from '@ds/shared/Button'
 import { TextField } from '@ds/shared/TextField'
+import { VintigaIconBlack } from '@ds/shared/VintigaLogo'
 import { BackArrowIcon, SearchIcon, SparklesIcon, TrendingUpIcon, UsersIcon, CopyIcon, CheckIcon, ArrowRightIcon } from '@ds/icons/Icons'
 import {
   BlockKicker,
@@ -373,16 +374,17 @@ function PlainMedia({ slide }: { slide: SlideConfig }) {
   )
 }
 
-// The little logo mark (top) or the vertical rail (left) — deck chrome.
-function LogoMark({ dark }: { dark: boolean }) {
-  return <span className={`block w-[14px] h-[14px] rounded-[3px] ${dark ? 'bg-white' : 'bg-vintiga-slate-900'}`} />
+// The Vintiga mark — the provided icon-only logo (black square + white chalice).
+function LogoMark({ size = 16 }: { size?: number }) {
+  return <VintigaIconBlack size={size} className="rounded-[3px] shrink-0" />
 }
 
 // Live branded 16:9 render of the slide being edited.
-function SlidePreview({ slide, index }: { slide: SlideConfig; index: number }) {
+function SlidePreview({ slide, index, storeName }: { slide: SlideConfig; index: number; storeName: string }) {
   const theme = BG_THEME[slide.bg]
-  const dark = slide.bg !== 'white'
-  const leftRail = slide.kind === 'intro' && slide.header === 'left'
+  // Intro with a top header shows a small mark; content slides (and intro-left)
+  // use the vertical rail — logo + store name + page number.
+  const useRail = slide.kind === 'content' || (slide.kind === 'intro' && slide.header === 'left')
 
   let body: ReactNode
   if (slide.kind === 'intro') {
@@ -423,26 +425,31 @@ function SlidePreview({ slide, index }: { slide: SlideConfig; index: number }) {
         </>
       )}
 
-      {leftRail ? (
-        <div className="absolute left-0 inset-y-0 w-[7%] flex flex-col items-center justify-between py-[4%] z-10">
-          <LogoMark dark={dark} />
-          <span className={`text-[8px] ${theme.foot}`}>{String(index + 1).padStart(2, '0')}</span>
+      {useRail ? (
+        <div className="absolute left-0 inset-y-0 w-[7%] flex flex-col items-center justify-between py-[5%] z-10">
+          <div className="flex flex-col items-center gap-2">
+            <LogoMark size={16} />
+            <span className={`[writing-mode:vertical-rl] rotate-180 text-[8px] tracking-wide whitespace-nowrap ${theme.foot}`}>{storeName}</span>
+          </div>
+          <span className={`text-[9px] tabular-nums ${theme.foot}`}>{String(index + 1).padStart(2, '0')}</span>
         </div>
       ) : (
-        <div className="absolute left-[3%] top-[5%] z-10"><LogoMark dark={dark} /></div>
+        <div className="absolute left-[3%] top-[5%] z-10"><LogoMark size={16} /></div>
       )}
 
-      <div className={leftRail ? 'absolute inset-0 pl-[7%]' : 'contents'}>{body}</div>
+      <div className={useRail ? 'absolute inset-0 left-[7%]' : 'contents'}>{body}</div>
     </div>
   )
 }
 
 // Turn the answers into a precise, copy-ready spec for Claude Code to build from.
-function buildPrompt(slides: SlideConfig[], closing: boolean): string {
+function buildPrompt(slides: SlideConfig[], closing: boolean, storeName: string): string {
   const out: string[] = []
   out.push(`Build a Vintiga presentation deck — ${slides.length} slide${slides.length === 1 ? '' : 's'}${closing ? ' plus a closing slide' : ''}.`)
   out.push('')
   out.push('Conventions: fully branded with Vintiga tokens + Inter, the same entrance animations as the existing "Vintiga Overview" deck, one dominant colour (indigo), a visual on every slide, and mobile responsive. Build from the presentation blocks in src/presentations/blocks/blocks.tsx (kicker · display title · lead · footnote · icon cards) and the glass blocks for product imagery. Add it as a new screen under src/presentations/ and register it like the other decks.')
+  out.push('')
+  out.push(`Deck chrome: the Vintiga icon mark, the store name "${storeName}", and the page number — shown top-left on intro slides with a top header, and down a vertical left rail on content slides (and the left-header intro).`)
   out.push('')
   slides.forEach((s, i) => {
     const bgLine =
@@ -507,6 +514,7 @@ export function PageBuilderScreen() {
   const [idx, setIdx] = useState(pbInit.idx)
   const [closing, setClosing] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [storeName, setStoreName] = useState('Vintiga Labs, LLC')
 
   function begin() {
     if (!count) return
@@ -519,7 +527,7 @@ export function PageBuilderScreen() {
   }
   async function copyPrompt() {
     try {
-      await navigator.clipboard.writeText(buildPrompt(slides, closing))
+      await navigator.clipboard.writeText(buildPrompt(slides, closing, storeName))
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch { /* clipboard blocked — user can still select the text */ }
@@ -567,7 +575,7 @@ export function PageBuilderScreen() {
             </p>
           </div>
           <div className="rounded-vintiga-card border border-vintiga-border bg-vintiga-slate-900 p-vintiga-lg">
-            <pre className="whitespace-pre-wrap font-mono typo-body-sm text-vintiga-slate-100 leading-relaxed overflow-x-auto">{buildPrompt(slides, closing)}</pre>
+            <pre className="whitespace-pre-wrap font-mono typo-body-sm text-vintiga-slate-100 leading-relaxed overflow-x-auto">{buildPrompt(slides, closing, storeName)}</pre>
           </div>
           <div className="flex flex-wrap items-center gap-vintiga-sm">
             <Button leftIcon={copied ? <CheckIcon className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />} onClick={copyPrompt}>{copied ? 'Copied' : 'Copy prompt'}</Button>
@@ -684,6 +692,10 @@ export function PageBuilderScreen() {
               <span className="typo-caption font-semibold text-vintiga-foreground-muted">Content</span>
               {isIntro ? (
                 <>
+                  <label className="flex flex-col gap-1.5">
+                    <span className="typo-caption font-semibold text-vintiga-foreground">Store name <span className="text-vintiga-foreground-muted font-normal">(logo, all slides)</span></span>
+                    <TextField value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Vintiga Labs, LLC" />
+                  </label>
                   {field('caption', 'Caption', 'Guest Intelligence')}
                   {field('headline', 'Headline', "Powering the world's most remarkable wineries")}
                   {field('description', 'Description', 'More visitors. More members. More revenue.')}
@@ -752,7 +764,7 @@ export function PageBuilderScreen() {
           {/* Preview */}
           <div className="lg:sticky lg:top-vintiga-lg flex flex-col gap-vintiga-sm">
             <span className="typo-caption font-semibold text-vintiga-foreground-muted">Preview · page {idx + 1}</span>
-            <SlidePreview slide={slide} index={idx} />
+            <SlidePreview slide={slide} index={idx} storeName={storeName} />
           </div>
         </div>
 
