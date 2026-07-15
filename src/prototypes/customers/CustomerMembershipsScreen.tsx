@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import { CustomerViewLayout } from './CustomerViewLayout'
 import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
@@ -7,6 +7,7 @@ import { Tag } from '@ds/shared/Tag'
 import { RecordsCard } from '@ds/shared/RecordsCard'
 import { CardBrandLogo } from '@ds/shared/CardBrandLogo'
 import { AlertSoft } from '@ds/shared/AlertSoft'
+import { Toast } from '@ds/shared/Toast'
 import {
   GemIcon,
   MailIcon,
@@ -21,6 +22,7 @@ import {
   DIGITAL_PASS,
   MEMBERSHIPS,
   CLUB_OPTIONS,
+  type DigitalPass,
   type Membership,
   type MembershipStatus,
   type NextShipment,
@@ -62,8 +64,42 @@ function Pair({ label, value, edit }: { label: string; value: ReactNode; edit?: 
 
 // ─── Digital Pass — standalone compact card ───────────────────────────────────
 
+// Derive the displayed state from which dates are present — most-advanced wins,
+// so re-sending an invite on an active pass never downgrades what's shown.
+function passStatus(p: DigitalPass): { active: boolean; label: string } {
+  if (p.lastUsedOn)           return { active: true,  label: `Last Used: ${p.lastUsedOn}` }
+  if (p.invitationAcceptedOn) return { active: true,  label: `Invitation Accepted: ${p.invitationAcceptedOn}` }
+  if (p.invitationSentOn)     return { active: false, label: `Invitation Sent: ${p.invitationSentOn}` }
+  return { active: false, label: 'Invitation Sent: Not Sent' }
+}
+
+// A pass ID is minted the first time an invite is sent (dev may instead mint it
+// at record creation — either way the display has no value until first send).
+function mintPassId(): string {
+  return `VA${Math.floor(10000000 + Math.random() * 89999999)}`
+}
+
 function DigitalPassCard() {
-  const p = DIGITAL_PASS
+  const [pass, setPass] = useState<DigitalPass>(DIGITAL_PASS)
+  const [toast, setToast] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!toast) return
+    const id = setTimeout(() => setToast(null), 3500)
+    return () => clearTimeout(id)
+  }, [toast])
+
+  const { active, label } = passStatus(pass)
+
+  function sendInvite() {
+    setPass((prev) => ({
+      ...prev,
+      passId: prev.passId ?? mintPassId(), // created on the first send
+      invitationSentOn: formatToday(),     // updated internally even when already active
+    }))
+    setToast(pass.invitationSentOn ? 'Invitation re-sent to the customer.' : 'Invitation sent to the customer.')
+  }
+
   return (
     <RecordsCard title="Digital Passes" subtitle="Manage your customer digital passes" divider={false}>
       <div className="flex items-center gap-vintiga-md rounded-vintiga-card border border-vintiga-border p-vintiga-md">
@@ -73,12 +109,14 @@ function DigitalPassCard() {
         <div className="flex-1 min-w-0 flex flex-wrap items-center gap-x-vintiga-xl gap-y-1">
           <div className="flex items-center gap-vintiga-sm">
             <span className="typo-body-sm font-semibold text-vintiga-slate-900">Digital Pass</span>
-            <Tag variant="filled" tone="success" size="sm">Active</Tag>
+            {active
+              ? <Tag variant="filled" tone="success" size="sm">Active</Tag>
+              : <Tag variant="neutral-light" size="sm">Inactive</Tag>}
           </div>
-          <span className="typo-body-sm text-vintiga-slate-500">Pass ID {p.passId}</span>
-          <span className="typo-body-sm text-vintiga-slate-500">{p.loyaltyPoints} loyalty points</span>
-          <span className="typo-body-sm text-vintiga-slate-500">Accepted {p.invitationAccepted}</span>
-          <span className="typo-body-sm text-vintiga-slate-500">Created {p.created}</span>
+          <span className="typo-body-sm font-medium text-vintiga-slate-700">{label}</span>
+          {pass.passId && <span className="typo-body-sm text-vintiga-slate-500">Pass ID {pass.passId}</span>}
+          <span className="typo-body-sm text-vintiga-slate-500">{pass.loyaltyPoints} loyalty points</span>
+          <span className="typo-body-sm text-vintiga-slate-500">Created {pass.created}</span>
         </div>
         <PopoverMenu
           align="right"
@@ -86,9 +124,18 @@ function DigitalPassCard() {
           trigger={(_o, toggle) => (
             <IconButton variant="outline" size="sm" icon={<EllipsisVerticalIcon />} onClick={toggle} aria-label="More options for Digital Pass" />
           )}
-          items={[{ label: 'View pass', onClick: () => {} }]}
+          items={[
+            { label: 'Send Invite', onClick: sendInvite },
+            ...(pass.passId ? [{ label: 'View pass', onClick: () => {} }] : []),
+          ]}
         />
       </div>
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[60] animate-[fadeUp_0.3s_ease-out]">
+          <Toast title={toast} description="They'll get an email to add the pass to their wallet." variant="success" onClose={() => setToast(null)} />
+        </div>
+      )}
     </RecordsCard>
   )
 }

@@ -6,6 +6,10 @@
 
 ---
 
+## 2026-07-10 — Fedja + Claude: Experience product-type icon aligned
+
+The **Select Product Type** modal used `PartyPopperIcon` for **Experience** — the same icon the products list filter bar assigns to **Events** — so adding an Experience showed the "Events" icon. Switched it to `HandHeartIcon`, matching the **Experiences** filter tab, so the type reads consistently across the two surfaces. `SelectProductTypeModal.tsx`.
+
 ## 2026-07-06 — Fedja + Claude: Cost Of Good + Alcohol % share a row on the inline form
 
 Follow-up to the shared `VariantFields`: on the inline single-variant form (no Sort Order), Cost Of Good and Alcohol Percentage each sat on a half-empty row. Alcohol Percentage now moves up beside Cost Of Good when Sort Order is hidden; the modal keeps its [Cost Of Good, Sort Order] + [Alcohol %, Proof] layout, and spirits on the inline form get Proof on the following row.
