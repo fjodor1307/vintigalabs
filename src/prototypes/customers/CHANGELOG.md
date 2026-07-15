@@ -6,7 +6,7 @@ Reworked the Memberships tab per the Jul 15 review.
 
 - **Condensed card** carries the essentials only: **delivery** (combined), **payment** (change card), **join date + commitment/renewal**, **preferred shipping**, **shipping notes + gift message**, **order review**, and an **"order waiting for pickup"** alert when one exists.
 - **Removed the "Your next shipment" block** (bottles, charge/ship dates, min–max) from the card — that lives in Club processing. No shipment info in the collapsed summary either.
-- **Full membership page** behind a **"View full membership →"** link (`#/web/customers/view/memberships/{id}`, `MembershipDetailPage.tsx`): Overview + **membership tags** and **membership notes** (kept distinct from the customer-level ones) + **paginated past club orders**.
+- **"View full membership →"** links to the existing **Clubs membership page** (`#/web/clubs/memberships/{clubMemberId}`) — the canonical deep view (orders, history, addresses, payment, holds) — instead of duplicating it under Customers. Per the Jul 15 decision, membership deep-detail lives in Club processing. The customer's Curators Club maps to club member `1001` (Jane Davis) via a new `clubMemberId`.
 - **Combined delivery method** (`DeliveryDestinationModal`) — one picker listing **pickup locations *and* saved addresses together**; one tap sets method + destination (no two-step). Replaces the separate ship-to + delivery modals. Same paradigm to hand to Vantage.
 
 `CustomerMembershipsScreen.tsx`, `MembershipDetailPage.tsx` (new), `membershipEditModals.tsx`, `membershipsData.ts`, route in `prototype.config.ts`.

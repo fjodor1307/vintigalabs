@@ -56,6 +56,7 @@ export interface NextShipment {
 
 export interface Membership {
   id: string
+  clubMemberId?: string // links to the full membership page in the Clubs prototype (#/web/clubs/memberships/{id})
   clubName: string
   clubType: string
   kind: MembershipKind
@@ -133,6 +134,7 @@ export const DIGITAL_PASS: DigitalPass = {
 export const MEMBERSHIPS: Membership[] = [
   {
     id: 'mbr-curated',
+    clubMemberId: '1001', // Jane Davis in the Clubs prototype
     clubName: 'Curators Club',
     clubType: 'Curated Bottle Club',
     kind: 'curated',

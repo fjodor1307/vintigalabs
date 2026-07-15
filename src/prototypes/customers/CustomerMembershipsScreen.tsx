@@ -396,7 +396,7 @@ export function CustomerMembershipsScreen() {
               onEdit={() => setModal({ kind: 'edit', id: m.id })}
               onHold={() => handleHold(m.id)}
               onCancel={() => setModal({ kind: 'cancel', id: m.id })}
-              onView={() => { window.location.hash = `#/web/customers/view/memberships/${m.id}` }}
+              onView={() => { window.location.hash = m.clubMemberId ? `#/web/clubs/memberships/${m.clubMemberId}` : '#/web/clubs/memberships' }}
             />
           ))}
         </RecordsCard>
