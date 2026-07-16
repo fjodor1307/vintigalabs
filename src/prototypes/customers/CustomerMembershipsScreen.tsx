@@ -16,6 +16,7 @@ import {
   ChevronDownIcon,
   TruckIcon,
   MapPinIcon,
+  CreditCardIcon,
   IdCardIcon,
 } from '@ds/icons/Icons'
 import {
@@ -155,12 +156,43 @@ function summaryLine(m: Membership): string {
 // notes. The next shipment (bottles / charge dates) lives in Club processing;
 // deep detail (past orders, tags, custom fields) is on the full membership page.
 
-function deliveryDisplay(result: DeliveryResult): ReactNode {
+// Same 56×36 tile as CardBrandLogo, so the "paid with" and "delivery" rows read
+// as one pair rather than a card logo next to a loose icon.
+function Chip({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="text-vintiga-slate-400 [&>svg]:w-4 [&>svg]:h-4">{result.method === 'pickup' ? <MapPinIcon /> : <TruckIcon />}</span>
-      {result.method === 'pickup' ? 'Pickup' : 'Ship'} · {result.destination}
+    <span className="w-14 h-9 shrink-0 rounded-[5px] border border-vintiga-slate-200 bg-vintiga-white inline-flex items-center justify-center text-vintiga-slate-400 [&>svg]:w-4 [&>svg]:h-4">
+      {children}
     </span>
+  )
+}
+
+function DeliveryChip({ method }: { method: 'pickup' | 'ship' }) {
+  return <Chip>{method === 'pickup' ? <MapPinIcon /> : <TruckIcon />}</Chip>
+}
+
+// Label + chip + value + edit link — the payment/delivery pair at the top of the
+// card. Separate from `Pair` because the chip needs to sit beside the value.
+function ChipPair({ label, chip, value, edit }: {
+  label: string
+  chip: ReactNode
+  value: ReactNode
+  edit?: { label: string; onClick: () => void }
+}) {
+  return (
+    <div className="flex flex-col gap-0.5 min-w-0">
+      <span className="typo-caption uppercase tracking-wide text-vintiga-slate-400">{label}</span>
+      {/* min-h matches the two-line delivery address so the chips in both
+          columns centre on the same baseline. */}
+      <div className="flex items-center gap-vintiga-sm min-w-0 min-h-10">
+        {chip}
+        <span className="typo-body-sm text-vintiga-slate-900 min-w-0">{value}</span>
+      </div>
+      {edit && (
+        <button type="button" onClick={edit.onClick} className="typo-caption font-semibold text-vintiga-indigo-600 hover:text-vintiga-indigo-700 bg-transparent border-none p-0 cursor-pointer text-left w-fit mt-0.5">
+          {edit.label}
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -186,31 +218,42 @@ function MembershipDetailBlock({ m, onView }: { m: Membership; onView: () => voi
         <AlertSoft variant="warning" title="Order waiting for pickup" subtitle={`Ready since ${m.outstandingPickup}.`} />
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-vintiga-md">
-        {isShipmentKind && (
-          <Pair label="Delivery" value={deliveryDisplay(delivery)} edit={{ label: 'Change delivery', onClick: () => setModal('delivery') }} />
-        )}
-        <Pair
+      {/* How it's paid for and where it goes — the two editable facts, paired. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-vintiga-md">
+        <ChipPair
           label="Paid with"
-          value={card ? <span className="inline-flex items-center gap-1.5"><CardBrandLogo brand={card.brand} /> •••• {card.last4}</span> : 'No card on file'}
+          chip={card ? <CardBrandLogo brand={card.brand} className="shrink-0" /> : <Chip><CreditCardIcon /></Chip>}
+          value={card ? <>•••• {card.last4}</> : 'No card on file'}
           edit={{ label: card ? 'Change card' : 'Add a card', onClick: () => setModal('card') }}
         />
+        {isShipmentKind && (
+          <ChipPair
+            label="Delivery"
+            chip={<DeliveryChip method={delivery.method} />}
+            value={`${delivery.method === 'pickup' ? 'Pickup' : 'Ship'} · ${delivery.destination}`}
+            edit={{ label: 'Change delivery', onClick: () => setModal('delivery') }}
+          />
+        )}
+      </div>
+
+      {/* Dates + plan facts, on one aligned row. */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-vintiga-md pt-vintiga-md border-t border-vintiga-border">
+        {(m.renews || m.commitmentEnds) && <Pair label={m.renews ? 'Renews' : 'Commitment ends'} value={(m.renews ?? m.commitmentEnds) as string} />}
         {m.level && <Pair label="Level" value={`${m.level.name} · $${m.level.monthly}/mo`} />}
         {m.accountCredit !== undefined && <Pair label="Account credit" value={`$${m.accountCredit.toFixed(2)}`} />}
-        <Pair label="Joined" value={m.joined} />
-        {(m.renews || m.commitmentEnds) && <Pair label={m.renews ? 'Renews' : 'Commitment ends'} value={(m.renews ?? m.commitmentEnds) as string} />}
         {isShipmentKind && <Pair label="Preferred shipping" value={m.preferredShipping ?? '—'} />}
+        <Pair label="Joined" value={m.joined} />
       </div>
 
       {isShipmentKind && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-vintiga-md pt-vintiga-sm border-t border-vintiga-border">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-vintiga-md pt-vintiga-md border-t border-vintiga-border">
           <Pair label="Shipping notes" value={m.shippingNotes || <span className="text-vintiga-slate-400">None</span>} />
           <Pair label="Gift message" value={m.giftMessage ? m.giftMessage : <span className="text-vintiga-slate-400">None</span>} />
         </div>
       )}
 
       {m.benefits && (
-        <div className="pt-vintiga-sm border-t border-vintiga-border">
+        <div className="pt-vintiga-md border-t border-vintiga-border">
           <p className="typo-caption font-semibold uppercase tracking-wide text-vintiga-slate-500 mb-vintiga-sm">Member benefits</p>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-vintiga-lg gap-y-1.5">
             {m.benefits.map((b) => (
@@ -222,7 +265,7 @@ function MembershipDetailBlock({ m, onView }: { m: Membership; onView: () => voi
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-vintiga-md pt-vintiga-sm border-t border-vintiga-border">
+      <div className="flex items-center justify-between gap-vintiga-md pt-vintiga-md border-t border-vintiga-border">
         {m.kind === 'curated' && m.orderReview !== undefined ? (
           <span className="inline-flex items-center gap-vintiga-sm typo-body-sm text-vintiga-slate-500">
             <span className="font-medium text-vintiga-slate-700">Order review</span>
