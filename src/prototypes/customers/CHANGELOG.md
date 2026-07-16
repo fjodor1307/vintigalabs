@@ -1,5 +1,16 @@
 # Customers — Changelog
 
+## 2026-07-16 — Fedja + Claude: Membership card polish
+
+Tightened the expanded membership card so it reads as three groups instead of one flat grid.
+
+- **Paid with + Delivery are paired at the top** — the two editable facts, side by side. Delivery now uses the **same 56×36 chip as `CardBrandLogo`** (a pin for pickup, a truck for shipping) instead of a loose inline icon, so the two columns read as a set. The chips centre on a shared baseline (`min-h-10`) so a wrapping address can't knock them out of line.
+- **Dates on one aligned row** — Commitment ends / Renews · Preferred shipping · Joined. Previously "Joined" was stranded in the first row's whitespace because the wrapping delivery line made the row uneven.
+- **Dividers between groups** (paid/delivery · dates · notes · footer) with `pt-vintiga-md` for consistent rhythm.
+- No-card state now shows a card-icon chip rather than a delivery icon.
+
+`CustomerMembershipsScreen.tsx`.
+
 ## 2026-07-16 — Fedja + Claude: Delivery picker bug fix + shared editor
 
 Follow-up to the Jul 15 combined-delivery work.
