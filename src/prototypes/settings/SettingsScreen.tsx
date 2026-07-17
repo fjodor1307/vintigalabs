@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { SettingsLayout } from './SettingsLayout'
+import { GeneralTab } from './GeneralTab'
 import { LocationsTab } from './LocationsTab'
 import { TaxesTab } from './TaxesTab'
 import { SeasonsTab } from './SeasonsTab'
@@ -46,13 +47,13 @@ const TAB_DESCRIPTION: Record<SettingsTab, string> = {
 /** Read `?tab=…` off the hash query string. Lets other surfaces deep-link
  *  to a specific Settings tab. */
 function readInitialTab(): SettingsTab {
-  if (typeof window === 'undefined') return 'locations'
+  if (typeof window === 'undefined') return 'general'
   const hash = window.location.hash
   const qIdx = hash.indexOf('?')
-  if (qIdx === -1) return 'locations'
+  if (qIdx === -1) return 'general'
   const params = new URLSearchParams(hash.slice(qIdx + 1))
   const t = params.get('tab') as SettingsTab | null
-  return t && TABS.some((row) => row.value === t) ? t : 'locations'
+  return t && TABS.some((row) => row.value === t) ? t : 'general'
 }
 
 export function SettingsScreen() {
@@ -78,7 +79,9 @@ export function SettingsScreen() {
           options={TABS}
         />
 
-        {tab === 'locations' ? (
+        {tab === 'general' ? (
+          <GeneralTab />
+        ) : tab === 'locations' ? (
           <LocationsTab />
         ) : tab === 'tax-settings' ? (
           <TaxesTab />

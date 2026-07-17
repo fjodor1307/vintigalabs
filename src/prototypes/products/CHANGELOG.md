@@ -6,6 +6,39 @@
 
 ---
 
+## 2026-07-10 — Fedja + Claude: Experience product-type icon aligned
+
+The **Select Product Type** modal used `PartyPopperIcon` for **Experience** — the same icon the products list filter bar assigns to **Events** — so adding an Experience showed the "Events" icon. Switched it to `HandHeartIcon`, matching the **Experiences** filter tab, so the type reads consistently across the two surfaces. `SelectProductTypeModal.tsx`.
+
+## 2026-07-06 — Fedja + Claude: Cost Of Good + Alcohol % share a row on the inline form
+
+Follow-up to the shared `VariantFields`: on the inline single-variant form (no Sort Order), Cost Of Good and Alcohol Percentage each sat on a half-empty row. Alcohol Percentage now moves up beside Cost Of Good when Sort Order is hidden; the modal keeps its [Cost Of Good, Sort Order] + [Alcohol %, Proof] layout, and spirits on the inline form get Proof on the following row.
+
+## 2026-07-06 — Fedja + Claude: One shared `VariantFields` for modal + inline form
+
+Client feedback on the single-variant work: the Add Variant modal and the inline form had drifted — different title labels ("Variant Title" vs "Variant (Size / Unit)") and the modal-only Sort Order field made them feel like two different editors.
+
+- **New `VariantFields.tsx`** — the single source of truth for a variant's fields. Both `VariantModal` and `SingleVariantForm` (General tab) render it, so the two surfaces can't drift again.
+- **Unified label: "Variant Title"** everywhere, with the example placeholders kept ("e.g. 750ml, Bottle, Medium, Glass" / "e.g. For 2, For 4, Private Tour" for experiences). The modal's bare "Enter title" placeholder is gone.
+- Intentional differences are now explicit props: the modal shows **Sort Order** (`showSortOrder`) since ordering only matters with multiple variants, and the inline form keeps its info banner.
+
+## 2026-07-05 — Fedja + Claude: Experiences get the inline single-variant form
+
+Client feedback: an experience with one variant was still showing the variant *table*, while wines already switched to the inline form.
+
+- **`GeneralScreen.tsx`** — dropped the `!isExperience` gate on `showInlineVariant`, so any product with exactly one variant gets the inline form. `SingleVariantForm` now takes `isExperience` and mirrors the `VariantModal` field rules: no UPC / Compare At / Alcohol % / Physical Product-Weight-Volume, experience tax types (Experience, Service, Tax-Exempt), and experience copy for the info banner + variant title field ("Variant (Package / Party Size)", placeholder "e.g. For 2, For 4, Private Tour"). Adding a second variant still flips back to the table.
+- **`productStore.ts`** — `loadFromCatalogue` treats the store's initial blank variant as "no variants", so opening a catalogue product now actually seeds the variant from the row (title / SKU / price / tax type). Before, the blank placeholder blocked the seed and experiences opened with an untitled wine-default variant.
+
+## 2026-06-17 — Fedja + Claude: Global Properties — optional dropdowns + Brand / Vendor
+
+Beer/Spirits Details → **Global properties** updates from client feedback:
+
+- **None of Department / Brand-Vendor / Sales Attribute are required.** Every dropdown now leads with a non-selection **"—"** option (the shared `Select` renders `''` as "—").
+- **"Vendor" renamed to "Brand / Vendor"** — it's the label a wine is sold under (a winery may carry several brands), not a supplier. Options are now winery brand names (Vintiga Estate, Willow Glen, Cedar & Stone, Lakeview Cellars, Old Vine Reserve) and it **defaults to non-selection** (store default `vendor: ''`).
+- Extracted the block into a shared **`GlobalPropertiesCard`** so Beer and Spirits stay in lock-step for the upcoming override-spec changes.
+
+Department still shows "Wine" by default (Commerce 7 syncs beer/spirits as Wine) but is now clearable.
+
 ## 2026-06-04 — Fedja + Claude: "Make global" switch on Choose Season (Jun 4 review)
 
 Per the Jun 4 design review, season management moves entirely to the experience Schedule tab (the Settings → Seasons page is gone in the same PR). The `AddSeasonModal`'s **Create experience-only season** mode now ends with a "Make available to all experiences" switch — mirrors the **Apply to all experiences** pattern on the blackouts modal. When on, the custom range is also written to `storeSeasonsStore`, so other experiences see it in their store-season dropdown immediately.

@@ -131,12 +131,19 @@ export function deriveMembershipState(
     return { ...ACTIVE_STATE, futureHold: hold }
   }
 
-  // Hold is in effect.
+  // Start is in the past. If the end date has also passed, the hold has
+  // expired and the membership is Active again.
+  if (hold.end && isPast(hold.end, today)) {
+    return { ...ACTIVE_STATE }
+  }
+
+  // Hold is in effect now → status is "On Hold". A future end date rides along
+  // as a caption; the full date copy lives in the detail messaging area.
   if (hold.end) {
     return {
-      label: 'Hold Until', tone: 'default', variant: 'neutral-light',
+      label: 'On Hold', tone: 'default', variant: 'neutral-light',
       kind: 'hold-until', filter: 'on-hold',
-      caption: formatHoldDate(hold.end),
+      caption: `Until ${formatHoldDate(hold.end)}`,
       activeHold: hold,
     }
   }

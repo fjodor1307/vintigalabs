@@ -347,7 +347,7 @@ const initial: ProductState = {
   // single-variant form (price / SKU / measurements) instead of an empty state.
   variants: [emptyVariant('', 0)],
   department: 'Wine',
-  vendor: 'Wine',
+  vendor: '',
   salesAttribute: '',
   wineType: 'Red',
   varietal: 'Cabernet Sauvignon',
@@ -865,8 +865,10 @@ export const productActions = {
       slug: slugify(p.name),
       metaTitleAuto: true,
       slugAuto: true,
-      // Variants: if catalogue product carries no variants, seed a single one.
-      variants: state.variants.length > 0 ? state.variants : [
+      // Variants: seed a single one from the catalogue row unless the session
+      // already holds real edits. The initial store ships one blank variant —
+      // treat that as "no variants" so the seed isn't silently skipped.
+      variants: state.variants.some((v) => v.title || v.price || v.sku) ? state.variants : [
         { ...emptyVariant(seedTitle, 0), sku: p.sku, price: p.price, taxType: seedTax },
       ],
     }

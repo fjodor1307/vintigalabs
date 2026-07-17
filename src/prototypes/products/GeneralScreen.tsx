@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { ProductLayout, SectionCard, Field, TextInput, InputWithAdornment, Select } from './ProductLayout'
+import { ProductLayout, SectionCard, Field, TextInput, Select } from './ProductLayout'
 import { MediaSection } from './MediaSection'
 import { AiSuggestButton } from './AiSuggestButton'
-import { CheckboxField } from './Modal'
 import { Switch } from '@ds/shared/Switch'
 import { RichTextEditor } from '@ds/shared/RichTextEditor'
-import { useProductState, productActions, proofFromAbv, type Variant, type ProductState, type ProductTypeOverride } from './productStore'
+import { useProductState, productActions, type Variant, type ProductState, type ProductTypeOverride } from './productStore'
 import { VariantModal } from './VariantModal'
+import { VariantFields } from './VariantFields'
 import { useRowDrag } from './useRowDrag'
 import { EmptyState } from '@ds/components/EmptyState'
 import {
@@ -156,12 +156,14 @@ function VariantsTable({ onEdit, onAdd, isExperience }: { onEdit: (v: Variant) =
 // When a product has exactly one variant, Commerce7 (and now Vintiga) shows the
 // pricing/measurement fields inline on the general page instead of burying them
 // in a table — so the alcohol %, weight, and volume stay visible at a glance.
-// Adding a second variant flips it back to the table view.
-function SingleVariantForm({ variant, isSpirits }: { variant: Variant; isSpirits: boolean }) {
+// Adding a second variant flips it back to the table view. The fields
+// themselves live in `VariantFields`, shared with the Add/Edit Variant modal
+// so the two surfaces stay identical; only the info banner and the sort-order
+// field (meaningless with one variant) differ.
+function SingleVariantForm({ variant, isSpirits, isExperience }: { variant: Variant; isSpirits: boolean; isExperience: boolean }) {
   function patch<K extends keyof Variant>(key: K, value: Variant[K]) {
     productActions.upsertVariant({ ...variant, [key]: value })
   }
-  const proof = proofFromAbv(variant.alcoholPercentage)
 
   return (
     <div className="flex flex-col gap-5">
@@ -170,79 +172,14 @@ function SingleVariantForm({ variant, isSpirits }: { variant: Variant; isSpirits
         <div className="flex flex-col">
           <span className="typo-body-sm font-semibold text-vintiga-indigo-700">Info</span>
           <span className="typo-body-sm text-vintiga-indigo-700">
-            If your product has more than one option such as size or color, multiple variants can be added after the product is created.
+            {isExperience
+              ? 'If this experience comes in more than one package or party size, multiple variants can be added after the product is created.'
+              : 'If your product has more than one option such as size or color, multiple variants can be added after the product is created.'}
           </span>
         </div>
       </div>
 
-      <Field label="Variant (Size / Unit)" required>
-        <TextInput
-          placeholder="e.g. 750ml, Bottle, Medium, Glass"
-          value={variant.title}
-          onChange={(e) => patch('title', e.target.value)}
-        />
-      </Field>
-
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Price" required>
-          <InputWithAdornment adornment="$" placeholder="0.00" value={variant.price} onChange={(e) => patch('price', e.target.value)} />
-        </Field>
-        <Field label="SKU" required>
-          <TextInput placeholder="Enter SKU" value={variant.sku} onChange={(e) => patch('sku', e.target.value)} />
-        </Field>
-      </div>
-
-      <Field label="UPC Code">
-        <TextInput placeholder="Enter UPC code" value={variant.upcCode} onChange={(e) => patch('upcCode', e.target.value)} />
-      </Field>
-
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Compare At Price">
-          <InputWithAdornment adornment="$" placeholder="0.00" value={variant.compareAtPrice} onChange={(e) => patch('compareAtPrice', e.target.value)} />
-        </Field>
-        <Field label="Tax Type" required>
-          <Select value={variant.taxType} onChange={(x) => patch('taxType', x)} options={['Wine', 'Beer', 'Spirits', 'Food', 'Merchandise']} />
-        </Field>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Cost Of Good" required>
-          <InputWithAdornment adornment="$" placeholder="0.00" value={variant.costOfGood} onChange={(e) => patch('costOfGood', e.target.value)} />
-        </Field>
-        <Field label="Alcohol Percentage" required>
-          <InputWithAdornment adornment="%" placeholder="0.00" value={variant.alcoholPercentage} onChange={(e) => patch('alcoholPercentage', e.target.value)} />
-        </Field>
-      </div>
-
-      {isSpirits && (
-        <Field label="Proof" helper="Calculated automatically as 2 × alcohol percentage.">
-          <InputWithAdornment adornment="proof" placeholder="0" value={proof} readOnly />
-        </Field>
-      )}
-
-      {/* Physical Product gates Weight + Volume — those are only needed for
-          shipping (Commerce 7 calls the flag "shipping" under the covers).
-          Putting the checkbox first means turning it off hides the fields
-          rather than discarding values the operator was forced to fill in. */}
-      <div className="flex flex-col gap-1.5">
-        <CheckboxField checked={variant.physicalProduct} onChange={(next) => patch('physicalProduct', next)}>
-          Physical Product
-        </CheckboxField>
-        <p className="typo-caption text-vintiga-slate-500 pl-[26px]">
-          Turn on for anything you ship — weight and volume are required to calculate shipping. Leave off for tasting-room-only items (a glass pour, a plate of food).
-        </p>
-      </div>
-
-      {variant.physicalProduct && (
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Weight" required>
-            <InputWithAdornment adornment="lbs" placeholder="0.00" value={variant.weight} onChange={(e) => patch('weight', e.target.value)} />
-          </Field>
-          <Field label="Volume" required>
-            <InputWithAdornment adornment="ml" placeholder="0.00" value={variant.volume} onChange={(e) => patch('volume', e.target.value)} />
-          </Field>
-        </div>
-      )}
+      <VariantFields v={variant} patch={patch} isExperience={isExperience} isSpirits={isSpirits} />
     </div>
   )
 }
@@ -262,8 +199,8 @@ export function GeneralScreen() {
   const effectiveType = product.productType === 'Wine' && product.productTypeOverride !== 'None'
     ? product.productTypeOverride
     : product.productType
-  // Single non-experience variant → inline form; 0 or 2+ → table / empty state.
-  const showInlineVariant = !isExperience && product.variants.length === 1
+  // Single variant → inline form; 0 or 2+ → table / empty state.
+  const showInlineVariant = product.variants.length === 1
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Variant | null>(null)
   const [generating, setGenerating] = useState(false)
@@ -377,7 +314,7 @@ export function GeneralScreen() {
           </p>
         )}
         {showInlineVariant ? (
-          <SingleVariantForm variant={product.variants[0]} isSpirits={effectiveType === 'Spirits'} />
+          <SingleVariantForm variant={product.variants[0]} isSpirits={effectiveType === 'Spirits'} isExperience={isExperience} />
         ) : (
           <VariantsTable onEdit={openEdit} onAdd={openAdd} isExperience={isExperience} />
         )}

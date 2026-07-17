@@ -3,6 +3,7 @@ import type { PrototypeConfig } from '../_registry'
 import { CustomersScreen } from './CustomersScreen'
 import { CustomerOverviewScreen } from './CustomerOverviewScreen'
 import { CustomerBillingScreen } from './CustomerBillingScreen'
+import { CustomerMembershipsScreen } from './CustomerMembershipsScreen'
 import { BalanceTransactionsScreen } from './BalanceTransactionsScreen'
 import { PointsTransactionsScreen } from './PointsTransactionsScreen'
 import { OrderDetailScreen } from './OrderDetailScreen'
@@ -12,6 +13,7 @@ const baseRoutes: Record<string, ComponentType> = {
   '#/web/customers':                          CustomersScreen,
   '#/web/customers/view/overview':            CustomerOverviewScreen,
   '#/web/customers/view/billing':             CustomerBillingScreen,
+  '#/web/customers/view/memberships':         CustomerMembershipsScreen,
   '#/web/customers/view/billing/balance':     BalanceTransactionsScreen,
   '#/web/customers/view/billing/points':      PointsTransactionsScreen,
 }

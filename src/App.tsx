@@ -1,11 +1,21 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Agentation } from 'agentation'
-import contributorsData from './generated/contributors.json'
 import { DesignSystemScreen } from './design-system/style-guide/DesignSystemScreen'
+import { ToneOfVoiceScreen } from './brand/ToneOfVoiceScreen'
+import { ImageryScreen } from './brand/ImageryScreen'
+import { VintigaOverviewScreen } from './presentations/VintigaOverviewScreen'
+import { VintigaOverviewSlidesScreen } from './presentations/VintigaOverviewSlidesScreen'
+import { InvestorDecksScreen, PresentationBlocksScreen, PageBuilderScreen } from './presentations/PresentationsHub'
 import { ReviewMode, decodeComments } from './design-system/shared/ReviewMode'
-import { FilterBar } from './design-system/shared/FilterBar'
-import { BackArrowIcon, DownloadIcon } from './design-system/icons/Icons'
+import { BackArrowIcon, SearchIcon, ArrowRightIcon, ChevronDownIcon, LayoutListIcon, Grid2x2Icon, ExternalLinkIcon } from './design-system/icons/Icons'
+import { Button } from './design-system/shared/Button'
+import { IconButton } from './design-system/shared/IconButton'
+import { TextField } from './design-system/shared/TextField'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from './design-system/shared/Modal'
 import { SegmentedControl } from './design-system/shared/SegmentedControl'
+import updatesData from './generated/updates.json'
+import { HubNavbar, HUB_OUTLINE_DARK } from './hub/HubNavbar'
+import { CATEGORY_OPTIONS, type Category, type Segment } from './hub/segments'
 import {
   allRoutes,
   allEntries,
@@ -13,6 +23,7 @@ import {
   configForPath,
   frameForPath,
   type EnrichedEntry,
+  type PrototypeFrame,
 } from './prototypes/_registry'
 
 function useHashRoute() {
@@ -31,78 +42,456 @@ function useHashRoute() {
   return hash
 }
 
-// Design System is a tool, not a prototype — registered directly.
+// Design System and Brand are tools, not prototypes — registered directly.
 const webScreens: Record<string, React.ComponentType> = {
   '#/web/design-system': DesignSystemScreen,
+  '#/brand/tone-of-voice': ToneOfVoiceScreen,
+  '#/brand/imagery': ImageryScreen,
+  '#/presentations/vintiga-overview': VintigaOverviewScreen,
+  '#/presentations/vintiga-overview-slides': VintigaOverviewSlidesScreen,
+  '#/presentations/investor-decks': InvestorDecksScreen,
+  '#/presentations/blocks': PresentationBlocksScreen,
+  '#/presentations/page-builder': PageBuilderScreen,
   ...allRoutes,
 }
 
-type Status = 'in-progress' | 'approved'
+// Prototypes are categorised by the surface they target: web → CRM (dashboard),
+// mobile → POS. The Design System is a separate tool, not a prototype.
+// `Category` / `CATEGORY_OPTIONS` / `Segment` live in ./hub/segments.
 
-type Contributor = {
-  name: string
-  email: string
-  initials: string
-  colour: string
-  commits: number
-  firstCommit: string
-  lastCommit: string
+function categoryForFrame(frame: PrototypeFrame): Category {
+  return frame === 'mobile' ? 'POS' : 'CRM'
 }
 
-type GeneratedData = {
-  generatedAt: string
-  prototypes: Record<string, { status: Status; contributors: Contributor[] }>
-}
-
-const generated = contributorsData as GeneratedData
-
-function authorsFor(slug: string): Contributor[] {
-  return generated.prototypes[slug]?.contributors ?? []
-}
-
-function resolveStatus(slug: string): Status {
-  return generated.prototypes[slug]?.status ?? 'in-progress'
-}
-
-function StatusBadge({ status }: { status: Status }) {
-  if (status === 'approved') {
+function CategoryBadge({ category }: { category: Category }) {
+  if (category === 'POS') {
     return (
-      <span className="inline-flex items-center gap-1 typo-caption font-semibold bg-vintiga-success/15 text-vintiga-success px-2 py-0.5 rounded-full">
-        <span className="w-1.5 h-1.5 rounded-full bg-vintiga-success" aria-hidden="true" />
-        Approved
+      <span className="shrink-0 inline-flex items-center typo-caption font-medium bg-vintiga-indigo-100 text-vintiga-indigo-700 px-2.5 py-1 rounded-vintiga-2xl">
+        POS
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center gap-1 typo-caption font-semibold bg-vintiga-warning-soft text-vintiga-amber-800 px-2 py-0.5 rounded-full">
-      <span className="w-1.5 h-1.5 rounded-full bg-vintiga-warning" aria-hidden="true" />
-      In progress
+    <span className="shrink-0 inline-flex items-center typo-caption font-medium bg-vintiga-lime-100 text-vintiga-green-700 px-2.5 py-1 rounded-vintiga-2xl">
+      CRM
     </span>
   )
 }
 
-function AvatarStack({ contributors }: { contributors: Contributor[] }) {
-  if (contributors.length === 0) return null
-  const shown = contributors.slice(0, 3)
-  const remaining = contributors.length - shown.length
+// Shareable review-view hash for a prototype entry.
+// Prototypes open in a new browser tab from the hub, so the catalogue stays put.
+const NEW_TAB = { target: '_blank', rel: 'noopener noreferrer' } as const
+
+function reviewHashFor(entry: EnrichedEntry): string {
+  const pathParts = entry.path.split('/')
+  const flowSegment = pathParts.length >= 5 ? pathParts[3] : undefined
+  return flowSegment && prototypeConfigs.find((c) => c.slug === entry.slug)?.entries && pathParts.length >= 5
+    ? `#/review/${entry.slug}/${flowSegment}`
+    : `#/review/${entry.slug}`
+}
+
+// Badge (+ "Latest" label on the featured card).
+function CardBadgeRow({ category, featured }: { category: Category; featured?: boolean }) {
   return (
-    <div className="flex items-center">
-      {shown.map((c, idx) => (
-        <div
-          key={c.email}
-          className={`w-6 h-6 ${idx > 0 ? '-ml-1.5' : ''} rounded-full flex items-center justify-center font-semibold text-white ring-2 ring-vintiga-surface`}
-          style={{ backgroundColor: c.colour }}
-          title={`${c.name} · ${c.commits} commit${c.commits === 1 ? '' : 's'}`}
-        >
-          <span className="text-[10px]">{c.initials}</span>
-        </div>
-      ))}
-      {remaining > 0 && (
-        <div className="w-6 h-6 -ml-1.5 rounded-full flex items-center justify-center font-semibold bg-vintiga-surface-element text-vintiga-foreground-muted ring-2 ring-vintiga-surface">
-          <span className="text-[10px]">+{remaining}</span>
-        </div>
+    <div className="flex items-center gap-vintiga-sm">
+      <CategoryBadge category={category} />
+      {featured && (
+        <span className="typo-body-sm font-medium text-vintiga-foreground-muted">Latest</span>
       )}
     </div>
+  )
+}
+
+function CardTags({ tags }: { tags: string[] }) {
+  if (tags.length === 0) return null
+  return (
+    <div className="flex flex-wrap gap-1">
+      {tags.slice(0, 4).map((t) => (
+        <span key={t} className="typo-caption px-2 py-0.5 rounded-full bg-vintiga-surface-element text-vintiga-foreground-muted">
+          #{t}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+// The arrow affordance — DS IconButton: filled (solid) on the featured card,
+// outlined elsewhere. Opens the live prototype.
+function CardArrow({ entry, featured }: { entry: EnrichedEntry; featured?: boolean }) {
+  return (
+    <IconButton
+      variant={featured ? 'solid' : 'outline'}
+      size="lg"
+      icon={<ArrowRightIcon />}
+      onClick={() => {
+        window.open(`${window.location.pathname}${entry.path}`, '_blank', 'noopener,noreferrer')
+      }}
+      aria-label="Open prototype"
+      className={featured ? '' : HUB_OUTLINE_DARK}
+    />
+  )
+}
+
+function PrototypeLinks({ entry }: { entry: EnrichedEntry }) {
+  return (
+    <div className="flex items-center gap-vintiga-md">
+      <a href={entry.path} {...NEW_TAB} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Prototype</a>
+      <a href={`${entry.path}?view=overview`} {...NEW_TAB} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Designs</a>
+      <a href={reviewHashFor(entry)} {...NEW_TAB} className="typo-body-sm font-semibold text-vintiga-primary no-underline hover:underline">Review</a>
+    </div>
+  )
+}
+
+// Shared card body — badge, title, description, tags, and the
+// Prototype / Designs links + arrow. Used by grid cards and list rows.
+function CardMeta({ entry, category, featured }: { entry: EnrichedEntry; category: Category; featured?: boolean }) {
+  return (
+    <>
+      <a href={entry.path} {...NEW_TAB} className="flex flex-col gap-vintiga-sm no-underline">
+        <CardBadgeRow category={category} featured={featured} />
+        <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">{entry.name}</h2>
+        <p className="typo-body-sm text-vintiga-foreground-muted line-clamp-3">{entry.description}</p>
+        <div className="mt-vintiga-xs">
+          <CardTags tags={entry.tags} />
+        </div>
+      </a>
+      <div className="mt-auto pt-vintiga-md flex items-center justify-between gap-vintiga-sm">
+        <PrototypeLinks entry={entry} />
+        <CardArrow entry={entry} featured={featured} />
+      </div>
+    </>
+  )
+}
+
+// A live, click-through thumbnail of one prototype screen (list view + featured
+// card). Clicking launches the prototype at that screen.
+function ScreenThumb({ path, frame, height = 168 }: { path: string; frame: PrototypeFrame; height?: number }) {
+  const isPhone = frame === 'mobile'
+  const innerW = isPhone ? 390 : 1440
+  const innerH = isPhone ? 844 : 900
+  const scale = height / innerH
+  const outerW = Math.round(innerW * scale)
+  return (
+    <a
+      href={path}
+      {...NEW_TAB}
+      aria-label="Open screen"
+      className="shrink-0 block overflow-hidden rounded-vintiga-md border border-vintiga-border bg-vintiga-surface hover:border-vintiga-surface-muted transition-colors"
+      style={{ width: outerW, height }}
+    >
+      <iframe
+        src={`${window.location.pathname}${path}?thumbnail=1`}
+        title=""
+        tabIndex={-1}
+        aria-hidden="true"
+        style={{ width: innerW, height: innerH, transform: `scale(${scale})`, transformOrigin: '0 0', border: 0, pointerEvents: 'none' }}
+      />
+    </a>
+  )
+}
+
+// Large featured "Latest" card for the grid view — indigo-tinted, with a big
+// title and a row of live screen thumbnails. Spans two columns (or the full
+// width when there are no side cards).
+function FeaturedGridCard({ entry, spanFull }: { entry: EnrichedEntry; spanFull: boolean }) {
+  const category = categoryForFrame(entry.frame)
+  const screens = flowForPath(entry.path)?.paths ?? [entry.path]
+  return (
+    <div
+      className={[
+        spanFull ? 'lg:col-span-3' : 'lg:col-span-2',
+        'bg-vintiga-indigo-50 dark:bg-vintiga-surface border border-vintiga-indigo-200 dark:border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-5 overflow-hidden transition-colors hover:border-vintiga-indigo-300 dark:hover:border-vintiga-surface-muted',
+      ].join(' ')}
+    >
+      <a href={entry.path} {...NEW_TAB} className="flex flex-col gap-6 no-underline">
+        <div className="flex flex-col gap-1">
+          <CardBadgeRow category={category} featured />
+          <h2 className="text-[30px] leading-9 font-medium text-vintiga-foreground">{entry.name}</h2>
+        </div>
+        <p className="typo-body text-vintiga-foreground-muted line-clamp-2">{entry.description}</p>
+      </a>
+      <div className="overflow-x-auto flex items-start gap-5">
+        {screens.slice(0, 6).map((p) => (
+          <ScreenThumb key={p} path={p} frame={entry.frame} height={244} />
+        ))}
+      </div>
+      <div className="mt-auto pt-vintiga-md flex items-center justify-between gap-vintiga-md">
+        <CardTags tags={entry.tags} />
+        <div className="flex items-center gap-vintiga-md shrink-0">
+          <PrototypeLinks entry={entry} />
+          <CardArrow entry={entry} featured />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Plain prototype card (grid side/bottom cards).
+function PrototypeCard({ entry, className = '' }: { entry: EnrichedEntry; className?: string }) {
+  return (
+    <div
+      className={`bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-vintiga-sm hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted transition-colors ${className}`}
+    >
+      <CardMeta entry={entry} category={categoryForFrame(entry.frame)} />
+    </div>
+  )
+}
+
+// Catalog filter — "Latest" (everything, newest first) or a single tag.
+// `value` is 'latest' or a tag name (without the leading #).
+type SortKey = 'updated' | 'name' | 'screens'
+
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'updated', label: 'Last updated' },
+  { key: 'name', label: 'Name (A–Z)' },
+  { key: 'screens', label: 'Most screens' },
+]
+
+// Sort menu for the catalog — sorts prototypes, doesn't filter.
+function SortDropdown({ value, onChange }: { value: SortKey; onChange: (v: SortKey) => void }) {
+  const [open, setOpen] = useState(false)
+  const current = SORT_OPTIONS.find((o) => o.key === value) ?? SORT_OPTIONS[0]
+  return (
+    <div className="relative">
+      <Button
+        variant="outline"
+        size="lg"
+        rightIcon={<ChevronDownIcon />}
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className={HUB_OUTLINE_DARK}
+      >
+        {current.label}
+      </Button>
+      {open && (
+        <>
+          <button
+            type="button"
+            aria-hidden="true"
+            tabIndex={-1}
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-10 cursor-default"
+          />
+          <div className="absolute right-0 mt-1 z-20 min-w-[180px] rounded-vintiga-md border border-vintiga-border bg-vintiga-surface shadow-vintiga-md p-1">
+            {SORT_OPTIONS.map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                onClick={() => {
+                  onChange(o.key)
+                  setOpen(false)
+                }}
+                className={[
+                  'w-full text-left px-3 py-2 rounded-vintiga-input typo-body-sm transition-colors',
+                  o.key === value
+                    ? 'font-semibold text-vintiga-foreground bg-vintiga-surface-element'
+                    : 'text-vintiga-foreground-muted hover:bg-vintiga-surface-element',
+                ].join(' ')}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── Latest updates modal ───────────────────────────────────────────────────
+// A lightweight "what got done" feed for end-of-day reports. Data is generated
+// from git history at build time (scripts/generate-updates.mjs → updates.json).
+type UpdateItem = { date: string; label: string; pr: number | null; area: string; type: string }
+const UPDATES = updatesData as { generatedAt: string; repoUrl: string; items: UpdateItem[] }
+
+// Only surface user-facing change types in the feed — keeps it readable for
+// non-engineers (no chore/refactor/docs/test/build noise).
+const USER_FACING_TYPES = new Set(['feat', 'fix', 'perf'])
+const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s)
+const MAX_PER_AREA = 6
+
+const AREA_FALLBACK: Record<string, { name: string; category: string }> = {
+  builder: { name: 'Builder', category: 'Hub' },
+  'design-system': { name: 'Design System', category: 'DS' },
+}
+
+function areaMeta(area: string): { name: string; category: string } {
+  const entry = allEntries.find((e) => e.slug === area)
+  if (entry) return { name: entry.name, category: categoryForFrame(entry.frame) }
+  return AREA_FALLBACK[area] ?? { name: area, category: '' }
+}
+
+type UpdateRange = 'week' | 'lastweek'
+
+function ymd(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+function LatestUpdatesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [range, setRange] = useState<UpdateRange>('week')
+  const [area, setArea] = useState<string>('all')
+  const [areaOpen, setAreaOpen] = useState(false)
+
+  // Date boundaries (calendar weeks, Monday-start), computed from "now".
+  const now = new Date()
+  const todayStr = ymd(now)
+  const monday = new Date(now)
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
+  const weekStart = ymd(monday)
+  const lastMon = new Date(monday)
+  lastMon.setDate(monday.getDate() - 7)
+  const lastSun = new Date(monday)
+  lastSun.setDate(monday.getDate() - 1)
+  const lastStart = ymd(lastMon)
+  const lastEnd = ymd(lastSun)
+
+  const inRange = (d: string) =>
+    range === 'week' ? d >= weekStart && d <= todayStr : d >= lastStart && d <= lastEnd
+
+  const rangeOptions = [
+    { value: 'week', label: 'This Week' },
+    { value: 'lastweek', label: 'Last Week' },
+  ]
+
+  const rangeItems = UPDATES.items.filter((i) => inRange(i.date) && USER_FACING_TYPES.has(i.type))
+  const areasInRange = Array.from(new Set(rangeItems.map((i) => i.area))).sort((a, b) =>
+    areaMeta(a).name.localeCompare(areaMeta(b).name),
+  )
+  // Keep the selected area only while it has items in the current range.
+  const activeArea = area !== 'all' && !areasInRange.includes(area) ? 'all' : area
+  const groupAreas = activeArea === 'all' ? areasInRange : [activeArea]
+
+  // De-duplicated, capitalised, capped bullet list for one area.
+  const bulletsFor = (a: string) => {
+    const seen = new Set<string>()
+    const unique: UpdateItem[] = []
+    for (const i of rangeItems) {
+      if (i.area !== a) continue
+      const key = i.label.toLowerCase()
+      if (seen.has(key)) continue
+      seen.add(key)
+      unique.push(i)
+    }
+    return { visible: unique.slice(0, MAX_PER_AREA), extra: Math.max(0, unique.length - MAX_PER_AREA) }
+  }
+
+  const visibleAreas = groupAreas.filter((a) => bulletsFor(a).visible.length > 0)
+
+  return (
+    <Modal open={open} onClose={onClose} size="lg">
+      <ModalHeader title="Latest updates" onClose={onClose} />
+      <ModalBody className="max-h-[60vh] overflow-y-auto">
+        {/* Range tabs + area dropdown */}
+        <div className="flex items-center justify-between gap-3">
+          <SegmentedControl
+            size="sm"
+            value={range}
+            onChange={(v) => setRange(v as UpdateRange)}
+            options={rangeOptions}
+            aria-label="Time range"
+          />
+          <div className="relative shrink-0">
+            <Button
+              variant="outline"
+              size="md"
+              rightIcon={<ChevronDownIcon />}
+              onClick={() => setAreaOpen((o) => !o)}
+              aria-haspopup="listbox"
+              aria-expanded={areaOpen}
+            >
+              {activeArea === 'all' ? 'All' : areaMeta(activeArea).name}
+            </Button>
+            {areaOpen && (
+              <>
+                <button type="button" aria-hidden="true" tabIndex={-1} onClick={() => setAreaOpen(false)} className="fixed inset-0 z-10 cursor-default" />
+                <div className="absolute right-0 mt-1 z-20 min-w-[180px] max-h-[50vh] overflow-y-auto rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white shadow-vintiga-md p-1">
+                  {['all', ...areasInRange].map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => {
+                        setArea(a)
+                        setAreaOpen(false)
+                      }}
+                      className={[
+                        'w-full text-left px-3 py-2 rounded-vintiga-input typo-body-sm transition-colors',
+                        a === activeArea
+                          ? 'font-semibold text-vintiga-slate-900 bg-vintiga-slate-100'
+                          : 'text-vintiga-slate-500 hover:bg-vintiga-slate-50',
+                      ].join(' ')}
+                    >
+                      {a === 'all' ? 'All' : areaMeta(a).name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Grouped accomplishments */}
+        {visibleAreas.length === 0 ? (
+          <p className="typo-body-sm text-vintiga-slate-500 py-vintiga-xl text-center">
+            Nothing shipped in this window.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-vintiga-lg">
+            {visibleAreas.map((a) => {
+              const { visible, extra } = bulletsFor(a)
+              const meta = areaMeta(a)
+              const latestPr = rangeItems
+                .filter((i) => i.area === a)
+                .reduce<number | null>((max, i) => (i.pr && (!max || i.pr > max) ? i.pr : max), null)
+              return (
+                <section key={a}>
+                  <h3 className="typo-body font-semibold text-vintiga-slate-900">
+                    {meta.name} {meta.category && <span className="text-vintiga-slate-400">{`{${meta.category}}`}</span>}
+                  </h3>
+                  <ul className="mt-vintiga-sm flex flex-col gap-1.5 list-disc pl-5">
+                    {visible.map((i, idx) => (
+                      <li key={`${a}-${idx}`} className="typo-body-sm text-vintiga-slate-600">
+                        {capitalize(i.label)}
+                      </li>
+                    ))}
+                    {extra > 0 && (
+                      <li className="typo-body-sm text-vintiga-slate-400 list-none -ml-5">+{extra} more</li>
+                    )}
+                  </ul>
+                  {latestPr && (
+                    <a
+                      href={`${UPDATES.repoUrl}/pull/${latestPr}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-vintiga-sm inline-block typo-body-sm font-semibold text-vintiga-indigo-600 no-underline hover:underline"
+                    >
+                      Latest PR
+                    </a>
+                  )}
+                </section>
+              )
+            })}
+          </div>
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="outline" size="lg" onClick={onClose}>
+          Close
+        </Button>
+        <Button
+          as="a"
+          href={`${UPDATES.repoUrl}/pulls?q=is%3Apr`}
+          target="_blank"
+          rel="noreferrer"
+          variant="solid"
+          size="lg"
+          leftIcon={<ExternalLinkIcon />}
+        >
+          Open Github
+        </Button>
+      </ModalFooter>
+    </Modal>
   )
 }
 
@@ -117,160 +506,287 @@ function matchesQuery(entry: EnrichedEntry, query: string): boolean {
   )
 }
 
+// The Design System split into its three top-level areas. Each card deep-links
+// into the DS at that section's first page (?p=<pageId>).
+const DS_SECTIONS: { label: string; desc: string; page: string }[] = [
+  { label: 'Foundation', desc: 'Colours, typography, spacing, radius, shadows & motion.', page: 'colors' },
+  { label: 'Assets', desc: 'Logo and the full icon library.', page: 'logo' },
+  { label: 'Components', desc: 'Buttons, inputs, cards, overlays, navigation & mobile patterns.', page: 'ds-buttons' },
+]
+
+function DesignSystemSectionCards() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
+      {DS_SECTIONS.map((s) => (
+        <a
+          key={s.label}
+          href={`#/web/design-system?p=${s.page}`}
+          className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-vintiga-sm hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted transition-colors no-underline"
+        >
+          <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">{s.label}</h3>
+          <p className="typo-body-sm text-vintiga-foreground-muted">{s.desc}</p>
+          <span className="mt-auto pt-vintiga-md typo-body-sm font-semibold text-vintiga-primary">Open →</span>
+        </a>
+      ))}
+    </div>
+  )
+}
+
+// Brand — the identity layer. Logo / Colour / Typography deep-link into the
+// Design System; Tone of voice is brand-specific; Imagery is not written yet.
+const BRAND_SECTIONS: { label: string; desc: string; href: string | null }[] = [
+  { label: 'Logo', desc: 'The Vintiga mark and how to use it.', href: '#/web/design-system?p=logo' },
+  { label: 'Colour', desc: 'The brand palette and where it applies.', href: '#/web/design-system?p=colors' },
+  { label: 'Typography', desc: 'Type personality and the type scale.', href: '#/web/design-system?p=typography' },
+  { label: 'Tone of voice', desc: 'How Vintiga sounds — principles, rules, samples.', href: '#/brand/tone-of-voice' },
+  { label: 'Imagery', desc: 'Marketing image library — browse and download photography.', href: '#/brand/imagery' },
+]
+
+function BrandSectionCards() {
+  const base = 'bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-vintiga-sm transition-colors'
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
+      {BRAND_SECTIONS.map((s) =>
+        s.href ? (
+          <a
+            key={s.label}
+            href={s.href}
+            className={`${base} hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted no-underline`}
+          >
+            <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">{s.label}</h3>
+            <p className="typo-body-sm text-vintiga-foreground-muted">{s.desc}</p>
+            <span className="mt-auto pt-vintiga-md typo-body-sm font-semibold text-vintiga-primary">Open →</span>
+          </a>
+        ) : (
+          <div key={s.label} className={`${base} opacity-70`}>
+            <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">{s.label}</h3>
+            <p className="typo-body-sm text-vintiga-foreground-muted">{s.desc}</p>
+            <span className="mt-auto pt-vintiga-md typo-caption font-semibold uppercase tracking-wide text-vintiga-foreground-muted">Coming soon</span>
+          </div>
+        ),
+      )}
+    </div>
+  )
+}
+
+// Presentations — two groups: the deck categories, and the Builder tooling.
+// Card style matches Brand (title · desc · Open → / Coming soon).
+type HubCard = { label: string; desc: string; href: string | null }
+
+const PRESENTATION_CATEGORIES: HubCard[] = [
+  { label: 'Investor Decks', desc: 'Fundraising overviews — the guest-intelligence platform.', href: '#/presentations/investor-decks' },
+  { label: 'Demo', desc: 'Product walkthroughs for prospects and calls.', href: null },
+  { label: 'Sprint Review', desc: 'What shipped this sprint, for the team.', href: null },
+  { label: 'Board Update', desc: 'Quarterly board & stakeholder updates.', href: null },
+  { label: 'Sales Pitch', desc: 'Short pitch decks for outreach.', href: null },
+]
+
+const PRESENTATION_BUILDER: HubCard[] = [
+  { label: 'Blocks', desc: 'Reusable presentation blocks — titles, stats, glass cards, media.', href: '#/presentations/blocks' },
+  { label: 'Deck Builder', desc: 'Assemble decks from blocks — pick pages, swap copy & imagery, export.', href: '#/presentations/page-builder' },
+]
+
+function HubCardGrid({ cards }: { cards: HubCard[] }) {
+  const base = 'bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-lg flex flex-col gap-vintiga-sm transition-colors'
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
+      {cards.map((c) =>
+        c.href ? (
+          <a key={c.label} href={c.href} className={`${base} hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted no-underline`}>
+            <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">{c.label}</h3>
+            <p className="typo-body-sm text-vintiga-foreground-muted">{c.desc}</p>
+            <span className="mt-auto pt-vintiga-md typo-body-sm font-semibold text-vintiga-primary">Open →</span>
+          </a>
+        ) : (
+          <div key={c.label} className={`${base} opacity-70`}>
+            <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">{c.label}</h3>
+            <p className="typo-body-sm text-vintiga-foreground-muted">{c.desc}</p>
+            <span className="mt-auto pt-vintiga-md typo-caption font-semibold uppercase tracking-wide text-vintiga-foreground-muted">Coming soon</span>
+          </div>
+        ),
+      )}
+    </div>
+  )
+}
+
+function PresentationsSectionCards() {
+  return (
+    <div className="flex flex-col gap-vintiga-2xl">
+      {/* Categories render directly under the "Presentations" segment heading. */}
+      <HubCardGrid cards={PRESENTATION_CATEGORIES} />
+      <div className="flex flex-col gap-vintiga-lg">
+        <h2 className="typo-title-section font-semibold text-vintiga-foreground">Builder</h2>
+        <HubCardGrid cards={PRESENTATION_BUILDER} />
+      </div>
+    </div>
+  )
+}
+
+const ALL_SEGMENTS: string[] = ['all', ...CATEGORY_OPTIONS]
+
 function IndexPage() {
-  const [selectedAuthors, setSelectedAuthors] = useState<Set<string>>(new Set())
-  const [selectedStatuses, setSelectedStatuses] = useState<Set<Status>>(new Set())
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
+  // Persisted so navigating in from a sub-page (Imagery, etc.) lands on the tab.
+  const [segment, setSegment] = useState<Segment>(() => {
+    const saved = localStorage.getItem('vintiga-hub-segment')
+    return saved && ALL_SEGMENTS.includes(saved) ? (saved as Segment) : 'all'
+  })
+  useEffect(() => {
+    localStorage.setItem('vintiga-hub-segment', segment)
+  }, [segment])
   const [query, setQuery] = useState('')
+  // Hub-only dark mode (neutral palette). Persisted so it survives navigation.
+  const [dark, setDark] = useState(() => localStorage.getItem('vintiga-hub-dark') === '1')
+  useEffect(() => {
+    localStorage.setItem('vintiga-hub-dark', dark ? '1' : '0')
+  }, [dark])
+  // Grid (default) vs list layout for the prototype catalog.
+  const [view, setView] = useState<'grid' | 'list'>(
+    () => (localStorage.getItem('vintiga-hub-view') === 'list' ? 'list' : 'grid'),
+  )
+  useEffect(() => {
+    localStorage.setItem('vintiga-hub-view', view)
+  }, [view])
+  // Catalog sort order. Persisted.
+  const [sort, setSort] = useState<SortKey>(() => {
+    const saved = localStorage.getItem('vintiga-hub-sort')
+    return SORT_OPTIONS.some((o) => o.key === saved) ? (saved as SortKey) : 'updated'
+  })
+  useEffect(() => {
+    localStorage.setItem('vintiga-hub-sort', sort)
+  }, [sort])
+  // "Latest updates" modal (end-of-day summary).
+  const [updatesOpen, setUpdatesOpen] = useState(false)
 
-  const allAuthors = useMemo<Contributor[]>(() => {
-    const byEmail = new Map<string, Contributor>()
-    for (const p of allEntries) {
-      for (const c of authorsFor(p.slug)) {
-        if (!byEmail.has(c.email)) byEmail.set(c.email, c)
-      }
-    }
-    return [...byEmail.values()].sort((a, b) => a.name.localeCompare(b.name))
-  }, [])
+  // "Brand", "Design System" and "Presentations" aren't prototypes — selecting
+  // them empties the prototype grid (Brand and Design System show their section
+  // cards instead; Presentations is a placeholder for now).
+  const segmentPrototypes =
+    segment === 'Brand' || segment === 'Design System' || segment === 'Presentations'
+      ? []
+      : allEntries.filter(
+          (p) =>
+            (segment === 'all' || categoryForFrame(p.frame) === segment) && matchesQuery(p, query),
+        )
 
-  const allTags = useMemo<string[]>(() => {
-    const set = new Set<string>()
-    for (const e of allEntries) for (const t of e.tags) set.add(t)
-    return [...set].sort()
-  }, [])
-
-  const filteredPrototypes = allEntries.filter((p) => {
-    const authorMatch =
-      selectedAuthors.size === 0 ||
-      authorsFor(p.slug).some((a) => selectedAuthors.has(a.email))
-    const statusMatch =
-      selectedStatuses.size === 0 || selectedStatuses.has(resolveStatus(p.slug))
-    const tagMatch =
-      selectedTags.size === 0 || p.tags.some((t) => selectedTags.has(t))
-    return authorMatch && statusMatch && tagMatch && matchesQuery(p, query)
+  const sortedPrototypes = [...segmentPrototypes].sort((a, b) => {
+    if (sort === 'name') return a.name.localeCompare(b.name)
+    if (sort === 'screens') return b.screens - a.screens
+    // 'updated' — most recent commit first; unknown dates sink to the bottom.
+    return (b.lastUpdated || '').localeCompare(a.lastUpdated || '')
   })
 
-  const hasFilters =
-    selectedAuthors.size > 0 ||
-    selectedStatuses.size > 0 ||
-    selectedTags.size > 0 ||
-    query.length > 0
-
-  function toggleFrom<T>(setFn: React.Dispatch<React.SetStateAction<Set<T>>>, value: T) {
-    setFn((prev) => {
-      const next = new Set(prev)
-      if (next.has(value)) next.delete(value)
-      else next.add(value)
-      return next
-    })
-  }
+  // On the All tab the Design System gets a section row at the bottom; the
+  // Design System tab itself shows the section cards as its main content.
+  const showDesignSystem = segment === 'all'
+  const hasFilters = segment !== 'all' || query.length > 0
+  const segmentTitle = segment === 'all' ? 'All' : segment
 
   function clearFilters() {
-    setSelectedAuthors(new Set())
-    setSelectedStatuses(new Set())
-    setSelectedTags(new Set())
+    setSegment('all')
     setQuery('')
   }
 
   return (
-    <div className="min-h-screen bg-vintiga-surface p-vintiga-lg sm:p-vintiga-2xl font-vintiga-body">
-      <header className="mb-vintiga-xl flex items-start justify-between gap-vintiga-md">
-        <div>
-          <h1 className="typo-display font-light text-vintiga-foreground">
-            Vintiga Prototypes
-          </h1>
-          <p className="typo-body-lg text-vintiga-foreground-muted mt-vintiga-sm">
-            Clickable prototypes for validating flows and user stories
-          </p>
-        </div>
-        {/* Download repo as a ZIP — handy for dev handoff so the engineering
-            team can grab the latest main without cloning. GitHub's
-            archive URL works without auth on public repos. */}
-        <a
-          href="https://github.com/fjodor1307/vintigalabs/archive/refs/heads/main.zip"
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Download repository as ZIP"
-          title="Download repository as ZIP"
-          className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white text-vintiga-slate-600 hover:text-vintiga-slate-900 hover:border-vintiga-slate-300 transition-colors no-underline"
-        >
-          <DownloadIcon className="w-4 h-4" />
-        </a>
-      </header>
-
-      <FilterBar
-        query={query}
-        onQueryChange={setQuery}
-        authors={allAuthors}
-        selectedAuthors={selectedAuthors}
-        onToggleAuthor={(email) => toggleFrom(setSelectedAuthors, email)}
-        tags={allTags}
-        selectedTags={selectedTags}
-        onToggleTag={(tag) => toggleFrom(setSelectedTags, tag)}
-        selectedStatuses={selectedStatuses}
-        onToggleStatus={(s) => toggleFrom(setSelectedStatuses, s)}
-        onClear={clearFilters}
+    // Own scroll container with a stable scrollbar gutter — keeps the content
+    // width constant whether or not a vertical scrollbar is showing, so nothing
+    // shifts horizontally when you switch tabs or scroll.
+    <div className={`${dark ? 'dark bg-[#0a0a0a] ' : 'bg-vintiga-surface '}h-screen overflow-y-auto font-vintiga-body [scrollbar-gutter:stable]`}>
+      <HubNavbar
+        dark={dark}
+        onToggleDark={() => setDark((d) => !d)}
+        segment={segment}
+        onSelectSegment={setSegment}
+        onOpenUpdates={() => setUpdatesOpen(true)}
+        search={
+          <TextField
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search"
+            leftIcon={<SearchIcon className="w-4 h-4" />}
+          />
+        }
       />
 
-      {/* Prototype grid */}
-      {filteredPrototypes.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
-          {filteredPrototypes.map((entry) => {
-            const status = resolveStatus(entry.slug)
-            const authors = authorsFor(entry.slug)
-            // Derive the flow segment from the path — e.g. `#/web/subscription-v2/a/choose-plan` → `a`
-            const pathParts = entry.path.split('/')
-            const flowSegment = pathParts.length >= 5 ? pathParts[3] : undefined
-            const reviewHash = flowSegment && prototypeConfigs.find((c) => c.slug === entry.slug)?.entries && entry.path.split('/').length >= 5
-              ? `#/review/${entry.slug}/${flowSegment}`
-              : `#/review/${entry.slug}`
+      <div className="px-vintiga-lg sm:px-vintiga-2xl py-vintiga-xl">
+
+      {/* Catalog sub-header — title + (for prototype tabs) sort + grid/list switch. */}
+      <div className="flex items-center justify-between gap-vintiga-md mb-vintiga-lg">
+        <h1 className="typo-title-subsection font-semibold text-vintiga-foreground">{segmentTitle}</h1>
+        {segment !== 'Brand' && segment !== 'Design System' && segment !== 'Presentations' && (
+          <div className="flex items-center gap-3">
+            <SortDropdown value={sort} onChange={setSort} />
+            <IconButton
+              variant="outline"
+              size="lg"
+              icon={view === 'grid' ? <LayoutListIcon /> : <Grid2x2Icon />}
+              onClick={() => setView((v) => (v === 'grid' ? 'list' : 'grid'))}
+              aria-label={view === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
+              className={HUB_OUTLINE_DARK}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Catalog — Brand / Design System section cards, or the prototype grid/list. */}
+      {segment === 'Brand' ? (
+        <BrandSectionCards />
+      ) : segment === 'Design System' ? (
+        <DesignSystemSectionCards />
+      ) : segment === 'Presentations' ? (
+        <PresentationsSectionCards />
+      ) : sortedPrototypes.length > 0 ? (
+        view === 'list' ? (
+        <div className="flex flex-col gap-vintiga-lg">
+          {sortedPrototypes.map((entry, i) => {
+            const category = categoryForFrame(entry.frame)
+            const featured = i === 0
+            const screens = flowForPath(entry.path)?.paths ?? [entry.path]
             return (
               <div
                 key={entry.path}
-                className="relative bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-primary transition-colors"
+                className={[
+                  'border rounded-vintiga-card p-vintiga-lg flex gap-vintiga-2xl transition-colors',
+                  featured
+                    ? 'bg-vintiga-indigo-50 dark:bg-vintiga-surface border-vintiga-indigo-100 dark:border-vintiga-border hover:border-vintiga-indigo-300 dark:hover:border-vintiga-surface-muted'
+                    : 'bg-vintiga-surface border-vintiga-border hover:border-vintiga-slate-400 dark:hover:border-vintiga-surface-muted',
+                ].join(' ')}
               >
-                <a href={entry.path} className="flex flex-col gap-vintiga-sm no-underline">
-                  <div>
-                    <StatusBadge status={status} />
-                  </div>
-                  <h2 className="typo-title-subsection font-semibold text-vintiga-foreground">
-                    {entry.name}
-                  </h2>
-                  <p className="typo-body-sm text-vintiga-foreground-muted">
-                    {entry.description}
-                  </p>
-                  {entry.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-vintiga-xs">
-                      {entry.tags.slice(0, 4).map((t) => (
-                        <span
-                          key={t}
-                          className="typo-caption text-vintiga-foreground-muted bg-vintiga-surface-element px-2 py-0.5 rounded-full"
-                        >
-                          #{t}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </a>
-                <div className="mt-vintiga-sm flex items-center justify-between gap-vintiga-sm">
-                  <a href={entry.path} className="typo-body-sm font-semibold text-vintiga-primary no-underline">
-                    Open flow ({entry.screens} screens) →
-                  </a>
-                  <div className="flex items-center gap-vintiga-sm">
-                    <a
-                      href={reviewHash}
-                      className="typo-caption font-semibold text-vintiga-foreground-muted hover:text-vintiga-primary no-underline"
-                      title="Open shareable review view"
-                    >
-                      Review →
-                    </a>
-                    <AvatarStack contributors={authors} />
-                  </div>
+                <div className="w-[280px] shrink-0 flex flex-col gap-vintiga-sm">
+                  <CardMeta entry={entry} category={category} featured={featured} />
+                </div>
+                <div className="flex-1 min-w-0 overflow-x-auto flex items-center gap-vintiga-md">
+                  {screens.slice(0, 8).map((p) => (
+                    <ScreenThumb key={p} path={p} frame={entry.frame} />
+                  ))}
                 </div>
               </div>
             )
           })}
         </div>
+        ) : (
+        <div className="flex flex-col gap-vintiga-lg">
+          {/* Featured "Latest" card + up to two side cards. */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-vintiga-lg">
+            <FeaturedGridCard entry={sortedPrototypes[0]} spanFull={sortedPrototypes.length <= 1} />
+            {sortedPrototypes.length > 1 && (
+              <div className="flex flex-col gap-vintiga-lg">
+                {sortedPrototypes.slice(1, 3).map((entry) => (
+                  <PrototypeCard key={entry.path} entry={entry} className="flex-1" />
+                ))}
+              </div>
+            )}
+          </div>
+          {/* The rest, in a uniform grid. */}
+          {sortedPrototypes.length > 3 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
+              {sortedPrototypes.slice(3).map((entry) => (
+                <PrototypeCard key={entry.path} entry={entry} />
+              ))}
+            </div>
+          )}
+        </div>
+        )
       ) : (
         <div className="border-2 border-dashed border-vintiga-border rounded-vintiga-card p-vintiga-3xl flex flex-col items-center justify-center text-center gap-vintiga-md">
           <p className="typo-title-subsection font-semibold text-vintiga-foreground">
@@ -292,28 +808,18 @@ function IndexPage() {
         </div>
       )}
 
-      {/* Tools (unfiltered) */}
-      <section className="mt-vintiga-2xl">
-        <h2 className="typo-caption font-semibold text-vintiga-foreground-muted uppercase tracking-wide mb-vintiga-md">
-          Tools
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-vintiga-lg">
-          <a
-            href="#/web/design-system"
-            className="bg-vintiga-surface border border-vintiga-border rounded-vintiga-card p-vintiga-xl flex flex-col gap-vintiga-sm hover:border-vintiga-primary transition-colors no-underline"
-          >
-            <h3 className="typo-title-subsection font-semibold text-vintiga-foreground">
-              Design System
-            </h3>
-            <p className="typo-body-sm text-vintiga-foreground-muted">
-              Tokens, typography, colours, components
-            </p>
-            <span className="typo-body-sm font-semibold text-vintiga-primary mt-vintiga-sm">
-              Open →
-            </span>
-          </a>
-        </div>
-      </section>
+      {/* Design System section — shown on the All tab. */}
+      {showDesignSystem && (
+        <section className="mt-vintiga-2xl">
+          <h2 className="typo-caption font-semibold text-vintiga-foreground-muted uppercase tracking-wide mb-vintiga-md">
+            Design System
+          </h2>
+          <DesignSystemSectionCards />
+        </section>
+      )}
+      </div>
+
+      <LatestUpdatesModal open={updatesOpen} onClose={() => setUpdatesOpen(false)} />
     </div>
   )
 }
@@ -339,41 +845,23 @@ function prettyScreenName(path: string, prefix: string): string {
     .join(' ')
 }
 
-type View = 'prototype' | 'overview' | 'flow'
+type View = 'prototype' | 'overview'
 
-function ViewToggle({ hashPath, view, showFlow }: { hashPath: string; view: View; showFlow: boolean }) {
-  const setView = (next: View) => {
-    if (next === 'prototype') window.location.hash = hashPath
-    else window.location.hash = `${hashPath}?view=${next === 'overview' ? 'overview' : 'flow'}`
-  }
-  const options: { value: View; label: string }[] = [
-    { value: 'prototype', label: 'Prototype' },
-    { value: 'overview',  label: 'Design' },
-    ...(showFlow ? [{ value: 'flow' as const, label: 'Flow' }] : []),
-  ]
-
+// The live prototype renders with no builder chrome — the Prototype / Designs
+// choice lives on the home-page card. This minimal "Prototypes" back link is
+// only used on the builder's own Designs (overview) page.
+function BackButton() {
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-14 bg-vintiga-slate-800 px-4 flex items-center justify-between">
-      <a
-        href="#/"
-        aria-label="Back to prototypes"
-        className="w-10 h-10 rounded-vintiga-md flex items-center justify-center text-vintiga-white hover:bg-vintiga-slate-700 transition-colors no-underline"
-      >
-        <BackArrowIcon className="w-5 h-5" />
-      </a>
-      <SegmentedControl<View>
-        size="sm"
-        value={view}
-        onChange={setView}
-        options={options}
-        aria-label="Prototype view"
-      />
-    </div>
+    <a
+      href="#/"
+      aria-label="Back to prototypes"
+      className="fixed top-4 left-4 z-50 inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-vintiga-surface border border-vintiga-border shadow-vintiga-sm typo-body-sm font-semibold text-vintiga-foreground-muted hover:text-vintiga-foreground transition-colors no-underline"
+    >
+      <BackArrowIcon className="w-4 h-4" />
+      Prototypes
+    </a>
   )
 }
-
-// Height of the top bar — used as top padding when a prototype screen is rendered underneath.
-const VIEW_TOGGLE_HEIGHT = 56 // h-14
 
 const PHONE_W = 390
 const PHONE_H = 844
@@ -381,73 +869,12 @@ const WEB_THUMB_W = 480
 const WEB_INNER_W = 1440
 const WEB_INNER_H = 900
 
-function FlowGrid({ flow }: { flow: { prefix: string; paths: string[] }; inPhoneFrame: boolean }) {
-  const total = flow.paths.length
-  return (
-    <div
-      className="min-h-screen bg-vintiga-surface-secondary pb-vintiga-2xl px-vintiga-xl overflow-x-auto"
-      style={{ paddingTop: VIEW_TOGGLE_HEIGHT + 64 }}
-    >
-      {/* Row of nodes + arrows */}
-      <div className="flex items-center gap-0 w-max mx-auto">
-        {flow.paths.map((p, idx) => {
-          const label = prettyScreenName(p, flow.prefix)
-          return (
-            <div key={p} className="flex items-center">
-              {/* Node */}
-              <a
-                href={p}
-                aria-label={`Open ${label}`}
-                className="group flex flex-col items-center gap-2 no-underline focus-visible:outline-none"
-              >
-                {/* Step number pill */}
-                <span className="typo-caption font-semibold text-vintiga-foreground-muted">
-                  {idx + 1} / {total}
-                </span>
-
-                {/* Card */}
-                <div className="w-40 bg-vintiga-surface border border-vintiga-border rounded-vintiga-card px-vintiga-md py-vintiga-md flex flex-col items-center gap-1 shadow-vintiga-sm group-hover:border-vintiga-primary group-hover:shadow-vintiga-md transition-all">
-                  {/* Icon circle */}
-                  <div className="w-8 h-8 rounded-full bg-vintiga-surface-element flex items-center justify-center mb-1">
-                    <span className="typo-caption font-semibold text-vintiga-foreground">
-                      {idx + 1}
-                    </span>
-                  </div>
-                  <span className="typo-body-sm font-semibold text-vintiga-foreground text-center group-hover:text-vintiga-primary transition-colors">
-                    {label}
-                  </span>
-                </div>
-              </a>
-
-              {/* Arrow connector */}
-              {idx < total - 1 && (
-                <div className="w-10 flex items-center justify-center shrink-0 mt-6" aria-hidden="true">
-                  <svg width="32" height="12" viewBox="0 0 32 12" fill="none">
-                    <path
-                      d="M0 6h26M20 1l6 5-6 5"
-                      stroke="var(--color-vintiga-slate-300)"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
 function OverviewGrid({ flow, inPhoneFrame }: { flow: { prefix: string; paths: string[] }; inPhoneFrame: boolean }) {
   const webScale = WEB_THUMB_W / WEB_INNER_W
   const webThumbH = Math.round(WEB_INNER_H * webScale)
   return (
     <div
-      className="min-h-screen bg-vintiga-surface-secondary pb-vintiga-2xl px-vintiga-lg"
-      style={{ paddingTop: VIEW_TOGGLE_HEIGHT + 48 }}
+      className="min-h-screen bg-vintiga-surface-secondary pt-vintiga-2xl px-vintiga-lg pb-28"
     >
       <div className="mx-auto">
         <div className="flex flex-wrap gap-vintiga-2xl justify-start">
@@ -516,7 +943,7 @@ function App() {
   }
 
   const viewParam = params.get('view')
-  const view: View = viewParam === 'overview' ? 'overview' : viewParam === 'flow' ? 'flow' : 'prototype'
+  const view: View = viewParam === 'overview' ? 'overview' : 'prototype'
   const isThumbnail = params.get('thumbnail') === '1'
   const Screen = webScreens[hashPath]
 
@@ -532,30 +959,21 @@ function App() {
   }
 
   const flow = flowForPath(hashPath)
-  const canToggle = !!flow && !hashPath.startsWith('#/web/design-system')
-  const showFlow = !!flow && flow.paths.length > 1
 
   if (Screen) {
+    // Designs (overview) — a builder page, so it keeps the "Prototypes" back link.
     if (view === 'overview' && flow) {
       return (
         <>
-          <ViewToggle hashPath={hashPath} view="overview" showFlow={showFlow} />
           <OverviewGrid flow={flow} inPhoneFrame={showInPhoneFrame} />
+          <BackButton />
         </>
       )
     }
-    if (view === 'flow' && flow) {
-      return (
-        <>
-          <ViewToggle hashPath={hashPath} view="flow" showFlow={showFlow} />
-          <FlowGrid flow={flow} inPhoneFrame={showInPhoneFrame} />
-        </>
-      )
-    }
+    // The live prototype renders with no builder chrome.
     if (showInPhoneFrame) {
       return (
         <div className="min-h-screen bg-vintiga-surface-secondary flex items-center justify-center py-vintiga-xl">
-          {canToggle && <ViewToggle hashPath={hashPath} view="prototype" showFlow={showFlow} />}
           <div className="w-[390px] h-[844px] rounded-[40px] shadow-vintiga-lg overflow-hidden bg-vintiga-surface flex flex-col">
             <Screen />
           </div>
@@ -565,8 +983,7 @@ function App() {
     }
     return (
       <div className="h-screen flex flex-col">
-        {canToggle && <ViewToggle hashPath={hashPath} view="prototype" showFlow={showFlow} />}
-        <div className="flex-1 min-h-0" style={canToggle ? { paddingTop: VIEW_TOGGLE_HEIGHT } : undefined}>
+        <div className="flex-1 min-h-0">
           <Screen />
         </div>
         {import.meta.env.DEV && <Agentation />}

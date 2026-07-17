@@ -50,7 +50,7 @@ const ROUTES: Record<CustomerViewTab, string> = {
   overview:          '#/web/customers/view/overview',
   orders:            '#/web/customers/view/overview',
   billing:           '#/web/customers/view/billing',
-  memberships:       '#/web/customers/view/overview',
+  memberships:       '#/web/customers/view/memberships',
   'important-dates': '#/web/customers/view/overview',
   relationships:     '#/web/customers/view/overview',
   reservations:      '#/web/customers/view/overview',

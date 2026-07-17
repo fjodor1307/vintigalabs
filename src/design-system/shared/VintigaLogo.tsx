@@ -22,6 +22,17 @@ export function VintigaIconIndigo({ size = 44, ...props }: SVGProps<SVGSVGElemen
   )
 }
 
+/** Neutral rounded square (#FAFAFA) + dark glyph — for dark backgrounds */
+export function VintigaIconNeutral({ size = 44, ...props }: SVGProps<SVGSVGElement> & { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <rect width="40" height="40" rx="10" fill="#FAFAFA" />
+      <path d="M20.0001 21.25C20.0001 16.4175 16.0826 12.5 11.2501 12.5H10.0001V18.75C10.0001 23.5825 13.9176 27.5 18.7501 27.5H20.0001V21.25Z" fill="#171717" />
+      <path d="M20.0001 21.25C20.0001 16.4175 23.9176 12.5 28.7501 12.5H30.0001V18.75C30.0001 23.5825 26.0826 27.5 21.2501 27.5H20.0001V21.25Z" fill="#171717" />
+    </svg>
+  )
+}
+
 // ─── Full wordmark variants ────────────────────────────────────────────────────
 
 const WORDMARK_PATHS = (

@@ -251,7 +251,7 @@ export function ClubViewChargesScreen() {
           subtitle={
             failedCount > 0
               ? `${failedCount} failed ${failedCount === 1 ? 'charge needs' : 'charges need'} follow-up. Tap a member to open their membership.`
-              : 'Every charge against a Tasting Credit level. Tap a member to open their membership.'
+              : 'Every charge against a Member Choice level. Tap a member to open their membership.'
           }
           divider={false}
         >
