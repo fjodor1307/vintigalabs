@@ -58,6 +58,7 @@ Replace the left column with the right. Sourced from the Vintiga voice on [vinti
 
 ## Capitalisation reminders
 
-- Buttons, titles, headers: **sentence case** ("Book a demo", not "Book A Demo").
-- Feature names keep caps: **Mobile POS**, **Wine Club**, **CRM**, **Reservations**.
+- Buttons, titles, headers, CTAs: **Title Case** ("Book a Demo", "See Your Savings") — matches vintigalabs.com. Short connector words (a, and, for, in, of, the, to, with) stay lowercase mid-title: "View Vintiga in Action".
+- Body copy and narrative subheads: **sentence case**, with a period when the subhead reads as a sentence ("Guests discover your winery.").
+- Feature names keep their caps: **Mobile POS**, **Wine Club**, **Guest Intelligence**, **CRM**, **Reservations**, **AI Upsell**, **Smart Cart**.
 - No ALL CAPS for emphasis. Use weight or colour instead.

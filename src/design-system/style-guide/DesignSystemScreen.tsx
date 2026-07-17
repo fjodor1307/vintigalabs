@@ -169,6 +169,10 @@ const NAV: NavGroup[] = [
         items: [
           { id: 'ds-screen-header', label: 'Screen Header' },
           { id: 'ds-screen-footer', label: 'Screen Footer' },
+          { id: 'ds-pos-tab-bar', label: 'POS Tab Bar' },
+          { id: 'ds-pos-navbar', label: 'POS Navbar' },
+          { id: 'ds-pos-cart', label: 'POS Cart Button' },
+          { id: 'ds-pos-product-card', label: 'POS Product Card' },
         ],
       },
       {
@@ -199,6 +203,16 @@ const PAGE_MAP: Record<string, React.ComponentType> = {
   ...FOUNDATION_PAGES,
   ...ANIMATION_PAGES,
   ...COMPONENT_PAGES,
+}
+
+// Deep-link support: the hub links to `#/web/design-system?p=<pageId>` so a
+// section card (Foundation / Assets / Components) can open the DS at that place.
+function getInitialPage(): string {
+  if (typeof window === 'undefined') return 'colors'
+  const qi = window.location.hash.indexOf('?')
+  if (qi === -1) return 'colors'
+  const p = new URLSearchParams(window.location.hash.slice(qi + 1)).get('p')
+  return p && PAGE_MAP[p] ? p : 'colors'
 }
 
 // ─── Breadcrumb helper ────────────────────────────────────────────────────────
@@ -472,7 +486,7 @@ function Sidebar({
 // ─── Inner shell — needs to be inside PlaygroundProvider to use context ──────
 
 function DesignSystemInner() {
-  const [activePage, setActivePage] = useState('colors')
+  const [activePage, setActivePage] = useState(getInitialPage)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const playground = usePlaygroundContext()

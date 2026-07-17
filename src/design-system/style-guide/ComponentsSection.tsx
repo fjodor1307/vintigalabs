@@ -16,6 +16,10 @@ import { Skeleton, SkeletonText, SkeletonCard } from '../components/Skeleton'
 import { ErrorState } from '../components/ErrorState'
 import { ScreenHeader } from '@ds/shared/ScreenHeader'
 import { ScreenFooter } from '@ds/shared/ScreenFooter'
+import { PosTabBar } from '@ds/shared/PosTabBar'
+import { PosNavbar } from '@ds/shared/PosNavbar'
+import { PosCartButton } from '@ds/shared/PosCartButton'
+import { PosProductCard } from '@ds/shared/PosProductCard'
 import { Tabs } from '@base-ui/react/tabs'
 import { Progress } from '@base-ui/react/progress'
 import { Separator } from '@base-ui/react/separator'
@@ -928,6 +932,57 @@ function ScreenFooterSection() {
   )
 }
 
+function PosTabBarSection() {
+  return (
+    <SubSection id="ds-pos-tab-bar" title="POS Tab Bar" description="Floating glass tab bar for the POS app. Active tab floats in a white pill with the indigo accent.">
+      <div className="border border-vintiga-border rounded-vintiga-card bg-vintiga-surface-secondary p-vintiga-lg">
+        <div className="max-w-[393px] mx-auto">
+          <PosTabBar active={0} />
+        </div>
+      </div>
+    </SubSection>
+  )
+}
+
+function PosNavbarSection() {
+  return (
+    <SubSection id="ds-pos-navbar" title="POS Navbar" description="Product search navbar with a list-view toggle.">
+      <div className="border border-vintiga-border rounded-vintiga-card overflow-hidden">
+        <div className="max-w-[393px]">
+          <PosNavbar />
+        </div>
+      </div>
+    </SubSection>
+  )
+}
+
+function PosCartSection() {
+  return (
+    <SubSection id="ds-pos-cart" title="POS Cart Button" description="Floating cart button with a red live-count badge.">
+      <div className="border border-vintiga-border rounded-vintiga-card bg-vintiga-surface-secondary p-vintiga-2xl flex justify-center">
+        <PosCartButton count={12} />
+      </div>
+    </SubSection>
+  )
+}
+
+function PosProductCardSection() {
+  return (
+    <SubSection id="ds-pos-product-card" title="POS Product Card" description="Square product tile with a frosted name · price · volume panel. Tap to add to cart.">
+      <div className="border border-vintiga-border rounded-vintiga-card bg-vintiga-surface-secondary p-vintiga-lg">
+        <div className="w-44">
+          <PosProductCard
+            name="2020 Rosé"
+            price="29.00 $"
+            volume="750ml"
+            image="https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=400&h=400&fit=crop"
+          />
+        </div>
+      </div>
+    </SubSection>
+  )
+}
+
 // ── New component sections ──────────────────────────────────────────────────
 
 function AvatarsSection() {
@@ -1081,7 +1136,8 @@ function InteractiveTagShowcase() {
           pressed={selected.has(label)}
           onToggle={() => {
             const next = new Set(selected)
-            next.has(label) ? next.delete(label) : next.add(label)
+            if (next.has(label)) next.delete(label)
+            else next.add(label)
             setSelected(next)
           }}
         >
@@ -1297,9 +1353,9 @@ function SelectSection() {
   const v = usePlayground(SELECT_CONTROLS)
   const stringOpts = ['Available', 'Not Available', 'Draft', 'Archived']
   const labelledOpts = [
-    { value: 'curated',    label: 'Curated Club' },
-    { value: 'tasting',    label: 'Tasting Credit' },
-    { value: 'membership', label: 'Membership' },
+    { value: 'curated',    label: 'Curated Bottle Club' },
+    { value: 'tasting',    label: 'Member Choice Club' },
+    { value: 'membership', label: 'Rewards Club' },
   ]
   return (
     <SubSection
@@ -2020,7 +2076,7 @@ function ClubCardSection() {
                 />
               }
               title="Vintiga Heritage"
-              tags={[<Tag tone="violet" size="sm">Curated Club</Tag>]}
+              tags={[<Tag tone="violet" size="sm">Curated Bottle Club</Tag>]}
               meta="10 Active | 2 On-hold | 2 New | 1 Canceled"
               action={
                 <button
@@ -2558,6 +2614,10 @@ export const COMPONENT_PAGES: Record<string, React.ComponentType> = {
   'ds-otp-input':      OtpInputSection,
   'ds-screen-header':  ScreenHeaderSection,
   'ds-screen-footer':  ScreenFooterSection,
+  'ds-pos-tab-bar':    PosTabBarSection,
+  'ds-pos-navbar':     PosNavbarSection,
+  'ds-pos-cart':       PosCartSection,
+  'ds-pos-product-card': PosProductCardSection,
   'ds-avatars':        AvatarsSection,
   'ds-tags':           TagsSection,
   'ds-kpi-card':       KpiCardsSection,

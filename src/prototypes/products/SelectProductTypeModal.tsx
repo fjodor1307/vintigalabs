@@ -2,7 +2,7 @@ import { Dialog } from '@base-ui/react/dialog'
 import { Button } from '@ds/shared/Button'
 import {
   XIcon,
-  BottleWineIcon, BeerIcon, MartiniIcon, PartyPopperIcon, ShirtIcon,
+  BottleWineIcon, BeerIcon, MartiniIcon, HandHeartIcon, ShirtIcon,
   HandCoinsIcon, SandwichIcon, WineIcon, CalendarCheckIcon, PackageOpenIcon,
   GiftIcon, NotebookPenIcon, TicketIcon,
 } from '@ds/icons/Icons'
@@ -26,7 +26,7 @@ const TYPES: TypeOption[] = [
   { value: 'wine',          label: 'Wines',         icon: BottleWineIcon },
   { value: 'beer',          label: 'Beer',          icon: BeerIcon },
   { value: 'spirit',        label: 'Spirits',       icon: MartiniIcon },
-  { value: 'experience',    label: 'Experience',    icon: PartyPopperIcon },
+  { value: 'experience',    label: 'Experience',    icon: HandHeartIcon },
   { value: 'merchandise',   label: 'Merchandise',   icon: ShirtIcon },
   { value: 'drink-token',   label: 'Drink Tokens',  icon: HandCoinsIcon },
   { value: 'food',          label: 'Food',          icon: SandwichIcon },

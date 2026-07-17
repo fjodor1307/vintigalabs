@@ -9,9 +9,6 @@ import { IconButton } from '@ds/shared/IconButton'
 import { Avatar } from '@ds/shared/Avatar'
 import { FilterDropdown } from '@ds/shared/FilterDropdown'
 import { PopoverMenu } from '@ds/shared/PopoverMenu'
-import { Modal, ModalHeader, ModalBody, ModalFooter } from '@ds/shared/Modal'
-import { Field } from '@ds/shared/Field'
-import { Textarea } from '@ds/shared/Textarea'
 import {
   Table,
   TableHead,
@@ -29,7 +26,6 @@ import {
   SparklesIcon,
   MapPinIcon,
   FileTextIcon,
-  HandIcon,
   CircleXIcon,
   CheckIcon,
   PencilIcon,
@@ -38,7 +34,7 @@ import { Popover } from './Popover'
 import { MiniCalendar } from './MiniCalendar'
 import { ReservationCalendar } from './ReservationCalendar'
 import { GuestPanel } from './GuestPanel'
-import { HoldLocationModal, BlockTimeModal } from './ReservationModals'
+import { BlockTimeModal, NotesModal } from './ReservationModals'
 import {
   RESERVATIONS,
   STATUS_TONE,
@@ -115,25 +111,10 @@ export function ReservationsScreen() {
   const [status, setStatus] = useState<Set<ReservationStatus>>(new Set())
   // The reservation whose "Get To Know" guest panel is open (bulb action).
   const [guest, setGuest] = useState<Reservation | null>(null)
-  const [holdOpen, setHoldOpen] = useState(false)
   const [blockOpen, setBlockOpen] = useState(false)
-  // Schedule / staff notes for the active day. Saved values back the popover;
-  // the editor modal works on a draft so Cancel discards.
-  const [scheduleNote, setScheduleNote] = useState('')
-  const [staffNote, setStaffNote] = useState('')
   const [notesOpen, setNotesOpen] = useState(false)
-  const [draftSchedule, setDraftSchedule] = useState('')
-  const [draftStaff, setDraftStaff] = useState('')
-  function openNotes() {
-    setDraftSchedule(scheduleNote)
-    setDraftStaff(staffNote)
-    setNotesOpen(true)
-  }
-  function saveNotes() {
-    setScheduleNote(draftSchedule)
-    setStaffNote(draftStaff)
-    setNotesOpen(false)
-  }
+  const [scheduleNotes, setScheduleNotes] = useState('')
+  const [staffNotes, setStaffNotes] = useState('')
 
   // Toolbar filters (search · experience · status), applied regardless of date.
   const matched = useMemo(() => {
@@ -162,8 +143,12 @@ export function ReservationsScreen() {
   const weekHasData = weekDays.some((d) => sameDay(d, DATA_DATE))
 
   // What's visible depends on the view's date scope: a single day (List / Day)
-  // or the whole week (Week).
-  const visible = view === 'Week View' ? (weekHasData ? matched : []) : onDataDate ? matched : []
+  // or the whole week (Week). A text search overrides the date scope — searching
+  // spans every reservation, not just the day in view (Jul 9 review).
+  const searching = query.trim() !== ''
+  const visible = searching
+    ? matched
+    : view === 'Week View' ? (weekHasData ? matched : []) : onDataDate ? matched : []
 
   const guestCount = visible.reduce((sum, r) => sum + r.guests, 0)
   const hasFilters = query.trim() !== '' || experience.size > 0 || status.size > 0
@@ -225,50 +210,35 @@ export function ReservationsScreen() {
               </div>
 
               <div className="flex items-center gap-vintiga-sm">
-                {/* Tasks */}
-                <Popover
-                  align="right"
-                  width="w-96"
-                  trigger={(_open, toggle) => (
-                    <IconButton variant="outline" size="md" icon={<FileTextIcon />} aria-label="Tasks" onClick={toggle} />
-                  )}
-                >
-                  {() => (
-                    <div className="flex flex-col gap-vintiga-sm">
-                      <h3 className="typo-body-lg font-semibold text-vintiga-slate-900">Your Tasks</h3>
-                      <p className="typo-body-sm text-vintiga-slate-500">
-                        No tasks assigned. Tasks can be added on any reservation, order, customer, or club membership.
-                      </p>
-                    </div>
-                  )}
-                </Popover>
-
                 {/* Notes */}
                 <Popover
                   align="right"
                   width="w-96"
                   trigger={(_open, toggle) => (
-                    <IconButton variant="outline" size="md" icon={<MessageIcon />} aria-label="Notes" onClick={toggle} />
+                    <span className="relative inline-flex">
+                      <IconButton variant="outline" size="md" icon={<MessageIcon />} aria-label="Notes" onClick={toggle} />
+                      {(scheduleNotes || staffNotes) && (
+                        <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-vintiga-primary ring-2 ring-vintiga-white" aria-hidden />
+                      )}
+                    </span>
                   )}
                 >
                   {(close) => {
-                    const edit = () => { close(); openNotes() }
+                    // Either heading opens the editor, so the whole popover is a
+                    // target — not just the pencil.
+                    const edit = () => { close(); setNotesOpen(true) }
                     return (
                       <div className="flex flex-col gap-vintiga-md">
                         <div className="flex flex-col gap-vintiga-xs">
                           <div className="flex items-center justify-between gap-vintiga-md">
-                            <button type="button" onClick={edit} className="typo-body-lg font-semibold text-vintiga-slate-900 hover:text-vintiga-primary transition-colors text-left">Schedule Notes</button>
+                            <button type="button" onClick={edit} className="typo-body-lg font-semibold text-vintiga-slate-900 hover:text-vintiga-primary transition-colors bg-transparent border-none p-0 cursor-pointer text-left">Schedule Notes</button>
                             <IconButton variant="outline" size="sm" icon={<PencilIcon />} aria-label="Edit notes" onClick={edit} />
                           </div>
-                          {scheduleNote
-                            ? <p className="typo-body-sm text-vintiga-slate-700 whitespace-pre-wrap">{scheduleNote}</p>
-                            : <p className="typo-body-sm text-vintiga-slate-500">No notes entered.</p>}
+                          <p className={`typo-body-sm ${scheduleNotes ? 'text-vintiga-slate-700' : 'text-vintiga-slate-500'}`}>{scheduleNotes || 'No notes entered.'}</p>
                         </div>
                         <div className="flex flex-col gap-vintiga-xs">
-                          <button type="button" onClick={edit} className="typo-body-lg font-semibold text-vintiga-slate-900 hover:text-vintiga-primary transition-colors text-left">Staff Notes</button>
-                          {staffNote
-                            ? <p className="typo-body-sm text-vintiga-slate-700 whitespace-pre-wrap">{staffNote}</p>
-                            : <p className="typo-body-sm text-vintiga-slate-500">No notes entered.</p>}
+                          <button type="button" onClick={edit} className="typo-body-lg font-semibold text-vintiga-slate-900 hover:text-vintiga-primary transition-colors bg-transparent border-none p-0 cursor-pointer text-left w-fit">Staff Notes</button>
+                          <p className={`typo-body-sm ${staffNotes ? 'text-vintiga-slate-700' : 'text-vintiga-slate-500'}`}>{staffNotes || 'No notes entered.'}</p>
                         </div>
                       </div>
                     )
@@ -288,8 +258,6 @@ export function ReservationsScreen() {
                   label="More"
                   width="w-60"
                   items={[
-                    { label: 'Ad Hoc Reservation', icon: <PlusIcon className="w-4 h-4" />, onClick: () => { window.location.hash = '#/web/reservations/add' } },
-                    { label: 'Hold Location', icon: <HandIcon className="w-4 h-4" />, onClick: () => setHoldOpen(true) },
                     { label: 'Block Time', icon: <CircleXIcon className="w-4 h-4" />, onClick: () => setBlockOpen(true) },
                     { label: 'Print List', icon: <FileTextIcon className="w-4 h-4" />, onClick: () => {} },
                   ]}
@@ -380,7 +348,7 @@ export function ReservationsScreen() {
                       <div className="inline-flex items-center justify-end gap-vintiga-sm" onClick={(e) => e.stopPropagation()}>
                         <IconButton variant="outline" size="sm" icon={<SparklesIcon />} aria-label={`Get to know ${r.name}`} onClick={() => setGuest(r)} />
                         {r.status === 'Checked In' ? (
-                          <span className="typo-body-sm font-medium text-vintiga-success">Checked In</span>
+                          <span className="typo-body-sm font-medium text-vintiga-success whitespace-nowrap">Checked In</span>
                         ) : (
                           <Button size="sm" onClick={() => checkIn(r.id)}>Check In</Button>
                         )}
@@ -410,28 +378,15 @@ export function ReservationsScreen() {
       </div>
 
       {guest && <GuestPanel guest={guest} onClose={() => setGuest(null)} />}
-      <HoldLocationModal open={holdOpen} onClose={() => setHoldOpen(false)} />
       <BlockTimeModal open={blockOpen} onClose={() => setBlockOpen(false)} />
-
-      {/* Notes editor — opened from the Schedule / Staff Notes popover. */}
-      <Modal open={notesOpen} onClose={() => setNotesOpen(false)} size="md">
-        <ModalHeader
-          title={`Notes for ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
-          onClose={() => setNotesOpen(false)}
-        />
-        <ModalBody>
-          <Field label="Schedule Notes">
-            <Textarea rows={5} placeholder="Enter note" value={draftSchedule} onChange={(e) => setDraftSchedule(e.target.value)} />
-          </Field>
-          <Field label="Staff Notes">
-            <Textarea rows={5} placeholder="Enter note" value={draftStaff} onChange={(e) => setDraftStaff(e.target.value)} />
-          </Field>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="outline" onClick={() => setNotesOpen(false)}>Cancel</Button>
-          <Button onClick={saveNotes}>Save Notes</Button>
-        </ModalFooter>
-      </Modal>
+      <NotesModal
+        open={notesOpen}
+        date={date}
+        scheduleNotes={scheduleNotes}
+        staffNotes={staffNotes}
+        onClose={() => setNotesOpen(false)}
+        onSave={(s, st) => { setScheduleNotes(s); setStaffNotes(st) }}
+      />
     </div>
   )
 }

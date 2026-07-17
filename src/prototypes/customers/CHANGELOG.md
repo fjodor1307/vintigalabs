@@ -1,10 +1,81 @@
 # Customers — Changelog
 
+## 2026-07-16 — Fedja + Claude: Membership card polish
+
+Tightened the expanded membership card so it reads as three groups instead of one flat grid.
+
+- **Paid with + Delivery are paired at the top** — the two editable facts, side by side. Delivery now uses the **same 56×36 chip as `CardBrandLogo`** (a pin for pickup, a truck for shipping) instead of a loose inline icon, so the two columns read as a set. The chips centre on a shared baseline (`min-h-10`) so a wrapping address can't knock them out of line.
+- **Dates on one aligned row** — Commitment ends / Renews · Preferred shipping · Joined. Previously "Joined" was stranded in the first row's whitespace because the wrapping delivery line made the row uneven.
+- **Dividers between groups** (paid/delivery · dates · notes · footer) with `pt-vintiga-md` for consistent rhythm.
+- No-card state now shows a card-icon chip rather than a delivery icon.
+
+`CustomerMembershipsScreen.tsx`.
+
+## 2026-07-16 — Fedja + Claude: Delivery picker bug fix + shared editor
+
+Follow-up to the Jul 15 combined-delivery work.
+
+- **Fixed the duplicate/both-selected bug.** The seed had two byte-identical saved addresses, and the picker selected by address *text*, so both rows rendered as selected. The seed now carries two distinct addresses (**Home** — 1210 Lakeview, Bellingham WA · **Work** — 500 Market St, San Francisco CA), state stored as the two-letter abbreviation (`WA`/`CA`).
+- **"Change delivery" now opens the shared `DeliveryMethodModal`** (`@ds/shared/DeliveryMethodPicker`) — the same tiles + "Shipping Address" dropdown as the Add Membership form — in place of the local combined `DeliveryDestinationModal`, which was removed. "Add new address" writes through `customerActions.addAddress` (now returns the new id).
+
+`CustomerMembershipsScreen.tsx`, `membershipEditModals.tsx`, `customerStore.ts`.
+
+## 2026-07-15 — Fedja + Claude: Memberships — condensed card + full page + combined delivery (Jul 15 review)
+
+Reworked the Memberships tab per the Jul 15 review.
+
+- **Condensed card** carries the essentials only: **delivery** (combined), **payment** (change card), **join date + commitment/renewal**, **preferred shipping**, **shipping notes + gift message**, **order review**, and an **"order waiting for pickup"** alert when one exists.
+- **Removed the "Your next shipment" block** (bottles, charge/ship dates, min–max) from the card — that lives in Club processing. No shipment info in the collapsed summary either.
+- **"View full membership →"** links to the existing **Clubs membership page** (`#/web/clubs/memberships/{clubMemberId}`) — the canonical deep view (orders, history, addresses, payment, holds) — instead of duplicating it under Customers. Per the Jul 15 decision, membership deep-detail lives in Club processing. The customer's Curators Club maps to club member `1001` (Jane Davis) via a new `clubMemberId`.
+- **Combined delivery method** (`DeliveryDestinationModal`) — one picker listing **pickup locations *and* saved addresses together**; one tap sets method + destination (no two-step). Replaces the separate ship-to + delivery modals. Same paradigm to hand to Vantage.
+
+`CustomerMembershipsScreen.tsx`, `MembershipDetailPage.tsx` (new), `membershipEditModals.tsx`, `membershipsData.ts`, route in `prototype.config.ts`.
+
+## 2026-07-10 — Fedja + Claude: Digital Pass lifecycle + Send Invite
+
+Reworked the **Digital Pass** on the Memberships tab from a static "Active" row into the ticketed lifecycle. Every customer record has a pass (its own card, separate from the addable clubs — a pass can't be "added").
+
+- **State is derived from dates** (`passStatus`), most-advanced wins:
+  - `Inactive · Invitation Sent: Not Sent` — new-customer starting state (seeded), **no Pass ID shown**.
+  - `Inactive · Invitation Sent: {date}` after an invite goes out.
+  - `Active · Invitation Accepted: {date}` once accepted.
+  - `Active · Last Used: {date}` once used. All states except "Not Sent" show their date.
+- **Send Invite** replaces "View pass" as the 3-dot action — sends the email invite (toast), stamps `invitationSentOn`, and **mints the Pass ID on first send** (dev may instead mint at record creation). "View pass" returns as a second item once a Pass ID exists.
+- **Re-send never downgrades** — resending updates `invitationSentOn` internally but the display follows the precedence, so an already-active/used pass keeps showing `Active · Last Used: {date}`.
+
+`membershipsData.ts` (new `DigitalPass` shape), `CustomerMembershipsScreen.tsx`.
+
+## 2026-07-09 — Fedja + Claude: Memberships tab — expandable club + next-order model (Jul 1 review)
+
+Built the **Memberships** tab (was a placeholder that bounced to Overview). Reworked per Donna's Jul 1 feedback on Figma 2015:6618 and the customer-portal reference, which combines the club and its next shipment into one card:
+
+- **Digital Pass is its own compact card** at the top — it's a loyalty/identity object, not a subscription club, so it reads separately from the memberships list.
+- **Expandable club cards** — collapsed shows a one-line summary (`Next shipment {date} · N bottles` for shipment clubs, `Level · $X/mo` for Member Choice, `Renews {date}` for Rewards). Expanding reveals the type-specific body:
+  - **Shipment clubs (Curated / Traditional)** → a "Your next shipment" block (ships-to · paid-with · delivery · charge/ship dates · min–max requirements) and an "In this shipment" bottle list with a working **Skip / Unskip** toggle — mirroring the portal, with staff-side edit affordances (Change address / card / delivery).
+  - **Rewards** → member benefits + commitment expiry (no shipment).
+  - **Member Choice** → level ($/mo) + account credit + commitment (no shipment).
+- **On-hold** cards show a hold alert; **cancelled** cards don't expand and show the cancellation reason inline.
+- Seeded Jane Davis with **one of every club type** across active / on-hold / cancelled and both sources.
+
+`CustomerMembershipsScreen.tsx` + `membershipsData.ts` (new); route `#/web/customers/view/memberships` wired; the tab no longer points at Overview. The inline edit affordances (Change address / card / delivery / level, Add) are visual placeholders for now — see `NOTES.md`.
+
+
 > Living handoff document for this prototype. Read first if you're picking up someone else's work.
 >
 > **Convention:** Add new entries at the top. Each entry needs a date, who made the change, what changed, and why. Focus on changes to this prototype only — cross-cutting / design-system changes belong in the repo-level `CHANGELOG.md`.
 
 ---
+
+## 2026-07-08 — Fedja + Claude: Add card modal with real number validation
+
+The Payment Methods `+ Add` button was a no-op. Wired it to a new `AddCardModal` (card number · expires · CVC · cardholder name) that saves through `customerActions.addPaymentMethod` — brand is detected from the number, and the row shows up immediately.
+
+- `AddCardModal.tsx` — new. Validates the card number client-side (Luhn checksum + 13–19 digit length) before the form can submit. An invalid number is caught here with an inline, actionable message — `Credit card number can't be validated. Check the number and re-enter.` — shown in the field's destructive state, instead of the opaque `Payment Method ID is required` the processor returns downstream. The number is grouped into 4s as you type; the error clears the moment you edit the field.
+- `CustomerBillingScreen.tsx` — `PaymentMethodsCard` now owns the modal open state and renders `<AddCardModal>`.
+
+Copy note: the ticket specified `Credit Card number entered can not be validated. Check the number and re-enter`; shipped house-styled per `vintiga-tov` (sentence case, contraction, filler trimmed) with the same meaning and recovery action.
+
+Verified in preview: invalid number keeps the modal open and shows the red message; a valid Luhn number (4242…) adds a Visa row and closes the modal. tsc clean, lint clean for these files.
 
 ## 2026-05-27 — Fedja + Claude: Surface Commerce 7-only cards (May 27 design review)
 
@@ -48,7 +119,7 @@ Reworked Billing after the Figma `Customer - Payments` (1948:14816) was shared. 
 
 Why: the user pointed at the actual Figma design which is unambiguously a management page. Keeping the transactions UI as drill-ins under Billing satisfies the audit-trail requirement without bloating the page or adding a new top-level tab.
 
-Add Payment Method / Edit Address modals — Figma doesn't have designs for these yet. Header `+ Add` buttons are wired to no-ops; the delete / set-default actions on the kebab work. Will come back when designs land.
+Add Payment Method / Edit Address modals — Figma doesn't have designs for these yet. Header `+ Add` buttons are wired to no-ops; the delete / set-default actions on the kebab work. Will come back when designs land. _(Update 2026-07-08: the Payment Methods `+ Add` modal now exists — see the top entry. Edit Address is still a no-op.)_
 
 ## 2026-05-07 — Fedja + Claude: Billing tab — Account Balance + Loyalty Points ledgers
 

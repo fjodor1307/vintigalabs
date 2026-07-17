@@ -6,10 +6,54 @@
 
 ---
 
-## 2026-06-24 — Fedja + Claude: Notes editor modal + trim the More menu
+## 2026-07-17 — Fedja + Claude: Notes editor names the day it edits
 
-- **Notes are now editable.** Clicking **Schedule Notes** / **Staff Notes** (or the pencil) in the Notes popover opens a **"Notes for {date}"** modal with both note fields + **Cancel / Save Notes**. Saved text shows back in the popover; the modal edits a draft so Cancel discards.
-- **Removed "Search From All Reservations"** from the More menu (now: Ad Hoc Reservation · Hold Location · Block Time · Print List).
+The header's notes editor always announced itself as **"Notes for Today"**, but the header has a date picker — open the notes on any other day and the title was simply wrong. `NotesModal` now takes the selected `date` and titles itself after it ("Notes for Mar 15, 2026").
+
+Also: either heading in the Schedule / Staff Notes popover now opens the editor, so the whole popover is a target rather than just the pencil.
+
+`ReservationModals.tsx`, `ReservationsScreen.tsx`.
+
+## 2026-07-10 — Fedja + Claude: Reservation View actions wired
+
+Made the detail-page header actions do something (all were no-ops):
+
+- **Check In** — flips the reservation to **Checked In**: the header + card status tags turn green, the button becomes a disabled "Checked In", and a success toast fires. Reversible via **Undo check-in** in the menu.
+- **Edit reservation** — the details form is now **read-only by default**; Edit unlocks it (fields enable + a **Save changes / Discard** bar appears). Save exits edit mode with a "Changes saved" toast.
+- **Resend confirmation** — info toast ("Sent to dorothyladner@gmail.com").
+- **Cancel reservation** — opens a danger confirm modal; confirming marks it **Cancelled** (red tags + a cancelled banner, Check In hidden). Reversible via **Reinstate reservation**.
+
+All feedback uses the DS `Toast`; the confirm uses the DS `Modal`. Reversible on purpose so the flow is repeatable in a demo. `ReservationViewScreen.tsx`.
+
+## 2026-07-10 — Fedja + Claude: Post-Reserve confirmed state
+
+Wired what happens after **Reserve** on the Add screen (was a no-op):
+
+- **Stay + edit mode** — the page stays open as the saved reservation. A green success banner ("Reservation #1004 confirmed for …") confirms it, the title gains a **Reserved** tag, the breadcrumb flips from *Add Reservation* → *Reservation #1004*, and every field stays editable so staff can immediately adjust host/table/notes.
+- The rail's primary button becomes **Save changes** (flips the banner to "Changes saved"); the secondary becomes **Back to reservations**.
+- **Back nav** — the confirmation banner carries a **Back to reservations** action (breadcrumbs still work too). Chosen over a header button to avoid duplicating the breadcrumb.
+- Reserve is disabled until a customer (or walk-in) is selected.
+- **Zero-charge only** — per the Jul 9 review, we only handle no-charge reservations right now, so every experience is priced at **0** ("No charge" across the dropdown, summary and total; the Reserve button drops the amount). The paid flow (reserve → create order → charge card on file) stays deferred in `NOTES.md`; the price model + labelling are kept so a charged experience lights up automatically later.
+
+`AddReservationScreen.tsx`, `experienceOptions.ts`.
+
+## 2026-07-09 — Fedja + Claude: Combined Experience/Option + Notes modal (Jul 9 review)
+
+- **One Experience dropdown** — Experience and Option are merged into a single picker. Variants are flattened ("Wine Tasting · Premium Tasting — $55.00 / guest"); single-variant experiences show just their name (no separate option); free experiences read **"No charge"**. Shared `experienceOptions.ts` drives both the **Add** and **View** reservation screens. Add's summary/total shows "No charge" for zero-cost bookings.
+- **Notes modal** — the Schedule Notes pencil in the header popover now opens a **"Notes for Today"** modal (Schedule + Staff notes). Saved notes render in the popover and light a small indicator dot on the Notes button. `NotesModal` added to `ReservationModals.tsx`.
+
+Seeded one experience with variants (Wine Tasting, Lunch) and single-variant ones (Private Tasting, Vineyard Picnic) so both cases show. Paid-reservation order flow + host-list filtering still logged in `NOTES.md`.
+
+## 2026-07-09 — Fedja + Claude: List-view cleanup (Jul 9 review)
+
+Trimmed the reservations header before handing the dev ticket to Donna:
+
+- **"More" menu** now only shows **Block Time** + **Print List**. Removed **Ad Hoc Reservation** (redundant — "Add" already covers the walk-in), **Search From All Reservations** (redundant), and **Hold Location** (unclear purpose — parked; the `HoldLocationModal` component stays in `ReservationModals.tsx`, just unused).
+- **Removed the Tasks** popover — no task management yet (comes after promotions).
+- **Search now spans all reservations**, not just the day in view — a text query overrides the List/Day/Week date scope. Verified: searching from an empty day surfaces bookings on other days.
+- **Notes** popover kept (Schedule + Staff Notes) pending the notes redesign.
+
+`ReservationsScreen.tsx`. Follow-ups (AI/quick-create Add, experience-option variants, host list excludes departed staff, free/paid labelling) logged in `NOTES.md`.
 
 ## 2026-06-24 — Fedja + Claude: Day View + Week View calendar
 
