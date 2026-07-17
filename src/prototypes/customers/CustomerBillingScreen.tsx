@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { CustomerViewLayout } from './CustomerViewLayout'
+import { AddCardModal } from './AddCardModal'
 import { Button } from '@ds/shared/Button'
 import { IconButton } from '@ds/shared/IconButton'
 import { PopoverMenu } from '@ds/shared/PopoverMenu'
@@ -125,24 +127,28 @@ function PaymentMethodRow({ method }: { method: PaymentMethod }) {
 
 function PaymentMethodsCard() {
   const methods = usePaymentMethods()
+  const [addOpen, setAddOpen] = useState(false)
   return (
-    <RecordsCard
-      title="Payment Methods"
-      subtitle="Manage your payment information"
-      action={
-        <Button variant="outline" size="md" leftIcon={<PlusIcon />} onClick={() => {}}>
-          Add
-        </Button>
-      }
-      empty={
-        <RecordsCardEmpty
-          title="No payment methods"
-          hint="Add a card to enable one-click checkout."
-        />
-      }
-    >
-      {methods.map((m) => <PaymentMethodRow key={m.id} method={m} />)}
-    </RecordsCard>
+    <>
+      <RecordsCard
+        title="Payment Methods"
+        subtitle="Manage your payment information"
+        action={
+          <Button variant="outline" size="md" leftIcon={<PlusIcon />} onClick={() => setAddOpen(true)}>
+            Add
+          </Button>
+        }
+        empty={
+          <RecordsCardEmpty
+            title="No payment methods"
+            hint="Add a card to enable one-click checkout."
+          />
+        }
+      >
+        {methods.map((m) => <PaymentMethodRow key={m.id} method={m} />)}
+      </RecordsCard>
+      <AddCardModal open={addOpen} onClose={() => setAddOpen(false)} />
+    </>
   )
 }
 

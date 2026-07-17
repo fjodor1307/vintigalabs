@@ -2,6 +2,10 @@
 @import "tailwindcss";
 @import "./design-system/tokens.css";
 
+/* Class-based dark mode — `dark:` utilities activate under the hub's `.dark`
+   container (not via prefers-color-scheme). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -19,6 +23,24 @@ body {
 #root {
   isolation: isolate;
   min-height: 100svh;
+}
+
+/* Hub dark mode — neutral surfaces (Tailwind neutral scale), scoped to elements
+   under `.dark` (the prototype hub container) so prototype screens stay light.
+   Cards sit on `surface` (#171717) above the darker page (#0a0a0a, set on the
+   hub container). Brand accents on the badges stay colored (per Figma dark). */
+.dark {
+  --color-vintiga-foreground:         #fafafa; /* neutral-50 */
+  --color-vintiga-foreground-muted:   #d4d4d4; /* neutral-300 */
+  --color-vintiga-surface:            #171717; /* neutral-900 — cards */
+  --color-vintiga-surface-element:    #262626; /* neutral-800 — search / chips */
+  --color-vintiga-surface-secondary:  #262626; /* neutral-800 */
+  --color-vintiga-surface-muted:      #404040; /* neutral-700 */
+  --color-vintiga-border:             #262626; /* neutral-800 */
+
+  /* Links read neutral; badge accents (lime/green, indigo) stay as-is. */
+  --color-vintiga-primary:            #d4d4d4; /* neutral-300 */
+  --color-vintiga-primary-hover:      #fafafa; /* neutral-50 */
 }
 
 @keyframes slide-in-left {

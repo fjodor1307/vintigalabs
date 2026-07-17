@@ -59,12 +59,12 @@ const NAV_BOTTOM_GROUP: NavItemDef[] = [
   { icon: <UsersIcon />,        label: 'Customers', href: '#/web/customers' },
   { icon: <PackageIcon />,      label: 'Products',  href: '#/web/products/list' },
   { icon: <ShoppingCartIcon />, label: 'Orders' },
-  { icon: <CalendarIcon />,     label: 'Reservations' },
+  { icon: <CalendarIcon />,     label: 'Reservations', href: '#/web/reservations' },
   { icon: <BookmarkIcon />,     label: 'Clubs',     href: '#/web/clubs' },
 ]
 
 const NAV_FOOTER: NavItemDef[] = [
-  { icon: <UserIcon />,     label: 'POS Profiles' },
+  { icon: <UserIcon />,     label: 'POS Profiles', href: '#/web/pos-profiles/list' },
   { icon: <SettingsIcon />, label: 'Settings', href: '#/web/settings' },
 ]
 
@@ -133,6 +133,7 @@ function AppSidebarInner({
               key={item.label}
               icon={item.icon}
               label={item.label}
+              selected={activeNav === item.label}
               href={item.href}
               onClick={onItemClick}
             />

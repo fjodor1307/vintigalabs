@@ -219,7 +219,9 @@ export function Select({ value, onChange, options }: { value: string; onChange: 
         onChange={(e) => onChange(e.target.value)}
         className="h-10 w-full px-3 pr-9 rounded-vintiga-md border border-vintiga-slate-200 bg-vintiga-white typo-body-sm text-vintiga-slate-900 appearance-none focus:outline-none focus:border-vintiga-indigo-500"
       >
-        {options.map((o) => <option key={o}>{o}</option>)}
+        {/* '' renders as a non-selection placeholder ("—") so optional
+            dropdowns can be left blank. */}
+        {options.map((o) => <option key={o} value={o}>{o === '' ? '—' : o}</option>)}
       </select>
       <ChevronDownIcon className="absolute top-1/2 -translate-y-1/2 right-3 w-4 h-4 text-vintiga-slate-400 pointer-events-none" />
     </div>

@@ -6,6 +6,104 @@
 
 ---
 
+## 2026-07-16 — Fedja + Claude: Member-detail delivery card is now editable
+
+- **Member detail** (`MembershipDetailScreen.tsx`): the pickup/shipping split cards are now one editable `Delivery Method` card — the ⋯ opens the shared `DeliveryMethodModal` (`@ds/shared/DeliveryMethodPicker`), which is the **same tiles + "Shipping Address" dropdown** the Add Membership form uses. Previously the ⋯ was a dead `onClick`.
+- The shared component was **extracted from the Add Membership delivery UI**, so that screen is unchanged and the member-detail editor matches it exactly.
+
+## 2026-06-24 — Fedja + Claude: Design-review follow-ups — club renames, create-time charge, save-driven activation
+
+From the Jun 24 design review (Fedja, Donna, Jim, Geoff). Six changes:
+
+**1. Club type renames.** Settled the naming, dropping "Flex"/"Tasting Credit" and deliberately avoiding "subscription" (collides with Commerce 7's bottle-subscription):
+- **Member Flex Club / Tasting Credit → Member Choice Club**
+- **Membership Club → Rewards Club**
+- **Curated Club → Curated Bottle Club**
+
+Updated everywhere user-facing: [AddClubModal.tsx](AddClubModal.tsx), [clubsCatalog.ts](clubsCatalog.ts), [clubStore.ts](clubStore.ts), [ClubsScreen.tsx](ClubsScreen.tsx), [ClubViewChargesScreen.tsx](ClubViewChargesScreen.tsx), plus customer balance source names, the sales-chat tag, and the style-guide demo. Internal `kind` keys (`account-credit` / `membership` / `curated`) are unchanged.
+
+**2. Member Choice charges on create.** Member Choice is the one club that charges the moment you create the membership ([AddMembershipScreen.tsx](AddMembershipScreen.tsx)). **Create Membership** now opens a confirmation modal:
+- **Card on file →** "Charge {card} {amount} and create this membership?" On confirm, the charge is attempted and you land on the new membership.
+- **No card →** "Create in a pending state?" — creates the membership Pending.
+
+Commerce 7 / traditional clubs are now excluded from the club picker (you can't enrol into a C7 store club through Vintiga), and every club option names its **type** in parentheses so operators know what kind a fancy club name is.
+
+**3. Create → landing states.** After create you land on the membership detail with a one-time confirmation banner ([MembershipDetailScreen.tsx](MembershipDetailScreen.tsx)):
+- charge succeeded → **Active** (success banner)
+- card declined → **Pending** with the card still on file, "update the card and save to activate" (error banner)
+- no card → **Pending**, "add a card and save to activate" (warning banner)
+
+The just-created record is synthesised from query params (real customer + club + outcome) since there's no backend. Decline is demoable via the **`****0044`** test card; no-card via customer **Marvin McKinney** (no cards on file). Cards on file now vary by selected customer.
+
+**4. Activation is driven by Save.** On a pending membership, adding a card no longer auto-prompts activation — it just makes the membership "ready". Hitting **Save** opens the charge-&-activate confirmation ("Charge {amount} & activate" / "No, leave as pending"), keeping the money-moving action on the top Save button, consistent with every other flow.
+
+**5. Add vs View stay distinct.** Confirmed the membership detail is a view (no club-type dropdown) — flagged for dev, whose first build still allowed changing the club in edit.
+
+**6. Billing visibility.** Recurring memberships (Member Choice / Rewards) now show **Next Billing Date** and **Collected to Date** in the Club Overview rail.
+
+Deferred to a later pass: club income **forecasting** and surfacing Member Choice contributions in the customer's account-balance transactions (see [NOTES.md](NOTES.md)).
+
+---
+
+## 2026-06-24 — Fedja + Claude: First-installment charge on activation + "Member Flex Club" rename
+
+**First installment.** Activating a **recurring-fee** club (Member Flex / Membership) now takes the first payment as part of activation, so the charge is a deliberate, confirmed step rather than a silent side-effect of Save:
+
+- The activation modal is now charge-aware. For recurring clubs with a card on file it reads **"Activate and charge the first installment?"** and the CTA is **"Charge {amount} & activate"** (e.g. `$75.00`), naming the card (`Mastercard **** 0092`). On confirm → status flips to **Active** and a history row lands: **"Activated · First installment charged · $75.00 · Mastercard **** 0092"**.
+- No card yet on a recurring club → the modal blocks with **"Add a card to activate"** (add the card first, then charge).
+- Per-release clubs (Curated / Traditional) are unchanged — they keep the plain "Yes, activate now" copy and take no activation charge.
+- The kebab **Activate membership** item now routes through the same confirmation instead of activating instantly.
+- Amounts live in `FIRST_INSTALLMENT` (per club); Guy Hawkins (1008) moved to **Blind Enthusiasm** so there's a pending Member Flex membership to demo the charge on.
+
+**Rename.** "Tasting Credit" → **"Member Flex Club"** across the rendered UI (club catalog type, club rail tag, Add-Club type picker, kind→label map, Charges-log copy). The internal `account-credit` kind is unchanged.
+
+## 2026-06-18 — Fedja + Claude: Membership list — declutter the hold text
+
+On the membership lists, a future hold now shows only **"Hold Starts {start}"** (start date only) instead of the full range — the end date lives on the membership detail. Current holds show **"Until {end}"**. Keeps the list less cluttered.
+
+## 2026-06-17 — Fedja + Claude: Pending membership → activation prompt
+
+When a staff member supplies the missing info on a **pending** membership (adding the card via Payment Method → "Add Card"), a modal now asks **"Would you like to activate this membership?"** with **Yes, activate now** / **No, leave as pending**:
+
+- **Yes** → membership flips to **Active** (local `baseStatus`); the pending message clears.
+- **No** → stays pending, but the message changes from "Requires information to activate: {info}" to **"Membership is ready for activation."**
+- The kebab menu on a pending membership now offers **Activate membership** (· Cancel Membership).
+
+Payment-method state + activation are lifted to the screen so the message, the card, and the modal stay in sync.
+
+## 2026-06-17 — Fedja + Claude: Membership detail — copy spec pass
+
+Implemented the client's copy/structure spec for the membership detail:
+
+- **Breadcrumb** last crumb is now the **customer name** (Clubs / Memberships / {name}).
+- **Header** = club name + membership ID + status tag; the status tag is now bare (no date caption) — dates live in the messaging area.
+- **Hold messaging** rewritten to the exact date matrix in `holdStatus.ts` + a `holdMessage()` helper:
+  - start past, no end → **On Hold** / "Hold started on {start}"
+  - start past, end future → **On Hold until {end}** / "Hold started on {start}"
+  - start future, end future → **Hold scheduled for {start}** / "Hold ends on {end}"
+  - start future, no end → **Hold scheduled for {start}**
+  - start past, **end past** → hold has expired → membership is **Active** again (new derivation in `deriveMembershipState`; previously stayed "Hold Until"). "Hold Until" label retired in favour of **On Hold**.
+- **Menu options**: no hold → *Hold Membership · Cancel Membership*; has hold → *Remove Hold · Edit Hold · Cancel Membership*.
+- **Cancellation message**: "Membership Cancelled on {date}" / "{reason}" (added `cancelReason` to samples).
+- **Pending message**: "Pending Activation" / "Created on {created}. Requires information to activate: {info}" (added `activationInfo`).
+- **Order Review message** now surfaces under the header ("Order Review Required" + instructions) — order-review state lifted to the screen so the messaging and the body toggle stay in sync.
+
+## 2026-06-16 — Fedja + Claude: Membership detail — hold as a top banner, not an always-on card
+
+Reworked the membership detail screen from the Jun 16 review:
+
+- **Hold card removed.** The big "Membership Hold" card rendered on every membership (including a "Place on Hold" CTA), eating real estate on the ~90% that are never held. Gone.
+- **Hold lives in the kebab menu.** The "More actions" dropdown carries **Hold membership** (no hold) / **Edit hold** (held) + **Lift hold** (when held) + **Cancel membership**; hold items hidden when cancelled. The header stays clean — just **Save** + the kebab. The hold banner also has its own inline **Edit**.
+- **Order Review moved above the delivery method** section (matches the club-order layout convention).
+- **Customer tile trimmed** (Jim's feedback): shows only tags + email + phone now — dropped city/zip, last visit, and club status. For the rest, go to the customer record. Added a `phone` field to `memberSamples`.
+- **Order Review made compact** with our DS `Switch`: the card is now a title row + toggle; the instructions textarea only appears when the toggle is on. Replaces the old checkbox + always-visible description.
+- **Hold + status now surface as a top alert stack** (`MembershipAlerts`, built on `AlertSoft`), rendered at the top of the content below the breadcrumbs — only when there's something to say. Stacks most-urgent-first: **cancelled** (error) · **pending activation** (warning) · **manual processing required** (info, from `flagged`) · **hold** (future → indigo info "Hold scheduled · {range}", current → amber "On hold until {end}"). The hold banner carries an inline **Edit** action.
+- **Title leads with the club + number** (e.g. "Blind Enthusiasm #1004") instead of repeating "Membership" across breadcrumb → title; the member's name stays on the customer card below. Last breadcrumb matches.
+
+Verified in preview across no-hold, future-hold, current-hold, and cancelled members.
+
+**Phase 2 (not done):** read-only membership *View* with the name in the header instead of a grayed-out edit-form field.
+
 ## 2026-06-13 — Fedja + Claude: Membership hold with start + end dates
 
 Holds now carry a **start** and an optional **end** date, and the displayed status is derived from where today sits between them (single source of truth in `holdStatus.ts`):

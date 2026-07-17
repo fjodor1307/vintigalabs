@@ -108,9 +108,9 @@ export interface ClubDraft {
 }
 
 const TYPE_LABEL: Record<ClubKind, string> = {
-  curated:          'Curated Club',
-  'account-credit': 'Tasting Credit',
-  membership:       'Membership',
+  curated:          'Curated Bottle Club',
+  'account-credit': 'Member Choice Club',
+  membership:       'Rewards Club',
 }
 
 function emptyDraft(type: ClubKind): ClubDraft {

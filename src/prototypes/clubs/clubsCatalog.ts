@@ -21,17 +21,17 @@ export type ClubKind = 'curated' | 'membership' | 'account-credit' | 'traditiona
 export interface ClubInfo {
   slug: ClubKey
   name: string
-  /** Tag rendered on the rail tile (e.g. "Curated Club", "Tasting Credit"). */
+  /** Tag rendered on the rail tile (e.g. "Curated Bottle Club", "Member Choice Club"). */
   type: string
   kind: ClubKind
 }
 
 export const CLUBS_CATALOG: Record<ClubKey, ClubInfo> = {
-  'curators':           { slug: 'curators',          name: 'Curators Club',     type: 'Curated Club',   kind: 'curated'        },
-  'vintiga-signature':  { slug: 'vintiga-signature', name: 'Vintiga Signature', type: 'Membership',     kind: 'membership'     },
-  'vintiga-heritage':   { slug: 'vintiga-heritage',  name: 'Vintiga Heritage',  type: 'Curated Club',   kind: 'curated'        },
-  'blind-enthusiasm':   { slug: 'blind-enthusiasm',  name: 'Blind Enthusiasm',  type: 'Tasting Credit', kind: 'account-credit' },
-  'c7':                 { slug: 'c7',                name: 'C7',                type: 'Traditional',    kind: 'traditional'    },
+  'curators':           { slug: 'curators',          name: 'Curators Club',     type: 'Curated Bottle Club', kind: 'curated'        },
+  'vintiga-signature':  { slug: 'vintiga-signature', name: 'Vintiga Signature', type: 'Rewards Club',         kind: 'membership'     },
+  'vintiga-heritage':   { slug: 'vintiga-heritage',  name: 'Vintiga Heritage',  type: 'Curated Bottle Club', kind: 'curated'        },
+  'blind-enthusiasm':   { slug: 'blind-enthusiasm',  name: 'Blind Enthusiasm',  type: 'Member Choice Club',  kind: 'account-credit' },
+  'c7':                 { slug: 'c7',                name: 'C7',                type: 'Traditional',         kind: 'traditional'    },
 }
 
 export const CLUB_KEYS = Object.keys(CLUBS_CATALOG) as ClubKey[]

@@ -10,6 +10,7 @@ import { PopoverMenu } from '@ds/shared/PopoverMenu'
 import { Tag } from '@ds/shared/Tag'
 import { Avatar } from '@ds/shared/Avatar'
 import { CustomerCard } from '@ds/shared/CustomerCard'
+import { AlertSoft } from '@ds/shared/AlertSoft'
 import { CardBrandLogo } from '@ds/shared/CardBrandLogo'
 import { RecordsCard, RecordsCardEmpty } from '@ds/shared/RecordsCard'
 import { RailSection } from '@ds/shared/RightRail'
@@ -29,25 +30,27 @@ import {
   ChevronRightIcon,
   CreditCardIcon,
   StoreIcon,
-  ClockIcon,
-  CalendarIcon,
-  PencilIcon,
+  TruckIcon,
+  CheckCircleIcon,
 } from '@ds/icons/Icons'
-import { Checkbox } from '@ds/shared/Checkbox'
+import { DeliveryMethodModal } from '@ds/shared/DeliveryMethodPicker'
+import { DELIVERY_PICKUP_LOCATIONS, type DeliverySavedAddress, type DeliveryResult } from '@ds/shared/deliveryMethod'
+import { Switch } from '@ds/shared/Switch'
 import { Textarea } from '@ds/shared/Textarea'
 import { AgeVerifiedBadge } from '@ds/shared/AgeVerifiedBadge'
 import { BlindEnthusiasmLogo } from './BlindEnthusiasmLogo'
-import { getMember, type Member } from './memberSamples'
+import { getMember, type Member, type Delivery } from './memberSamples'
 import { CLUBS_CATALOG, type ClubKey } from './clubsCatalog'
 import {
   deriveMembershipState,
   formatHoldDate,
-  formatHoldRange,
   TODAY_ISO,
   type MembershipHold,
+  type MembershipState,
 } from './holdStatus'
 import { MembershipStatusTag } from './MembershipStatusTag'
 import { HoldModal } from './HoldModal'
+import { Modal, ModalAlertHeader, ModalFooter } from '@ds/shared/Modal'
 
 // ─── MembershipDetailScreen ──────────────────────────────────────────────────
 // Drill-down from the Memberships table (Figma 5078:5161). Reads the member id
@@ -101,6 +104,106 @@ const BASE_HISTORY: HistoryEntry[] = [
 
 const CURRENT_USER = 'Tom Cook'
 
+// Card vaulted on the membership (mirrors PaymentMethodCard). Used in the
+// activation/charge confirmation + the resulting history note.
+const CARD_ON_FILE = 'Mastercard **** 0092'
+
+// First installment taken when a recurring-fee club activates. Member Choice
+// (account-credit) charges the member's chosen monthly contribution; the
+// Rewards club charges its set fee. Curated / Traditional clubs charge per
+// release, so they have no activation charge and are absent here.
+const FIRST_INSTALLMENT: Partial<Record<ClubKey, string>> = {
+  'blind-enthusiasm':  '$75.00',
+  'vintiga-signature': '$45.00',
+}
+
+// ─── Just-created context ────────────────────────────────────────────────────
+// Add Membership routes here with `?created=<outcome>` after enrolling a
+// customer, so the operator lands on the membership they just created with a
+// confirmation banner. The record is synthesised from the query params rather
+// than looked up — there's no backend to persist a brand-new membership.
+
+type CreatedOutcome = 'active' | 'pending' | 'declined' | 'nocard'
+
+interface CreatedContext {
+  outcome: CreatedOutcome
+  club: ClubKey
+  customer: string
+  delivery: Delivery
+  level?: string
+  fee?: string
+  card?: string
+}
+
+function parseCreatedContext(): CreatedContext | null {
+  if (typeof window === 'undefined') return null
+  const hash = window.location.hash
+  const qIdx = hash.indexOf('?')
+  if (qIdx === -1) return null
+  const sp = new URLSearchParams(hash.slice(qIdx + 1))
+  const outcome = sp.get('created') as CreatedOutcome | null
+  if (!outcome) return null
+  const club = sp.get('club') ?? ''
+  return {
+    outcome,
+    club: (club in CLUBS_CATALOG ? club : 'blind-enthusiasm') as ClubKey,
+    customer: sp.get('customer') || 'New Member',
+    delivery: sp.get('delivery') === 'shipping' ? 'shipping' : 'pickup',
+    level: sp.get('level') ?? undefined,
+    fee: sp.get('fee') ?? undefined,
+    card: sp.get('card') ?? undefined,
+  }
+}
+
+/** Build a believable membership record for a just-created enrolment. */
+function synthesizeMember(ctx: CreatedContext): Member {
+  const initials =
+    ctx.customer.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase() || 'NM'
+  const today = formatHoldDate(TODAY_ISO)
+  const active = ctx.outcome === 'active'
+  const club = CLUBS_CATALOG[ctx.club]
+  const recurring = club.kind === 'membership' || club.kind === 'account-credit'
+  return {
+    id: 'new',
+    name: ctx.customer,
+    initials,
+    club: ctx.club,
+    delivery: ctx.delivery,
+    city: '',
+    zip: '',
+    email: `${ctx.customer.split(/\s+/)[0].toLowerCase()}@email.com`,
+    phone: '—',
+    status: active ? 'active' : 'pending',
+    activationInfo: ctx.outcome === 'nocard' ? 'Payment method' : undefined,
+    // A just-activated recurring membership has collected exactly its first
+    // contribution. Next billing isn't scheduled yet in the prototype.
+    collectedToDate: active && recurring && ctx.fee ? `$${ctx.fee}` : undefined,
+    audienceTags: [],
+    ageVerified: true,
+    signupDate: today,
+    activatedDate: active ? today : '—',
+    salesAssociate: CURRENT_USER,
+    totalOrders: active ? 1 : 0,
+    lastVisit: today,
+  }
+}
+
+/** One-time confirmation banner shown after creating a membership. */
+function createdBanner(ctx: CreatedContext): { variant: 'success' | 'warning' | 'error'; title: string; subtitle: string } {
+  const card = ctx.card ?? CARD_ON_FILE
+  const amount = ctx.fee ? `$${ctx.fee}` : 'the first contribution'
+  switch (ctx.outcome) {
+    case 'active':
+      return { variant: 'success', title: 'Membership created', subtitle: `${amount} charged to ${card}. The membership is now active.` }
+    case 'declined':
+      return { variant: 'error', title: 'Card declined — membership created pending', subtitle: `We couldn't charge ${card}. Update the card below and save to charge ${amount} and activate.` }
+    case 'nocard':
+      return { variant: 'warning', title: 'Membership created pending', subtitle: 'No card on file. Add a card below and save to charge the first contribution and activate.' }
+    default:
+      return { variant: 'warning', title: 'Membership created pending', subtitle: 'Outstanding requirements — complete them and save to activate.' }
+  }
+}
+
 /** Today, formatted for a freshly-written history row. */
 function todayLabel(): string {
   return formatHoldDate(TODAY_ISO)
@@ -138,15 +241,82 @@ function getMemberFromHash(): Member {
 
 export function MembershipDetailScreen() {
   const { collapsed, mobileOpen, onMenuToggle, closeMobile } = useResponsiveSidebar()
-  const member = getMemberFromHash()
+  // Arrived from Add Membership? Synthesise the just-created record from the
+  // query params and show a confirmation banner; otherwise look up a sample.
+  const created = parseCreatedContext()
+  const member = created ? synthesizeMember(created) : getMemberFromHash()
+  const [showCreatedBanner, setShowCreatedBanner] = useState(true)
 
   // Hold + history are local state so editing the hold updates the title tag,
   // the Hold card, and the history table live.
   const [hold, setHold] = useState<MembershipHold | undefined>(member.hold)
   const [history, setHistory] = useState<HistoryEntry[]>(BASE_HISTORY)
   const [holdModalOpen, setHoldModalOpen] = useState(false)
+  // Order review is editable in the body card AND surfaced in the messaging
+  // area under the header, so its state lives here and is shared by both.
+  const [orderReviewRequired, setOrderReviewRequired] = useState(member.flagged ?? false)
+  const [orderReviewInstructions, setOrderReviewInstructions] = useState(
+    member.flagged
+      ? 'Call before each release — customer reviews the bottle selection and may swap. Do not auto-batch.'
+      : '',
+  )
 
-  const state = deriveMembershipState(member.status, hold, { cancelledDate: member.statusDate })
+  // Pending → active flow. A pending membership starts with no card on file;
+  // once a staff member adds the missing info (the card) we prompt to activate.
+  // `baseStatus` is local so "Activate" / "Yes, activate now" flips it live.
+  const [baseStatus, setBaseStatus] = useState(member.status)
+  // A declined create still vaults the card (the charge failed, not the card
+  // capture), so it lands pending *with* a card — ready to retry on save.
+  const [hasCard, setHasCard] = useState(
+    created
+      ? created.outcome === 'active' || created.outcome === 'declined'
+      : member.status !== 'pending',
+  )
+  const [activationModalOpen, setActivationModalOpen] = useState(false)
+
+  const state = deriveMembershipState(baseStatus, hold, { cancelledDate: member.statusDate })
+  const isPending = state.kind === 'pending'
+  // A pending membership with its missing info now supplied is "ready" — the
+  // pending note flips to "ready for activation" even if staff leave it pending.
+  const readyForActivation = isPending && hasCard
+
+  // Recurring-fee clubs (Rewards + Member Choice) take a charge the moment they
+  // activate — that's the first installment. Curated / Traditional clubs charge
+  // per release instead, so activation is just a status flip for them.
+  const clubInfo = CLUBS_CATALOG[member.club]
+  const recurring = clubInfo.kind === 'membership' || clubInfo.kind === 'account-credit'
+  const firstInstallment = FIRST_INSTALLMENT[member.club] ?? ''
+
+  function activateNow() {
+    setBaseStatus('active')
+    setActivationModalOpen(false)
+    const charged = recurring && hasCard
+    setHistory((h) => [
+      {
+        date: todayLabel(),
+        by: CURRENT_USER,
+        change: 'Activated',
+        notes: charged
+          ? `First installment charged · ${firstInstallment} · ${CARD_ON_FILE}`
+          : '—',
+      },
+      ...h,
+    ])
+  }
+  // Adding the card supplies the missing info but does NOT activate on its own
+  // — activation is driven by the top Save button (see `handleSave`), so staff
+  // can add a card and still leave the membership pending. A pending membership
+  // with a card now on file reads as "ready for activation".
+  function addCard() {
+    setHasCard(true)
+  }
+
+  // Save is the single money-moving action. On a pending membership that's now
+  // ready (card on file), saving prompts to charge + activate (or keep
+  // pending). Otherwise saving is a no-op in the prototype.
+  function handleSave() {
+    if (isPending && hasCard) setActivationModalOpen(true)
+  }
 
   function commitHold(next: MembershipHold | undefined) {
     setHistory((h) => [holdHistoryEntry(hold, next), ...h])
@@ -154,10 +324,16 @@ export function MembershipDetailScreen() {
     setHoldModalOpen(false)
   }
 
+  const club = clubInfo
+  const onHold = !!hold
+  const cancelled = state.kind === 'cancelled'
+
+  // Lead the title with the club + membership number so "Membership" doesn't
+  // repeat across breadcrumb → title; the member's name lives on the card below.
   const titleNode = (
     <h1 className="typo-title-screen font-semibold text-vintiga-slate-900 inline-flex items-center gap-vintiga-sm">
-      Membership #{member.id}
-      <MembershipStatusTag state={state} size="md" showFutureHold={false} />
+      {club.name} #{member.id}
+      <MembershipStatusTag state={state} size="md" showFutureHold={false} showCaption={false} />
     </h1>
   )
 
@@ -185,12 +361,12 @@ export function MembershipDetailScreen() {
               { icon: <BreadcrumbHomeIcon />, href: '#/web/clubs' },
               { label: 'Clubs',       href: '#/web/clubs' },
               { label: 'Memberships', href: '#/web/clubs/memberships' },
-              { label: `Membership #${member.id}` },
+              { label: member.name },
             ]}
             title={titleNode}
             actions={
               <>
-                <Button onClick={() => {}}>Save</Button>
+                <Button onClick={handleSave}>Save</Button>
                 <PopoverMenu
                   align="right"
                   width="w-44"
@@ -204,7 +380,19 @@ export function MembershipDetailScreen() {
                     />
                   )}
                   items={[
-                    { label: 'Cancel membership', onClick: () => {}, danger: true },
+                    // Pending → Activate. No hold → Hold Membership.
+                    // Has hold → Remove Hold · Edit Hold. (Then always Cancel.)
+                    ...(cancelled
+                      ? []
+                      : isPending
+                        ? [{ label: 'Activate membership', onClick: () => setActivationModalOpen(true) }]
+                        : onHold
+                          ? [
+                              { label: 'Remove Hold', onClick: () => commitHold(undefined) },
+                              { label: 'Edit Hold', onClick: () => setHoldModalOpen(true) },
+                            ]
+                          : [{ label: 'Hold Membership', onClick: () => setHoldModalOpen(true) }]),
+                    { label: 'Cancel Membership', onClick: () => {}, danger: true },
                   ]}
                 />
               </>
@@ -212,18 +400,36 @@ export function MembershipDetailScreen() {
             rail={<ClubOverviewRail member={member} />}
           >
             <div className="flex flex-col gap-vintiga-lg">
-              <CustomerHeaderCard member={member} statusLabel={state.label} />
-              <HoldCard
+              {created && showCreatedBanner && (() => {
+                const b = createdBanner(created)
+                return (
+                  <AlertSoft
+                    variant={b.variant}
+                    title={b.title}
+                    subtitle={b.subtitle}
+                    onClose={() => setShowCreatedBanner(false)}
+                  />
+                )
+              })()}
+              <MembershipAlerts
+                state={state}
                 hold={hold}
-                onEdit={() => setHoldModalOpen(true)}
-                disabled={member.status === 'cancelled'}
+                member={member}
+                readyForActivation={readyForActivation}
+                orderReviewRequired={orderReviewRequired}
+                orderReviewInstructions={orderReviewInstructions}
+                onEditHold={() => setHoldModalOpen(true)}
               />
-              {member.delivery === 'pickup'
-                ? <PickupDeliveryCard />
-                : <AddressCard title="Shipping Address" />}
+              <CustomerHeaderCard member={member} />
+              <OrderReviewCard
+                required={orderReviewRequired}
+                onRequiredChange={setOrderReviewRequired}
+                instructions={orderReviewInstructions}
+                onInstructionsChange={setOrderReviewInstructions}
+              />
+              <DeliveryMethodCard member={member} />
               <AddressCard title="Billing Address" />
-              <PaymentMethodCard member={member} />
-              <OrderReviewCard member={member} />
+              <PaymentMethodCard hasCard={hasCard} onAddCard={addCard} />
               <ClubOrdersCard />
               <MembershipHistoryCard history={history} />
             </div>
@@ -238,88 +444,159 @@ export function MembershipDetailScreen() {
         onSave={(next) => commitHold(next)}
         onRemove={() => commitHold(undefined)}
       />
+
+      {/* Prompted after the missing info is supplied on a pending membership,
+          or from the "Activate membership" menu item. Recurring-fee clubs
+          (Member Choice / Rewards) confirm the first installment charge before
+          activating; per-release clubs just confirm activation. */}
+      <Modal open={activationModalOpen} onClose={() => setActivationModalOpen(false)} size="sm">
+        {recurring && !hasCard ? (
+          <>
+            <ModalAlertHeader
+              icon={<CreditCardIcon />}
+              iconColor="orange"
+              title="Add a card to activate"
+              description={`${club.name} charges the first installment of ${firstInstallment} on activation. Add a card on file first, then activate.`}
+            />
+            <ModalFooter shaded>
+              <Button onClick={() => setActivationModalOpen(false)}>Got it</Button>
+            </ModalFooter>
+          </>
+        ) : recurring ? (
+          <>
+            <ModalAlertHeader
+              icon={<CreditCardIcon />}
+              iconColor="green"
+              title="Activate and charge the first installment?"
+              description={`Activating ${club.name} charges the first installment of ${firstInstallment} to ${CARD_ON_FILE} and starts the membership. You can also leave it pending and charge later.`}
+            />
+            <ModalFooter shaded>
+              <Button variant="outline" onClick={() => setActivationModalOpen(false)}>No, leave as pending</Button>
+              <Button onClick={activateNow}>Charge {firstInstallment} &amp; activate</Button>
+            </ModalFooter>
+          </>
+        ) : (
+          <>
+            <ModalAlertHeader
+              icon={<CheckCircleIcon />}
+              iconColor="green"
+              title="Would you like to activate this membership?"
+              description="The information needed to activate is now on file. You can activate it now, or leave it pending for later."
+            />
+            <ModalFooter shaded>
+              <Button variant="outline" onClick={() => setActivationModalOpen(false)}>No, leave as pending</Button>
+              <Button onClick={activateNow}>Yes, activate now</Button>
+            </ModalFooter>
+          </>
+        )}
+      </Modal>
     </div>
   )
 }
 
-// ─── Hold card ───────────────────────────────────────────────────────────────
-// Surfaces the membership's current / scheduled hold and the entry point to
-// edit it. Three states:
-//   • no hold      → "Place on Hold" CTA
-//   • current hold → On Hold / Hold Until {end}, since {start}
-//   • future hold  → indigo-tinted "Hold scheduled" — membership stays active
-function HoldCard({
-  hold,
-  onEdit,
-  disabled,
-}: {
-  hold?: MembershipHold
-  onEdit: () => void
-  disabled?: boolean
-}) {
-  const future = !!hold && hold.start > TODAY_ISO
+// ─── Membership alerts ───────────────────────────────────────────────────────
+// Status messaging that sits directly under the header text — the back-office
+// equivalent of the POS "pay attention to this" note. Only renders when there's
+// something to say. Copy follows the spec: cancellation · pending · hold (the
+// five start/end-date cases) · order review.
 
-  return (
-    <RecordsCard
-      title="Membership Hold"
-      action={
-        <Button variant="outline" size="sm" leftIcon={hold ? <PencilIcon /> : <ClockIcon />} onClick={onEdit} disabled={disabled}>
-          {hold ? 'Edit Hold' : 'Place on Hold'}
-        </Button>
-      }
-      divider={false}
-    >
-      {!hold ? (
-        <p className="typo-body-sm text-vintiga-slate-500">
-          No hold on this membership. Releases process on the normal schedule.
-        </p>
-      ) : (
-        <div
-          className={[
-            'flex items-start gap-vintiga-md rounded-vintiga-md p-vintiga-md',
-            future ? 'bg-vintiga-indigo-50' : 'bg-vintiga-slate-50',
-          ].join(' ')}
-        >
-          <div
-            className={[
-              'w-10 h-10 rounded-full inline-flex items-center justify-center shrink-0',
-              future ? 'bg-vintiga-indigo-100 text-vintiga-indigo-600' : 'bg-vintiga-slate-200 text-vintiga-slate-600',
-            ].join(' ')}
-          >
-            {future ? <ClockIcon className="w-5 h-5" /> : <CalendarIcon className="w-5 h-5" />}
-          </div>
-          <div className="flex flex-col gap-0.5">
-            {future ? (
-              <>
-                <span className="typo-body-sm font-semibold text-vintiga-indigo-700">
-                  Hold scheduled · {formatHoldRange(hold)}
-                </span>
-                <span className="typo-caption text-vintiga-slate-600">
-                  Membership stays <strong>Active</strong> until {formatHoldDate(hold.start)}, then goes on hold
-                  {hold.end ? ` and auto-resumes ${formatHoldDate(hold.end)}.` : ' until lifted.'}
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="typo-body-sm font-semibold text-vintiga-slate-900">
-                  {hold.end ? `On hold until ${formatHoldDate(hold.end)}` : 'On hold indefinitely'}
-                </span>
-                <span className="typo-caption text-vintiga-slate-600">
-                  On hold since {formatHoldDate(hold.start)}
-                  {hold.end ? ' · auto-resumes on the end date' : ' · lift the hold to resume releases'}.
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </RecordsCard>
-  )
+/** Hold messaging per the spec's start/end-date matrix (relative to today). */
+function holdMessage(hold: MembershipHold): { title: string; subtitle?: string; variant: 'info' | 'warning' } {
+  const startPast = hold.start <= TODAY_ISO
+  const endFuture = !!hold.end && hold.end > TODAY_ISO
+  const fmt = formatHoldDate
+  // Start in the past, no end → On Hold (indefinite).
+  if (startPast && !hold.end) {
+    return { variant: 'warning', title: 'On Hold', subtitle: `Hold started on ${fmt(hold.start)}` }
+  }
+  // Start in the past, end in the future → On Hold until the end date.
+  if (startPast && endFuture) {
+    return { variant: 'warning', title: `On Hold until ${fmt(hold.end!)}`, subtitle: `Hold started on ${fmt(hold.start)}` }
+  }
+  // Start in the future, end in the future → scheduled, with an end.
+  if (!startPast && endFuture) {
+    return { variant: 'info', title: `Hold scheduled for ${fmt(hold.start)}`, subtitle: `Hold ends on ${fmt(hold.end!)}` }
+  }
+  // Start in the future, no end → scheduled (open-ended). Also the fallback for
+  // an already-expired hold (start + end both in the past).
+  return { variant: 'info', title: `Hold scheduled for ${fmt(hold.start)}` }
+}
+
+function MembershipAlerts({
+  state,
+  hold,
+  member,
+  readyForActivation,
+  orderReviewRequired,
+  orderReviewInstructions,
+  onEditHold,
+}: {
+  state: MembershipState
+  hold?: MembershipHold
+  member: Member
+  readyForActivation: boolean
+  orderReviewRequired: boolean
+  orderReviewInstructions: string
+  onEditHold: () => void
+}) {
+  const alerts: ReactNode[] = []
+
+  // Primary status message — one of cancelled / pending / hold.
+  if (state.kind === 'cancelled') {
+    alerts.push(
+      <AlertSoft
+        key="cancelled"
+        variant="error"
+        title={`Membership Cancelled${member.statusDate ? ` on ${member.statusDate}` : ''}`}
+        subtitle={member.cancelReason}
+      />,
+    )
+  } else if (state.kind === 'pending') {
+    alerts.push(
+      <AlertSoft
+        key="pending"
+        variant="warning"
+        title="Pending Activation"
+        subtitle={
+          readyForActivation
+            ? 'Membership is ready for activation'
+            : `Created on ${member.signupDate}.${member.activationInfo ? ` Requires information to activate: ${member.activationInfo}` : ''}`
+        }
+      />,
+    )
+  } else if (hold) {
+    const msg = holdMessage(hold)
+    alerts.push(
+      <AlertSoft
+        key="hold"
+        variant={msg.variant}
+        title={msg.title}
+        subtitle={msg.subtitle}
+        actionLabel="Edit"
+        onAction={onEditHold}
+      />,
+    )
+  }
+
+  // Order review rides alongside the status (but not on a cancelled membership).
+  if (orderReviewRequired && state.kind !== 'cancelled') {
+    alerts.push(
+      <AlertSoft
+        key="review"
+        variant="info"
+        title="Order Review Required"
+        subtitle={orderReviewInstructions || undefined}
+      />,
+    )
+  }
+
+  if (alerts.length === 0) return null
+  return <div className="flex flex-col gap-vintiga-sm">{alerts}</div>
 }
 
 // ─── Customer header card ────────────────────────────────────────────────────
 
-function CustomerHeaderCard({ member, statusLabel }: { member: Member; statusLabel: string }) {
+function CustomerHeaderCard({ member }: { member: Member }) {
   const club = CLUBS_CATALOG[member.club]
   return (
     <CustomerCard
@@ -354,9 +631,7 @@ function CustomerHeaderCard({ member, statusLabel }: { member: Member; statusLab
             {member.email}
             <span className="text-vintiga-slate-500"> | Preferred</span>
           </span>
-          <span>{member.city} {member.zip}</span>
-          <span className="text-vintiga-slate-500">Last Visit: {member.lastVisit}</span>
-          <span className="text-vintiga-slate-500">Club Status: {statusLabel}</span>
+          <span>{member.phone}</span>
         </>
       }
       actions={
@@ -465,9 +740,10 @@ function ClubOrdersCard() {
 
 // ─── Payment Method card ─────────────────────────────────────────────────────
 
-function PaymentMethodCard({ member }: { member: Member }) {
+function PaymentMethodCard({ hasCard, onAddCard }: { hasCard: boolean; onAddCard: () => void }) {
   // Pending memberships haven't had a card vaulted yet — show the empty state.
-  const hasCard = member.status !== 'pending'
+  // Adding the card supplies the missing info and (when pending) prompts to
+  // activate the membership.
   return (
     <RecordsCard
       title="Payment Method"
@@ -480,7 +756,7 @@ function PaymentMethodCard({ member }: { member: Member }) {
             title="No card on file"
             hint="Add a card to charge membership fees and club releases. The member can also pay in person."
           />
-          <Button variant="outline" size="sm" onClick={() => {}}>Add Card</Button>
+          <Button variant="outline" size="sm" onClick={onAddCard}>Add Card</Button>
         </div>
       ) : undefined}
     >
@@ -506,61 +782,106 @@ function PaymentMethodCard({ member }: { member: Member }) {
   )
 }
 
-// Pickup memberships have no shipping address — the customer collects releases
-// at the winery. We surface the delivery method + pickup location instead.
-function PickupDeliveryCard() {
+// The customer's saved addresses (same set the Add Membership form offers).
+const CLUB_ADDRESSES: DeliverySavedAddress[] = [
+  { value: 'home',   label: '1210 Lakeview Street, Bellingham, WA 98229' },
+  { value: 'office', label: '500 Market Street, San Francisco, CA 94110' },
+]
+
+// Read-only delivery summary; the ⋯ opens the shared DeliveryMethodModal — the
+// same tiles + "Shipping Address" editor as the Add Membership form.
+function DeliveryMethodCard({ member }: { member: Member }) {
+  const [addresses, setAddresses] = useState<DeliverySavedAddress[]>(CLUB_ADDRESSES)
+  const [result, setResult] = useState<DeliveryResult>(
+    member.delivery === 'pickup'
+      ? { method: 'pickup', destination: DELIVERY_PICKUP_LOCATIONS[0].label }
+      : { method: 'ship', destination: CLUB_ADDRESSES[0].label },
+  )
+  const [open, setOpen] = useState(false)
+  const isPickup = result.method === 'pickup'
+
+  const initialOption = isPickup
+    ? `pickup:${DELIVERY_PICKUP_LOCATIONS.find((l) => l.label === result.destination)?.value ?? DELIVERY_PICKUP_LOCATIONS[0].value}`
+    : 'shipping'
+  const initialShipAddress = isPickup
+    ? (addresses[0]?.value ?? 'new')
+    : (addresses.find((a) => a.label === result.destination)?.value ?? addresses[0]?.value ?? 'new')
+
   return (
     <RecordsCard title="Delivery Method">
       <div className="flex items-center gap-vintiga-md">
         <div className="w-10 h-10 rounded-full bg-vintiga-slate-100 inline-flex items-center justify-center text-vintiga-slate-500 shrink-0">
-          <StoreIcon className="w-5 h-5" />
+          {isPickup ? <StoreIcon className="w-5 h-5" /> : <TruckIcon className="w-5 h-5" />}
         </div>
-        <div className="flex flex-col">
-          <span className="typo-body-sm font-semibold text-vintiga-slate-900">Pickup</span>
-          <span className="typo-caption text-vintiga-slate-500">Estate Tasting Room · 1210 Lakeview Street, Napa</span>
+        <div className="flex flex-col min-w-0">
+          <span className="typo-body-sm font-semibold text-vintiga-slate-900">{isPickup ? 'Pickup' : 'Shipping'}</span>
+          <span className="typo-caption text-vintiga-slate-500 truncate">{result.destination}</span>
         </div>
         <div className="flex-1" />
         <IconButton
           variant="outline"
           size="sm"
           icon={<EllipsisVerticalIcon />}
-          aria-label="Delivery method actions"
-          onClick={() => {}}
+          aria-label="Edit delivery method"
+          onClick={() => setOpen(true)}
         />
       </div>
+      <DeliveryMethodModal
+        open={open}
+        savedAddresses={addresses}
+        initialOption={initialOption}
+        initialShipAddress={initialShipAddress}
+        onClose={() => setOpen(false)}
+        onSave={setResult}
+        onAddAddress={(a) => {
+          const opt = { value: `addr-new-${addresses.length + 1}`, label: `${a.street}, ${a.city}, ${a.state} ${a.zip}` }
+          setAddresses((prev) => [...prev, opt])
+          return opt
+        }}
+      />
     </RecordsCard>
   )
 }
 
 // ─── Order Review Required card ──────────────────────────────────────────────
 // VIP / finicky members whose club orders must be held for manual review before
-// they batch-process. The admin types the reason into the instructions field.
-function OrderReviewCard({ member }: { member: Member }) {
-  const [required, setRequired] = useState(member.flagged ?? false)
-  const [instructions, setInstructions] = useState(
-    member.flagged
-      ? 'Call before each release — customer reviews the bottle selection and may swap. Do not auto-batch.'
-      : '',
-  )
+// they batch-process. Controlled by the parent so the same state also drives the
+// "Order Review Required" message under the header. Toggle in the header keeps
+// it compact: off → just the title row; on → reveals the instructions field.
+function OrderReviewCard({
+  required,
+  onRequiredChange,
+  instructions,
+  onInstructionsChange,
+}: {
+  required: boolean
+  onRequiredChange: (v: boolean) => void
+  instructions: string
+  onInstructionsChange: (v: string) => void
+}) {
   return (
-    <RecordsCard title="Order Review" divider={false}>
-      <Checkbox
-        checked={required}
-        onChange={setRequired}
-        label="Order review required"
-        description="Hold this member's club orders for manual review instead of auto-processing with the batch."
-      />
-      {required && (
+    <RecordsCard
+      title="Order Review"
+      action={
+        <Switch
+          checked={required}
+          onChange={onRequiredChange}
+          aria-label="Order review required"
+        />
+      }
+      divider={false}
+    >
+      {required ? (
         <div className="flex flex-col gap-vintiga-xs">
           <label className="typo-caption font-semibold text-vintiga-slate-600">Order review instructions</label>
           <Textarea
             rows={3}
             placeholder="Explain why this member's orders need review (e.g. always call to confirm the selection)."
             value={instructions}
-            onChange={(e) => setInstructions(e.target.value)}
+            onChange={(e) => onInstructionsChange(e.target.value)}
           />
         </div>
-      )}
+      ) : null}
     </RecordsCard>
   )
 }
@@ -672,6 +993,10 @@ function ClubOverviewRail({ member }: { member: Member }) {
 
         <RailRow label="Signup Date">{member.signupDate}</RailRow>
         <RailRow label="Activated Date">{member.activatedDate}</RailRow>
+        {/* Recurring clubs (Member Choice / Rewards) bill on a cycle — surface
+            the next charge date + how much this membership has collected. */}
+        {member.nextBillingDate && <RailRow label="Next Billing Date">{member.nextBillingDate}</RailRow>}
+        {member.collectedToDate && <RailRow label="Collected to Date">{member.collectedToDate}</RailRow>}
         <RailRow label="Sales Associate">{member.salesAssociate}</RailRow>
         <RailRow label="Membership ID">#{member.id}</RailRow>
         <RailRow label="Delivery Method">{DELIVERY_LABEL[member.delivery]}</RailRow>

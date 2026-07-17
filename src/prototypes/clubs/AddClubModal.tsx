@@ -17,19 +17,19 @@ const CLUB_TYPES: {
 }[] = [
   {
     kind: 'curated',
-    title: 'Curated Club',
+    title: 'Curated Bottle Club',
     description: 'Club Admin orders for members, charging their cards on a set day. Orders are picked up or shipped.',
     icon: <GemIcon />,
   },
   {
     kind: 'account-credit',
-    title: 'Tasting Credit',
+    title: 'Member Choice Club',
     description: 'Members pick a monthly amount to add to their account, which they can spend on any purchase.',
     icon: <CreditCardIcon />,
   },
   {
     kind: 'membership',
-    title: 'Membership Club',
+    title: 'Rewards Club',
     description: 'Members pay a set amount, and receive discounts for future purchases for a defined time period.',
     icon: <IdCardIcon />,
   },

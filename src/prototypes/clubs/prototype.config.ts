@@ -71,6 +71,9 @@ for (const slug of CLUB_KEYS) {
 for (const m of MEMBERS) {
   baseRoutes[`#/web/clubs/memberships/${m.id}`] = MembershipDetailScreen
 }
+// Just-created membership — Add Membership routes here with `?created=<outcome>`;
+// the detail screen synthesises the record from the query params.
+baseRoutes['#/web/clubs/memberships/new'] = MembershipDetailScreen
 
 export const config: PrototypeConfig = {
   slug: 'clubs',
