@@ -67,6 +67,10 @@ Rebuilt the Deck Builder's per-slide step (Step 2) from element-chips into the f
 
 `PresentationsHub.tsx`.
 
+## 2026-07-10 — Fedja + Claude: Presentations — deep-linkable deck slides
+
+The **Vintiga Overview** deck now accepts a `?slide=N` query param (1-based) to open on a specific slide — so a single slide is directly shareable, and it lets the Figma capture flow load each slide on a fresh page load. Backward compatible: no param → slide 1. `VintigaOverviewScreen.tsx`.
+
 ## 2026-07-10 — Fedja + Claude: Hub — prototypes open in a new tab; "Deck Builder"
 
 - **Prototype clicks open in a new browser tab** — every prototype-opening affordance on the hub (card body, Prototype / Designs / Review links, screen thumbnails, and the arrow button) now opens in a new tab (`target="_blank"` / `window.open`), so the catalogue stays put behind the prototype. Design System / Brand / Presentations tool links stay same-tab.
