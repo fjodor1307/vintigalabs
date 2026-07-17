@@ -13,14 +13,18 @@ export interface ExperienceOption {
   price: number
 }
 
+// Jul 9 review: we only handle zero-charge reservations right now — every
+// experience is "No charge" (paid reservations create an order at reserve time,
+// a deferred flow — see NOTES.md). Prices stay modelled (0 today) so the paid
+// labelling lights up automatically once a charged experience is added.
 export const EXPERIENCE_OPTIONS: ExperienceOption[] = [
   // Single-variant experiences → one entry, no separate option.
-  { value: 'private-tasting',        experience: 'Private Tasting Experience (30 mins)', price: 55 },
+  { value: 'private-tasting',        experience: 'Private Tasting Experience (30 mins)', price: 0 },
   { value: 'vineyard-picnic',        experience: 'Vineyard Picnic',                      price: 0 },
   // Multi-variant → one entry per variant.
-  { value: 'wine-tasting:tasting',   experience: 'Wine Tasting', variant: 'Tasting',         price: 35 },
-  { value: 'wine-tasting:premium',   experience: 'Wine Tasting', variant: 'Premium Tasting', price: 55 },
-  { value: 'wine-tasting:reserve',   experience: 'Wine Tasting', variant: 'Reserve Flight',  price: 75 },
+  { value: 'wine-tasting:tasting',   experience: 'Wine Tasting', variant: 'Tasting',         price: 0 },
+  { value: 'wine-tasting:premium',   experience: 'Wine Tasting', variant: 'Premium Tasting', price: 0 },
+  { value: 'wine-tasting:reserve',   experience: 'Wine Tasting', variant: 'Reserve Flight',  price: 0 },
   { value: 'lunch:patio',            experience: 'Lunch',        variant: 'Patio',            price: 0 },
   { value: 'lunch:dining',           experience: 'Lunch',        variant: 'Dining Room',      price: 0 },
 ]

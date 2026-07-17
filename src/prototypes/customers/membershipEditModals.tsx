@@ -6,7 +6,7 @@ import { Button } from '@ds/shared/Button'
 import { Radio } from '@ds/shared/Radio'
 import { SegmentedControl } from '@ds/shared/SegmentedControl'
 import { CardBrandLogo } from '@ds/shared/CardBrandLogo'
-import { TruckIcon, MapPinIcon, PlusIcon } from '@ds/icons/Icons'
+import { PlusIcon } from '@ds/icons/Icons'
 import { useAddresses, usePaymentMethods, type CardBrand } from './customerStore'
 
 // ─── Membership shipment edit modals ──────────────────────────────────────────
@@ -198,53 +198,6 @@ function CardOnFileForm({ current, onClose, onSave }: { current?: CardRef; onClo
       <ModalFooter>
         <Button variant="outline" onClick={onClose}>Cancel</Button>
         <Button onClick={handleSave} disabled={!canSave}>Use this card</Button>
-      </ModalFooter>
-    </>
-  )
-}
-
-// ─── Delivery method ──────────────────────────────────────────────────────────
-
-export function DeliveryMethodModal({
-  open,
-  current,
-  onClose,
-  onSave,
-}: {
-  open: boolean
-  current: 'ship' | 'pickup'
-  onClose: () => void
-  onSave: (method: 'ship' | 'pickup') => void
-}) {
-  return (
-    <Modal open={open} onClose={onClose} size="md">
-      {open && <DeliveryMethodForm current={current} onClose={onClose} onSave={onSave} />}
-    </Modal>
-  )
-}
-
-function DeliveryMethodForm({ current, onClose, onSave }: { current: 'ship' | 'pickup'; onClose: () => void; onSave: (m: 'ship' | 'pickup') => void }) {
-  const [method, setMethod] = useState<'ship' | 'pickup'>(current)
-  return (
-    <>
-      <ModalHeader title="Delivery method" onClose={onClose} />
-      <ModalBody>
-        <div className="flex flex-col gap-vintiga-sm">
-          <RadioCard selected={method === 'ship'} onSelect={() => setMethod('ship')}>
-            <span className="inline-flex items-center gap-vintiga-sm typo-body-sm font-semibold text-vintiga-slate-900">
-              <TruckIcon className="w-4 h-4 text-vintiga-slate-500" /> Ship
-            </span>
-          </RadioCard>
-          <RadioCard selected={method === 'pickup'} onSelect={() => setMethod('pickup')}>
-            <span className="inline-flex items-center gap-vintiga-sm typo-body-sm font-semibold text-vintiga-slate-900">
-              <MapPinIcon className="w-4 h-4 text-vintiga-slate-500" /> Pickup
-            </span>
-          </RadioCard>
-        </div>
-      </ModalBody>
-      <ModalFooter>
-        <Button variant="outline" onClick={onClose}>Cancel</Button>
-        <Button onClick={() => { onSave(method); onClose() }}>Save</Button>
       </ModalFooter>
     </>
   )

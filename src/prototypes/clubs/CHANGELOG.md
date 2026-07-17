@@ -6,6 +6,11 @@
 
 ---
 
+## 2026-07-16 — Fedja + Claude: Member-detail delivery card is now editable
+
+- **Member detail** (`MembershipDetailScreen.tsx`): the pickup/shipping split cards are now one editable `Delivery Method` card — the ⋯ opens the shared `DeliveryMethodModal` (`@ds/shared/DeliveryMethodPicker`), which is the **same tiles + "Shipping Address" dropdown** the Add Membership form uses. Previously the ⋯ was a dead `onClick`.
+- The shared component was **extracted from the Add Membership delivery UI**, so that screen is unchanged and the member-detail editor matches it exactly.
+
 ## 2026-06-24 — Fedja + Claude: Design-review follow-ups — club renames, create-time charge, save-driven activation
 
 From the Jun 24 design review (Fedja, Donna, Jim, Geoff). Six changes:

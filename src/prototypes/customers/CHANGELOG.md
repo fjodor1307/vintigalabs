@@ -1,5 +1,50 @@
 # Customers — Changelog
 
+## 2026-07-16 — Fedja + Claude: Membership card polish
+
+Tightened the expanded membership card so it reads as three groups instead of one flat grid.
+
+- **Paid with + Delivery are paired at the top** — the two editable facts, side by side. Delivery now uses the **same 56×36 chip as `CardBrandLogo`** (a pin for pickup, a truck for shipping) instead of a loose inline icon, so the two columns read as a set. The chips centre on a shared baseline (`min-h-10`) so a wrapping address can't knock them out of line.
+- **Dates on one aligned row** — Commitment ends / Renews · Preferred shipping · Joined. Previously "Joined" was stranded in the first row's whitespace because the wrapping delivery line made the row uneven.
+- **Dividers between groups** (paid/delivery · dates · notes · footer) with `pt-vintiga-md` for consistent rhythm.
+- No-card state now shows a card-icon chip rather than a delivery icon.
+
+`CustomerMembershipsScreen.tsx`.
+
+## 2026-07-16 — Fedja + Claude: Delivery picker bug fix + shared editor
+
+Follow-up to the Jul 15 combined-delivery work.
+
+- **Fixed the duplicate/both-selected bug.** The seed had two byte-identical saved addresses, and the picker selected by address *text*, so both rows rendered as selected. The seed now carries two distinct addresses (**Home** — 1210 Lakeview, Bellingham WA · **Work** — 500 Market St, San Francisco CA), state stored as the two-letter abbreviation (`WA`/`CA`).
+- **"Change delivery" now opens the shared `DeliveryMethodModal`** (`@ds/shared/DeliveryMethodPicker`) — the same tiles + "Shipping Address" dropdown as the Add Membership form — in place of the local combined `DeliveryDestinationModal`, which was removed. "Add new address" writes through `customerActions.addAddress` (now returns the new id).
+
+`CustomerMembershipsScreen.tsx`, `membershipEditModals.tsx`, `customerStore.ts`.
+
+## 2026-07-15 — Fedja + Claude: Memberships — condensed card + full page + combined delivery (Jul 15 review)
+
+Reworked the Memberships tab per the Jul 15 review.
+
+- **Condensed card** carries the essentials only: **delivery** (combined), **payment** (change card), **join date + commitment/renewal**, **preferred shipping**, **shipping notes + gift message**, **order review**, and an **"order waiting for pickup"** alert when one exists.
+- **Removed the "Your next shipment" block** (bottles, charge/ship dates, min–max) from the card — that lives in Club processing. No shipment info in the collapsed summary either.
+- **"View full membership →"** links to the existing **Clubs membership page** (`#/web/clubs/memberships/{clubMemberId}`) — the canonical deep view (orders, history, addresses, payment, holds) — instead of duplicating it under Customers. Per the Jul 15 decision, membership deep-detail lives in Club processing. The customer's Curators Club maps to club member `1001` (Jane Davis) via a new `clubMemberId`.
+- **Combined delivery method** (`DeliveryDestinationModal`) — one picker listing **pickup locations *and* saved addresses together**; one tap sets method + destination (no two-step). Replaces the separate ship-to + delivery modals. Same paradigm to hand to Vantage.
+
+`CustomerMembershipsScreen.tsx`, `MembershipDetailPage.tsx` (new), `membershipEditModals.tsx`, `membershipsData.ts`, route in `prototype.config.ts`.
+
+## 2026-07-10 — Fedja + Claude: Digital Pass lifecycle + Send Invite
+
+Reworked the **Digital Pass** on the Memberships tab from a static "Active" row into the ticketed lifecycle. Every customer record has a pass (its own card, separate from the addable clubs — a pass can't be "added").
+
+- **State is derived from dates** (`passStatus`), most-advanced wins:
+  - `Inactive · Invitation Sent: Not Sent` — new-customer starting state (seeded), **no Pass ID shown**.
+  - `Inactive · Invitation Sent: {date}` after an invite goes out.
+  - `Active · Invitation Accepted: {date}` once accepted.
+  - `Active · Last Used: {date}` once used. All states except "Not Sent" show their date.
+- **Send Invite** replaces "View pass" as the 3-dot action — sends the email invite (toast), stamps `invitationSentOn`, and **mints the Pass ID on first send** (dev may instead mint at record creation). "View pass" returns as a second item once a Pass ID exists.
+- **Re-send never downgrades** — resending updates `invitationSentOn` internally but the display follows the precedence, so an already-active/used pass keeps showing `Active · Last Used: {date}`.
+
+`membershipsData.ts` (new `DigitalPass` shape), `CustomerMembershipsScreen.tsx`.
+
 ## 2026-07-09 — Fedja + Claude: Memberships tab — expandable club + next-order model (Jul 1 review)
 
 Built the **Memberships** tab (was a placeholder that bounced to Overview). Reworked per Donna's Jul 1 feedback on Figma 2015:6618 and the customer-portal reference, which combines the club and its next shipment into one card:

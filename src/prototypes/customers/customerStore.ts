@@ -284,10 +284,10 @@ const SEED_PAYMENT_METHODS: PaymentMethod[] = [
 const SEED_ADDRESSES: Address[] = [
   {
     id: 'addr-1',
-    label: 'Address 1',
+    label: 'Home',
     street: '1210 Lakeview Street',
     city: 'Bellingham',
-    state: 'Washington',
+    state: 'WA',
     zip: '98229',
     country: 'United States',
     phone: '(555) 123-4567',
@@ -295,11 +295,11 @@ const SEED_ADDRESSES: Address[] = [
   },
   {
     id: 'addr-2',
-    label: 'Address 2',
-    street: '1210 Lakeview Street',
-    city: 'Bellingham',
-    state: 'Washington',
-    zip: '98229',
+    label: 'Work',
+    street: '500 Market Street',
+    city: 'San Francisco',
+    state: 'CA',
+    zip: '94110',
     country: 'United States',
     phone: '(555) 123-4567',
     email: 'janedavis@gmail.com',
@@ -475,10 +475,11 @@ export const customerActions = {
     state = { ...state, paymentMethods: state.paymentMethods.filter((m) => m.id !== id) }
     emit()
   },
-  addAddress(addr: Omit<Address, 'id'>) {
+  addAddress(addr: Omit<Address, 'id'>): string {
     const id = `addr-${++addrSeq}`
     state = { ...state, addresses: [...state.addresses, { ...addr, id }] }
     emit()
+    return id
   },
   updateAddress(id: string, patch: Partial<Address>) {
     state = {
