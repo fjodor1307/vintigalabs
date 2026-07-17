@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-07-17 — Fedja + Claude: Notes editor names the day it edits
+
+The header's notes editor always announced itself as **"Notes for Today"**, but the header has a date picker — open the notes on any other day and the title was simply wrong. `NotesModal` now takes the selected `date` and titles itself after it ("Notes for Mar 15, 2026").
+
+Also: either heading in the Schedule / Staff Notes popover now opens the editor, so the whole popover is a target rather than just the pencil.
+
+`ReservationModals.tsx`, `ReservationsScreen.tsx`.
+
 ## 2026-07-10 — Fedja + Claude: Reservation View actions wired
 
 Made the detail-page header actions do something (all were no-ops):

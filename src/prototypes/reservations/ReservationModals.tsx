@@ -61,16 +61,20 @@ export function HoldLocationModal({ open, onClose }: { open: boolean; onClose: (
   )
 }
 
-// "Notes for Today" — edits the day's Schedule + Staff notes shown in the
-// reservations header popover (Jul 9 review).
+// Edits the day's Schedule + Staff notes shown in the reservations header
+// popover (Jul 9 review). The title names the day being edited — the header has
+// a date picker, so "Today" would be wrong on any other day.
 export function NotesModal({
   open,
+  date,
   scheduleNotes,
   staffNotes,
   onClose,
   onSave,
 }: {
   open: boolean
+  /** The day whose notes are being edited. */
+  date: Date
   scheduleNotes: string
   staffNotes: string
   onClose: () => void
@@ -78,17 +82,18 @@ export function NotesModal({
 }) {
   return (
     <Modal open={open} onClose={onClose} size="md">
-      {open && <NotesForm scheduleNotes={scheduleNotes} staffNotes={staffNotes} onClose={onClose} onSave={onSave} />}
+      {open && <NotesForm date={date} scheduleNotes={scheduleNotes} staffNotes={staffNotes} onClose={onClose} onSave={onSave} />}
     </Modal>
   )
 }
 
-function NotesForm({ scheduleNotes, staffNotes, onClose, onSave }: { scheduleNotes: string; staffNotes: string; onClose: () => void; onSave: (s: string, st: string) => void }) {
+function NotesForm({ date, scheduleNotes, staffNotes, onClose, onSave }: { date: Date; scheduleNotes: string; staffNotes: string; onClose: () => void; onSave: (s: string, st: string) => void }) {
   const [schedule, setSchedule] = useState(scheduleNotes)
   const [staff, setStaff] = useState(staffNotes)
+  const title = `Notes for ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
   return (
     <>
-      <ModalHeader title="Notes for Today" onClose={onClose} />
+      <ModalHeader title={title} onClose={onClose} />
       <ModalBody>
         <Field label="Schedule Notes"><Textarea rows={3} value={schedule} onChange={(e) => setSchedule(e.target.value)} placeholder="e.g. Vintiga is coming around 12." /></Field>
         <Field label="Staff Notes"><Textarea rows={3} value={staff} onChange={(e) => setStaff(e.target.value)} placeholder="e.g. Slushy machine is broken; Sam is out sick." /></Field>

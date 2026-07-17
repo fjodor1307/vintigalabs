@@ -223,21 +223,26 @@ export function ReservationsScreen() {
                     </span>
                   )}
                 >
-                  {(close) => (
-                    <div className="flex flex-col gap-vintiga-md">
-                      <div className="flex flex-col gap-vintiga-xs">
-                        <div className="flex items-center justify-between gap-vintiga-md">
-                          <h3 className="typo-body-lg font-semibold text-vintiga-slate-900">Schedule Notes</h3>
-                          <IconButton variant="outline" size="sm" icon={<PencilIcon />} aria-label="Edit notes for today" onClick={() => { close(); setNotesOpen(true) }} />
+                  {(close) => {
+                    // Either heading opens the editor, so the whole popover is a
+                    // target — not just the pencil.
+                    const edit = () => { close(); setNotesOpen(true) }
+                    return (
+                      <div className="flex flex-col gap-vintiga-md">
+                        <div className="flex flex-col gap-vintiga-xs">
+                          <div className="flex items-center justify-between gap-vintiga-md">
+                            <button type="button" onClick={edit} className="typo-body-lg font-semibold text-vintiga-slate-900 hover:text-vintiga-primary transition-colors bg-transparent border-none p-0 cursor-pointer text-left">Schedule Notes</button>
+                            <IconButton variant="outline" size="sm" icon={<PencilIcon />} aria-label="Edit notes" onClick={edit} />
+                          </div>
+                          <p className={`typo-body-sm ${scheduleNotes ? 'text-vintiga-slate-700' : 'text-vintiga-slate-500'}`}>{scheduleNotes || 'No notes entered.'}</p>
                         </div>
-                        <p className={`typo-body-sm ${scheduleNotes ? 'text-vintiga-slate-700' : 'text-vintiga-slate-500'}`}>{scheduleNotes || 'No notes entered.'}</p>
+                        <div className="flex flex-col gap-vintiga-xs">
+                          <button type="button" onClick={edit} className="typo-body-lg font-semibold text-vintiga-slate-900 hover:text-vintiga-primary transition-colors bg-transparent border-none p-0 cursor-pointer text-left w-fit">Staff Notes</button>
+                          <p className={`typo-body-sm ${staffNotes ? 'text-vintiga-slate-700' : 'text-vintiga-slate-500'}`}>{staffNotes || 'No notes entered.'}</p>
+                        </div>
                       </div>
-                      <div className="flex flex-col gap-vintiga-xs">
-                        <h3 className="typo-body-lg font-semibold text-vintiga-slate-900">Staff Notes</h3>
-                        <p className={`typo-body-sm ${staffNotes ? 'text-vintiga-slate-700' : 'text-vintiga-slate-500'}`}>{staffNotes || 'No notes entered.'}</p>
-                      </div>
-                    </div>
-                  )}
+                    )
+                  }}
                 </Popover>
 
                 <DropdownButton
@@ -376,6 +381,7 @@ export function ReservationsScreen() {
       <BlockTimeModal open={blockOpen} onClose={() => setBlockOpen(false)} />
       <NotesModal
         open={notesOpen}
+        date={date}
         scheduleNotes={scheduleNotes}
         staffNotes={staffNotes}
         onClose={() => setNotesOpen(false)}
