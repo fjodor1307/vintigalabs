@@ -228,6 +228,10 @@ Reworked the prototype-builder home page and the in-prototype chrome:
 - **Flow view removed entirely** — the third tab and its `FlowGrid` are deleted; only Prototype + Design remain.
 - `FilterBar`'s segmented control is now generic (`segments` / `activeSegment` / `onSelectSegment`) rather than status-specific.
 
+## 2026-06-15 — Style guide: "View in Figma" link on every component section
+
+Each DS component was drawn from the Vintiga Figma library (file `3DnxyYDZqDGQqvknlD4aTu`), where every component family sits on its own page. Added a central `FIGMA_NODES` map in `ComponentsSection.tsx` (section id → Figma page node-id) and made `SubSection` resolve a `figmaUrl` automatically, so every registered section renders the `FigmaLink` "View in Figma" pill pointing at its source page (Buttons, Tags, Avatars, Text Fields, Dropdown, Checkbox, Radio, Switch, Segmented Controls, Cards, Modal, Empty State, Notifications, Table, Sidebar, Navbar, Widget, Insights, Forms, Rich Text Editor). Sections that are prototype-only helpers with no Figma source (Progress, Skeletons, Tooltip, Bottom Sheet, Tabs, Separator, OTP, Screen Header/Footer, Media, Breadcrumb, etc.) are simply omitted from the map and render no button. Single source of truth — the old inline `figmaUrl` on the Buttons section was removed.
+
 ## 2026-05-27 — Removed the `experience-timeslots-matrix` prototype
 
 Deleted `src/prototypes/experience-timeslots-matrix/`. The Reservation Time Slots grid + Blackout Dates table that lived there have been folded into the **Products → Schedule** tab, and the May 27 review concluded that's where the work should live going forward (one editor, not a parallel sandbox). Everything we built in the matrix prototype is now in `src/prototypes/products/TimeSlotsScreen.tsx`.
